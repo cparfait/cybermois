@@ -172,7 +172,11 @@ a:hover { color: var(--vert-fonce-sombre); }
   *, *::before, *::after {
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
+    /* Le delai doit tomber lui aussi : un contenu revele par une animation
+       retardee resterait sinon invisible pendant toute la duree du delai. */
+    animation-delay: -1ms !important;
     transition-duration: .01ms !important;
+    transition-delay: 0s !important;
     scroll-behavior: auto !important;
   }
 }

@@ -99,28 +99,58 @@ export const formaterDate = (iso) => {
 export const medaille = (rang) => ['🥇', '🥈', '🥉'][rang - 1] || '';
 
 /** Petite pluie de confettis, desactivee si l'agent a demande la reduction des animations. */
-export function confettis(duree = 2200) {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+export const animationsReduites = () =>
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/**
+ * Pluie de confettis.
+ * `depuis` permet de partir d'un element plutot que du haut de l'ecran : une
+ * petite salve au niveau de la reponse validee se remarque sans envahir la page,
+ * alors qu'une pluie pleine hauteur est reservee a la fin du defi.
+ */
+export function confettis({ nombre = 70, duree = 2200, depuis = null } = {}) {
+  if (animationsReduites()) return;
+
   const couleurs = ['#006e46', '#aec80c', '#4fbf8b', '#c8e04a', '#ffffff'];
   const zone = document.createElement('div');
   zone.setAttribute('aria-hidden', 'true');
   zone.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden';
   document.body.appendChild(zone);
 
-  for (let i = 0; i < 70; i++) {
+  const cadre = depuis?.getBoundingClientRect();
+
+  for (let i = 0; i < nombre; i++) {
     const p = document.createElement('span');
     const taille = 6 + Math.random() * 7;
-    p.style.cssText = `position:absolute;top:-20px;left:${Math.random() * 100}%;
-      width:${taille}px;height:${taille * 0.5}px;background:${couleurs[i % couleurs.length]};
-      opacity:${0.7 + Math.random() * 0.3};border-radius:2px;
-      animation:tomber ${1.4 + Math.random() * 1.4}s linear ${Math.random() * 0.6}s forwards`;
+
+    if (cadre) {
+      // Salve : projection vers le haut depuis l'element, puis retombee
+      const angle = (Math.random() - 0.5) * Math.PI * 0.9;
+      const force = 90 + Math.random() * 140;
+      p.style.setProperty('--dx', `${Math.sin(angle) * force}px`);
+      p.style.setProperty('--dy', `${-Math.abs(Math.cos(angle)) * force}px`);
+      p.style.cssText += `position:absolute;left:${cadre.left + cadre.width * (0.2 + Math.random() * 0.6)}px;
+        top:${cadre.top + cadre.height / 2}px;
+        width:${taille}px;height:${taille * 0.5}px;background:${couleurs[i % couleurs.length]};
+        border-radius:2px;animation:salve ${0.8 + Math.random() * 0.5}s cubic-bezier(.2,.7,.4,1) forwards`;
+    } else {
+      p.style.cssText = `position:absolute;top:-20px;left:${Math.random() * 100}%;
+        width:${taille}px;height:${taille * 0.5}px;background:${couleurs[i % couleurs.length]};
+        opacity:${0.7 + Math.random() * 0.3};border-radius:2px;
+        animation:tomber ${1.4 + Math.random() * 1.4}s linear ${Math.random() * 0.6}s forwards`;
+    }
     zone.appendChild(p);
   }
 
   if (!document.getElementById('style-confettis')) {
     const style = document.createElement('style');
     style.id = 'style-confettis';
-    style.textContent = '@keyframes tomber{to{transform:translateY(105vh) rotate(720deg);opacity:0}}';
+    style.textContent = `
+      @keyframes tomber { to { transform: translateY(105vh) rotate(720deg); opacity: 0 } }
+      @keyframes salve {
+        0%   { transform: translate(0, 0) rotate(0); opacity: 1 }
+        100% { transform: translate(var(--dx), calc(var(--dy) + 90px)) rotate(540deg); opacity: 0 }
+      }`;
     document.head.appendChild(style);
   }
   setTimeout(() => zone.remove(), duree + 800);

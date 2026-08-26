@@ -1,4 +1,4 @@
-import { api, echapper, initialiserPage, alerte, confettis } from '/js/commun.js';
+import { api, echapper, initialiserPage, alerte, confettis, animationsReduites } from '/js/commun.js';
 
 await initialiserPage('/accueil');
 
@@ -218,17 +218,18 @@ function afficherCorrection(q, r) {
       </div>
     </div>
 
-    <div class="carte bloc-question" style="border:1px solid var(--bordure)" role="status">
+    <div class="carte bloc-question bloc-correction correction-animee" style="border:1px solid var(--bordure)" role="status">
+      ${r.points > 0 ? `<span class="points-gagnes" aria-hidden="true">+${r.points}</span>` : ''}
       <p class="bandeau-note" style="color:${couleur}">
         ${r.parfaite ? '✅' : r.points > 0 ? '⚠️' : '❌'} ${verdict} — ${r.points} / ${r.pointsMax} points
       </p>
       <h2 style="font-size:1.2rem;margin:.2em 0 .8em">${echapper(q.enonce)}</h2>
       <ul class="liste-choix">${items}</ul>
 
-      ${details.length ? `<div class="explication" style="border-left-color:${couleur}">${details.join('')}</div>` : ''}
+      ${details.length ? `<div class="explication explication-bilan" style="border-left-color:${couleur}">${details.join('')}</div>` : ''}
 
       ${r.explication ? `
-        <div class="explication">
+        <div class="explication explication-pourquoi">
           <strong>Pourquoi :</strong> ${echapper(r.explication)}
         </div>` : ''}
     </div>
@@ -244,6 +245,13 @@ function afficherCorrection(q, r) {
     index++;
     afficherQuestion();
   });
+
+  // Une salve discrete sur une reponse parfaite : elle recompense sans envahir
+  // la page, la pluie pleine hauteur restant reservee a la fin du defi.
+  if (r.parfaite && !animationsReduites()) {
+    const premiere = zone.querySelector('.choix.correcte');
+    setTimeout(() => confettis({ nombre: 26, duree: 1100, depuis: premiere }), 420);
+  }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -308,5 +316,5 @@ async function terminer() {
     </section>`;
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  if (!r.entrainement && r.pourcentage >= 70) confettis();
+  if (!r.entrainement && r.pourcentage >= 70) confettis({ nombre: 80, duree: 2400 });
 }
