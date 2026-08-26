@@ -18,6 +18,28 @@ import { db } from './db.js';
 
 export const normaliser = (nom) => String(nom || '').replace(/\s+/g, ' ').trim();
 
+/**
+ * Cle de comparaison insensible a la casse, aux accents, a la ponctuation et
+ * au pluriel. « Services Techniques », « Service Technique » et
+ * « service techniques » donnent la meme cle, tout comme « Population &
+ * Citoyennete » et « Population et Citoyennete ».
+ *
+ * Les annuaires reels sont remplis a la main sur des annees : ces variantes
+ * d'orthographe y sont la regle, pas l'exception, et creeraient autant de
+ * services distincts au classement.
+ */
+export function cleComparaison(nom) {
+  return String(nom || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/&/g, ' et ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .split(' ')
+    .map((mot) => mot.replace(/s$/, ''))
+    .join(' ');
+}
+
 /** Chaine complete des OU d'un DN, de la plus proche de l'agent a la plus haute. */
 export function chaineOu(dn) {
   if (!dn) return [];
@@ -109,21 +131,143 @@ export function inventaireServices() {
   }
   const estGenerique = (ou) => avecOu > 1 && frequence.get(ou) >= avecOu;
 
+  const sources = lignes.map((l) => l.source);
+  const familles = detecterFamilles(sources);
+
   return lignes.map((l, i) => {
     const ous = chaines[i];
-    // On remonte l'arborescence jusqu'a la premiere OU qui soit un vrai
-    // regroupement metier, en sautant les conteneurs techniques.
-    let proposition = null;
-    for (let n = 1; n < ous.length; n++) {
-      if (ous[n] !== l.source && !estGenerique(ous[n])) { proposition = ous[n]; break; }
+
+    // 1. Familles deduites des libelles eux-memes : c'est le cas le plus frequent
+    //    quand les OU sont organisees par site plutot que par service.
+    let proposition = familles.get(l.source) || null;
+
+    // 2. A defaut, l'OU parente, en sautant les conteneurs techniques.
+    if (!proposition) {
+      for (let n = 1; n < ous.length; n++) {
+        if (ous[n] !== l.source && !estGenerique(ous[n])) { proposition = ous[n]; break; }
+      }
     }
+
     return {
       source: l.source,
       effectif: l.effectif,
       cible: regles[l.source] || l.source,
       regroupe: !!regles[l.source],
       chaineOu: ous,
-      proposition,
+      proposition: proposition && proposition !== l.source ? proposition : null,
     };
   });
+}
+
+/**
+ * Deduit des regroupements a partir des libelles eux-memes, selon deux motifs
+ * observes dans les annuaires de collectivite :
+ *
+ *   - le tiret separateur   « Jeunesse - Kid Club »        -> Jeunesse
+ *   - le prefixe partage    « Crêche La Cigogne »,
+ *                           « Crêche Petit Poucet »        -> Crêche
+ *
+ * Les orthographes divergentes d'un meme prefixe sont ramenees a la graphie la
+ * plus repandue : sans cela « Services Techniques - Voirie » et « Service
+ * Technique - Propreté » donneraient deux services distincts.
+ */
+export function detecterFamilles(sources, seuil = 2) {
+  const candidats = new Map(); // source -> prefixe propose
+
+  for (const source of sources) {
+    const separe = source.split(/\s+[-–—]\s+/);
+    if (separe.length > 1 && separe[0].trim()) candidats.set(source, separe[0].trim());
+  }
+
+  // Prefixe partage : on regroupe par premier mot, puis on retient le plus long
+  // prefixe commun a TOUS les membres du groupe. Raisonner a longueur fixe
+  // couperait « Crêche Petit Poucet » et « Crêche Petit Prince » sur
+  // « Crêche Petit », alors que la famille est « Crêche ».
+  const restants = sources.filter((s) => !candidats.has(s));
+  const grappes = new Map();
+  for (const source of restants) {
+    const mots = source.split(' ');
+    if (mots.length < 2) continue;
+    const cle = cleComparaison(mots[0]);
+    if (!grappes.has(cle)) grappes.set(cle, []);
+    grappes.get(cle).push(source);
+  }
+
+  for (const membres of grappes.values()) {
+    if (membres.length < seuil) continue;
+
+    const motsPar = membres.map((s) => s.split(' '));
+    const normalises = motsPar.map((mots) => mots.map((m) => cleComparaison(m)));
+
+    let longueur = 0;
+    const maximum = Math.min(...motsPar.map((m) => m.length));
+    while (longueur < maximum
+      && normalises.every((n) => n[longueur] === normalises[0][longueur])) longueur++;
+
+    // Un membre entierement contenu dans le prefixe est le nom de la famille
+    if (longueur === 0) continue;
+
+    // Graphie de reference : mot par mot, la plus frequente parmi les membres
+    const prefixe = [];
+    for (let i = 0; i < longueur; i++) {
+      const compte = new Map();
+      for (const mots of motsPar) compte.set(mots[i], (compte.get(mots[i]) || 0) + 1);
+      // Depart au comptage : on retient la graphie la plus longue, donc la forme
+      // ecrite en toutes lettres plutot qu'un symbole (« et » plutot que « & »).
+      prefixe.push([...compte.entries()]
+        .sort((a, b) => b[1] - a[1] || b[0].length - a[0].length || a[0].localeCompare(b[0], 'fr'))[0][0]);
+    }
+    const famille = prefixe.join(' ');
+
+    for (const source of membres) {
+      if (source !== famille) candidats.set(source, famille);
+    }
+  }
+
+  // Harmonisation des graphies : on retient la plus frequente de chaque famille
+  const graphies = new Map();
+  for (const prefixe of candidats.values()) {
+    const cle = cleComparaison(prefixe);
+    if (!graphies.has(cle)) graphies.set(cle, new Map());
+    const compte = graphies.get(cle);
+    compte.set(prefixe, (compte.get(prefixe) || 0) + 1);
+  }
+  const canonique = new Map();
+  for (const [cle, compte] of graphies) {
+    const meilleure = [...compte.entries()]
+      .sort((a, b) => b[1] - a[1] || b[0].length - a[0].length)[0][0];
+    canonique.set(cle, meilleure);
+  }
+
+  // Deux libelles qui ne different que par l'orthographe se rejoignent aussi
+  const parCle = new Map();
+  for (const source of sources) {
+    const cle = cleComparaison(source);
+    if (!parCle.has(cle)) parCle.set(cle, []);
+    parCle.get(cle).push(source);
+  }
+
+  // Un libelle retenu comme nom de famille ne doit jamais etre redirige a son
+  // tour : sans cette precaution, deux orthographes d'un meme service se
+  // pointent mutuellement et le regroupement tourne en rond.
+  const nomsDeFamille = new Set(
+    [...candidats.values()].map((p) => canonique.get(cleComparaison(p)))
+  );
+
+  const familles = new Map();
+  for (const source of sources) {
+    if (candidats.has(source)) {
+      const cible = canonique.get(cleComparaison(candidats.get(source)));
+      if (cible !== source) familles.set(source, cible);
+      continue;
+    }
+    if (nomsDeFamille.has(source)) continue;
+
+    const jumeaux = parCle.get(cleComparaison(source));
+    if (jumeaux.length > 1) {
+      const cible = [...jumeaux].sort((a, b) => b.length - a.length || a.localeCompare(b, 'fr'))[0];
+      if (cible !== source) familles.set(source, cible);
+    }
+  }
+  return familles;
 }

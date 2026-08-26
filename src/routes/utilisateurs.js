@@ -6,6 +6,10 @@ import {
   resoudreService, inventaireServices, lireRegroupements,
   enregistrerRegroupements, appliquerRegroupements,
 } from '../lib/services.js';
+import {
+  analyserSynchronisation, appliquerSynchronisation,
+  lireExclusions, enregistrerExclusions, MOTIFS_SUGGERES,
+} from '../lib/synchronisation.js';
 
 export default async function routesUtilisateurs(app) {
   app.addHook('preHandler', exigerAdmin);
@@ -299,6 +303,46 @@ export default async function routesUtilisateurs(app) {
     } catch (err) {
       db.exec('ROLLBACK');
       return reponse.code(500).send({ erreur: `Import interrompu, aucune modification enregistrée : ${err.message}` });
+    }
+  });
+
+  /* --------------------------------------- Synchronisation depuis l'annuaire */
+
+  /** Analyse : ne touche a rien, c'est le sas de validation. */
+  app.post('/api/admin/synchronisation/analyse', async (requete, reponse) => {
+    const resultat = await analyserSynchronisation();
+    if (!resultat.ok) return reponse.code(502).send({ erreur: resultat.message });
+    return { ...resultat, motifsSuggeres: MOTIFS_SUGGERES };
+  });
+
+  /** Application : seuls les comptes explicitement retenus entrent. */
+  app.post('/api/admin/synchronisation/appliquer', async (requete, reponse) => {
+    const c = requete.body || {};
+    const resultat = await appliquerSynchronisation({
+      accepter: Array.isArray(c.accepter) ? c.accepter : [],
+      appliquerModifications: c.appliquerModifications !== false,
+      exclureDesactives: c.exclureDesactives !== false,
+      exclureDisparus: !!c.exclureDisparus,
+    }, requete.agent.login);
+
+    if (!resultat.ok) return reponse.code(500).send({ erreur: resultat.message });
+    return resultat;
+  });
+
+  app.get('/api/admin/synchronisation/exclusions', async () => ({
+    exclusions: lireExclusions(),
+    suggeres: MOTIFS_SUGGERES,
+  }));
+
+  app.put('/api/admin/synchronisation/exclusions', async (requete, reponse) => {
+    const regles = Array.isArray(requete.body?.regles) ? requete.body.regles : null;
+    if (!regles) return reponse.code(400).send({ erreur: 'Liste de règles attendue.' });
+    try {
+      const exclusions = enregistrerExclusions(regles, requete.agent.login);
+      journaliser(requete.agent.login, 'exclusions_sync', `${exclusions.length} regle(s)`, requete.ip);
+      return { ok: true, exclusions, message: `${exclusions.length} règle(s) d'exclusion enregistrée(s).` };
+    } catch (err) {
+      return reponse.code(500).send({ erreur: err.message });
     }
   });
 

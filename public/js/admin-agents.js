@@ -1,4 +1,5 @@
 import { api, echapper, alerte, formaterDate } from '/js/commun.js';
+import { formulaireSynchronisation } from '/js/admin-sync.js';
 
 let etatFiltres = { recherche: '', service: '', etat: '' };
 let dernierImport = null;
@@ -38,13 +39,17 @@ export async function chargerAgents() {
   cible.innerHTML = `
     <details class="aide-admin">
       <summary>Comment alimenter la liste des agents</summary>
-      <p><strong>Trois façons, cumulables.</strong> Par défaut, un agent apparaît automatiquement
-      à sa première connexion — mais tant qu'il ne s'est pas connecté, il est invisible et le taux
-      de participation est faussé.</p>
-      <p>L'<strong>import d'un export d'annuaire</strong> règle ce problème : l'effectif réel
-      est connu dès le départ, le taux de participation devient juste, et les relances atteignent
-      aussi ceux qui ne sont jamais venus. L'<strong>ajout manuel</strong> reste utile pour un
-      arrivant ou un cas particulier.</p>
+      <p><strong>La synchronisation depuis l'annuaire est la voie normale.</strong> Elle lit
+      directement l'Active Directory, repère les comptes déjà connus et ne propose que les
+      nouveaux — ce qui permet de la relancer autant de fois qu'on veut, pendant la campagne
+      comme l'année suivante, pour rattraper les arrivées.</p>
+      <p>Rien n'entre sans validation : vous passez en revue les nouveaux comptes service par
+      service avant de les accepter. Les comptes désactivés dans l'annuaire sont écartés des
+      effectifs et des statistiques, en conservant leurs résultats.</p>
+      <p>L'<strong>import CSV</strong> reste disponible si vous préférez passer par un fichier
+      relu dans Excel, et l'<strong>ajout manuel</strong> pour un cas particulier. Sans aucun
+      des trois, un agent n'apparaît qu'à sa première connexion — et le taux de participation
+      reste faux jusque-là.</p>
       <p>Un agent ajouté ici <strong>ne dispose d'aucun compte</strong> : il se connectera avec
       son compte Active Directory, comme tout le monde. La fiche sert uniquement à le compter et
       à le contacter.</p>
@@ -60,7 +65,8 @@ export async function chargerAgents() {
     </div>
 
     <div class="rang" style="margin-bottom:1.5rem">
-      <button class="btn btn-principal" id="btn-ouvrir-import">Importer un export d'annuaire</button>
+      <button class="btn btn-principal" id="btn-ouvrir-sync">Synchroniser depuis l'annuaire</button>
+      <button class="btn btn-secondaire" id="btn-ouvrir-import">Importer un fichier CSV</button>
       <button class="btn btn-secondaire" id="btn-ouvrir-ajout">Ajouter un agent</button>
       <button class="btn btn-secondaire" id="btn-ouvrir-services">Regrouper les services</button>
       <a class="btn btn-secondaire" href="/api/admin/agents/modele.csv">Télécharger un modèle CSV</a>
@@ -203,6 +209,8 @@ function brancher(d) {
   document.getElementById('btn-ouvrir-ajout').addEventListener('click', () => formulaireAgent(null, d.services));
   document.getElementById('btn-ouvrir-import').addEventListener('click', () => formulaireImport());
   document.getElementById('btn-ouvrir-services').addEventListener('click', () => formulaireServices());
+  document.getElementById('btn-ouvrir-sync')
+    .addEventListener('click', () => formulaireSynchronisation(chargerAgents));
 }
 
 /* ------------------------------------------------- Ajout et modification */

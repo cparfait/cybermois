@@ -1,0 +1,281 @@
+import { db, journaliser } from './db.js';
+import { config } from './config.js';
+import { listerAgentsAnnuaire } from './ldap.js';
+import { resoudreService, normaliser } from './services.js';
+
+/**
+ * Synchronisation de l'effectif depuis l'Active Directory.
+ *
+ * Aucune ecriture n'a lieu sans validation explicite : l'annuaire d'une
+ * collectivite contient bien plus que des agents - elus, comptes de service,
+ * boites partagees, comptes de test - et la liste des services doit etre
+ * verifiee avant d'alimenter un classement.
+ *
+ * L'analyse produit quatre categories, chacune traitee separement :
+ *   nouveaux    comptes absents de l'application, a valider un par un
+ *   modifies    service, nom ou adresse ayant change dans l'annuaire
+ *   desactives  comptes desactives dans l'annuaire, encore actifs ici
+ *   disparus    comptes absents de l'annuaire (suppression, changement d'OU)
+ */
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS exclusions_sync (
+  id       INTEGER PRIMARY KEY AUTOINCREMENT,
+  champ    TEXT NOT NULL,
+  motif    TEXT NOT NULL,
+  cree_le  TEXT NOT NULL DEFAULT (datetime('now')),
+  cree_par TEXT,
+  UNIQUE(champ, motif)
+);
+`);
+
+/**
+ * Motifs proposes par defaut : ce qui, dans un annuaire de collectivite,
+ * n'a jamais sa place dans une campagne destinee aux agents.
+ */
+export const MOTIFS_SUGGERES = [
+  { champ: 'dn', motif: 'OU=Comptes de service', libelle: 'Comptes de service' },
+  { champ: 'dn', motif: 'OU=Elus', libelle: 'Élus' },
+  { champ: 'dn', motif: 'OU=zExternes', libelle: 'Prestataires externes' },
+  { champ: 'service', motif: 'Elus de', libelle: 'Services commençant par « Elus de »' },
+  { champ: 'login', motif: 'svc-', libelle: 'Identifiants commençant par svc-' },
+  { champ: 'login', motif: 'adm-', libelle: 'Identifiants commençant par adm-' },
+  { champ: 'service', motif: 'A CLASSER', libelle: 'Comptes non classés' },
+];
+
+export const lireExclusions = () =>
+  db.prepare('SELECT id, champ, motif FROM exclusions_sync ORDER BY champ, motif').all();
+
+export function enregistrerExclusions(regles, parQui) {
+  db.exec('BEGIN');
+  try {
+    db.exec('DELETE FROM exclusions_sync');
+    const inserer = db.prepare('INSERT OR IGNORE INTO exclusions_sync (champ, motif, cree_par) VALUES (?, ?, ?)');
+    for (const r of regles) {
+      const champ = ['dn', 'service', 'login'].includes(r.champ) ? r.champ : null;
+      const motif = String(r.motif || '').trim();
+      if (champ && motif) inserer.run(champ, motif, parQui || null);
+    }
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
+  return lireExclusions();
+}
+
+/** Un compte est-il ecarte par une des regles ? Renvoie le motif, ou null. */
+function motifExclusion(agent, exclusions) {
+  for (const e of exclusions) {
+    const valeur = e.champ === 'dn' ? agent.dn
+      : e.champ === 'service' ? agent.serviceAd
+        : agent.login;
+    if (String(valeur || '').toLowerCase().includes(e.motif.toLowerCase())) {
+      return `${e.champ} contient « ${e.motif} »`;
+    }
+  }
+  return null;
+}
+
+/**
+ * Compare l'annuaire et la base, sans rien ecrire.
+ * C'est le sas : rien n'entre dans la campagne avant validation.
+ */
+export async function analyserSynchronisation() {
+  const lecture = await listerAgentsAnnuaire();
+  if (!lecture.ok) return { ok: false, message: lecture.message };
+
+  const exclusions = lireExclusions();
+  const enBase = new Map(
+    db.prepare(`
+      SELECT id, login, nom_complet, email, service, service_ad, exclu, origine, vu_le,
+             (SELECT COUNT(*) FROM participations p WHERE p.agent_id = agents.id AND p.entrainement = 0) AS defis
+      FROM agents
+    `).all().map((a) => [a.login, a])
+  );
+
+  const nouveaux = [];
+  const modifies = [];
+  const desactives = [];
+  const ecartes = [];
+  const vusDansAnnuaire = new Set();
+
+  for (const a of lecture.agents) {
+    vusDansAnnuaire.add(a.login);
+    const existant = enBase.get(a.login);
+    const motif = motifExclusion(a, exclusions);
+
+    // Un compte desactive dans l'annuaire sort de la campagne, qu'il soit
+    // deja connu ou non : le laisser compter fausserait l'effectif de reference.
+    if (!a.actif) {
+      if (existant && !existant.exclu) {
+        desactives.push({
+          login: a.login, nomComplet: existant.nom_complet,
+          service: existant.service, defis: existant.defis,
+        });
+      }
+      continue;
+    }
+
+    if (motif) {
+      if (!existant) ecartes.push({ ...a, motif });
+      continue;
+    }
+
+    if (!existant) {
+      nouveaux.push({ ...a, service: resoudreService(a.serviceAd) });
+      continue;
+    }
+
+    const changements = [];
+    if (normaliser(existant.nom_complet) !== normaliser(a.nomComplet)) {
+      changements.push({ champ: 'nom', avant: existant.nom_complet, apres: a.nomComplet });
+    }
+    if ((existant.email || '') !== (a.email || '')) {
+      changements.push({ champ: 'adresse', avant: existant.email || '(vide)', apres: a.email || '(vide)' });
+    }
+    if (normaliser(existant.service_ad || existant.service) !== normaliser(a.serviceAd)) {
+      changements.push({ champ: 'service', avant: existant.service_ad || existant.service, apres: a.serviceAd });
+    }
+    // Un compte reactive dans l'annuaire doit pouvoir revenir dans la campagne
+    if (existant.exclu && existant.origine !== 'local') {
+      changements.push({ champ: 'etat', avant: 'exclu', apres: 'réintégré' });
+    }
+    if (changements.length) {
+      modifies.push({
+        login: a.login, nomComplet: a.nomComplet, serviceAd: a.serviceAd,
+        service: resoudreService(a.serviceAd), email: a.email, changements,
+      });
+    }
+  }
+
+  const disparus = [...enBase.values()]
+    .filter((a) => !vusDansAnnuaire.has(a.login) && !a.exclu && a.origine !== 'local')
+    .map((a) => ({ login: a.login, nomComplet: a.nom_complet, service: a.service, defis: a.defis }));
+
+  // Repartition par service des nouveaux comptes : c'est la vue qui permet de
+  // reperer d'un coup d'oeil un lot entier a ecarter.
+  const parService = new Map();
+  for (const n of nouveaux) {
+    if (!parService.has(n.service)) parService.set(n.service, []);
+    parService.get(n.service).push(n);
+  }
+
+  return {
+    ok: true,
+    source: config.ldap.url === 'demo' ? 'annuaire simulé' : config.ldap.url,
+    origineService: config.service.source === 'attr'
+      ? `attribut ${config.service.attribut}`
+      : `OU du DN (profondeur ${config.service.ouDepth})`,
+    lus: lecture.agents.length,
+    resume: {
+      nouveaux: nouveaux.length,
+      modifies: modifies.length,
+      desactives: desactives.length,
+      disparus: disparus.length,
+      ecartes: ecartes.length,
+      sansEmail: nouveaux.filter((n) => !n.email).length,
+      services: parService.size,
+    },
+    nouveauxParService: [...parService.entries()]
+      .map(([service, agents]) => ({
+        service,
+        effectif: agents.length,
+        sansEmail: agents.filter((a) => !a.email).length,
+        agents: agents.map((a) => ({
+          login: a.login, nomComplet: a.nomComplet, email: a.email, serviceAd: a.serviceAd, dn: a.dn,
+        })),
+      }))
+      .sort((a, b) => b.effectif - a.effectif || a.service.localeCompare(b.service, 'fr')),
+    modifies: modifies.slice(0, 200),
+    desactives,
+    disparus,
+    ecartes: ecartes.slice(0, 100),
+    exclusions,
+  };
+}
+
+/**
+ * Applique la synchronisation validee.
+ * `accepter` porte les identifiants explicitement retenus dans le sas.
+ */
+export async function appliquerSynchronisation({
+  accepter = [], appliquerModifications = true,
+  exclureDesactives = true, exclureDisparus = false,
+} = {}, parQui) {
+  const lecture = await listerAgentsAnnuaire();
+  if (!lecture.ok) return { ok: false, message: lecture.message };
+
+  const retenus = new Set(accepter.map((l) => String(l).toLowerCase()));
+  const parLogin = new Map(lecture.agents.map((a) => [a.login, a]));
+  const enBase = new Map(db.prepare('SELECT id, login, exclu, origine FROM agents').all().map((a) => [a.login, a]));
+
+  const inserer = db.prepare(`
+    INSERT INTO agents (login, nom_complet, email, service, service_ad, service_brut, origine, est_admin)
+    VALUES (?, ?, ?, ?, ?, ?, 'annuaire', ?)
+  `);
+  const majorer = db.prepare(`
+    UPDATE agents SET nom_complet = ?, email = COALESCE(?, email), service = ?, service_ad = ?,
+                      service_brut = ?, exclu = 0
+    WHERE login = ?
+  `);
+  const exclure = db.prepare('UPDATE agents SET exclu = 1, note = COALESCE(note, ?) WHERE login = ?');
+
+  let ajoutes = 0; let misAJour = 0; let desactives = 0; let retires = 0;
+
+  db.exec('BEGIN');
+  try {
+    for (const login of retenus) {
+      const a = parLogin.get(login);
+      if (!a || !a.actif || enBase.has(login)) continue;
+      inserer.run(a.login, a.nomComplet, a.email, resoudreService(a.serviceAd), a.serviceAd, a.dn,
+        config.adminLogins.includes(a.login) ? 1 : 0);
+      ajoutes++;
+    }
+
+    if (appliquerModifications) {
+      for (const a of lecture.agents) {
+        const existant = enBase.get(a.login);
+        // Les comptes locaux d'administration ne sont pas pilotes par l'annuaire
+        if (!existant || !a.actif || existant.origine === 'local') continue;
+        majorer.run(a.nomComplet, a.email, resoudreService(a.serviceAd), a.serviceAd, a.dn, a.login);
+        misAJour++;
+      }
+    }
+
+    if (exclureDesactives) {
+      for (const a of lecture.agents) {
+        const existant = enBase.get(a.login);
+        if (a.actif || !existant || existant.exclu || existant.origine === 'local') continue;
+        exclure.run("Compte desactive dans l'annuaire", a.login);
+        desactives++;
+      }
+    }
+
+    if (exclureDisparus) {
+      for (const [login, existant] of enBase) {
+        if (parLogin.has(login) || existant.exclu || existant.origine === 'local') continue;
+        exclure.run("Absent de l'annuaire lors de la derniere synchronisation", login);
+        retires++;
+      }
+    }
+
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    return { ok: false, message: `Synchronisation interrompue, aucune modification enregistrée : ${err.message}` };
+  }
+
+  journaliser(parQui, 'synchronisation_annuaire',
+    `${ajoutes} ajoutes, ${misAJour} mis a jour, ${desactives} desactives, ${retires} retires`, null);
+
+  return {
+    ok: true,
+    ajoutes, misAJour, desactives, retires,
+    message: `${ajoutes} agent(s) ajouté(s)`
+      + (misAJour ? `, ${misAJour} fiche(s) mise(s) à jour` : '')
+      + (desactives ? `, ${desactives} compte(s) désactivé(s) dans l'annuaire écarté(s)` : '')
+      + (retires ? `, ${retires} disparu(s) de l'annuaire écarté(s)` : '')
+      + '.',
+  };
+}

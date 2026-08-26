@@ -203,3 +203,62 @@ export async function testerConnexion() {
     await client.unbind().catch(() => {});
   }
 }
+
+/**
+ * Liste tous les comptes utilisateurs de l'annuaire, pour la synchronisation.
+ *
+ * Les comptes desactives sont renvoyes eux aussi, avec leur etat : c'est ce qui
+ * permet d'ecarter de la campagne un agent parti, plutot que de le laisser
+ * compter indefiniment dans l'effectif de reference.
+ */
+export async function listerAgentsAnnuaire({ limite = 20000 } = {}) {
+  if (config.ldap.url === 'demo') {
+    const { comptesDemo } = await import('./annuaire-demo.js');
+    return {
+      ok: true,
+      agents: comptesDemo().map((c) => ({
+        login: c.login,
+        nomComplet: c.nom,
+        email: `${c.login}@ville-chatillon.fr`,
+        serviceAd: c.service,
+        dn: `CN=${c.nom},OU=${c.service},OU=Agents,DC=ville,DC=local`,
+        actif: true,
+      })),
+    };
+  }
+
+  const client = nouveauClient();
+  try {
+    await client.bind(config.ldap.bindDn, config.ldap.bindPassword);
+    const { searchEntries } = await client.search(config.ldap.baseDn, {
+      scope: 'sub',
+      filter: '(&(objectClass=user)(objectCategory=person))',
+      attributes: ATTRIBUTS,
+      sizeLimit: limite,
+      paged: { pageSize: 500 },
+    });
+
+    const agents = searchEntries.map((e) => {
+      const brut = config.service.source === 'attr'
+        ? e[config.service.attribut] || e.physicalDeliveryOfficeName
+        : serviceDepuisDn(e.dn, config.service.ouDepth);
+      const prenomNom = [e.givenName, e.sn].filter(Boolean).join(' ');
+
+      return {
+        login: String(e.sAMAccountName || '').toLowerCase(),
+        nomComplet: String(e.displayName || prenomNom || e.sAMAccountName || ''),
+        email: e.mail ? String(e.mail).toLowerCase() : null,
+        serviceAd: normaliserService(brut),
+        dn: String(e.dn),
+        // bit 2 de userAccountControl : compte desactive
+        actif: !(Number(e.userAccountControl || 0) & 2),
+      };
+    }).filter((a) => a.login);
+
+    return { ok: true, agents };
+  } catch (err) {
+    return { ok: false, message: err.message };
+  } finally {
+    await client.unbind().catch(() => {});
+  }
+}
