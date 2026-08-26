@@ -68,7 +68,7 @@ export async function chargerAgents() {
       <button class="btn btn-principal" id="btn-ouvrir-sync">Synchroniser depuis l'annuaire</button>
       <button class="btn btn-secondaire" id="btn-ouvrir-import">Importer un fichier CSV</button>
       <button class="btn btn-secondaire" id="btn-ouvrir-ajout">Ajouter un agent</button>
-      <button class="btn btn-secondaire" id="btn-ouvrir-services">Regrouper les services</button>
+      <button class="btn btn-secondaire" id="btn-ouvrir-services">Renommer et regrouper les services</button>
       <a class="btn btn-secondaire" href="/api/admin/agents/modele.csv">Télécharger un modèle CSV</a>
     </div>
 
@@ -138,7 +138,9 @@ function ligneAgent(a) {
     <tr data-id="${a.id}">
       <td><input type="checkbox" class="case-agent" value="${a.id}" aria-label="Sélectionner ${echapper(a.nom_complet)}" style="width:18px;height:18px;accent-color:var(--vert-fonce)"></td>
       <td><strong>${echapper(a.nom_complet)}</strong><br><span class="discret">${echapper(a.login)}</span></td>
-      <td>${echapper(a.service)}</td>
+      <td>${echapper(a.service)}
+        ${a.service_ad && a.service_ad !== a.service
+          ? `<br><span class="discret" style="font-size:.75rem">annuaire : ${echapper(a.service_ad)}</span>` : ''}</td>
       <td>${a.email ? echapper(a.email) : '<span class="discret">—</span>'}</td>
       <td class="num">${a.defis_joues}</td>
       <td class="num">${a.score_total}</td>
@@ -505,13 +507,18 @@ async function formulaireServices() {
 
   zone.innerHTML = `
     <div class="carte" style="margin-bottom:1.5rem;border-left:4px solid var(--vert-clair)">
-      <h2>Regrouper les services</h2>
+      <h2>Renommer et regrouper les services</h2>
 
       <details class="aide-admin" style="margin-bottom:1.2rem">
         <summary>À quoi ça sert</summary>
-        <p>Votre annuaire comporte des sous-OU : « Crèches », « Écoles » et « Restauration scolaire »
-        peuvent être trois OU distinctes alors qu'elles ne forment qu'un seul service pour la campagne.
-        Ce tableau associe chaque libellé lu dans l'annuaire au service à afficher.</p>
+        <p>Ce tableau associe chaque libellé lu dans l'annuaire au nom affiché dans la campagne.
+        Il sert à deux choses.</p>
+        <p><strong>Renommer.</strong> Un annuaire contient des libellés écrits pour l'informatique,
+        pas pour être affichés : « LUDO-MEDIATHEQUE », « zzGVE », « CTM ». Vous saisissez le nom
+        présentable, le libellé d'origine reste visible ici et sous chaque agent.</p>
+        <p><strong>Regrouper.</strong> « Crèche La Cigogne », « Crèche Petit Poucet » et
+        « Crèche Sablons » sont trois libellés distincts qui ne forment qu'un service.
+        Pointez-les vers le même nom et ils fusionnent au classement.</p>
         <p>Le regroupement s'applique <strong>partout et durablement</strong> : à l'import comme à la
         connexion d'un agent. C'est pourquoi il vaut mieux que trier le fichier à la main — un tri Excel
         serait contourné dès qu'un agent se connecte, puisque sa fiche est alors créée depuis son DN.</p>
@@ -531,7 +538,7 @@ async function formulaireServices() {
           <th>Libellé dans l'annuaire</th>
           <th class="num">Agents</th>
           <th>Arborescence des OU</th>
-          <th>Service affiché dans la campagne</th>
+          <th>Nom affiché dans la campagne</th>
         </tr></thead>
         <tbody>${d.inventaire.map((i, index) => `
           <tr${i.regroupe ? ' style="background:var(--vert-clair-fond)"' : ''}>

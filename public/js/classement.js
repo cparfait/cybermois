@@ -38,9 +38,38 @@ function podium(entrees, rendu) {
     .join('')}</div>`;
 }
 
+// On affiche les dix premiers : au-dela le classement se lit mal, et l'agent
+// qui se cherche a la 60e place prefere deplier que faire defiler.
+const PREMIERS = 10;
+
+/** Bouton « voir plus » : deplie les lignes au-dela des dix premieres. */
+function brancherVoirPlus(idTable, idBouton, total, libelle) {
+  const bouton = document.getElementById(idBouton);
+  if (!bouton) return;
+
+  const restants = total - PREMIERS;
+  if (restants <= 0) { bouton.hidden = true; return; }
+  bouton.hidden = false;
+
+  let deplie = false;
+  const majLibelle = () => {
+    bouton.textContent = deplie
+      ? 'Réduire au top 10'
+      : `Voir les ${restants} autre${restants > 1 ? 's' : ''} ${libelle}${restants > 1 ? 's' : ''}`;
+    bouton.setAttribute('aria-expanded', String(deplie));
+  };
+  majLibelle();
+
+  bouton.onclick = () => {
+    deplie = !deplie;
+    document.querySelectorAll(`#${idTable} tr[data-au-dela]`).forEach((l) => { l.hidden = !deplie; });
+    majLibelle();
+    if (!deplie) document.getElementById(idTable).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+}
+
 function rendreServices(donnees) {
   const services = donnees.services;
-  const maxMoyen = Math.max(1, ...services.map((s) => s.score_moyen));
 
   document.getElementById('podium-services').innerHTML = podium(services, (s, i) => `
     <div class="medaille" aria-hidden="true">${medaille(i + 1)}</div>
@@ -57,7 +86,7 @@ function rendreServices(donnees) {
       <th scope="col" class="num">Agents</th>
     </tr></thead>
     <tbody>${services.map((s, i) => `
-      <tr class="${s.service === agent.service ? 'moi' : ''}">
+      <tr class="${s.service === agent.service ? 'moi' : ''}"${i >= PREMIERS ? ' data-au-dela hidden' : ''}>
         <td class="rang-cell">${medaille(i + 1) || i + 1}</td>
         <td>${echapper(s.service)}${s.service === agent.service ? ' <span class="discret">(mon service)</span>' : ''}</td>
         <td class="num">${s.score_moyen} pts</td>
@@ -74,7 +103,7 @@ function rendreServices(donnees) {
     document.getElementById('table-services').innerHTML =
       '<tbody><tr><td class="discret">Aucune participation pour le moment. Soyez le premier !</td></tr></tbody>';
   }
-  void maxMoyen;
+  brancherVoirPlus('table-services', 'voir-plus-services', services.length, 'service');
 }
 
 function rendreAgents(donnees) {
@@ -93,7 +122,7 @@ function rendreAgents(donnees) {
       <th scope="col" class="num">Points</th><th scope="col" class="num">Défis</th>
     </tr></thead>
     <tbody>${agents.map((a, i) => `
-      <tr class="${a.nom_complet === agent.nomComplet ? 'moi' : ''}">
+      <tr class="${a.nom_complet === agent.nomComplet ? 'moi' : ''}"${i >= PREMIERS ? ' data-au-dela hidden' : ''}>
         <td class="rang-cell">${medaille(i + 1) || i + 1}</td>
         <td>${echapper(a.nom_complet)}</td>
         <td>${echapper(a.service)}</td>
@@ -105,6 +134,7 @@ function rendreAgents(donnees) {
     document.getElementById('table-agents').innerHTML =
       '<tbody><tr><td class="discret">Aucune participation pour le moment.</td></tr></tbody>';
   }
+  brancherVoirPlus('table-agents', 'voir-plus-agents', agents.length, 'agent');
 }
 
 /* ---------------------------------------------------------- Chargement */

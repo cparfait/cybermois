@@ -38,7 +38,7 @@ export default async function routesUtilisateurs(app) {
     const ou = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
     const agents = db.prepare(`
-      SELECT a.id, a.login, a.nom_complet, a.email, a.service, a.origine,
+      SELECT a.id, a.login, a.nom_complet, a.email, a.service, a.service_ad, a.origine,
              a.est_admin, a.exclu, a.anonyme, a.note, a.cree_le, a.vu_le,
              COUNT(p.id)               AS defis_joues,
              COALESCE(SUM(p.score), 0) AS score_total

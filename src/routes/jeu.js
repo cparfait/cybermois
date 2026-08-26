@@ -2,14 +2,40 @@ import { db, journaliser } from '../lib/db.js';
 import { config } from '../lib/config.js';
 import { exigerAuth } from '../lib/session.js';
 import {
-  noterQuestion, bonusRapidite, attribuerBadges, BADGES,
+  attribuerBadges, BADGES,
   classementServices, classementAgents, rangAgent, rangService, statistiquesGlobales,
 } from '../lib/scoring.js';
+import {
+  progression, repondre, totaux, effacerTentative, detailTentative,
+} from '../lib/tentatives.js';
 
-const aujourdhui = () => new Date().toISOString().slice(0, 10);
+/** Date du jour en heure locale : passer par toISOString reculerait d'un jour le soir. */
+function aujourdhui() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
 
-/** Un defi est jouable si il est publie et que sa date d'ouverture est atteinte. */
+/**
+ * La campagne est close le lendemain de sa date de fin : le 31 octobre reste
+ * jouable toute la journee, le 1er novembre le classement est definitif.
+ */
+export function campagneClose() {
+  return !!config.campagne.fin && aujourdhui() > config.campagne.fin;
+}
+
+/**
+ * Un defi est jouable s'il est publie, que sa date de parution est atteinte,
+ * et que la campagne n'est pas close.
+ * Les defis des semaines precedentes restent ouverts : un agent qui prend le
+ * train en marche doit pouvoir rattraper.
+ */
 function estOuvert(defi) {
+  return defi.publie === 1 && defi.ouvre_le <= aujourdhui() && !campagneClose();
+}
+
+/** Un defi deja joue reste consultable apres la cloture, sans pouvoir etre rejoue. */
+function estParu(defi) {
   return defi.publie === 1 && defi.ouvre_le <= aujourdhui();
 }
 
@@ -31,6 +57,7 @@ export default async function routesJeu(app) {
       dureeMinutes: d.duree_minutes,
       ouvreLe: d.ouvre_le,
       ouvert: estOuvert(d),
+      paru: estParu(d),
       nbQuestions: db.prepare('SELECT COUNT(*) AS n FROM questions WHERE defi_id = ?').get(d.id).n,
       participation: parDefi[d.id]
         ? {
@@ -47,7 +74,9 @@ export default async function routesJeu(app) {
   app.get('/api/defis/:semaine', async (requete, reponse) => {
     const defi = db.prepare('SELECT * FROM defis WHERE semaine = ?').get(Number(requete.params.semaine));
     if (!defi) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
-    if (!estOuvert(defi)) return reponse.code(403).send({ erreur: `Ce défi ouvre le ${defi.ouvre_le}.` });
+    // Apres la cloture le defi reste consultable : on peut relire les
+    // corrections, mais plus rien ne s'enregistre.
+    if (!estParu(defi)) return reponse.code(403).send({ erreur: `Ce défi ouvre le ${defi.ouvre_le}.` });
 
     const dejaFait = db.prepare(
       'SELECT id FROM participations WHERE agent_id = ? AND defi_id = ? AND entrainement = 0'
@@ -63,6 +92,9 @@ export default async function routesJeu(app) {
       dureeMinutes: defi.duree_minutes,
       // Rejouer est possible mais ne rapporte plus de points : mode entrainement
       entrainement: !!dejaFait,
+      close: campagneClose(),
+      // Permet de reprendre ou l'agent s'etait arrete
+      dejaRepondu: progression(requete.agent.id, defi.id).map((p) => p.question_id),
       questions: questions.map((q) => ({
         id: q.id,
         enonce: q.enonce,
@@ -75,15 +107,59 @@ export default async function routesJeu(app) {
     };
   });
 
-  /* ---------------------------------------------------------- Validation */
-  app.post('/api/defis/:semaine/valider', async (requete, reponse) => {
+  /* --------------------------------------- Validation, une question a la fois */
+
+  app.post('/api/defis/:semaine/questions/:questionId', async (requete, reponse) => {
     const defi = db.prepare('SELECT * FROM defis WHERE semaine = ?').get(Number(requete.params.semaine));
     if (!defi) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
-    if (!estOuvert(defi)) return reponse.code(403).send({ erreur: 'Ce défi n\'est pas ouvert.' });
+    if (campagneClose()) {
+      return reponse.code(403).send({
+        erreur: `La campagne est terminée depuis le ${config.campagne.fin}. Le classement est définitif.`,
+        close: true,
+      });
+    }
+    if (!estOuvert(defi)) return reponse.code(403).send({ erreur: "Ce défi n'est pas ouvert." });
 
-    const { reponses: choixParQuestion, dureeSecondes } = requete.body || {};
-    if (!choixParQuestion || typeof choixParQuestion !== 'object') {
-      return reponse.code(400).send({ erreur: 'Réponses manquantes.' });
+    const question = db.prepare('SELECT * FROM questions WHERE id = ? AND defi_id = ?')
+      .get(Number(requete.params.questionId), defi.id);
+    if (!question) return reponse.code(404).send({ erreur: 'Question introuvable.' });
+
+    const choix = Array.isArray(requete.body?.choix) ? requete.body.choix : [];
+    if (!choix.length) return reponse.code(400).send({ erreur: 'Sélectionnez au moins une réponse.' });
+
+    // Une reponse validee ne se reprend pas : la correction est deja connue
+    const dejaRepondu = progression(requete.agent.id, defi.id).some((p) => p.question_id === question.id);
+    if (dejaRepondu) {
+      return reponse.code(409).send({ erreur: 'Vous avez déjà répondu à cette question.' });
+    }
+
+    const correction = repondre(requete.agent.id, defi.id, question, choix);
+    const etat = totaux(requete.agent.id, defi.id);
+    const nbQuestions = db.prepare('SELECT COUNT(*) AS n FROM questions WHERE defi_id = ?').get(defi.id).n;
+
+    return {
+      ...correction,
+      progression: { repondues: etat.repondues, total: nbQuestions },
+      scoreCourant: etat.score,
+      derniere: etat.repondues >= nbQuestions,
+    };
+  });
+
+  /* ----------------------------------------------------------- Fin du defi */
+
+  app.post('/api/defis/:semaine/terminer', async (requete, reponse) => {
+    const defi = db.prepare('SELECT * FROM defis WHERE semaine = ?').get(Number(requete.params.semaine));
+    if (!defi) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
+    if (campagneClose()) {
+      return reponse.code(403).send({ erreur: 'La campagne est terminée.', close: true });
+    }
+
+    const nbQuestions = db.prepare('SELECT COUNT(*) AS n FROM questions WHERE defi_id = ?').get(defi.id).n;
+    const etat = totaux(requete.agent.id, defi.id);
+    if (etat.repondues < nbQuestions) {
+      return reponse.code(400).send({
+        erreur: `Défi incomplet : ${etat.repondues} question(s) sur ${nbQuestions}.`,
+      });
     }
 
     const dejaFait = db.prepare(
@@ -91,43 +167,12 @@ export default async function routesJeu(app) {
     ).get(requete.agent.id, defi.id);
     const entrainement = dejaFait ? 1 : 0;
 
-    const questions = db.prepare('SELECT * FROM questions WHERE defi_id = ? ORDER BY ordre').all(defi.id);
-    const detail = [];
-    let score = 0; let scoreMax = 0; let bonnes = 0;
-
-    for (const q of questions) {
-      q.reponses = db.prepare('SELECT id, libelle, correcte FROM reponses WHERE question_id = ? ORDER BY ordre').all(q.id);
-      const choix = choixParQuestion[q.id] || [];
-      const note = noterQuestion(q, choix);
-
-      score += note.points;
-      scoreMax += q.points;
-      if (note.parfaite) bonnes++;
-
-      detail.push({
-        questionId: q.id,
-        enonce: q.enonce,
-        points: note.points,
-        pointsMax: q.points,
-        parfaite: note.parfaite,
-        explication: q.explication,
-        choixAgent: choix.map(Number),
-        bonnesReponses: q.reponses.filter((r) => r.correcte).map((r) => r.id),
-        reponses: q.reponses.map((r) => ({ id: r.id, libelle: r.libelle, correcte: !!r.correcte })),
-      });
-    }
-
-    const duree = Math.max(0, Math.min(Number(dureeSecondes) || 0, 7200));
-    const bonus = entrainement ? 0 : bonusRapidite(score, duree, questions.length);
-    const scoreFinal = score + bonus;
-    const bonusMax = bonus > 0 && bonus >= Math.round(score * 0.19);
-
     let nouveauxBadges = [];
     if (!entrainement) {
       db.prepare(`
         INSERT INTO participations (agent_id, defi_id, score, score_max, bonnes, total_questions, duree_secondes, entrainement)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 0)
-      `).run(requete.agent.id, defi.id, scoreFinal, scoreMax, bonnes, questions.length, duree);
+        VALUES (?, ?, ?, ?, ?, ?, 0, 0)
+      `).run(requete.agent.id, defi.id, etat.score, etat.scoreMax, etat.parfaites, nbQuestions);
 
       const participationId = db.prepare(
         'SELECT id FROM participations WHERE agent_id = ? AND defi_id = ? AND entrainement = 0'
@@ -136,37 +181,49 @@ export default async function routesJeu(app) {
       const ins = db.prepare(
         'INSERT INTO reponses_agent (participation_id, question_id, choix, correcte, points_obtenus) VALUES (?, ?, ?, ?, ?)'
       );
-      for (const d of detail) {
-        ins.run(participationId, d.questionId, JSON.stringify(d.choixAgent), d.parfaite ? 1 : 0, d.points);
+      for (const d of detailTentative(requete.agent.id, defi.id)) {
+        ins.run(participationId, d.question_id, d.choix, d.parfaite, d.points);
       }
 
       nouveauxBadges = attribuerBadges(requete.agent.id, {
-        semaine: defi.semaine, score: scoreFinal, scoreMax, bonusMax,
+        semaine: defi.semaine, score: etat.score, scoreMax: etat.scoreMax, bonusMax: false,
       });
 
-      journaliser(requete.agent.login, 'defi_termine', `semaine=${defi.semaine} score=${scoreFinal}/${scoreMax}`, requete.ip);
+      journaliser(requete.agent.login, 'defi_termine',
+        `semaine=${defi.semaine} score=${etat.score}/${etat.scoreMax}`, requete.ip);
     }
+
+    effacerTentative(requete.agent.id, defi.id);
 
     return {
       entrainement: !!entrainement,
-      score: scoreFinal,
-      scoreBrut: score,
-      bonus,
-      scoreMax,
-      bonnes,
-      total: questions.length,
-      pourcentage: scoreMax ? Math.round((score / scoreMax) * 100) : 0,
-      detail,
+      score: etat.score,
+      scoreMax: etat.scoreMax,
+      bonnes: etat.parfaites,
+      total: nbQuestions,
+      pourcentage: etat.scoreMax ? Math.round((etat.score / etat.scoreMax) * 100) : 0,
       nouveauxBadges,
       rangService: rangService(requete.agent.service),
       rangAgent: rangAgent(requete.agent.id),
     };
   });
 
+  /** Abandonner la tentative en cours pour repartir de zero. */
+  app.delete('/api/defis/:semaine/tentative', async (requete, reponse) => {
+    const defi = db.prepare('SELECT * FROM defis WHERE semaine = ?').get(Number(requete.params.semaine));
+    if (!defi) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
+    effacerTentative(requete.agent.id, defi.id);
+    return { ok: true };
+  });
+
   /* --------------------------------------------------------- Classements */
   app.get('/api/classement', async (requete) => ({
+    close: campagneClose(),
+    finCampagne: config.campagne.fin,
     services: classementServices(),
-    agents: classementAgents(50),
+    // La page n'affiche que les dix premiers, mais le « voir plus » deplie
+    // l'ensemble sans nouvel appel.
+    agents: classementAgents(1000),
     monService: requete.agent.service,
     monRangService: rangService(requete.agent.service),
     monRangAgent: rangAgent(requete.agent.id),
@@ -199,6 +256,7 @@ export default async function routesJeu(app) {
       complet: participations.length >= totalDefis && totalDefis > 0,
       totalDefis,
       campagne: config.campagne,
+      close: campagneClose(),
     };
   });
 }

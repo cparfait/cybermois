@@ -272,7 +272,24 @@ async function ouvrirEditeur(semaine) {
       <div class="champ-admin"><label for="ed-titre">Titre</label><input type="text" id="ed-titre" value="${echapper(defi.titre)}"></div>
       <div class="champ-admin"><label for="ed-accroche">Accroche</label><input type="text" id="ed-accroche" value="${echapper(defi.accroche)}"></div>
       <div class="champ-admin"><label for="ed-intro">Introduction</label><textarea id="ed-intro" style="min-height:90px">${echapper(defi.intro)}</textarea></div>
-      <div class="champ-admin" style="max-width:160px"><label for="ed-duree">Durée annoncée (min)</label><input type="number" id="ed-duree" value="${defi.duree_minutes}" min="1" max="60"></div>
+      <div class="rang" style="align-items:flex-end">
+        <div class="champ-admin" style="max-width:170px"><label for="ed-duree">Durée annoncée (min)</label>
+          <input type="number" id="ed-duree" value="${defi.duree_minutes}" min="1" max="60"></div>
+        <div class="champ-admin" style="max-width:210px"><label for="ed-ouvre">Date de parution</label>
+          <input type="date" id="ed-ouvre" value="${echapper(defi.ouvre_le || '')}"></div>
+        <div class="champ-admin">
+          <label style="display:flex;align-items:center;gap:.5rem;font-weight:600">
+            <input type="checkbox" id="ed-publie" ${defi.publie ? 'checked' : ''}
+                   style="width:20px;height:20px;accent-color:var(--vert-fonce)">
+            Publié
+          </label>
+        </div>
+      </div>
+      <p class="discret" style="margin-top:-.4rem">
+        Le défi n'apparaît aux agents qu'à partir de sa date de parution, et seulement s'il est
+        publié. Vous pouvez donc préparer les quatre semaines à l'avance : chacune se dévoilera
+        le jour venu. Les défis déjà parus restent accessibles quand les suivants s'ouvrent.
+      </p>
 
       <h3 style="margin-top:1.5rem">Questions</h3>
       <div id="liste-questions">${defi.questions.map(rendreQuestion).join('')}</div>
@@ -345,6 +362,8 @@ async function ouvrirEditeur(semaine) {
           accroche: document.getElementById('ed-accroche').value.trim(),
           intro: document.getElementById('ed-intro').value.trim(),
           duree_minutes: Number(document.getElementById('ed-duree').value),
+          ouvre_le: document.getElementById('ed-ouvre').value,
+          publie: document.getElementById('ed-publie').checked,
           questions,
         },
       });

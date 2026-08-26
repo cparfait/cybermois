@@ -49,7 +49,24 @@
   .choix.correcte span.etiquette { border-color: var(--succes); background: var(--succes-fond); }
   .choix.manquee span.etiquette { border-color: var(--succes); background: var(--succes-fond); border-style: dashed; }
   .choix.fausse span.etiquette { border-color: var(--erreur); background: var(--erreur-fond); }
-  .marque { margin-left: auto; font-weight: 700; flex: 0 0 auto; }
+  /* Pastille de verdict. Renommee : .marque designe deja le logo de l'en-tete.
+     Les emojis rendaient mal - tailles et lignes de base variables d'un poste a
+     l'autre - et se centraient mal a cote d'un libelle sur deux lignes. */
+  .verdict-reponse {
+    margin-left: auto; align-self: center; flex: 0 0 auto;
+    font-family: var(--police-ui); font-size: .7rem; font-weight: 700;
+    letter-spacing: .05em; text-transform: uppercase;
+    padding: .22rem .65rem; border-radius: 20px; white-space: nowrap;
+    border: 1.5px solid transparent;
+  }
+  .verdict-bonne   { background: var(--succes); color: #fff; }
+  .verdict-tort    { background: var(--erreur); color: #fff; }
+  .verdict-oubliee { color: var(--succes); border-color: var(--succes); background: var(--surface); }
+
+  @media (max-width: 560px) {
+    .choix .etiquette { flex-wrap: wrap; }
+    .verdict-reponse { margin-left: 2.8rem; margin-top: .4rem; }
+  }
 
   .explication {
     margin-top: 1rem; padding: 1rem 1.2rem; border-radius: var(--rayon-sm);
