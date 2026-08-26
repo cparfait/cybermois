@@ -4,6 +4,7 @@ import { exigerAdmin } from '../lib/session.js';
 import { testerConnexion } from '../lib/ldap.js';
 import { importerContenus, exporterDefi, dateOuverture } from '../lib/seed.js';
 import { listerModules, lireModule, etatProgramme, enregistrerProgramme } from '../lib/modules.js';
+import { versionApplication } from '../lib/version.js';
 import { classementServices, classementAgents, statistiquesGlobales } from '../lib/scoring.js';
 import {
   testerSmtp, envoyerRelances, envoyerResultats,
@@ -44,6 +45,7 @@ export default async function routesAdmin(app) {
     return {
       ldap,
       smtp,
+      version: versionApplication(),
       configuration: {
         ldapUrl: config.ldap.url,
         baseDn: config.ldap.baseDn,

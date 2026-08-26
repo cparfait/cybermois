@@ -609,7 +609,30 @@ chargeurs.technique = async () => {
     const d = await api('/api/admin/diagnostic');
     const c = d.configuration;
 
+    const v = d.version || {};
+    const quand = (iso) => (iso ? new Date(iso).toLocaleString('fr-FR') : '—');
+
     cible.innerHTML = `
+      ${v.perime ? `
+        <div class="message message-alerte" style="margin-bottom:1.5rem">
+          <strong>Cette instance ne fait pas tourner la dernière version.</strong>
+          <p style="margin:.4rem 0 0">${echapper(v.message)}</p>
+        </div>` : ''}
+
+      <div class="carte" style="margin-bottom:1.5rem">
+        <h3>Version en service</h3>
+        <div class="tableau-defilant"><table class="admin"><tbody>
+          <tr><td>Application</td><td>${echapper(v.version || '—')} · Node ${echapper(v.node || '—')}</td></tr>
+          ${v.commit ? `
+            <tr><td>Dernier changement</td><td>
+              <code>${echapper(v.commit.court)}</code> — ${echapper(v.commit.sujet)}
+              <br><span class="discret" style="font-size:.82rem">${quand(v.commit.date)}</span>
+            </td></tr>` : ''}
+          <tr><td>Serveur démarré</td><td>${quand(v.demarreLe)}</td></tr>
+          <tr><td>Code modifié</td><td>${quand(v.codeModifieLe)}</td></tr>
+        </tbody></table></div>
+      </div>
+
       <div class="grille grille-2" style="margin-bottom:1.5rem">
         <div class="carte">
           <h3>Annuaire LDAPS <span class="pastille-etat ${d.ldap.ok ? 'etat-ok' : 'etat-ko'}">${d.ldap.ok ? 'OK' : 'Erreur'}</span></h3>
