@@ -53,6 +53,27 @@ export function serviceDepuisDn(dn, profondeur = 1) {
   return ous[Math.min(profondeur, ous.length) - 1] || null;
 }
 
+/**
+ * L'appartenance a un groupe se verifie sur les DN presents dans memberOf.
+ * La valeur configuree est acceptee sous deux formes, parce que les deux
+ * circulent en pratique :
+ *   - le nom court du groupe      : GG-Cybermois-Admins
+ *   - le DN complet               : CN=GG-Cybermois-Admins,OU=Groupes,DC=chatillon,DC=lan
+ */
+export function appartientAuGroupe(groupesDn, attendu) {
+  const cible = String(attendu || '').trim().toLowerCase();
+  if (!cible) return true;
+
+  for (const dn of groupesDn) {
+    const complet = String(dn).trim().toLowerCase();
+    if (complet === cible) return true;
+    // Nom court : on compare au premier RDN, en tenant compte des virgules echappees
+    const cn = complet.split(/(?<!\\),/)[0].replace(/^cn=/, '').replace(/\\(.)/g, '$1').trim();
+    if (cn === cible) return true;
+  }
+  return false;
+}
+
 export function normaliserService(nom) {
   if (!nom) return 'Non rattache';
   return String(nom).replace(/\s+/g, ' ').trim();
@@ -96,12 +117,11 @@ export async function authentifier(login, motDePasse) {
   const uac = Number(entree.userAccountControl || 0);
   if (uac & 2) return { ok: false, motif: 'compte_desactive' };
 
+  const groupes = [].concat(entree.memberOf || []).map(String);
+
   // Appartenance a un groupe obligatoire
-  if (config.ldap.requiredGroup) {
-    const groupes = [].concat(entree.memberOf || []).map((g) => String(g).toLowerCase());
-    if (!groupes.includes(config.ldap.requiredGroup.toLowerCase())) {
-      return { ok: false, motif: 'hors_perimetre' };
-    }
+  if (config.ldap.requiredGroup && !appartientAuGroupe(groupes, config.ldap.requiredGroup)) {
+    return { ok: false, motif: 'hors_perimetre' };
   }
 
   // Verification du mot de passe par bind sur le DN trouve
@@ -128,6 +148,12 @@ export async function authentifier(login, motDePasse) {
       email: entree.mail ? String(entree.mail) : null,
       service: normaliserService(brut),
       serviceBrut: String(entree.dn),
+      groupes,
+      // Administrateur par appartenance a un groupe dedie, en complement de
+      // la liste d'identifiants : c'est plus simple a maintenir dans le temps.
+      adminParGroupe: config.ldap.adminGroup
+        ? appartientAuGroupe(groupes, config.ldap.adminGroup)
+        : false,
     },
   };
 }

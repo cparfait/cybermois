@@ -31,19 +31,33 @@ services:
       PUBLIC_URL: https://cybermois.chatillon92.fr
       # 32 caracteres aleatoires minimum. A generer une fois, puis ne plus changer :
       # le modifier deconnecte tous les agents en cours de session.
+      # ATTENTION : cette valeur chiffre les mots de passe stockes par la page
+      # de configuration. La changer les rendra illisibles.
       SESSION_SECRET: ${SESSION_SECRET}
 
+      # ---------- Compte administrateur local ----------
+      # Permet d'entrer pour configurer l'annuaire avant qu'il ne fonctionne.
+      # Mot de passe vide : genere au premier demarrage et affiche UNE FOIS
+      # dans les journaux du conteneur, lisibles dans Portainer.
+      ADMIN_LOCAL_LOGIN: ${ADMIN_LOCAL_LOGIN:-admin}
+      ADMIN_LOCAL_MOT_DE_PASSE: ${ADMIN_LOCAL_MOT_DE_PASSE:-}
+
       # ---------- Active Directory ----------
-      LDAP_URL: ${LDAP_URL}
-      LDAP_BIND_DN: ${LDAP_BIND_DN}
+      # Tous les reglages ci-dessous peuvent aussi se saisir dans
+      # Administration > Configuration, ou ils prendront le pas sur ces valeurs.
+      LDAP_URL: ${LDAP_URL:-ldaps://192.168.2.9:636}
+      LDAP_BIND_DN: ${LDAP_BIND_DN:-svc-cybermois@chatillon.lan}
       LDAP_BIND_PASSWORD: ${LDAP_BIND_PASSWORD}
-      LDAP_BASE_DN: ${LDAP_BASE_DN}
+      LDAP_BASE_DN: ${LDAP_BASE_DN:-DC=chatillon,DC=lan}
       LDAP_USER_FILTER: ${LDAP_USER_FILTER:-(&(objectClass=user)(objectCategory=person)(sAMAccountName={{login}}))}
       LDAP_REQUIRED_GROUP: ${LDAP_REQUIRED_GROUP:-}
+      # Membres autorises au back-office : nom court ou DN complet
+      LDAP_ADMIN_GROUP: ${LDAP_ADMIN_GROUP:-GG-Cybermois-Admins}
       # Certificat de l'AC interne, en base64 sur une seule ligne.
       # Windows : [Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\chemin\ca.crt"))
       LDAP_CA_BASE64: ${LDAP_CA_BASE64:-}
       LDAP_TLS_REJECT_UNAUTHORIZED: ${LDAP_TLS_REJECT_UNAUTHORIZED:-true}
+      LDAP_AUTORISER_NON_CHIFFRE: ${LDAP_AUTORISER_NON_CHIFFRE:-false}
 
       # ---------- Rattachement au service ----------
       SERVICE_SOURCE: ${SERVICE_SOURCE:-ou}
@@ -51,10 +65,11 @@ services:
       SERVICE_OU_DEPTH: ${SERVICE_OU_DEPTH:-1}
 
       # ---------- Administration ----------
-      ADMIN_LOGINS: ${ADMIN_LOGINS}
+      ADMIN_LOGINS: ${ADMIN_LOGINS:-c.parfait}
 
       # ---------- Messagerie ----------
-      SMTP_HOST: ${SMTP_HOST:-}
+      # Direct Send Microsoft 365 : sans authentification, STARTTLS sur le port 25
+      SMTP_HOST: ${SMTP_HOST:-chatillon92-fr.mail.protection.outlook.com}
       SMTP_PORT: ${SMTP_PORT:-25}
       SMTP_SECURE: ${SMTP_SECURE:-false}
       SMTP_USER: ${SMTP_USER:-}

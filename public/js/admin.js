@@ -1,9 +1,10 @@
 import { api, echapper, initialiserPage, alerte, formaterDate } from '/js/commun.js';
 import { chargerAgents } from '/js/admin-agents.js';
+import { chargerConfiguration } from '/js/admin-config.js';
 
 await initialiserPage('/administration');
 
-const NOMS = ['suivi', 'defis', 'agents', 'mails', 'exports', 'technique'];
+const NOMS = ['suivi', 'defis', 'agents', 'mails', 'exports', 'configuration', 'technique'];
 const onglets = NOMS.map((nom) => ({
   nom,
   bouton: document.getElementById(`onglet-${nom}`),
@@ -314,6 +315,7 @@ async function ouvrirEditeur(semaine) {
 /* ============================================================== Agents */
 
 chargeurs.agents = chargerAgents;
+chargeurs.configuration = chargerConfiguration;
 
 /* ============================================================== Mails */
 

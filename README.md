@@ -13,6 +13,8 @@ relèvent un défi par semaine, et font gagner des points à leur service.
 - **Import de l'effectif** depuis un export d'annuaire, avec prévisualisation
 - **Regroupement des sous-OU** en services, avec proposition automatique
 - **Gestion des agents** : ajout, modification, exclusion, suppression, actions groupées
+- **Configuration depuis le back-office** : Active Directory, SMTP et planification se règlent dans l'interface, sans redéployer, avec tests intégrés
+- **Compte administrateur local**, indépendant de l'annuaire, pour l'amorçage et le dépannage
 - **Back-office** : suivi en direct, éditeur de questions, aperçu des mails, exports CSV
 - Aux couleurs de la charte graphique de la Ville, conforme aux principes du RGAA 4.1
 
@@ -65,6 +67,7 @@ Trois documents selon votre besoin :
 | Document | Contenu |
 |---|---|
 | [`docs/deploiement-portainer.md`](docs/deploiement-portainer.md) | Pile Portainer + Nginx Proxy Manager, pas à pas |
+| [`docs/configuration.md`](docs/configuration.md) | Réglages depuis le back-office, compte local, tests intégrés |
 | [`docs/effectif-et-services.md`](docs/effectif-et-services.md) | Import de l'effectif, regroupement des sous-OU |
 | [`docs/exploitation.md`](docs/exploitation.md) | Incidents fréquents, sauvegarde, dépannage |
 
@@ -283,12 +286,15 @@ src/
     mail.js              Gabarits et envoi des messages
     seed.js              Import et export des contenus
     services.js          Regroupement des sous-OU en services
+    parametres.js        Reglages en base, secrets chiffres
+    admin-local.js       Compte administrateur independant de l'annuaire
     import-csv.js        Analyse tolérante des exports d'annuaire
   routes/
     auth.js              Connexion, déconnexion
     jeu.js               Défis, validation, classements, profil
     admin.js             Back-office, exports, mails
     utilisateurs.js      Agents : import, ajout, exclusion, regroupements
+    configuration.js     Reglages, tests LDAP et SMTP, comptes locaux
 content/semaine-*.json   Contenus pédagogiques, éditables
 public/                  Interface (HTML, CSS, modules ES — aucun outil de build)
 tests/                   Tests de dates, d'extraction de DN, simulation de campagne
@@ -306,6 +312,7 @@ node tests/dates.test.mjs         # planification des semaines, changement d'heu
 node tests/dn.test.mjs            # extraction du service depuis le DN
 node tests/import.test.mjs        # analyse des exports CSV, cas dégradés
 node tests/regroupement.test.mjs  # proposition de regroupement des sous-OU
+node tests/groupes.test.mjs       # appartenance a un groupe AD (nom court ou DN)
 node tests/simulation.mjs         # campagne complète (serveur démarré requis)
 node tests/diagnostic-ad.mjs      # diagnostic AD et SMTP sur configuration réelle
 ```

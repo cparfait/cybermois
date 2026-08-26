@@ -30,6 +30,7 @@ export const config = {
     baseDn: process.env.LDAP_BASE_DN || '',
     userFilter: process.env.LDAP_USER_FILTER || '(&(objectClass=user)(objectCategory=person)(sAMAccountName={{login}}))',
     requiredGroup: process.env.LDAP_REQUIRED_GROUP || '',
+    adminGroup: process.env.LDAP_ADMIN_GROUP || '',
     caFile: process.env.LDAP_CA_FILE || '',
     caBase64: process.env.LDAP_CA_BASE64 || '',
     rejectUnauthorized: bool(process.env.LDAP_TLS_REJECT_UNAUTHORIZED, true),

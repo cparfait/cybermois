@@ -1,6 +1,7 @@
 import { authentifier } from '../lib/ldap.js';
 import { estModeDemo, authentifierDemo } from '../lib/annuaire-demo.js';
 import { resoudreService } from '../lib/services.js';
+import { verifierAdminLocal, existeAdminLocal } from '../lib/admin-local.js';
 import { db, journaliser } from '../lib/db.js';
 import { config } from '../lib/config.js';
 import { creerSession, detruireSession, lireSession, COOKIE, optionsCookie } from '../lib/session.js';
@@ -61,7 +62,9 @@ export default async function routesAuth(app) {
       return reponse.code(403).send({ erreur: MESSAGES.exclu });
     }
 
-    const estAdmin = config.adminLogins.includes(a.login) ? 1 : 0;
+    // Administrateur soit par appartenance au groupe AD dedie, soit par la
+    // liste d'identifiants - qui reste utile pour un depannage ponctuel.
+    const estAdmin = (a.adminParGroupe || config.adminLogins.includes(a.login)) ? 1 : 0;
 
     // Creation ou mise a jour de la fiche agent : le service est resynchronise a chaque connexion
     // Le libelle lu dans l'annuaire est conserve tel quel dans service_ad ;
@@ -92,6 +95,53 @@ export default async function routesAuth(app) {
         agent: { nomComplet: agent.nom_complet, service: agent.service, estAdmin: !!agent.est_admin },
       });
   });
+
+  /**
+   * Connexion par compte local, independante de l'annuaire.
+   * Indispensable pour saisir la configuration LDAP avant qu'elle n'existe,
+   * et pour reprendre la main si l'annuaire devient injoignable.
+   */
+  app.post('/api/connexion-locale', {
+    config: {
+      rateLimit: {
+        max: 5,
+        timeWindow: '10 minutes',
+        keyGenerator: (requete) => `local:${String(requete.body?.login || '').trim().toLowerCase() || requete.ip}`,
+        errorResponseBuilder: () => ({
+          statusCode: 429,
+          erreur: 'Trop de tentatives sur ce compte local. Réessayez dans quelques minutes.',
+        }),
+      },
+    },
+  }, async (requete, reponse) => {
+    const { login, motDePasse } = requete.body || {};
+    const resultat = verifierAdminLocal(login, motDePasse);
+
+    if (!resultat.ok) {
+      journaliser(login, 'connexion_locale_echec', resultat.motif, requete.ip);
+      requete.log.warn({ login, motif: resultat.motif }, 'echec de connexion locale');
+      return reponse.code(401).send({ erreur: 'Identifiant ou mot de passe incorrect.' });
+    }
+
+    const token = creerSession(resultat.agent.id);
+    journaliser(resultat.agent.login, 'connexion_locale_ok', null, requete.ip);
+
+    return reponse
+      .setCookie(COOKIE, token, optionsCookie())
+      .send({
+        ok: true,
+        local: true,
+        provisoire: resultat.provisoire,
+        agent: { nomComplet: resultat.agent.nom_complet, service: resultat.agent.service, estAdmin: true },
+      });
+  });
+
+  /** Indique au formulaire s'il doit proposer la connexion locale. */
+  app.get('/api/mode-connexion', async () => ({
+    annuaire: config.ldap.url !== 'demo' || true,
+    demonstration: config.ldap.url === 'demo',
+    compteLocal: existeAdminLocal(),
+  }));
 
   app.post('/api/deconnexion', async (requete, reponse) => {
     const agent = lireSession(requete.cookies?.[COOKIE]);

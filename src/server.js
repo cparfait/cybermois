@@ -13,11 +13,14 @@ import { importerContenus } from './lib/seed.js';
 import { envoyerRelances, envoyerResultats } from './lib/mail.js';
 import { verifierModeDemo, estModeDemo, motDePasseDemo } from './lib/annuaire-demo.js';
 import { verifierChiffrement } from './lib/ldap.js';
+import { appliquerParametres, configurationUtilisable } from './lib/parametres.js';
+import { amorcerAdminLocal } from './lib/admin-local.js';
 
 import routesAuth from './routes/auth.js';
 import routesJeu from './routes/jeu.js';
 import routesAdmin from './routes/admin.js';
 import routesUtilisateurs from './routes/utilisateurs.js';
+import routesConfiguration from './routes/configuration.js';
 
 const app = Fastify({
   logger: {
@@ -69,6 +72,7 @@ await app.register(routesAuth);
 await app.register(routesJeu);
 await app.register(routesAdmin);
 await app.register(routesUtilisateurs);
+await app.register(routesConfiguration);
 
 /* ------------------------------------------------------------------ Pages */
 
@@ -82,6 +86,7 @@ app.get('/profil', page('profil.html'));
 app.get('/attestation', page('attestation.html'));
 app.get('/mentions', page('mentions.html'));
 app.get('/administration', page('admin.html'));
+app.get('/configuration', page('admin.html'));
 
 app.get('/sante', async () => ({
   ok: true,
@@ -105,7 +110,14 @@ app.setErrorHandler((erreur, requete, reponse) => {
 
 /* ---------------------------------------------------------- Planification */
 
-function planifier() {
+// Taches en cours, pour pouvoir les remplacer quand les horaires changent
+// depuis le back-office sans redemarrer le conteneur.
+let tachesPlanifiees = [];
+
+export function planifier() {
+  for (const t of tachesPlanifiees) { try { t.stop(); } catch { /* deja arretee */ } }
+  tachesPlanifiees = [];
+
   const semaineCourante = () => {
     const debut = new Date(`${config.campagne.debut}T00:00:00`);
     const jours = Math.floor((Date.now() - debut.getTime()) / 86_400_000);
@@ -113,26 +125,34 @@ function planifier() {
   };
 
   if (!config.smtp.actif) {
-    app.log.warn('Envoi de mails desactive (MAIL_ENVOI_ACTIF=false) : relances et resultats non planifies.');
+    app.log.warn('Envoi de mails desactive : relances et resultats non planifies.');
     return;
   }
 
-  cron.schedule(config.cron.relance, async () => {
+  if (!cron.validate(config.cron.relance) || !cron.validate(config.cron.resultats)) {
+    app.log.error(`Expression de planification invalide : relances "${config.cron.relance}", resultats "${config.cron.resultats}". Aucune tache planifiee.`);
+    return;
+  }
+
+  tachesPlanifiees.push(cron.schedule(config.cron.relance, async () => {
     const s = semaineCourante();
     app.log.info(`Relance automatique - semaine ${s}`);
     const res = await envoyerRelances(s);
     app.log.info(res, 'relances envoyees');
-  }, { timezone: config.cron.timezone });
+  }, { timezone: config.cron.timezone }));
 
-  cron.schedule(config.cron.resultats, async () => {
+  tachesPlanifiees.push(cron.schedule(config.cron.resultats, async () => {
     const s = semaineCourante();
     app.log.info(`Resultats automatiques - semaine ${s}`);
     const res = await envoyerResultats(s);
     app.log.info(res, 'resultats envoyes');
-  }, { timezone: config.cron.timezone });
+  }, { timezone: config.cron.timezone }));
 
   app.log.info(`Planification active - relances "${config.cron.relance}", resultats "${config.cron.resultats}" (${config.cron.timezone})`);
 }
+
+// Permet aux routes de configuration de replanifier apres modification
+app.decorate('replanifier', planifier);
 
 // Purge des sessions expirees toutes les heures
 cron.schedule('0 * * * *', () => purgerSessions(), { timezone: config.cron.timezone });
@@ -140,6 +160,24 @@ cron.schedule('0 * * * *', () => purgerSessions(), { timezone: config.cron.timez
 /* ------------------------------------------------------------- Demarrage */
 
 try {
+  // Les parametres saisis dans le back-office l'emportent sur l'environnement :
+  // ils doivent donc etre appliques avant toute verification de configuration.
+  const nbParametres = appliquerParametres();
+  if (nbParametres) app.log.info(`${nbParametres} parametre(s) charge(s) depuis la base.`);
+
+  // Sans compte local, personne ne pourrait entrer pour configurer l'annuaire.
+  const amorce = amorcerAdminLocal();
+  if (amorce) {
+    app.log.warn('================= COMPTE ADMINISTRATEUR LOCAL CREE =================');
+    app.log.warn(`  Identifiant  : ${amorce.login}`);
+    app.log.warn(`  Mot de passe : ${amorce.motDePasse}`);
+    app.log.warn(amorce.genere
+      ? '  Mot de passe genere aleatoirement, affiche une seule fois. Notez-le,'
+      : '  Mot de passe repris de ADMIN_LOCAL_MOT_DE_PASSE.');
+    app.log.warn('  puis changez-le dans Administration > Configuration.');
+    app.log.warn('===================================================================');
+  }
+
   verifierModeDemo();
   if (estModeDemo()) {
     app.log.warn(`MODE DEMONSTRATION actif : annuaire simule, mot de passe commun "${motDePasseDemo()}". Ne jamais utiliser en production.`);
@@ -147,6 +185,12 @@ try {
 
   const avertissement = verifierChiffrement();
   if (avertissement) app.log.warn(avertissement);
+
+  const etat = configurationUtilisable();
+  if (!etat.ok) {
+    app.log.warn(`Configuration incomplete (${etat.manquants.join(', ')}). `
+      + 'Connectez-vous avec le compte local, puis Administration > Configuration.');
+  }
 
   const rapport = importerContenus();
   app.log.info({ rapport }, 'contenus des defis charges');
