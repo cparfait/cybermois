@@ -563,7 +563,13 @@ export default async function routesUtilisateurs(app) {
     const lignes = agents.map((a) => {
       const ous = chaineOu(a.service_brut);
       const indice = ous[0] || '';
-      const propose = parCle.get(cleComparaison(indice)) || indice;
+      // Les regroupements decides dans l'application valent pour l'annuaire :
+      // si « Caramel » a ete rattache a « Petite Enfance » ici, c'est cela
+      // qu'il faut ecrire dans la fiche, pas le nom de la creche.
+      const regroupe = resoudreService(indice);
+      const propose = regroupe !== indice
+        ? regroupe
+        : parCle.get(cleComparaison(indice)) || indice;
       return [a.login, a.nom_complet, a.email || '', indice, propose, ous.join(' < ')]
         .map(echapper).join(';');
     });
