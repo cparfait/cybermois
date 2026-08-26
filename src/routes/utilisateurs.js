@@ -132,7 +132,11 @@ export default async function routesUtilisateurs(app) {
       champs.push('service = ?'); valeurs.push(service);
       champs.push('service_ad = ?'); valeurs.push(service);
     }
-    if (c.exclu !== undefined) { champs.push('exclu = ?'); valeurs.push(c.exclu ? 1 : 0); }
+    if (c.exclu !== undefined) {
+      champs.push('exclu = ?'); valeurs.push(c.exclu ? 1 : 0);
+      // Une exclusion decidee ici resiste aux synchronisations suivantes
+      champs.push('exclu_motif = ?'); valeurs.push(c.exclu ? 'manuel' : null);
+    }
     if (c.anonyme !== undefined) { champs.push('anonyme = ?'); valeurs.push(c.anonyme ? 1 : 0); }
     if (c.note !== undefined) { champs.push('note = ?'); valeurs.push(String(c.note).trim() || null); }
 
@@ -195,8 +199,9 @@ export default async function routesUtilisateurs(app) {
     if (action === 'exclure' || action === 'reintegrer') {
       const exclu = action === 'exclure' ? 1 : 0;
       // On ne s'exclut jamais soi-meme par megarde
-      const res = db.prepare(`UPDATE agents SET exclu = ? WHERE id IN (${marques}) AND login <> ?`)
-        .run(exclu, ...ids, requete.agent.login);
+      const res = db.prepare(`
+        UPDATE agents SET exclu = ?, exclu_motif = ? WHERE id IN (${marques}) AND login <> ?
+      `).run(exclu, exclu ? 'manuel' : null, ...ids, requete.agent.login);
       message = `${res.changes} agent(s) ${exclu ? 'exclus de' : 'réintégrés dans'} la campagne.`;
     } else if (action === 'anonymiser' || action === 'nommer') {
       const anonyme = action === 'anonymiser' ? 1 : 0;
@@ -375,6 +380,51 @@ export default async function routesUtilisateurs(app) {
     } catch (err) {
       return reponse.code(500).send({ erreur: err.message });
     }
+  });
+
+  /* -------------------------------------------- Vue d'ensemble des services */
+
+  /** Un service par ligne, avec de quoi l'ecarter d'un geste. */
+  app.get('/api/admin/services/effectifs', async () => ({
+    services: db.prepare(`
+      SELECT
+        a.service,
+        COUNT(*)                                                AS effectif,
+        SUM(CASE WHEN a.exclu = 1 THEN 1 ELSE 0 END)            AS exclus,
+        SUM(CASE WHEN a.exclu = 0 THEN 1 ELSE 0 END)            AS actifs,
+        SUM(CASE WHEN a.exclu = 0 AND (a.email IS NULL OR a.email = '') THEN 1 ELSE 0 END) AS sans_email,
+        SUM(CASE WHEN a.exclu = 0 AND a.vu_le IS NOT NULL THEN 1 ELSE 0 END) AS connectes,
+        COUNT(DISTINCT p.agent_id)                              AS joueurs
+      FROM agents a
+      LEFT JOIN participations p ON p.agent_id = a.id AND p.entrainement = 0
+      WHERE a.origine <> 'local'
+      GROUP BY a.service
+      ORDER BY a.service COLLATE NOCASE
+    `).all(),
+  }));
+
+  /** Exclusion ou reintegration de tous les agents d'un ou plusieurs services. */
+  app.post('/api/admin/services/exclusion', async (requete, reponse) => {
+    const services = Array.isArray(requete.body?.services) ? requete.body.services : [];
+    const exclu = requete.body?.exclu !== false;
+    if (!services.length) return reponse.code(400).send({ erreur: 'Aucun service sélectionné.' });
+
+    const marques = services.map(() => '?').join(',');
+    const res = db.prepare(`
+      UPDATE agents SET exclu = ?, exclu_motif = ?
+      WHERE service IN (${marques}) AND origine <> 'local' AND login <> ?
+    `).run(exclu ? 1 : 0, exclu ? 'manuel' : null, ...services, requete.agent.login);
+
+    journaliser(requete.agent.login, exclu ? 'services_exclus' : 'services_reintegres',
+      `${services.join(', ')} (${res.changes} agents)`, requete.ip);
+
+    return {
+      ok: true,
+      touches: res.changes,
+      message: `${res.changes} agent(s) ${exclu ? 'exclus' : 'réintégrés'} `
+        + `sur ${services.length} service(s).`
+        + (exclu ? " L'exclusion résiste aux synchronisations suivantes." : ''),
+    };
   });
 
   /* ------------------------------------------------ Regroupement des services */

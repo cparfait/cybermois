@@ -1,6 +1,7 @@
 import { api, echapper, alerte, formaterDate } from '/js/commun.js';
 import { formulaireSynchronisation } from '/js/admin-sync.js';
 import { formulaireResultatsAgent } from '/js/admin-corrections.js';
+import { formulaireServices as formulaireEffectifsServices } from '/js/admin-services.js';
 
 let etatFiltres = { recherche: '', service: '', etat: '', page: 1, parPage: 50 };
 let dernierImport = null;
@@ -93,10 +94,10 @@ export async function chargerAgents() {
       à le contacter.</p>
     </details>
 
-    <p class="discret" style="margin-bottom:.6rem">
-      Cliquez sur un chiffre pour filtrer la liste sur les agents qu'il représente.
+    <p class="discret" style="margin-bottom:.5rem;font-size:.82rem">
+      Cliquez sur un chiffre pour filtrer la liste.
     </p>
-    <div class="grille grille-3" style="margin-bottom:1.5rem">
+    <div class="bandeau-stats" style="margin-bottom:1.1rem">
       ${tuile(r.total - r.exclus, 'agents dans la campagne', 'actifs')}
       ${tuile(r.connectes, 'se sont déjà connectés', 'connectes')}
       ${tuile(r.jamais_connectes, 'jamais connectés', 'jamais_connecte')}
@@ -106,30 +107,36 @@ export async function chargerAgents() {
       ${tuile(r.anonymes, 'masqués du classement', 'anonymes')}
     </div>
 
-    <div class="rang" style="margin-bottom:1.5rem">
+    <div class="barre-outils" style="margin-bottom:1.2rem">
       <button class="btn btn-principal" id="btn-ouvrir-sync">Synchroniser depuis l'annuaire</button>
-      <button class="btn btn-secondaire" id="btn-ouvrir-import">Importer un fichier CSV</button>
+      <button class="btn btn-secondaire" id="btn-ouvrir-effectifs">Services et effectifs</button>
+      <button class="btn btn-secondaire" id="btn-ouvrir-services">Renommer et regrouper</button>
       <button class="btn btn-secondaire" id="btn-ouvrir-ajout">Ajouter un agent</button>
-      <button class="btn btn-secondaire" id="btn-ouvrir-services">Renommer et regrouper les services</button>
-      <a class="btn btn-secondaire" href="/api/admin/agents/modele.csv">Télécharger un modèle CSV</a>
+      <details style="margin-left:auto">
+        <summary class="ui discret" style="cursor:pointer;font-size:.84rem;padding:.5rem">Import par fichier</summary>
+        <div class="rang" style="margin-top:.5rem">
+          <button class="btn btn-secondaire" id="btn-ouvrir-import" style="padding:.4rem .8rem;font-size:.82rem">Importer un CSV</button>
+          <a class="btn btn-secondaire" href="/api/admin/agents/modele.csv" style="padding:.4rem .8rem;font-size:.82rem">Modèle</a>
+        </div>
+      </details>
     </div>
 
     <div id="zone-formulaire"></div>
 
-    <h2>Liste des agents</h2>
-    <div class="rang" style="align-items:flex-end;margin-bottom:1rem">
-      <div class="champ-admin" style="flex:2;min-width:260px;margin-bottom:0">
+    <h2 style="margin-bottom:.6rem">Liste des agents</h2>
+    <div class="barre-filtres" style="margin-bottom:1rem">
+      <div class="champ-admin" style="flex:2;min-width:240px">
         <label for="f-recherche">Rechercher</label>
         <input type="search" id="f-recherche" value="${echapper(etatFiltres.recherche)}" placeholder="nom, identifiant ou adresse">
       </div>
-      <div class="champ-admin" style="min-width:200px;margin-bottom:0">
+      <div class="champ-admin" style="flex:1;min-width:190px">
         <label for="f-service">Service</label>
         <select id="f-service">
           <option value="">Tous les services</option>
           ${d.services.map((s) => `<option value="${echapper(s.service)}"${s.service === etatFiltres.service ? ' selected' : ''}>${echapper(s.service)} (${s.n})</option>`).join('')}
         </select>
       </div>
-      <div class="champ-admin" style="min-width:200px;margin-bottom:0">
+      <div class="champ-admin" style="flex:1;min-width:180px">
         <label for="f-etat">État</label>
         <select id="f-etat">
           <option value="">Tous</option>
@@ -143,7 +150,7 @@ export async function chargerAgents() {
           <option value="exclus"${etatFiltres.etat === 'exclus' ? ' selected' : ''}>Exclus</option>
         </select>
       </div>
-      <button class="btn btn-secondaire" id="btn-reinit-filtres" style="margin-bottom:0">Réinitialiser</button>
+      <button class="btn btn-secondaire" id="btn-reinit-filtres" style="padding:.55rem 1rem">Réinitialiser</button>
     </div>
 
     <div id="barre-selection" hidden class="message message-info" style="margin-bottom:1rem">
@@ -303,6 +310,8 @@ function brancher(d) {
   document.getElementById('btn-ouvrir-services').addEventListener('click', () => formulaireServices());
   document.getElementById('btn-ouvrir-sync')
     .addEventListener('click', () => formulaireSynchronisation(chargerAgents));
+  document.getElementById('btn-ouvrir-effectifs')
+    .addEventListener('click', () => formulaireEffectifsServices(chargerAgents));
 }
 
 /* ------------------------------------------------- Ajout et modification */

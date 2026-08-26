@@ -88,7 +88,7 @@ export async function analyserSynchronisation() {
   const exclusions = lireExclusions();
   const enBase = new Map(
     db.prepare(`
-      SELECT id, login, nom_complet, email, service, service_ad, exclu, origine, vu_le,
+      SELECT id, login, nom_complet, email, service, service_ad, exclu, exclu_motif, origine, vu_le,
              (SELECT COUNT(*) FROM participations p WHERE p.agent_id = agents.id AND p.entrainement = 0) AS defis
       FROM agents
     `).all().map((a) => [a.login, a])
@@ -144,8 +144,9 @@ export async function analyserSynchronisation() {
     if (normaliser(existant.service_ad || existant.service) !== normaliser(a.serviceAd)) {
       changements.push({ champ: 'service', avant: existant.service_ad || existant.service, apres: a.serviceAd });
     }
-    // Un compte reactive dans l'annuaire doit pouvoir revenir dans la campagne
-    if (existant.exclu && existant.origine !== 'local') {
+    // Un compte reactive dans l'annuaire revient dans la campagne, sauf s'il a
+    // ete ecarte volontairement : cette decision-la ne se defait pas toute seule.
+    if (existant.exclu && existant.origine !== 'local' && existant.exclu_motif !== 'manuel') {
       changements.push({ champ: 'etat', avant: 'exclu', apres: 'réintégré' });
     }
     if (changements.length) {
@@ -231,12 +232,19 @@ export async function appliquerSynchronisation({
     INSERT INTO agents (login, nom_complet, email, service, service_ad, service_brut, origine, est_admin)
     VALUES (?, ?, ?, ?, ?, ?, 'annuaire', ?)
   `);
+  // Une exclusion decidee par l'administration survit a la synchronisation :
+  // sinon il faudrait refaire le tri a chaque fois. Seules les exclusions
+  // prononcees par l'annuaire lui-meme sont levees quand le compte redevient actif.
   const majorer = db.prepare(`
     UPDATE agents SET nom_complet = ?, email = COALESCE(?, email), service = ?, service_ad = ?,
-                      service_brut = ?, exclu = 0
+                      service_brut = ?,
+                      exclu = CASE WHEN exclu_motif = 'manuel' THEN exclu ELSE 0 END,
+                      exclu_motif = CASE WHEN exclu_motif = 'manuel' THEN exclu_motif ELSE NULL END
     WHERE login = ?
   `);
-  const exclure = db.prepare('UPDATE agents SET exclu = 1, note = COALESCE(note, ?) WHERE login = ?');
+  const exclure = db.prepare(
+    "UPDATE agents SET exclu = 1, exclu_motif = 'annuaire', note = COALESCE(note, ?) WHERE login = ?"
+  );
 
   let ajoutes = 0; let misAJour = 0; let desactives = 0; let retires = 0;
   let refusesSansAdresse = 0;

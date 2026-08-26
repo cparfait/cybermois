@@ -141,6 +141,10 @@ ajouterColonne('agents', 'exclu', 'INTEGER NOT NULL DEFAULT 0');
 // Droit d'opposition : compte pour son service, masque du classement individuel
 ajouterColonne('agents', 'anonyme', 'INTEGER NOT NULL DEFAULT 0');
 ajouterColonne('agents', 'note', 'TEXT');
+// Pourquoi l'agent est exclu : « manuel » (decision de l'administration) ou
+// « annuaire » (compte desactive ou disparu). Sans cette distinction, une
+// resynchronisation reintegrerait les agents ecartes a la main.
+ajouterColonne('agents', 'exclu_motif', 'TEXT');
 // Service tel que lu dans l'annuaire, avant application de la table de
 // correspondance. Le conserver permet de rejouer un regroupement a tout moment.
 ajouterColonne('agents', 'service_ad', 'TEXT');

@@ -19,6 +19,21 @@
   .stat-admin .v { font-family: var(--police-titre); font-weight: 900; font-size: 1.9rem; color: var(--vert-fonce); line-height: 1; }
   .stat-admin .l { font-family: var(--police-ui); font-size: .78rem; color: var(--encre-douce); margin-top: .3rem; }
 
+  /* Bandeau de statistiques compact : sept tuiles sur deux rangees aeraient
+     l'ecran sans rien apprendre de plus. Elles tiennent sur une seule ligne
+     des que la fenetre le permet. */
+  .bandeau-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: .6rem; }
+  .bandeau-stats .stat-admin { padding: .7rem .8rem; }
+  .bandeau-stats .stat-admin .v { font-size: 1.4rem; }
+  .bandeau-stats .stat-admin .l { font-size: .72rem; margin-top: .15rem; line-height: 1.25; }
+
+  /* Barre d'outils : tout sur une ligne, qui se replie proprement */
+  .barre-outils { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+  .barre-outils .btn { padding: .55rem 1rem; font-size: .88rem; }
+
+  .barre-filtres { display: flex; flex-wrap: wrap; gap: .8rem; align-items: flex-end; }
+  .barre-filtres .champ-admin { margin-bottom: 0; }
+
   /* Tuile cliquable : le chiffre EST le filtre, il n'y a pas de raison de
      faire chercher ailleurs le moyen d'afficher les agents qu'il compte. */
   .stat-cliquable {

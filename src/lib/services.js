@@ -1,4 +1,5 @@
 import { db } from './db.js';
+import { config } from './config.js';
 
 /**
  * Regroupement des services.
@@ -141,8 +142,11 @@ export function inventaireServices() {
     //    quand les OU sont organisees par site plutot que par service.
     let proposition = familles.get(l.source) || null;
 
-    // 2. A defaut, l'OU parente, en sautant les conteneurs techniques.
-    if (!proposition) {
+    // 2. A defaut, l'OU parente - mais seulement si le service VIENT des OU.
+    //    Quand il est lu dans un attribut, l'arborescence decrit souvent des
+    //    sites et non des services : proposer « TECHNOSUD » comme regroupement
+    //    de « CCAS » n'aurait aucun sens.
+    if (!proposition && config.service.source === 'ou') {
       for (let n = 1; n < ous.length; n++) {
         if (ous[n] !== l.source && !estGenerique(ous[n])) { proposition = ous[n]; break; }
       }
@@ -206,6 +210,12 @@ export function detecterFamilles(sources, seuil = 2) {
 
     // Un membre entierement contenu dans le prefixe est le nom de la famille
     if (longueur === 0) continue;
+
+    // « Cabinet de la Maire » et « Cabinet de Madame la Maire » ont pour prefixe
+    // commun « Cabinet de » : on retire les mots outils finaux, qui ne font pas
+    // un nom de service.
+    const MOTS_OUTILS = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'et', 'a', 'au', 'aux', 'en', 'd', 'l']);
+    while (longueur > 1 && MOTS_OUTILS.has(cleComparaison(motsPar[0][longueur - 1]))) longueur--;
 
     // Graphie de reference : mot par mot, la plus frequente parmi les membres
     const prefixe = [];

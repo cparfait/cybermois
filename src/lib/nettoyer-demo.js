@@ -62,13 +62,16 @@ export function inventaireDemo() {
   };
 }
 
-/** Participations de recette portees par de VRAIS agents : a effacer separement. */
+/**
+ * Participations restant apres retrait des fiches fictives.
+ *
+ * Elles sont portees par de vraies fiches et passent donc inapercues, alors
+ * qu'elles viennent des essais : un identifiant fictif peut coincider avec un
+ * identifiant reel, la synchronisation ecrase alors le nom et l'adresse mais
+ * laisse les resultats en place.
+ */
 export function participationsReelles() {
-  return db.prepare(`
-    SELECT COUNT(*) AS n FROM participations p
-    JOIN agents a ON a.id = p.agent_id
-    WHERE a.origine IN ('annuaire', 'local')
-  `).get().n;
+  return db.prepare('SELECT COUNT(*) AS n FROM participations').get().n;
 }
 
 export function nettoyer({ appliquer = false, participations = false, parQui = 'ligne de commande' } = {}) {
@@ -84,16 +87,10 @@ export function nettoyer({ appliquer = false, participations = false, parQui = '
 
     let effaceesReelles = 0;
     if (participations) {
-      effaceesReelles = db.prepare(`
-        DELETE FROM participations WHERE agent_id IN (
-          SELECT id FROM agents WHERE origine IN ('annuaire', 'local')
-        )
-      `).run().changes;
-      db.prepare(`
-        DELETE FROM badges_agent WHERE agent_id IN (
-          SELECT id FROM agents WHERE origine IN ('annuaire', 'local')
-        )
-      `).run();
+      // Toutes les participations restantes : celles des fiches fictives sont
+      // deja parties en cascade, il ne reste que des resultats d'essais.
+      effaceesReelles = db.prepare('DELETE FROM participations').run().changes;
+      db.exec('DELETE FROM badges_agent');
       db.exec('DELETE FROM tentatives');
     }
     db.exec('COMMIT');
@@ -125,7 +122,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
         + `${(a.service || '').padEnd(26)} ${a.email || '(sans adresse)'}`);
     }
     console.log(`\n  ${r.participations} participation(s) rattachée(s) à ces fiches`);
-    console.log(`  ${r.participationsReelles} participation(s) de recette sur de vrais agents`);
+    console.log(`  ${r.participationsReelles} participation(s) au total, essais compris`);
     console.log(`  ${r.conserves} fiche(s) réelle(s) conservée(s)\n`);
     console.log('  Rien n\'a été effacé. Pour appliquer :');
     console.log('    npm run nettoyer-demo -- --appliquer');
