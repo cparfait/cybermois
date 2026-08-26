@@ -2,6 +2,8 @@ import { api, echapper, alerte, formaterDate } from '/js/commun.js';
 import { formulaireSynchronisation } from '/js/admin-sync.js';
 import { formulaireResultatsAgent } from '/js/admin-corrections.js';
 import { formulaireServices as formulaireEffectifsServices } from '/js/admin-services.js';
+import { formulaireRattachement } from '/js/admin-rattachement.js';
+import { formulaireReferentiel } from '/js/admin-referentiel.js';
 
 let etatFiltres = { recherche: '', service: '', etat: '', page: 1, parPage: 50 };
 let dernierImport = null;
@@ -109,8 +111,10 @@ export async function chargerAgents() {
 
     <div class="barre-outils" style="margin-bottom:1.2rem">
       <button class="btn btn-principal" id="btn-ouvrir-sync">Synchroniser depuis l'annuaire</button>
-      <button class="btn btn-secondaire" id="btn-ouvrir-effectifs">Services et effectifs</button>
+      <button class="btn btn-secondaire" id="btn-ouvrir-referentiel">Référentiel des services</button>
+      <button class="btn btn-secondaire" id="btn-ouvrir-effectifs">Services participants</button>
       <button class="btn btn-secondaire" id="btn-ouvrir-services">Renommer et regrouper</button>
+      <button class="btn btn-secondaire" id="btn-ouvrir-rattachement">Agents sans service</button>
       <button class="btn btn-secondaire" id="btn-ouvrir-ajout">Ajouter un agent</button>
       <details style="margin-left:auto">
         <summary class="ui discret" style="cursor:pointer;font-size:.84rem;padding:.5rem">Import par fichier</summary>
@@ -346,6 +350,10 @@ function brancher(d) {
     .addEventListener('click', () => formulaireSynchronisation(chargerAgents));
   document.getElementById('btn-ouvrir-effectifs')
     .addEventListener('click', () => formulaireEffectifsServices(chargerAgents));
+  document.getElementById('btn-ouvrir-rattachement')
+    .addEventListener('click', () => formulaireRattachement(chargerAgents));
+  document.getElementById('btn-ouvrir-referentiel')
+    .addEventListener('click', () => formulaireReferentiel(chargerAgents));
 }
 
 /* ------------------------------------------------- Ajout et modification */
@@ -638,7 +646,10 @@ async function formulaireServices(filtreInitial = '') {
   // Tous les noms de service connus : ceux deja utilises, plus ceux que les
   // propositions feraient apparaitre. Un champ libre filtrait la liste a la
   // frappe, on ne voyait donc jamais l'ensemble de ce qui existe.
+  // Le referentiel fait foi quand il est renseigne : les listes deroulantes
+  // n'offrent alors que des services reconnus par la collectivite.
   const noms = [...new Set([
+    ...(d.referentiel || []),
     ...d.inventaire.map((i) => i.cible),
     ...d.inventaire.map((i) => i.proposition).filter(Boolean),
   ])].sort((a, b) => a.localeCompare(b, 'fr'));

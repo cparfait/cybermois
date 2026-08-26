@@ -5,11 +5,16 @@ import { preparerImport } from '../lib/import-csv.js';
 import {
   resoudreService, inventaireServices, lireRegroupements,
   enregistrerRegroupements, appliquerRegroupements, resumeRegroupements,
+  chaineOu, cleComparaison, normaliser,
 } from '../lib/services.js';
 import {
   analyserSynchronisation, appliquerSynchronisation,
   lireExclusions, enregistrerExclusions, MOTIFS_SUGGERES,
 } from '../lib/synchronisation.js';
+import {
+  etatReferentiel, enregistrerReferentiel, initialiserDepuisDonnees,
+  analyserCollage, appliquerReferentiel, nomsReferentiel,
+} from '../lib/referentiel.js';
 
 export default async function routesUtilisateurs(app) {
   app.addHook('preHandler', exigerAdmin);
@@ -382,11 +387,164 @@ export default async function routesUtilisateurs(app) {
     }
   });
 
+  /* ------------------------------------------- Referentiel des services */
+
+  app.get('/api/admin/referentiel', async () => etatReferentiel());
+
+  app.put('/api/admin/referentiel', async (requete, reponse) => {
+    const noms = Array.isArray(requete.body?.services) ? requete.body.services : null;
+    if (!noms) return reponse.code(400).send({ erreur: 'Liste de services attendue.' });
+    try {
+      const n = enregistrerReferentiel(noms, requete.agent.login);
+      return { ok: true, total: n, message: `Référentiel enregistré : ${n} service(s).` };
+    } catch (err) {
+      return reponse.code(500).send({ erreur: err.message });
+    }
+  });
+
+  /** Collage en masse : une ligne par service, ou une liste separee. */
+  app.post('/api/admin/referentiel/coller', async (requete, reponse) => {
+    const noms = analyserCollage(requete.body?.texte);
+    if (!noms.length) return reponse.code(400).send({ erreur: 'Aucun service reconnu dans le texte collé.' });
+
+    const remplacer = !!requete.body?.remplacer;
+    const existants = remplacer ? [] : nomsReferentiel();
+    try {
+      const n = enregistrerReferentiel([...existants, ...noms], requete.agent.login);
+      return {
+        ok: true, total: n, reconnus: noms.length,
+        message: `${noms.length} service(s) reconnu(s) dans le texte. Référentiel : ${n} service(s).`,
+      };
+    } catch (err) {
+      return reponse.code(500).send({ erreur: err.message });
+    }
+  });
+
+  /** Amorce le referentiel avec les services deja presents dans les donnees. */
+  app.post('/api/admin/referentiel/initialiser', async (requete) => {
+    const r = initialiserDepuisDonnees(requete.agent.login);
+    return {
+      ok: true, ...r,
+      message: `${r.ajoutes} service(s) ajouté(s) depuis les données. Référentiel : ${r.total} service(s).`,
+    };
+  });
+
+  /** Rattache automatiquement les libellés d'annuaire aux services du référentiel. */
+  app.post('/api/admin/referentiel/appliquer', async (requete, reponse) => {
+    try {
+      const r = appliquerReferentiel(requete.agent.login);
+      return {
+        ok: true, ...r,
+        message: r.regles
+          ? `${r.regles} libellé(s) rattaché(s) au référentiel, ${r.touches} agent(s) déplacé(s).`
+          : 'Aucun rapprochement possible : les libellés ne correspondent à aucun service du référentiel.',
+      };
+    } catch (err) {
+      return reponse.code(500).send({ erreur: err.message });
+    }
+  });
+
+  /* ------------------------------------------- Agents sans service attribue */
+
+  /**
+   * Les agents dont l'attribut « department » est vide tombent dans
+   * « Non rattache ». Leur DN porte pourtant presque toujours l'information :
+   * on la propose, en la rapprochant d'un service deja existant quand la
+   * graphie differe.
+   */
+  app.get('/api/admin/agents/non-rattaches', async () => {
+    const agents = db.prepare(`
+      SELECT id, login, nom_complet, email, service_brut, vu_le
+      FROM agents
+      WHERE service = 'Non rattache' AND exclu = 0 AND origine <> 'local'
+      ORDER BY nom_complet
+    `).all();
+
+    const existants = db.prepare(`
+      SELECT service, COUNT(*) AS n FROM agents
+      WHERE exclu = 0 AND service <> 'Non rattache'
+      GROUP BY service ORDER BY service COLLATE NOCASE
+    `).all();
+
+    // Rapprochement souple : « LUDO-MEDIATHEQUE » dans le DN doit retomber sur
+    // « Ludo-Médiathèque » si ce service existe deja.
+    const parCle = new Map(existants.map((e) => [cleComparaison(e.service), e.service]));
+
+    const groupes = new Map();
+    for (const a of agents) {
+      const ous = chaineOu(a.service_brut);
+      const indice = ous[0] || null;
+      const cle = indice ? cleComparaison(indice) : '';
+      const proposition = indice ? (parCle.get(cle) || indice) : null;
+      const groupe = proposition || '(aucun indice)';
+
+      if (!groupes.has(groupe)) {
+        groupes.set(groupe, {
+          proposition, existe: !!(indice && parCle.get(cle)),
+          indiceOu: indice, agents: [],
+        });
+      }
+      groupes.get(groupe).agents.push({
+        id: a.id, login: a.login, nomComplet: a.nom_complet,
+        email: a.email, chaineOu: ous, connecte: !!a.vu_le,
+      });
+    }
+
+    return {
+      total: agents.length,
+      services: existants,
+      groupes: [...groupes.values()].sort((x, y) => y.agents.length - x.agents.length),
+    };
+  });
+
+  /** Rattachement, definitif : l'annuaire ne l'ecrasera plus. */
+  app.post('/api/admin/agents/rattachement', async (requete, reponse) => {
+    const affectations = Array.isArray(requete.body?.affectations) ? requete.body.affectations : [];
+    if (!affectations.length) return reponse.code(400).send({ erreur: 'Aucune affectation transmise.' });
+
+    const maj = db.prepare(`
+      UPDATE agents SET service = ?, service_ad = ?, service_force = 1 WHERE id = ?
+    `);
+
+    let touches = 0;
+    const services = new Set();
+    db.exec('BEGIN');
+    try {
+      for (const a of affectations) {
+        const service = normaliser(a.service);
+        const id = Number(a.id);
+        if (!service || !id) continue;
+        // resoudreService pour qu'un rattachement suive un regroupement existant
+        maj.run(resoudreService(service), service, id);
+        services.add(service);
+        touches++;
+      }
+      db.exec('COMMIT');
+    } catch (err) {
+      db.exec('ROLLBACK');
+      return reponse.code(500).send({ erreur: `Rattachement interrompu : ${err.message}` });
+    }
+
+    journaliser(requete.agent.login, 'agents_rattaches',
+      `${touches} agent(s) vers ${[...services].join(', ')}`, requete.ip);
+
+    return {
+      ok: true,
+      touches,
+      message: `${touches} agent(s) rattaché(s) à ${services.size} service(s). `
+        + "Ce rattachement résiste aux synchronisations : l'annuaire ne l'écrasera pas.",
+    };
+  });
+
   /* -------------------------------------------- Vue d'ensemble des services */
 
   /** Un service par ligne, avec de quoi l'ecarter d'un geste. */
-  app.get('/api/admin/services/effectifs', async () => ({
-    services: db.prepare(`
+  app.get('/api/admin/services/effectifs', async () => {
+    const composition = new Map(
+      resumeRegroupements().map((s) => [s.service, s.sources])
+    );
+
+    const services = db.prepare(`
       SELECT
         a.service,
         COUNT(*)                                                AS effectif,
@@ -400,8 +558,16 @@ export default async function routesUtilisateurs(app) {
       WHERE a.origine <> 'local'
       GROUP BY a.service
       ORDER BY a.service COLLATE NOCASE
-    `).all(),
-  }));
+    `).all();
+
+    return {
+      services: services.map((s) => ({ ...s, sources: composition.get(s.service) || [] })),
+      // Ce qui apparaitra reellement au classement, une fois les regroupements
+      // faits et les exclusions prononcees.
+      participants: services.filter((s) => s.actifs > 0).length,
+      totalActifs: services.reduce((n, s) => n + s.actifs, 0),
+    };
+  });
 
   /** Exclusion ou reintegration de tous les agents d'un ou plusieurs services. */
   app.post('/api/admin/services/exclusion', async (requete, reponse) => {
@@ -432,6 +598,9 @@ export default async function routesUtilisateurs(app) {
   app.get('/api/admin/services', async () => ({
     inventaire: inventaireServices(),
     regles: lireRegroupements(),
+    // Quand un referentiel existe, c'est lui qui fait foi : les listes
+    // deroulantes n'offrent plus du texte libre mais des services reconnus.
+    referentiel: nomsReferentiel(),
   }));
 
   app.post('/api/admin/services/regroupements', async (requete, reponse) => {

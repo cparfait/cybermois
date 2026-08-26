@@ -88,7 +88,8 @@ export async function analyserSynchronisation() {
   const exclusions = lireExclusions();
   const enBase = new Map(
     db.prepare(`
-      SELECT id, login, nom_complet, email, service, service_ad, exclu, exclu_motif, origine, vu_le,
+      SELECT id, login, nom_complet, email, service, service_ad, service_force,
+             exclu, exclu_motif, origine, vu_le,
              (SELECT COUNT(*) FROM participations p WHERE p.agent_id = agents.id AND p.entrainement = 0) AS defis
       FROM agents
     `).all().map((a) => [a.login, a])
@@ -141,7 +142,8 @@ export async function analyserSynchronisation() {
     if ((existant.email || '') !== (a.email || '')) {
       changements.push({ champ: 'adresse', avant: existant.email || '(vide)', apres: a.email || '(vide)' });
     }
-    if (normaliser(existant.service_ad || existant.service) !== normaliser(a.serviceAd)) {
+    if (!existant.service_force
+      && normaliser(existant.service_ad || existant.service) !== normaliser(a.serviceAd)) {
       changements.push({ champ: 'service', avant: existant.service_ad || existant.service, apres: a.serviceAd });
     }
     // Un compte reactive dans l'annuaire revient dans la campagne, sauf s'il a
@@ -236,7 +238,11 @@ export async function appliquerSynchronisation({
   // sinon il faudrait refaire le tri a chaque fois. Seules les exclusions
   // prononcees par l'annuaire lui-meme sont levees quand le compte redevient actif.
   const majorer = db.prepare(`
-    UPDATE agents SET nom_complet = ?, email = COALESCE(?, email), service = ?, service_ad = ?,
+    UPDATE agents SET nom_complet = ?, email = COALESCE(?, email),
+                      -- Un rattachement decide a la main resiste a l'annuaire :
+                      -- c'est tout l'interet de l'avoir saisi.
+                      service    = CASE WHEN service_force = 1 THEN service    ELSE ? END,
+                      service_ad = CASE WHEN service_force = 1 THEN service_ad ELSE ? END,
                       service_brut = ?,
                       exclu = CASE WHEN exclu_motif = 'manuel' THEN exclu ELSE 0 END,
                       exclu_motif = CASE WHEN exclu_motif = 'manuel' THEN exclu_motif ELSE NULL END

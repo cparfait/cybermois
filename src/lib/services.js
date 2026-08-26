@@ -121,7 +121,9 @@ export function enregistrerRegroupements(regles) {
 
 /** Recalcule agents.service a partir de agents.service_ad et des regles en vigueur. */
 export function appliquerRegroupements() {
-  const agents = db.prepare('SELECT id, service, service_ad FROM agents').all();
+  // Les agents rattaches a la main sont laisses tels quels : leur service
+  // resulte d'une decision, pas d'une regle.
+  const agents = db.prepare('SELECT id, service, service_ad FROM agents WHERE service_force = 0').all();
   const maj = db.prepare('UPDATE agents SET service = ? WHERE id = ?');
   let touches = 0;
 

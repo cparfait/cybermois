@@ -27,24 +27,32 @@ export async function formulaireServices(onTermine) {
     zone.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`;
     return;
   }
-  rendre(d.services);
+  rendre(d);
 }
 
-function rendre(services) {
+function rendre(donnees) {
+  const services = donnees.services;
   const filtre = recherche.toLowerCase();
   const visibles = filtre
     ? services.filter((s) => (s.service || '').toLowerCase().includes(filtre))
     : services;
 
-  const totalActifs = services.reduce((n, s) => n + s.actifs, 0);
   const totalExclus = services.reduce((n, s) => n + s.exclus, 0);
 
   document.getElementById('zone-formulaire').innerHTML = `
     <div class="carte" style="margin-bottom:1.5rem;border-left:4px solid var(--vert-clair)">
-      <h2>Services et effectifs</h2>
+      <h2>Services participant à la campagne</h2>
       <p class="discret" style="margin-top:-.3em">
-        ${services.length} services · ${totalActifs} agents dans la campagne · ${totalExclus} exclus.
+        Ce que verront les agents au classement, une fois les regroupements faits
+        et les exclusions prononcées.
       </p>
+
+      <div class="bandeau-stats" style="margin:1rem 0">
+        <div class="stat-admin"><div class="v">${donnees.participants}</div><div class="l">services au classement</div></div>
+        <div class="stat-admin"><div class="v">${donnees.totalActifs}</div><div class="l">agents concernés</div></div>
+        <div class="stat-admin"><div class="v">${totalExclus}</div><div class="l">agents exclus</div></div>
+        <div class="stat-admin"><div class="v">${services.filter((s) => s.sources.length > 1).length}</div><div class="l">services regroupés</div></div>
+      </div>
 
       <div class="message message-info" style="margin:1rem 0">
         Une exclusion prononcée ici est <strong>conservée lors des synchronisations
@@ -90,7 +98,18 @@ function rendre(services) {
               <td><input type="checkbox" class="case-service-ex" value="${echapper(s.service)}"
                          aria-label="Sélectionner ${echapper(s.service)}"
                          style="width:18px;height:18px;accent-color:var(--vert-fonce)"></td>
-              <td><strong>${echapper(s.service)}</strong></td>
+              <td>
+                <strong>${echapper(s.service)}</strong>
+                ${s.sources.length > 1 ? `
+                  <details style="margin-top:.2rem">
+                    <summary class="discret ui" style="cursor:pointer;font-size:.76rem">
+                      regroupe ${s.sources.length} libellés d'annuaire
+                    </summary>
+                    <ul class="ui discret" style="font-size:.78rem;margin:.3rem 0 0;padding-left:1rem">
+                      ${s.sources.map((x) => `<li>${echapper(x.source)} — ${x.effectif}</li>`).join('')}
+                    </ul>
+                  </details>` : ''}
+              </td>
               <td class="num">${s.effectif}</td>
               <td class="num">${s.sans_email || '—'}</td>
               <td class="num">${s.connectes || '—'}</td>
@@ -109,10 +128,10 @@ function rendre(services) {
       <button class="btn btn-secondaire" id="btn-fermer-services" style="margin-top:1rem">Fermer</button>
     </div>`;
 
-  brancher(services);
+  brancher(donnees);
 }
 
-function brancher(services) {
+function brancher(donnees) {
   const zone = document.getElementById('zone-formulaire');
   const cases = () => [...zone.querySelectorAll('.case-service-ex')];
   const choisis = () => cases().filter((c) => c.checked).map((c) => c.value);
@@ -132,7 +151,7 @@ function brancher(services) {
   let minuteur;
   document.getElementById('rech-service').addEventListener('input', (e) => {
     clearTimeout(minuteur);
-    minuteur = setTimeout(() => { recherche = e.target.value.trim(); rendre(services); }, 250);
+    minuteur = setTimeout(() => { recherche = e.target.value.trim(); rendre(donnees); }, 250);
   });
 
   document.getElementById('btn-tout-services').addEventListener('click', () => {

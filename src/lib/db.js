@@ -145,6 +145,10 @@ ajouterColonne('agents', 'note', 'TEXT');
 // « annuaire » (compte desactive ou disparu). Sans cette distinction, une
 // resynchronisation reintegrerait les agents ecartes a la main.
 ajouterColonne('agents', 'exclu_motif', 'TEXT');
+// Service attribue a la main : l'annuaire ne doit plus l'ecraser. Sans cela,
+// rattacher les agents dont l'attribut « department » est vide serait a
+// refaire apres chaque synchronisation.
+ajouterColonne('agents', 'service_force', 'INTEGER NOT NULL DEFAULT 0');
 // Service tel que lu dans l'annuaire, avant application de la table de
 // correspondance. Le conserver permet de rejouer un regroupement a tout moment.
 ajouterColonne('agents', 'service_ad', 'TEXT');
