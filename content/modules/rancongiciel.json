@@ -1,0 +1,107 @@
+{
+  "code": "rancongiciel",
+  "theme": "Nouvelles menaces",
+  "titre": "Le jour où tout se bloque",
+  "accroche": "Des dizaines de communes y sont passées. Comment ça commence ?",
+  "intro": "Le rançongiciel est devenu la première cause d'arrêt brutal d'une collectivité : état civil à la main, paie repoussée, cantine gérée sur papier, des semaines de remise en route. Les villes touchées n'étaient pas négligentes — elles ont eu un clic de trop. Cette semaine, on regarde par où ça entre et ce qui tient. Plusieurs réponses peuvent être justes : cochez tout ce qui vous semble correct, puis validez.",
+  "duree_minutes": 8,
+  "badge": {
+    "code": "pare_feu",
+    "libelle": "Pare-feu humain",
+    "emoji": "🧯",
+    "description": "Défi rançongiciel réussi à 80 % ou plus."
+  },
+  "questions": [
+    {
+      "enonce": "Par où un rançongiciel entre-t-il le plus souvent dans une collectivité ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Trois portes dominent. La pièce jointe piégée reste la première : une facture, un CV, un courrier d'huissier, ouverts par un agent qui traite cent documents par jour. Les identifiants volés viennent ensuite : un mot de passe récupéré par hameçonnage sert à se connecter tranquillement, sans rien casser, parfois des semaines avant l'attaque. Enfin les serveurs exposés sur internet et non corrigés — accès distants, portails de télétravail — que les attaquants scannent en continu. À l'inverse, une clé USB inconnue est un risque réel mais un vecteur minoritaire aujourd'hui, et un poste éteint la nuit ne protège de rien : l'attaque se prépare pendant les heures ouvrées.",
+      "reponses": [
+        { "libelle": "Une pièce jointe piégée ouverte par un agent", "correcte": true },
+        { "libelle": "Des identifiants volés qui servent à se connecter normalement", "correcte": true },
+        { "libelle": "Un serveur accessible depuis internet et non mis à jour", "correcte": true },
+        { "libelle": "Le fait de laisser son poste allumé la nuit", "correcte": false },
+        { "libelle": "La consultation d'un site d'actualité", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Vous ouvrez un document Word reçu par mail. Un bandeau propose « Activer les macros pour afficher le contenu ». Que faites-vous ?",
+      "contexte": "Le document se présente comme une facture d'un fournisseur des Services Techniques.",
+      "multiple": false,
+      "points": 10,
+      "explication": "Une macro est un programme. L'activer, c'est autoriser un fichier reçu par mail à exécuter du code sur votre poste : c'est exactement ce que l'attaquant demande, et le bandeau flou sur « le contenu à afficher » est le prétexte. Un vrai document n'a pas besoin de macro pour montrer une facture. La bonne réaction est de ne pas activer, de fermer le document et de signaler le message à la DSI — pas de le transférer à un collègue pour avis, ce qui ne fait que déplacer le piège. Si vous avez un doute légitime sur une facture attendue, appelez le fournisseur au numéro du contrat.",
+      "reponses": [
+        { "libelle": "Je n'active rien, je ferme et je signale le message à la DSI", "correcte": true },
+        { "libelle": "J'active : sans macro, je ne peux pas lire la facture", "correcte": false },
+        { "libelle": "J'active puis je referme aussitôt, le temps d'un coup d'œil", "correcte": false },
+        { "libelle": "Je transfère à un collègue pour savoir s'il arrive à l'ouvrir", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Pourquoi une sauvegarde ne suffit-elle pas toujours à s'en sortir ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Les attaquants ont appris : leur premier geste, une fois dans le réseau, est de chercher et de détruire les sauvegardes. Un disque de sauvegarde branché en permanence est chiffré en même temps que le reste — c'est ce qui explique la plupart des situations désespérées. D'où la règle d'une copie hors ligne ou immuable, que rien de connecté ne peut atteindre. Une sauvegarde jamais testée est un pari : beaucoup découvrent au pire moment qu'elle ne restaure pas. Enfin, la sauvegarde ne répond pas à la seconde menace : les données ont souvent été copiées avant d'être chiffrées, et leur publication est un chantage distinct que la restauration ne règle pas.",
+      "reponses": [
+        { "libelle": "Un disque de sauvegarde connecté en permanence est chiffré avec le reste", "correcte": true },
+        { "libelle": "Une sauvegarde jamais testée peut se révéler irrécupérable", "correcte": true },
+        { "libelle": "Les données ont souvent été copiées avant d'être chiffrées, et leur publication est menacée", "correcte": true },
+        { "libelle": "Les sauvegardes sont inutiles face à un rançongiciel moderne", "correcte": false },
+        { "libelle": "Une sauvegarde quotidienne rend l'attaque sans conséquence", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Une commune de taille comparable à Châtillon est bloquée un lundi matin. Qu'est-ce qui s'arrête concrètement ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "L'expérience des communes touchées ces dernières années est constante : l'état civil bascule sur registre papier, les régies ne peuvent plus encaisser, les inscriptions scolaires et périscolaires sont suspendues, la paie devient un chantier manuel dans l'urgence. Le retour à la normale se compte en semaines, parfois en mois pour les applications métier. Ce qui continue, en revanche, c'est le service au public dans sa dimension physique : la crèche accueille, les agents des espaces verts travaillent, la Police Municipale patrouille. C'est précisément pourquoi le plan de continuité prévoit des procédures dégradées papier — et pourquoi savoir où elles sont rangées compte autant que la technique.",
+      "reponses": [
+        { "libelle": "L'état civil, qui repasse au registre papier", "correcte": true },
+        { "libelle": "Les encaissements en régie", "correcte": true },
+        { "libelle": "La préparation de la paie, qui devient manuelle", "correcte": true },
+        { "libelle": "L'accueil physique dans les crèches et les écoles", "correcte": false },
+        { "libelle": "Le retour à la normale, qui se compte en heures", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Pourquoi limiter les droits d'accès des agents aux seuls dossiers dont ils ont besoin ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Un rançongiciel chiffre ce que voit le compte qu'il a détourné, ni plus ni moins. Un agent qui accède à trois dossiers métier expose trois dossiers ; un compte qui voit tout le serveur expose tout le serveur. C'est la raison la plus concrète de la restriction des droits, avant même la confidentialité. Celle-ci compte aussi : les dossiers du CMS ou de la paie n'ont pas à être ouvrables par l'ensemble des agents. Et des droits propres à chacun rendent les journaux lisibles, ce qui permet de reconstituer ce qui s'est passé. Ce n'est pas une marque de défiance envers les agents — c'est ce qui limite les dégâts le jour où l'un des comptes tombe.",
+      "reponses": [
+        { "libelle": "Un rançongiciel ne chiffre que ce que voit le compte compromis", "correcte": true },
+        { "libelle": "Les dossiers sensibles ne doivent être ouvrables que par les agents concernés", "correcte": true },
+        { "libelle": "Des droits nominatifs rendent les journaux exploitables après un incident", "correcte": true },
+        { "libelle": "C'est une marque de défiance envers les agents", "correcte": false },
+        { "libelle": "Cela n'a aucun effet : l'attaquant obtient les droits d'administrateur de toute façon", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Quels signes doivent vous faire appeler la DSI immédiatement ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Une attaque laisse des traces avant de se déclarer. Des fichiers qui changent d'extension ou deviennent illisibles, un poste qui rame anormalement alors que rien ne tourne, des documents renommés en série, des fenêtres qui s'ouvrent seules : autant de signaux qui, pris tôt, permettent d'isoler le poste avant la propagation. La lenteur peut avoir cent causes banales — c'est justement pourquoi il vaut mieux appeler pour rien. Une mise à jour Windows qui s'installe au démarrage, en revanche, est le fonctionnement normal, et la bonne réaction est de la laisser finir.",
+      "reponses": [
+        { "libelle": "Des fichiers dont l'extension a changé ou qui ne s'ouvrent plus", "correcte": true },
+        { "libelle": "Des documents renommés en série sur un partage réseau", "correcte": true },
+        { "libelle": "Un poste anormalement lent alors qu'aucune application ne tourne", "correcte": true },
+        { "libelle": "Une mise à jour Windows qui s'installe au démarrage", "correcte": false },
+        { "libelle": "Un mot de passe qui arrive à expiration", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "L'attaquant demande une rançon en promettant la clé de déchiffrement. Que dit la doctrine française ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "La position des autorités françaises est constante : on ne paye pas. D'abord parce que rien n'est garanti — des organisations ont payé et n'ont récupéré qu'une partie de leurs données, voire rien. Ensuite parce que payer finance directement les attaques suivantes et désigne la collectivité comme bonne cliente : les récidives sur des victimes ayant payé sont documentées. Enfin parce que les fonds publics ne peuvent pas alimenter une organisation criminelle. Ce qu'il faut faire, en revanche, est cadré : déposer plainte, signaler sur cybermalveillance.gouv.fr, et prévenir la CNIL sous 72 heures dès que des données personnelles sont touchées — ce qui est presque toujours le cas dans une commune.",
+      "reponses": [
+        { "libelle": "On ne paye pas : rien ne garantit la restitution des données", "correcte": true },
+        { "libelle": "Payer finance les attaques suivantes et désigne la collectivité comme cible docile", "correcte": true },
+        { "libelle": "Il faut déposer plainte et signaler l'incident aux dispositifs nationaux", "correcte": true },
+        { "libelle": "La CNIL doit être prévenue sous 72 h si des données personnelles sont touchées", "correcte": true },
+        { "libelle": "Payer est acceptable si le montant reste inférieur au coût de la remise en route", "correcte": false }
+      ]
+    }
+  ]
+}

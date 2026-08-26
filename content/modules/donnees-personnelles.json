@@ -1,0 +1,106 @@
+{
+  "code": "donnees-personnelles",
+  "theme": "Données personnelles",
+  "titre": "Ce que la Ville sait de vous",
+  "accroche": "Une commune détient les dossiers de toute une vie. À quelles conditions ?",
+  "intro": "État civil, aide sociale, inscriptions scolaires, dossiers du CMS, paie : une commune de 37 000 habitants détient des informations qu'aucune entreprise n'aurait le droit de réunir. Le RGPD n'est pas là pour compliquer votre travail, mais pour que cette confiance tienne. Cette semaine, sept situations du quotidien. Plusieurs réponses peuvent être justes : cochez tout ce qui vous semble correct, puis validez.",
+  "duree_minutes": 8,
+  "badge": {
+    "code": "gardien_donnees",
+    "libelle": "Gardien des données",
+    "emoji": "🗂️",
+    "description": "Défi données personnelles réussi à 80 % ou plus."
+  },
+  "questions": [
+    {
+      "enonce": "Lesquelles de ces informations sont des données personnelles au sens du RGPD ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Une donnée est personnelle dès qu'elle permet d'identifier quelqu'un, directement ou par recoupement. Le numéro de dossier d'un bénéficiaire du CCAS en est une : il ne dit rien à un inconnu, mais la Ville peut remonter à la personne en trois secondes. Une plaque d'immatriculation relevée par la Police Municipale et une photo prise lors d'une sortie scolaire aussi. L'adresse IP est reconnue comme donnée personnelle depuis longtemps. En revanche, le nombre total d'inscrits au centre de loisirs et la raison sociale d'une entreprise attributaire d'un marché ne désignent personne : ce sont des statistiques et des informations publiques.",
+      "reponses": [
+        { "libelle": "Le numéro de dossier d'un bénéficiaire du CCAS", "correcte": true },
+        { "libelle": "Une plaque d'immatriculation relevée par la Police Municipale", "correcte": true },
+        { "libelle": "Une photo d'enfant prise lors d'une sortie scolaire", "correcte": true },
+        { "libelle": "Le nombre total d'enfants inscrits au centre de loisirs", "correcte": false },
+        { "libelle": "La raison sociale d'une entreprise attributaire d'un marché public", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Certaines données sont dites « sensibles » et bénéficient d'une protection renforcée. Lesquelles ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Le RGPD dresse une liste courte et fermée : santé, origine, opinions politiques, convictions religieuses, appartenance syndicale, vie sexuelle, données biométriques et génétiques. Leur traitement est interdit par principe, sauf exceptions prévues par la loi — dont la mission d'action sociale des communes. En pratique, cela signifie que le suivi d'un usager au CMS, un certificat médical joint à un dossier d'inscription ou un signalement de handicap réclament une prudence supérieure : accès limités aux seuls agents concernés, jamais de circulation par mail non protégé, jamais de conversation dans un couloir. Le numéro de sécurité sociale, sans être « sensible » au sens strict, est encadré à part et tout aussi peu bavard.",
+      "reponses": [
+        { "libelle": "Les informations de santé figurant dans un dossier du CMS", "correcte": true },
+        { "libelle": "L'appartenance syndicale d'un agent", "correcte": true },
+        { "libelle": "Les convictions religieuses mentionnées dans une demande de dérogation", "correcte": true },
+        { "libelle": "L'adresse postale d'un administré", "correcte": false },
+        { "libelle": "Le nom de famille d'un agent", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Vous conservez depuis 2014 un fichier des inscriptions au centre de loisirs, « au cas où ». Est-ce un problème ?",
+      "multiple": false,
+      "points": 10,
+      "explication": "Oui, et c'est l'un des manquements les plus fréquents en collectivité. Chaque traitement a une durée de conservation définie, au-delà de laquelle les données doivent être supprimées ou archivées selon les règles des archives publiques — qui existent et qui priment. Garder « au cas où » n'est pas une justification : c'est même le contraire d'une justification. Le risque n'est pas théorique : dix ans de fichiers d'enfants sur un partage réseau, c'est ce qui part en entier le jour d'un rançongiciel. La bonne démarche est de demander à la DPO la durée applicable, puis de purger — et non de décider seul de supprimer, car certaines données relèvent de l'archivage obligatoire.",
+      "reponses": [
+        { "libelle": "Oui : je dois demander à la DPO la durée applicable, puis purger ou archiver", "correcte": true },
+        { "libelle": "Non : tant que le fichier n'est pas diffusé, sa conservation est libre", "correcte": false },
+        { "libelle": "Non : les archives d'une commune doivent tout conserver indéfiniment", "correcte": false },
+        { "libelle": "Oui : je le supprime immédiatement moi-même pour être en règle", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Un administré demande à voir toutes les informations que la Ville détient sur lui. Que faites-vous ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "C'est le droit d'accès, et il est de droit : la Ville doit répondre dans un délai d'un mois, gratuitement. Ce n'est pas à l'agent de guichet d'y répondre seul — la demande se transmet à la DPO, qui coordonne la réponse entre les services concernés et vérifie ce qui peut légalement être communiqué. Deux précautions comptent : s'assurer de l'identité du demandeur, car répondre au mauvais destinataire serait précisément la violation qu'on veut éviter, et ne pas communiquer au passage les données de tiers qui figureraient dans les mêmes documents. Ce qui n'est pas acceptable, c'est d'exiger un motif : la personne n'a pas à se justifier.",
+      "reponses": [
+        { "libelle": "Transmettre la demande à la DPO, qui coordonne la réponse", "correcte": true },
+        { "libelle": "Vérifier l'identité du demandeur avant toute communication", "correcte": true },
+        { "libelle": "Veiller à ne pas communiquer au passage les données d'autres personnes", "correcte": true },
+        { "libelle": "Exiger qu'il justifie sa demande par un motif légitime", "correcte": false },
+        { "libelle": "Lui répondre qu'une telle demande n'est pas prévue par la réglementation", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Vous refondez la fiche d'inscription au centre de loisirs. Quelles informations demander ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Le principe de minimisation dit qu'on ne collecte que ce qui est nécessaire à la finalité annoncée. Pour accueillir un enfant, il faut savoir qui prévenir en urgence, ce qu'il ne peut pas manger et qui est autorisé à venir le chercher : tout cela est indispensable. La profession des parents et leur situation matrimoniale n'ont aucun rapport avec l'accueil de l'enfant — sauf si un tarif en dépend, et alors c'est le service qui calcule le quotient qui les traite, pas la fiche d'accueil. La question à se poser devant chaque champ : que se passe-t-il si je ne l'ai pas ? Si la réponse est « rien », le champ n'a pas lieu d'être.",
+      "reponses": [
+        { "libelle": "Les coordonnées des personnes à prévenir en cas d'urgence", "correcte": true },
+        { "libelle": "Les allergies et régimes alimentaires de l'enfant", "correcte": true },
+        { "libelle": "Les personnes autorisées à venir chercher l'enfant", "correcte": true },
+        { "libelle": "La profession des parents, pour mieux connaître les familles", "correcte": false },
+        { "libelle": "La situation matrimoniale des parents, par curiosité statistique", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "La Police Municipale demande au CCAS la liste des bénéficiaires d'une aide, pour « faciliter ses tournées ». Que répondez-vous ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Appartenir à la même collectivité ne crée aucun droit d'accès. Chaque traitement a une finalité, et des données collectées pour instruire une aide sociale ne peuvent pas servir à autre chose sans base légale — c'est le détournement de finalité, l'un des manquements les plus lourdement sanctionnés. S'ajoute ici le secret professionnel qui s'impose aux agents du CCAS. Cela ne veut pas dire qu'aucun échange n'est possible : certains cas, dont le signalement de personnes vulnérables, sont expressément prévus par les textes. C'est précisément pour distinguer les deux que la DPO existe : on lui pose la question avant de transmettre, pas après.",
+      "reponses": [
+        { "libelle": "Que la finalité de la collecte ne permet pas cet usage", "correcte": true },
+        { "libelle": "Que la DPO doit être saisie avant toute transmission", "correcte": true },
+        { "libelle": "Que le secret professionnel s'impose aux agents du CCAS", "correcte": true },
+        { "libelle": "Que c'est possible puisque les deux services appartiennent à la même commune", "correcte": false },
+        { "libelle": "Que c'est possible si la demande est faite par écrit", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Dans quelles situations faut-il saisir la DPO ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "La DPO n'est pas là pour dire non : elle est là pour que le projet tienne. Quatre moments comptent. Avant de mettre en place un nouveau traitement — logiciel, formulaire, dispositif de vidéoprotection, outil d'IA — car il est infiniment plus simple de cadrer avant que de corriger après. Dès qu'un incident touche des données personnelles, à cause du délai de 72 heures. Quand un administré exerce un droit. Et quand vous hésitez, tout simplement : une question posée pour rien ne coûte que quelques minutes. Ce qui coûte cher, c'est le fichier envoyé à un prestataire sans que personne ne sache qu'il existe.",
+      "reponses": [
+        { "libelle": "Avant de déployer un nouveau logiciel ou formulaire qui collecte des données", "correcte": true },
+        { "libelle": "Dès qu'un incident peut avoir exposé des données personnelles", "correcte": true },
+        { "libelle": "Quand un administré exerce un de ses droits", "correcte": true },
+        { "libelle": "Quand on hésite, même sans certitude qu'il y ait un problème", "correcte": true },
+        { "libelle": "Uniquement quand la CNIL contrôle la collectivité", "correcte": false }
+      ]
+    }
+  ]
+}

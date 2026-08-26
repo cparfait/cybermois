@@ -1,5 +1,6 @@
 {
-  "semaine": 3,
+  "code": "poste-de-travail",
+  "theme": "Poste de travail",
   "titre": "Poste sous surveillance",
   "accroche": "Votre bureau raconte-t-il vos dossiers à tout le monde ?",
   "intro": "Un agent de collectivité manipule chaque jour des données personnelles d'administrés : état civil, aides sociales, scolarité, urbanisme. Cette semaine, on parle du quotidien — l'écran, la clé USB, le document oublié sur l'imprimante. Plusieurs réponses peuvent être justes : cochez tout ce qui vous semble correct, puis validez.",

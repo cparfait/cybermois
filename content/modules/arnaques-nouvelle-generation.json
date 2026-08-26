@@ -1,0 +1,108 @@
+{
+  "code": "arnaques-nouvelle-generation",
+  "theme": "Nouvelles menaces",
+  "titre": "Arnaques nouvelle génération",
+  "accroche": "QR codes, SMS, appels truqués : l'arnaque a changé de forme.",
+  "intro": "L'hameçonnage par mail, vous commencez à le connaître. Les escrocs aussi : ils sont passés au QR code collé sur un horodateur, au SMS d'amende, à l'appel du faux conseiller. Cette semaine, sept situations qui se sont produites dans de vraies collectivités. Plusieurs réponses peuvent être justes : cochez tout ce qui vous semble correct, puis validez.",
+  "duree_minutes": 8,
+  "badge": {
+    "code": "nez_creux",
+    "libelle": "Nez creux",
+    "emoji": "🎭",
+    "description": "Défi arnaques nouvelle génération réussi à 80 % ou plus."
+  },
+  "questions": [
+    {
+      "enonce": "Un autocollant portant un QR code a été collé sur un horodateur de l'avenue de Paris. Que faut-il en penser ?",
+      "contexte": "Le QR code renvoie vers une page aux couleurs de la Ville qui demande une carte bancaire pour régler le stationnement.",
+      "multiple": true,
+      "points": 10,
+      "explication": "C'est du « quishing » : un faux QR code collé par-dessus le vrai, ou sur un support qui n'en comportait pas. La technique explose sur les horodateurs, les bornes de recharge et les affiches. Un QR code ne se lit pas à l'œil nu : impossible de savoir où il mène avant de l'avoir scanné, ce qui en fait un excellent piège. Deux réflexes : regarder si l'autocollant est collé par-dessus autre chose, et vérifier l'adresse affichée par le téléphone AVANT de valider quoi que ce soit. Un domaine qui n'est pas celui de la Ville ou de son prestataire doit arrêter le geste. Et si vous en croisez un, signalez-le : il piège des administrés toute la journée.",
+      "reponses": [
+        { "libelle": "Un autocollant ajouté par-dessus le support d'origine est un signal d'alarme", "correcte": true },
+        { "libelle": "Il faut lire l'adresse affichée par le téléphone avant de valider", "correcte": true },
+        { "libelle": "Un QR code ne peut pas être frauduleux, ce n'est qu'une image", "correcte": false },
+        { "libelle": "Il faut le signaler à la Police Municipale et aux Services Techniques", "correcte": true },
+        { "libelle": "La page reprend le logo de la Ville, donc elle est authentique", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "SMS reçu sur votre portable : « Votre colis est bloqué, 2,99 € de frais de douane à régler sous 48 h ». Quels éléments trahissent l'arnaque ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Le petit montant est l'astuce centrale : 2,99 €, on paye sans réfléchir. Ce que veut l'escroc n'est pas la somme, c'est votre numéro de carte, sa date d'expiration et son cryptogramme — de quoi débiter bien davantage ensuite. Le compte à rebours sert à empêcher la réflexion. Quant au lien, il pointe vers un domaine qui imite le transporteur sans être le sien. Le bon réflexe est toujours le même : n'utilisez jamais le lien du message. Ouvrez vous-même le site du transporteur, avec votre numéro de suivi.",
+      "reponses": [
+        { "libelle": "Le montant dérisoire, qui pousse à payer sans réfléchir", "correcte": true },
+        { "libelle": "Le délai de 48 h, qui empêche de vérifier", "correcte": true },
+        { "libelle": "Le lien, qui imite le transporteur sans être son vrai domaine", "correcte": true },
+        { "libelle": "Le fait que le SMS arrive alors que j'attends vraiment un colis", "correcte": false },
+        { "libelle": "L'absence de faute d'orthographe", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Le service Finances reçoit ce message. Que doit faire l'agent ?",
+      "contexte": "De : Nadège AZZAZ <n.azzaz@chatillon92.fr.eu> — Objet : Discret et urgent. « Je suis en réunion, je ne peux pas être dérangée. Un virement de 24 000 € doit partir aujourd'hui pour finaliser une acquisition. Merci de rester discrète, le dossier n'est pas encore public. »",
+      "multiple": true,
+      "points": 10,
+      "explication": "C'est la « fraude au président », adaptée aux collectivités — et elle a coûté des centaines de milliers d'euros à plusieurs communes françaises. Tout est là : l'autorité, l'urgence, le secret demandé, et l'impossibilité de vérifier puisque l'expéditrice se dit injoignable. Le domaine trahit l'imposture : chatillon92.fr.eu n'est pas chatillon92.fr, c'est un domaine que n'importe qui peut acheter. Mais la règle ne doit pas dépendre de votre acuité visuelle : un virement exceptionnel se vérifie toujours par un canal indépendant, et la demande de confidentialité est en soi le signal d'alarme le plus fiable. Aucune élue, aucun DGS ne reprochera un appel de vérification.",
+      "reponses": [
+        { "libelle": "Vérifier le domaine : chatillon92.fr.eu n'est pas chatillon92.fr", "correcte": true },
+        { "libelle": "Appeler la Maire ou le cabinet au numéro de l'annuaire interne", "correcte": true },
+        { "libelle": "La demande de discrétion est en elle-même un signal d'alarme", "correcte": true },
+        { "libelle": "Exécuter le virement : refuser un ordre de l'autorité territoriale est une faute", "correcte": false },
+        { "libelle": "Répondre au message pour demander confirmation", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Le téléphone sonne : « Bonjour, service informatique de la Ville, on a détecté un virus sur votre poste, je vous guide pour le nettoyer ». Quelles demandes doivent vous arrêter net ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Le faux support technique se présente comme un secours et obtient tout parce qu'on est soulagé. Trois demandes sont rédhibitoires : installer un logiciel de prise en main à distance sur instruction téléphonique, dicter un mot de passe ou un code reçu par SMS, et désactiver l'antivirus. La DSI de Châtillon n'a besoin d'aucune des trois : elle intervient avec ses propres outils, sur des postes qu'elle administre déjà. En cas de doute, la seule bonne réponse est de raccrocher et de rappeler la DSI au numéro de l'annuaire interne. Un vrai technicien ne se vexera pas ; un escroc, lui, insistera pour rester en ligne.",
+      "reponses": [
+        { "libelle": "Installer un logiciel de prise en main à distance qu'il vous dicte", "correcte": true },
+        { "libelle": "Lui communiquer le code à six chiffres reçu par SMS", "correcte": true },
+        { "libelle": "Désactiver l'antivirus « le temps de l'intervention »", "correcte": true },
+        { "libelle": "Insister pour que vous ne raccrochiez pas et ne rappeliez personne", "correcte": true },
+        { "libelle": "Vous demander votre numéro de poste pour ouvrir un ticket", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "En visioconférence, une personne à l'image et à la voix de votre directeur vous demande un accès urgent. Que faites-vous ?",
+      "multiple": false,
+      "points": 10,
+      "explication": "Le trucage vidéo en temps réel n'est plus un exercice de laboratoire : une entreprise de Hong Kong a viré 25 millions de dollars après une visio où tous les participants étaient synthétiques. L'image et la voix ne sont plus des preuves d'identité. Ce qui reste vrai, c'est le canal : raccrochez et rappelez sur le numéro que vous connaissez, ou allez frapper à la porte du bureau. Demander à la personne de bouger la tête ou de se lever aide parfois — les trucages tiennent mal les profils — mais c'est un indice, pas une garantie. Le rappel indépendant, si.",
+      "reponses": [
+        { "libelle": "Je raccroche et je rappelle sur le numéro de l'annuaire interne", "correcte": true },
+        { "libelle": "J'accepte : je l'ai vu et entendu, c'était bien lui", "correcte": false },
+        { "libelle": "Je demande un mot de passe convenu : s'il le donne, c'est bon", "correcte": false },
+        { "libelle": "Je fais une capture d'écran et je l'envoie à la DSI en attendant", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Votre banque vous appelle : « Nous avons bloqué un virement suspect, confirmez-nous le code que vous venez de recevoir ». Que faites-vous ?",
+      "contexte": "Le numéro affiché est bien celui de votre agence, et l'interlocuteur connaît vos dernières opérations.",
+      "multiple": false,
+      "points": 10,
+      "explication": "L'affichage du numéro se falsifie en quelques secondes — c'est du « spoofing », et cela ne prouve rien. Que l'interlocuteur connaisse vos opérations non plus : ces données circulent après les fuites de fichiers clients. Le point de bascule est le code : ce code autorise l'opération, il ne l'annule pas. Le donner, c'est valider soi-même le virement que l'on croit bloquer. Aucun conseiller bancaire ne le demandera jamais. Raccrochez, et rappelez le numéro figurant au dos de votre carte — jamais celui qui vous a appelé.",
+      "reponses": [
+        { "libelle": "Je raccroche et je rappelle le numéro inscrit au dos de ma carte bancaire", "correcte": true },
+        { "libelle": "Je donne le code : il sert à bloquer l'opération frauduleuse", "correcte": false },
+        { "libelle": "Je vérifie le numéro affiché : s'il correspond à l'agence, je peux répondre", "correcte": false },
+        { "libelle": "Je donne le code mais je change mon mot de passe juste après", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Parmi ces messages reçus sur la boîte de la Ville, lesquels sont des arnaques classiques du secteur public ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Ces trois-là tournent en permanence dans les collectivités. La fausse mise en demeure RGPD joue sur la peur de la sanction et facture une « mise en conformité » inutile. Le faux annuaire professionnel envoie un formulaire présenté comme gratuit dont les petites lignes engagent sur trois ans — et les tribunaux donnent rarement raison à celui qui a signé. Le faux fournisseur qui change de RIB est le plus coûteux des trois. À l'inverse, une facture d'un marché en cours et une invitation d'un syndicat intercommunal sont du quotidien : le but n'est pas de tout suspecter, mais de reconnaître les scénarios qui reviennent.",
+      "reponses": [
+        { "libelle": "Une mise en demeure de « mise en conformité RGPD » avec facture jointe", "correcte": true },
+        { "libelle": "Un formulaire d'inscription à un « annuaire officiel des collectivités », présenté comme gratuit", "correcte": true },
+        { "libelle": "Un fournisseur habituel qui annonce un changement de RIB par mail", "correcte": true },
+        { "libelle": "Une facture correspondant à un marché en cours, au RIB déjà connu", "correcte": false },
+        { "libelle": "Une invitation à une réunion du syndicat intercommunal, envoyée par son domaine habituel", "correcte": false }
+      ]
+    }
+  ]
+}

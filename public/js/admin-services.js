@@ -13,6 +13,7 @@ import { api, echapper, alerte } from '/js/commun.js';
 
 let auTermine = () => {};
 let recherche = '';
+let etat = 'tous';
 
 export async function formulaireServices(onTermine) {
   if (onTermine) auTermine = onTermine;
@@ -33,9 +34,14 @@ export async function formulaireServices(onTermine) {
 function rendre(donnees) {
   const services = donnees.services;
   const filtre = recherche.toLowerCase();
-  const visibles = filtre
-    ? services.filter((s) => (s.service || '').toLowerCase().includes(filtre))
-    : services;
+  const correspond = (s) => {
+    if (filtre && !(s.service || '').toLowerCase().includes(filtre)) return false;
+    if (etat === 'exclus') return s.exclus > 0;
+    if (etat === 'campagne') return s.actifs > 0;
+    return true;
+  };
+  const visibles = services.filter(correspond);
+  const nbExclus = services.filter((s) => s.exclus > 0).length;
 
   const totalExclus = services.reduce((n, s) => n + s.exclus, 0);
 
@@ -69,6 +75,17 @@ function rendre(donnees) {
         <button class="btn btn-secondaire" id="btn-rien-services" style="padding:.55rem 1rem">Tout décocher</button>
       </div>
 
+      <div class="rang" role="group" aria-label="Filtrer par état" style="margin-bottom:.9rem">
+        ${[
+          ['tous', `Tous (${services.length})`],
+          ['campagne', `Dans la campagne (${donnees.participants})`],
+          ['exclus', `Exclus (${nbExclus})`],
+        ].map(([cle, libelle]) => `
+          <button type="button" class="btn ${etat === cle ? 'btn-principal' : 'btn-secondaire'}"
+                  data-etat="${cle}" aria-pressed="${etat === cle}"
+                  style="padding:.35rem .9rem;font-size:.85rem">${libelle}</button>`).join('')}
+      </div>
+
       <div id="barre-services" hidden class="message message-alerte" style="margin-bottom:1rem">
         <span id="nb-services"></span>
         <div class="rang" style="margin-top:.6rem">
@@ -94,12 +111,16 @@ function rendre(donnees) {
             <th>État</th>
           </tr></thead>
           <tbody>${visibles.length ? visibles.map((s) => `
-            <tr${s.actifs === 0 && s.exclus ? ' style="opacity:.55"' : ''}>
+            <tr${s.exclus
+              ? ` style="background:var(--alerte-fond);border-left:3px solid var(--alerte)${s.actifs === 0 ? ';opacity:.7' : ''}"`
+              : ''}>
               <td><input type="checkbox" class="case-service-ex" value="${echapper(s.service)}"
                          aria-label="Sélectionner ${echapper(s.service)}"
                          style="width:18px;height:18px;accent-color:var(--vert-fonce)"></td>
               <td>
-                <strong>${echapper(s.service)}</strong>
+                <button type="button" class="lien-service" data-voir="${echapper(s.service)}"
+                        aria-expanded="false"
+                        title="Voir les agents de ce service">${echapper(s.service)}</button>
                 ${s.sources.length > 1 ? `
                   <details style="margin-top:.2rem">
                     <summary class="discret ui" style="cursor:pointer;font-size:.76rem">
@@ -110,7 +131,11 @@ function rendre(donnees) {
                     </ul>
                   </details>` : ''}
               </td>
-              <td class="num">${s.effectif}</td>
+              <td class="num">
+                <button type="button" class="lien-service" data-voir="${echapper(s.service)}"
+                        aria-expanded="false"
+                        title="Voir les agents de ce service">${s.effectif}</button>
+              </td>
               <td class="num">${s.sans_email || '—'}</td>
               <td class="num">${s.connectes || '—'}</td>
               <td class="num">${s.joueurs || '—'}</td>
@@ -119,6 +144,9 @@ function rendre(donnees) {
                 : s.exclus
                   ? `<span class="pastille-etat" style="background:var(--alerte-fond);color:var(--alerte)">${s.exclus} exclu(s)</span>`
                   : '<span class="pastille-etat etat-ok">dans la campagne</span>'}</td>
+            </tr>
+            <tr class="detail-service" data-detail="${echapper(s.service)}" hidden>
+              <td colspan="7" style="background:var(--fond-doux)"></td>
             </tr>`).join('')
             : '<tr><td colspan="7" class="discret">Aucun service ne correspond.</td></tr>'}
           </tbody>
@@ -162,6 +190,14 @@ function brancher(donnees) {
   });
   document.getElementById('btn-fermer-services').addEventListener('click', () => { zone.innerHTML = ''; });
 
+  zone.addEventListener('click', (e) => {
+    const bouton = e.target.closest('[data-voir]');
+    if (bouton) { basculerDetail(zone, bouton); return; }
+
+    const filtre = e.target.closest('[data-etat]');
+    if (filtre) { etat = filtre.dataset.etat; rendre(donnees); }
+  });
+
   const agir = async (exclu) => {
     const liste = choisis();
     if (!liste.length) return;
@@ -185,4 +221,52 @@ function brancher(donnees) {
 
   document.getElementById('btn-exclure-services').addEventListener('click', () => agir(true));
   document.getElementById('btn-reintegrer-services').addEventListener('click', () => agir(false));
+}
+
+/**
+ * Ouvre - ou referme - la composition d'un service.
+ *
+ * La liste est chargee a la demande : afficher d'emblee les agents des
+ * 87 services rendrait la page inutilisable pour repondre a une question
+ * qu'on ne se pose que sur deux ou trois d'entre eux.
+ */
+async function basculerDetail(zone, bouton) {
+  const service = bouton.dataset.voir;
+  const ligne = zone.querySelector(`[data-detail="${CSS.escape(service)}"]`);
+  if (!ligne) return;
+
+  const cellule = ligne.firstElementChild;
+  const boutons = zone.querySelectorAll(`[data-voir="${CSS.escape(service)}"]`);
+
+  if (!ligne.hidden) {
+    ligne.hidden = true;
+    boutons.forEach((b) => b.setAttribute('aria-expanded', 'false'));
+    return;
+  }
+
+  ligne.hidden = false;
+  boutons.forEach((b) => b.setAttribute('aria-expanded', 'true'));
+  if (cellule.dataset.charge === '1') return;
+
+  cellule.innerHTML = '<p class="discret" style="margin:.5rem 0">Chargement…</p>';
+  try {
+    const r = await api(`/api/admin/agents?service=${encodeURIComponent(service)}&parPage=200`);
+    const agents = r.agents || [];
+    const total = r.pagination?.total ?? agents.length;
+    cellule.innerHTML = agents.length
+      ? `<p class="discret ui" style="margin:.4rem 0;font-size:.82rem">
+           ${agents.length}${total > agents.length ? ` sur ${total}` : ''} agent(s)
+         </p>
+         <ul class="ui" style="columns:2;font-size:.84rem;margin:0;padding-left:1.1rem">
+           ${agents.map((a) => `<li${a.exclu ? ' style="opacity:.55"' : ''}>
+             ${echapper(a.nom_complet)}
+             <span class="discret">(${echapper(a.login)})</span>
+             ${a.exclu ? '<span class="discret"> — exclu</span>' : ''}
+           </li>`).join('')}
+         </ul>`
+      : '<p class="discret" style="margin:.5rem 0">Aucun agent.</p>';
+    cellule.dataset.charge = '1';
+  } catch (e) {
+    cellule.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`;
+  }
 }

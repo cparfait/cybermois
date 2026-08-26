@@ -12,6 +12,11 @@ import { api, echapper, alerte } from '/js/commun.js';
  * suivante ne l'ecrasera pas, sans quoi le travail serait a refaire.
  */
 
+// Valeur reservee du selecteur : ecarter plutot que rattacher. Un groupe
+// entier de boites fonctionnelles n'a pas de service, il n'a rien a faire
+// dans le classement.
+const EXCLURE = '__ecarter__';
+
 let auTermine = () => {};
 let donnees = null;
 
@@ -109,6 +114,7 @@ function rendre() {
               <label for="svc-${i}">Rattacher à</label>
               <select id="svc-${i}" class="service-groupe">
                 <option value="">Ne rien faire</option>
+                <option value="${EXCLURE}">— Écarter de la campagne —</option>
                 ${g.proposition && !g.existe
                   ? `<option value="${echapper(g.proposition)}" selected>${echapper(g.proposition)} — nouveau service</option>`
                   : ''}
@@ -139,10 +145,17 @@ function brancher() {
   const selecteurs = () => [...zone.querySelectorAll('.service-groupe')];
 
   const majCompteur = () => {
-    let n = 0;
-    selecteurs().forEach((sel, i) => { if (sel.value) n += donnees.groupes[i].agents.length; });
+    let rattaches = 0; let ecartes = 0;
+    selecteurs().forEach((sel, i) => {
+      if (!sel.value) return;
+      const n = donnees.groupes[i].agents.length;
+      if (sel.value === EXCLURE) ecartes += n; else rattaches += n;
+    });
+    const bouts = [];
+    if (rattaches) bouts.push(`${rattaches} agent(s) seront rattachés`);
+    if (ecartes) bouts.push(`${ecartes} écarté(s)`);
     document.getElementById('compteur-rattachement').textContent =
-      `${n} agent(s) seront rattachés`;
+      bouts.join(', ') || 'Aucune décision prise';
   };
   majCompteur();
   zone.addEventListener('change', (e) => { if (e.target.matches('.service-groupe')) majCompteur(); });
@@ -160,18 +173,33 @@ function brancher() {
 
   document.getElementById('btn-appliquer-rattachement').addEventListener('click', async () => {
     const affectations = [];
+    const exclusions = [];
     selecteurs().forEach((sel, i) => {
       if (!sel.value) return;
-      for (const a of donnees.groupes[i].agents) affectations.push({ id: a.id, service: sel.value });
+      for (const a of donnees.groupes[i].agents) {
+        if (sel.value === EXCLURE) exclusions.push(a.id);
+        else affectations.push({ id: a.id, service: sel.value });
+      }
     });
 
-    if (!affectations.length) return alerte('alerte', 'Aucun rattachement sélectionné.');
+    if (!affectations.length && !exclusions.length) {
+      return alerte('alerte', 'Aucune décision sélectionnée.');
+    }
+    if (exclusions.length && !confirm(
+      `Écarter ${exclusions.length} agent(s) de la campagne ?
+
+`
+      + "Ils ne comptent plus ni dans les classements ni dans les relances. "
+      + "Rien n'est supprimé, et la décision résiste aux synchronisations."
+    )) return;
 
     const bouton = document.getElementById('btn-appliquer-rattachement');
     bouton.disabled = true;
     bouton.textContent = 'Rattachement…';
     try {
-      const r = await api('/api/admin/agents/rattachement', { method: 'POST', body: { affectations } });
+      const r = await api('/api/admin/agents/rattachement', {
+        method: 'POST', body: { affectations, exclusions },
+      });
       alerte('alerte', r.message, 'succes');
       zone.innerHTML = '';
       auTermine();

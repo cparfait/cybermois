@@ -1,0 +1,107 @@
+{
+  "code": "fichiers-et-partages",
+  "theme": "Poste de travail",
+  "titre": "Où sont mes fichiers ?",
+  "accroche": "Sur le serveur, sur le bureau, dans un cloud perso. Devinez lequel est sauvegardé.",
+  "intro": "Un document de travail existe rarement à un seul endroit : une version sur le partage, une copie sur le bureau, une pièce jointe dans un mail, parfois un exemplaire dans un espace personnel. Le jour d'un incident, c'est cette dispersion qui coûte cher. Cette semaine, on range. Plusieurs réponses peuvent être justes : cochez tout ce qui vous semble correct, puis validez.",
+  "duree_minutes": 7,
+  "badge": {
+    "code": "bien_range",
+    "libelle": "Bien rangé",
+    "emoji": "🗄️",
+    "description": "Défi fichiers et partages réussi à 80 % ou plus."
+  },
+  "questions": [
+    {
+      "enonce": "Où un document de travail de la Ville doit-il vivre ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "L'espace partagé du service, ou l'espace collaboratif fourni par la DSI, sont les seuls endroits qui réunissent trois propriétés : ils sont sauvegardés, leurs droits sont gérés, et le document survit au départ de son auteur. Un fichier posé sur le bureau du poste n'a aucune de ces propriétés — le bureau n'est presque jamais sauvegardé, et le jour où la machine tombe en panne, il n'y a rien à restaurer. Un compte cloud personnel ajoute une fuite : le document quitte la collectivité et y reste après votre départ. Quant à la pièce jointe restée dans la messagerie, ce n'est pas un rangement, c'est un oubli en attente.",
+      "reponses": [
+        { "libelle": "Sur l'espace partagé du service", "correcte": true },
+        { "libelle": "Sur l'espace collaboratif fourni par la DSI", "correcte": true },
+        { "libelle": "Sur le bureau de mon poste, c'est plus rapide à retrouver", "correcte": false },
+        { "libelle": "Sur mon compte cloud personnel, qui est plus pratique", "correcte": false },
+        { "libelle": "En pièce jointe dans ma messagerie, cela fait office d'archive", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Vous constatez que vous accédez au dossier des Ressources Humaines alors que ce n'est pas votre service. Que faites-vous ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Une porte ouverte par erreur reste une porte ouverte : la franchir, même par curiosité, est une consultation sans motif légitime, et les accès sont journalisés. Le bon réflexe est de ne pas ouvrir et de signaler à la DSI, qui corrigera les droits — signalement qui rend service à tout le monde, à commencer par les agents des RH. En parler à sa hiérarchie permet que le sujet soit tracé plutôt que réglé de bouche à oreille. Se dire que l'ouverture des droits vaut autorisation est une erreur classique et coûteuse : la légitimité vient de la fonction, jamais de la possibilité technique.",
+      "reponses": [
+        { "libelle": "Ne pas ouvrir les fichiers et signaler à la DSI", "correcte": true },
+        { "libelle": "En informer ma hiérarchie pour que le sujet soit tracé", "correcte": true },
+        { "libelle": "En profiter tant que l'accès est ouvert, ce n'est pas moi qui l'ai demandé", "correcte": false },
+        { "libelle": "Regarder rapidement pour vérifier l'étendue du problème", "correcte": false },
+        { "libelle": "Ne rien dire : si l'accès existe, c'est qu'il est autorisé", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Quelles pratiques rendent un partage de service réellement utilisable ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Un partage devient inexploitable moins par excès de fichiers que par absence de règles. Des droits accordés par groupe plutôt que par personne survivent aux mouvements d'agents ; des droits nominatifs empilés depuis dix ans ne survivent à rien. Une revue périodique — même annuelle, même rapide — retire les accès des agents partis. Une arborescence tenue et des noms de fichiers datés évitent la prolifération des « version finale 3 corrigée ». À l'inverse, donner le droit à tout le monde « pour simplifier » est exactement ce qui transforme un incident local en incident général, et conserver toutes les versions de tous les documents finit par noyer la seule qui compte.",
+      "reponses": [
+        { "libelle": "Des droits accordés par groupe plutôt que personne par personne", "correcte": true },
+        { "libelle": "Une revue périodique des accès, pour retirer ceux des agents partis", "correcte": true },
+        { "libelle": "Une arborescence tenue et des fichiers nommés avec une date", "correcte": true },
+        { "libelle": "Un accès en écriture ouvert à tous, pour éviter les demandes", "correcte": false },
+        { "libelle": "La conservation de toutes les versions de tous les documents", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Qu'est-ce qui est réellement sauvegardé, et qu'est-ce qui ne l'est pas ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "C'est la question qui décide de tout le jour d'une panne. Les serveurs de fichiers et les applications métier sont sauvegardés par la DSI : c'est leur raison d'être. Le bureau et le disque local d'un poste ne le sont généralement pas — et quand ils le sont, c'est un service supplémentaire à vérifier, jamais à supposer. Une clé USB n'est pas une sauvegarde : c'est une copie unique sur un support fragile, ce qui est presque le contraire. Un cloud personnel synchronise, ce qui n'est pas non plus sauvegarder : un fichier supprimé ou chiffré par un rançongiciel se propage à toutes les copies en quelques secondes. En cas de doute, la question à la DSI prend une minute.",
+      "reponses": [
+        { "libelle": "Les serveurs de fichiers et les applications métier le sont", "correcte": true },
+        { "libelle": "Le bureau et le disque local du poste ne le sont généralement pas", "correcte": true },
+        { "libelle": "Une clé USB n'est pas une sauvegarde", "correcte": true },
+        { "libelle": "Une synchronisation cloud n'est pas une sauvegarde", "correcte": true },
+        { "libelle": "Tout ce qui est sur un ordinateur de la Ville est sauvegardé", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Un agent quitte le service. Que faut-il faire de ses fichiers ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Un départ mal préparé laisse un service sans ses dossiers et un compte ouvert dans la nature. Les documents de travail doivent être remis sur l'espace du service avant le départ : ce sont ceux de la collectivité, pas ceux de l'agent. La DSI ferme le compte à la date convenue et retire les accès aux boîtes partagées, qui sont l'oubli le plus fréquent. Ce qui n'est pas acceptable, c'est de laisser le compte actif « au cas où » — un compte inutilisé mais valide est une cible de choix, précisément parce que personne ne regarde son activité. Et supprimer les fichiers au départ ferait perdre au service ce qu'il lui faut pour continuer.",
+      "reponses": [
+        { "libelle": "Remettre les documents de travail sur l'espace du service avant le départ", "correcte": true },
+        { "libelle": "Faire fermer le compte par la DSI à la date convenue", "correcte": true },
+        { "libelle": "Retirer ses accès aux boîtes partagées", "correcte": true },
+        { "libelle": "Laisser le compte actif quelques mois au cas où", "correcte": false },
+        { "libelle": "Supprimer tous ses fichiers pour faire de la place", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Vous devez partager un tableau avec un partenaire extérieur pendant trois semaines. Comment procédez-vous ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Un partage temporaire doit l'être vraiment : un lien nominatif, avec une date d'expiration, et le droit strictement nécessaire — lecture seule si le partenaire n'a pas à modifier. Le retirer une fois le travail terminé prend cinq secondes et évite qu'il traîne trois ans. À proscrire absolument : le lien « toute personne disposant de l'adresse », qui se transfère et s'indexe, et la création d'un compte partagé dont les identifiants circulent par mail — plus personne ne saurait qui a fait quoi, et le mot de passe finirait par se promener bien au-delà du partenaire.",
+      "reponses": [
+        { "libelle": "Un lien nominatif avec une date d'expiration", "correcte": true },
+        { "libelle": "Le droit strictement nécessaire, en lecture seule si possible", "correcte": true },
+        { "libelle": "Retirer l'accès une fois le travail terminé", "correcte": true },
+        { "libelle": "Un lien ouvert à toute personne disposant de l'adresse", "correcte": false },
+        { "libelle": "Un compte partagé dont j'envoie les identifiants par mail", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Comment nommer et classer un fichier contenant des données personnelles ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Le nom d'un fichier circule bien plus que son contenu : il s'affiche dans un partage d'écran, dans une liste de fichiers récents, dans un objet de message. Y écrire un nom, une pathologie ou un motif d'aide sociale expose l'information sans même ouvrir le document. Un nom neutre, avec une date et une référence, dit tout ce qu'il faut. Le classement compte autant : le fichier va dans le dossier dont les droits correspondent à sa sensibilité, et une durée de conservation doit être prévue plutôt que d'être découverte cinq ans plus tard. Enfin, un fichier extrait pour un besoin ponctuel se supprime une fois le besoin passé — c'est ce qui évite les exports oubliés, qui sont la fuite la plus banale qui soit.",
+      "reponses": [
+        { "libelle": "Un nom neutre, avec une date et une référence de dossier", "correcte": true },
+        { "libelle": "Un classement dans un dossier dont les droits correspondent à la sensibilité", "correcte": true },
+        { "libelle": "Une durée de conservation prévue dès le départ", "correcte": true },
+        { "libelle": "La suppression des extractions ponctuelles une fois le besoin passé", "correcte": true },
+        { "libelle": "Le nom de la personne concernée dans le titre, pour retrouver plus vite", "correcte": false }
+      ]
+    }
+  ]
+}

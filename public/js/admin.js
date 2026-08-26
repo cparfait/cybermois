@@ -2,6 +2,9 @@ import { api, echapper, initialiserPage, alerte, formaterDate } from '/js/commun
 import { chargerAgents } from '/js/admin-agents.js';
 import { chargerConfiguration } from '/js/admin-config.js';
 import { formulaireRecalcul, chargerRegistre } from '/js/admin-corrections.js';
+import { ecranProgramme } from '/js/admin-programme.js';
+import { filtrerAgents } from '/js/admin-agents.js';
+import { formulaireServices } from '/js/admin-services.js';
 
 await initialiserPage('/administration');
 
@@ -46,13 +49,19 @@ chargeurs.suivi = async () => {
     const tauxGlobal = s.inscrits ? Math.round((s.joueurs / s.inscrits) * 100) : 0;
 
     cible.innerHTML = `
+      <p class="discret ui" style="margin:0 0 .5rem;font-size:.84rem">Cliquez sur un chiffre pour ouvrir le détail.</p>
       <div class="grille grille-3" style="margin-bottom:1.5rem">
-        <div class="stat-admin"><div class="v">${s.inscrits}</div><div class="l">agents dans la campagne</div></div>
-        <div class="stat-admin"><div class="v">${s.connectes}</div><div class="l">se sont connectés</div></div>
-        <div class="stat-admin"><div class="v">${s.joueurs}</div><div class="l">agents ayant joué</div></div>
+        <button type="button" class="stat-admin stat-cliquable" data-aller="agents:actifs">
+          <div class="v">${s.inscrits}</div><div class="l">agents dans la campagne</div></button>
+        <button type="button" class="stat-admin stat-cliquable" data-aller="agents:connectes">
+          <div class="v">${s.connectes}</div><div class="l">se sont connectés</div></button>
+        <button type="button" class="stat-admin stat-cliquable" data-aller="agents:joueurs">
+          <div class="v">${s.joueurs}</div><div class="l">agents ayant joué</div></button>
         <div class="stat-admin"><div class="v">${tauxGlobal} %</div><div class="l">taux de participation</div></div>
-        <div class="stat-admin"><div class="v">${s.participations}</div><div class="l">défis terminés</div></div>
-        <div class="stat-admin"><div class="v">${s.services}</div><div class="l">services représentés</div></div>
+        <button type="button" class="stat-admin stat-cliquable" data-aller="defis">
+          <div class="v">${s.participations}</div><div class="l">défis terminés</div></button>
+        <button type="button" class="stat-admin stat-cliquable" data-aller="services">
+          <div class="v">${s.services}</div><div class="l">services représentés</div></button>
         <div class="stat-admin"><div class="v">${s.points_cumules}</div><div class="l">points cumulés</div></div>
       </div>
 
@@ -106,8 +115,28 @@ chargeurs.suivi = async () => {
               <td class="num">${e.succes}</td><td>${echapper(e.erreur || '')}</td></tr>`).join('')
           : '<tr><td colspan="6" class="discret">Aucun envoi pour le moment.</td></tr>'}
         </tbody></table></div>`;
+    cible.querySelectorAll('[data-aller]').forEach((b) =>
+      b.addEventListener('click', () => allerVers(b.dataset.aller)));
   } catch (erreur) { cible.innerHTML = `<div class="message message-erreur">${echapper(erreur.message)}</div>`; }
 };
+
+/**
+ * Ouvre l'onglet qui repond a la tuile cliquee, deja filtre.
+ *
+ * Un chiffre sur un tableau de bord appelle toujours la meme question :
+ * « lesquels ? ». Sans ce raccourci, il faut changer d'onglet puis refaire a
+ * la main le filtre que la tuile designait deja.
+ */
+function allerVers(cible) {
+  const [onglet, filtre] = cible.split(':');
+  const index = onglets.findIndex((o) => o.nom === (onglet === 'services' ? 'agents' : onglet));
+  if (index < 0) return;
+  activer(index);
+
+  if (onglet === 'agents') filtrerAgents(filtre || '');
+  if (onglet === 'services') formulaireServices(() => { dejaCharge.delete('suivi'); });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 /* ============================================================== Défis */
 
@@ -122,6 +151,8 @@ chargeurs.defis = async () => {
         Modifier la date de début de campagne décale les quatre semaines de 7 jours en 7 jours.
         Un défi dépublié disparaît du portail sans que les participations soient perdues.</p>
       </details>
+
+      <div id="zone-programme"></div>
 
       <div class="rang" style="margin-bottom:1.5rem">
         <button class="btn btn-principal" id="btn-creer-defi">Créer un défi</button>
@@ -159,6 +190,10 @@ chargeurs.defis = async () => {
         </tbody></table></div>
 
       <div id="editeur" style="margin-top:2rem"></div>`;
+
+    ecranProgramme(document.getElementById('zone-programme'), () => {
+      dejaCharge.delete('defis'); dejaCharge.delete('suivi'); chargeurs.defis();
+    });
 
     document.getElementById('btn-replanifier').addEventListener('click', async () => {
       const debut = document.getElementById('debut-campagne').value;

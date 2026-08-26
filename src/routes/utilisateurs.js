@@ -42,6 +42,9 @@ export default async function routesUtilisateurs(app) {
       conditions.push('a.exclu = 0 AND NOT EXISTS (SELECT 1 FROM participations p WHERE p.agent_id = a.id AND p.entrainement = 0)');
     }
     if (etat === 'connectes') conditions.push('a.vu_le IS NOT NULL AND a.exclu = 0');
+    if (etat === 'joueurs') {
+      conditions.push('a.exclu = 0 AND EXISTS (SELECT 1 FROM participations p WHERE p.agent_id = a.id AND p.entrainement = 0)');
+    }
     if (etat === 'annuaire') conditions.push("a.origine IN ('import', 'annuaire') AND a.exclu = 0");
     if (etat === 'anonymes') conditions.push('a.anonyme = 1');
     const ou = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -586,13 +589,22 @@ export default async function routesUtilisateurs(app) {
   /** Rattachement, definitif : l'annuaire ne l'ecrasera plus. */
   app.post('/api/admin/agents/rattachement', async (requete, reponse) => {
     const affectations = Array.isArray(requete.body?.affectations) ? requete.body.affectations : [];
-    if (!affectations.length) return reponse.code(400).send({ erreur: 'Aucune affectation transmise.' });
+    const exclusions = Array.isArray(requete.body?.exclusions) ? requete.body.exclusions : [];
+    if (!affectations.length && !exclusions.length) {
+      return reponse.code(400).send({ erreur: 'Aucune affectation transmise.' });
+    }
 
     const maj = db.prepare(`
       UPDATE agents SET service = ?, service_ad = ?, service_force = 1 WHERE id = ?
     `);
+    // Motif « manuel » : la synchronisation ne defait pas une decision prise ici.
+    // Sans quoi les comptes de service reviendraient a chaque passage.
+    const exclure = db.prepare(`
+      UPDATE agents SET exclu = 1, exclu_motif = 'manuel', note = COALESCE(note, ?) WHERE id = ?
+    `);
 
     let touches = 0;
+    let ecartes = 0;
     const services = new Set();
     db.exec('BEGIN');
     try {
@@ -605,6 +617,12 @@ export default async function routesUtilisateurs(app) {
         services.add(service);
         touches++;
       }
+      for (const brut of exclusions) {
+        const id = Number(brut);
+        if (!id) continue;
+        exclure.run("Écarté depuis l'écran de rattachement", id);
+        ecartes++;
+      }
       db.exec('COMMIT');
     } catch (err) {
       db.exec('ROLLBACK');
@@ -612,13 +630,19 @@ export default async function routesUtilisateurs(app) {
     }
 
     journaliser(requete.agent.login, 'agents_rattaches',
-      `${touches} agent(s) vers ${[...services].join(', ')}`, requete.ip);
+      `${touches} agent(s) vers ${[...services].join(', ') || 'aucun service'}, ${ecartes} ecarte(s)`,
+      requete.ip);
+
+    const bouts = [];
+    if (touches) bouts.push(`${touches} agent(s) rattaché(s) à ${services.size} service(s)`);
+    if (ecartes) bouts.push(`${ecartes} agent(s) écarté(s) de la campagne`);
 
     return {
       ok: true,
       touches,
-      message: `${touches} agent(s) rattaché(s) à ${services.size} service(s). `
-        + "Ce rattachement résiste aux synchronisations : l'annuaire ne l'écrasera pas.",
+      ecartes,
+      message: `${bouts.join(', ')}. `
+        + "Ces décisions résistent aux synchronisations : l'annuaire ne les écrasera pas.",
     };
   });
 

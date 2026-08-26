@@ -1,5 +1,6 @@
 {
-  "semaine": 1,
+  "code": "mots-de-passe",
+  "theme": "Authentification",
   "titre": "Le coffre-fort",
   "accroche": "Vos mots de passe tiennent-ils vraiment la route ?",
   "intro": "Un mot de passe, c'est la clé de votre bureau numérique. Cette semaine, on regarde ce qui protège vraiment un compte... et ce qui ne protège rien du tout. Plusieurs réponses peuvent être justes : cochez tout ce qui vous semble correct, puis validez.",

@@ -1,0 +1,108 @@
+{
+  "code": "ia-au-bureau",
+  "theme": "Nouvelles menaces",
+  "titre": "L'IA s'installe au bureau",
+  "accroche": "Elle rédige vos courriers. Que lui donnez-vous en échange ?",
+  "intro": "Les assistants d'intelligence artificielle sont devenus des outils du quotidien : rédiger un courrier, résumer un compte rendu, reformuler une délibération. Le problème n'est pas l'outil, c'est ce qu'on lui confie et la confiance qu'on accorde à sa réponse. Cette semaine, on regarde où passe la ligne. Plusieurs réponses peuvent être justes : cochez tout ce qui vous semble correct, puis validez.",
+  "duree_minutes": 8,
+  "badge": {
+    "code": "esprit_critique",
+    "libelle": "Esprit critique",
+    "emoji": "🤖",
+    "description": "Défi intelligence artificielle réussi à 80 % ou plus."
+  },
+  "questions": [
+    {
+      "enonce": "Que pouvez-vous coller sans risque dans un assistant IA grand public ?",
+      "contexte": "Vous utilisez un assistant en ligne gratuit, depuis votre navigateur, avec un compte personnel.",
+      "multiple": true,
+      "points": 10,
+      "explication": "Tout ce que vous collez dans un assistant grand public sort de la collectivité et peut servir à entraîner le modèle. Une délibération déjà publiée au recueil des actes est publique : aucun risque. Un modèle de courrier vidé de ses noms l'est aussi. En revanche, la liste des bénéficiaires du CCAS, un tableau extrait de Ciril ou un signalement du CMS sont des données personnelles — parfois sensibles — et leur envoi constitue une violation de données à déclarer à la DPO. La règle courte : si vous n'afficheriez pas le texte sur le panneau d'affichage de l'accueil, ne le collez pas.",
+      "reponses": [
+        { "libelle": "Une délibération déjà publiée au recueil des actes de la Ville", "correcte": true },
+        { "libelle": "La liste des bénéficiaires de l'aide alimentaire du CCAS, pour la trier", "correcte": false },
+        { "libelle": "Un modèle de courrier type, sans aucun nom ni adresse", "correcte": true },
+        { "libelle": "Un export Ciril des rémunérations, pour lui demander une synthèse", "correcte": false },
+        { "libelle": "Le compte rendu d'un entretien social suivi au CMS", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Un assistant IA vous donne le délai de recours contre un permis de construire. Que faites-vous de sa réponse ?",
+      "contexte": "Vous préparez une réponse à un administré au service Urbanisme.",
+      "multiple": false,
+      "points": 10,
+      "explication": "Un assistant IA produit du texte plausible, pas du droit vérifié. Il invente régulièrement des articles de code, des jurisprudences et des délais — avec un aplomb parfait. C'est ce qu'on appelle une hallucination. Sur un acte qui engage la Ville et ouvre des voies de recours, la seule réponse acceptable est de vérifier à la source. L'IA peut vous faire gagner du temps sur la formulation ; jamais sur l'exactitude juridique.",
+      "reponses": [
+        { "libelle": "Je la vérifie dans le code de l'urbanisme ou auprès du service juridique avant de l'utiliser", "correcte": true },
+        { "libelle": "Je la recopie : l'outil cite un article de loi, donc c'est fiable", "correcte": false },
+        { "libelle": "Je la recopie en ajoutant « sous réserve de vérification »", "correcte": false },
+        { "libelle": "Je repose la question à l'assistant : s'il répond pareil deux fois, c'est juste", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Depuis que les escrocs utilisent l'IA, quels indices d'arnaque ne fonctionnent plus ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Pendant des années on a appris à repérer les fautes d'orthographe et le français bancal : c'est terminé. Un message frauduleux rédigé par IA est parfaitement écrit, dans le bon registre, et peut même reprendre le style de votre direction. La voix au téléphone se clone à partir de quelques secondes d'enregistrement — un vœu du Nouvel An en ligne suffit. Ce qui reste fiable : l'adresse d'expédition réelle, l'URL derrière le lien, et surtout le scénario, qui demande presque toujours quelque chose d'urgent, de confidentiel et d'inhabituel.",
+      "reponses": [
+        { "libelle": "Les fautes d'orthographe et la syntaxe approximative", "correcte": true },
+        { "libelle": "La reconnaissance de la voix d'un collègue au téléphone", "correcte": true },
+        { "libelle": "L'adresse d'expédition réelle, affichée en entier", "correcte": false },
+        { "libelle": "Le caractère urgent, confidentiel et inhabituel de la demande", "correcte": false },
+        { "libelle": "La qualité de la mise en page et du logo", "correcte": true }
+      ]
+    },
+    {
+      "enonce": "Quelle différence entre un assistant IA intégré à nos outils et un assistant grand public ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Un assistant fourni dans l'environnement Microsoft 365 de la Ville travaille dans un périmètre contractualisé : les données restent dans le cadre négocié, avec des engagements sur l'hébergement et la non-réutilisation. Un assistant grand public, lui, est un service tiers auquel vous envoyez volontairement des informations, sous vos conditions personnelles. Attention toutefois : même intégré, l'assistant voit tout ce à quoi vous avez accès. S'il vous ressort un fichier RH que vous n'auriez jamais dû pouvoir ouvrir, ce n'est pas lui le problème — ce sont les droits sur le partage, et cela se signale à la DSI.",
+      "reponses": [
+        { "libelle": "L'assistant intégré travaille dans le cadre contractuel négocié par la Ville", "correcte": true },
+        { "libelle": "L'assistant intégré ne voit que ce à quoi vous avez déjà accès", "correcte": true },
+        { "libelle": "L'assistant intégré ne se trompe jamais", "correcte": false },
+        { "libelle": "Avec l'assistant grand public, vous êtes seul responsable de ce que vous envoyez", "correcte": true },
+        { "libelle": "L'assistant intégré vous dispense de vérifier ses réponses", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Le service Ressources Humaines veut faire trier les candidatures d'un recrutement par une IA. Qu'en pensez-vous ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Trier des candidatures, c'est traiter des données personnelles pour prendre une décision qui affecte des personnes : le RGPD encadre strictement ce cas. Il faut associer la DPO en amont, ne jamais laisser la machine décider seule, et pouvoir expliquer le critère retenu à un candidat qui le demande. S'ajoute un risque propre à l'IA : un modèle entraîné sur des recrutements passés reproduit les biais de ces recrutements — sur l'âge, le genre, l'origine du nom ou l'adresse. Pour une collectivité tenue à l'égalité d'accès à l'emploi public, ce n'est pas un détail.",
+      "reponses": [
+        { "libelle": "Il faut associer la DPO avant de commencer, pas après", "correcte": true },
+        { "libelle": "Aucune décision ne doit être prise par la seule machine", "correcte": true },
+        { "libelle": "Un modèle peut reproduire des discriminations présentes dans les données passées", "correcte": true },
+        { "libelle": "Pas de problème : l'IA est neutre par nature", "correcte": false },
+        { "libelle": "Les CV peuvent être envoyés à un service en ligne gratuit s'il est bien noté", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Avant d'utiliser un nouvel outil d'IA dans votre service, que faites-vous ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Un outil qui traite des données de la collectivité doit être connu de la DSI et, dès qu'il touche à des données personnelles, de la DPO. Ce n'est pas une formalité tatillonne : c'est ce qui permet de savoir, le jour où le prestataire est piraté, quelles données de Châtillon s'y trouvaient. Payer un abonnement sur ses deniers personnels ne change rien à l'affaire, et une version gratuite n'est pas plus sûre — souvent l'inverse, puisque le modèle économique repose sur les données. Le réflexe : un message à la DSI avant, pas après.",
+      "reponses": [
+        { "libelle": "J'en parle à la DSI avant de l'utiliser sur des documents de la Ville", "correcte": true },
+        { "libelle": "Je sollicite la DPO si l'outil touche à des données personnelles", "correcte": true },
+        { "libelle": "Je l'utilise librement si je le paye moi-même", "correcte": false },
+        { "libelle": "Je l'utilise librement s'il est gratuit", "correcte": false },
+        { "libelle": "Je le teste d'abord sur des documents publics, sans donnée nominative", "correcte": true }
+      ]
+    },
+    {
+      "enonce": "Vous recevez une note de service parfaitement rédigée, signée du Directeur général, demandant vos identifiants pour « la migration IA ». Que faites-vous ?",
+      "contexte": "Le message est en français impeccable, reprend le logo de la Ville et l'organigramme est exact.",
+      "multiple": false,
+      "points": 10,
+      "explication": "La qualité du message ne prouve plus rien — c'est précisément ce que l'IA a changé. Reste le fond : aucun service de la Ville, aucune migration, aucun prestataire ne vous demandera jamais votre mot de passe. La DSI n'en a pas besoin, elle peut réinitialiser un compte sans le connaître. Face à une demande d'identifiants, le seul geste utile est de vérifier par un canal que vous choisissez vous-même : le numéro de poste de l'annuaire interne, pas celui indiqué dans le message.",
+      "reponses": [
+        { "libelle": "Je ne réponds pas et j'appelle la DSI au numéro que je connais, pas à celui du message", "correcte": true },
+        { "libelle": "Je réponds : la signature du Directeur général engage sa responsabilité, pas la mienne", "correcte": false },
+        { "libelle": "Je transfère à mes collègues pour savoir s'ils l'ont reçue aussi", "correcte": false },
+        { "libelle": "Je donne mon identifiant mais pas mon mot de passe", "correcte": false }
+      ]
+    }
+  ]
+}

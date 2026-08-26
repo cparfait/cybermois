@@ -3,6 +3,7 @@ import { config } from '../lib/config.js';
 import { exigerAdmin } from '../lib/session.js';
 import { testerConnexion } from '../lib/ldap.js';
 import { importerContenus, exporterDefi, dateOuverture } from '../lib/seed.js';
+import { listerModules, lireModule, etatProgramme, enregistrerProgramme } from '../lib/modules.js';
 import { classementServices, classementAgents, statistiquesGlobales } from '../lib/scoring.js';
 import {
   testerSmtp, envoyerRelances, envoyerResultats,
@@ -59,6 +60,54 @@ export default async function routesAdmin(app) {
   });
 
   /* ---------------------------------------------------- Gestion des defis */
+  /* ------------------------------------------- Catalogue et programmation */
+
+  /**
+   * Le catalogue des modules disponibles, et la semaine ou chacun est place.
+   * Ecrire vingt questionnaires et n'en jouer que quatre suppose de pouvoir
+   * choisir : c'est ce que cet ecran permet.
+   */
+  app.get('/api/admin/modules', async () => ({
+    modules: listerModules(),
+    programme: etatProgramme(),
+    debut: config.campagne.debut,
+  }));
+
+  /** Le detail d'un module, reponses comprises, pour le relire avant de le programmer. */
+  app.get('/api/admin/modules/:code', async (requete, reponse) => {
+    const module = lireModule(requete.params.code);
+    if (!module) return reponse.code(404).send({ erreur: 'Module introuvable.' });
+    return module;
+  });
+
+  /**
+   * Enregistre la programmation puis verse le contenu dans les defis.
+   * Les deux vont ensemble : une programmation qui ne se traduit pas en
+   * questionnaires ne se verifierait qu'au moment ou il serait trop tard.
+   */
+  app.put('/api/admin/programme', async (requete, reponse) => {
+    const entrees = Array.isArray(requete.body?.programme) ? requete.body.programme : null;
+    if (!entrees) return reponse.code(400).send({ erreur: 'Programmation attendue.' });
+
+    let n;
+    try {
+      n = enregistrerProgramme(entrees, requete.agent.login);
+    } catch (err) {
+      return reponse.code(409).send({ erreur: err.message });
+    }
+
+    const rapport = importerContenus();
+    const crees = rapport.filter((r) => r.statut === 'cree').length;
+    const majs = rapport.filter((r) => r.statut === 'mis a jour').length;
+    const retires = rapport.filter((r) => r.statut === 'deprogramme').length;
+
+    const bouts = [`${n} semaine(s) programmee(s)`];
+    if (crees) bouts.push(`${crees} questionnaire(s) cree(s)`);
+    if (majs) bouts.push(`${majs} mis a jour`);
+    if (retires) bouts.push(`${retires} retire(s)`);
+    return { message: `${bouts.join(', ')}.`, rapport };
+  });
+
   app.get('/api/admin/defis', async () => db.prepare('SELECT * FROM defis ORDER BY semaine').all());
 
   app.get('/api/admin/defis/:semaine', async (requete, reponse) => {

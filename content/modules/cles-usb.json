@@ -1,0 +1,106 @@
+{
+  "code": "cles-usb",
+  "theme": "Poste de travail",
+  "titre": "Ce qu'on branche",
+  "accroche": "Une clé trouvée sur le parking. Vous la branchez ?",
+  "intro": "La clé USB a mauvaise réputation, et pour de bonnes raisons : elle se perd, elle se prête, elle traîne, et elle transporte parfois autre chose que des fichiers. Elle reste pourtant partout — sur les postes de l'atelier, dans les sacs, entre les sites. Cette semaine, on regarde ce qu'on branche et ce qu'on emporte. Plusieurs réponses peuvent être justes : cochez tout ce qui vous semble correct, puis validez.",
+  "duree_minutes": 7,
+  "badge": {
+    "code": "port_ferme",
+    "libelle": "Port fermé",
+    "emoji": "🔌",
+    "description": "Défi supports amovibles réussi à 80 % ou plus."
+  },
+  "questions": [
+    {
+      "enonce": "Une clé USB est posée sur le parking de Technosud, marquée « Salaires 2026 ». Que faites-vous ?",
+      "multiple": false,
+      "points": 10,
+      "explication": "L'étiquette est l'appât : elle est là pour déclencher la curiosité, et « Salaires » fonctionne mieux que n'importe quel autre mot. Cette technique porte un nom, elle est employée en test d'intrusion comme en attaque réelle, et son taux de réussite reste élevé. Une clé peut se faire passer pour un clavier et taper des commandes sans que rien ne s'affiche : l'antivirus n'y voit rien, et il n'est même pas besoin d'ouvrir un fichier. La remettre à la DSI est le seul geste utile. La brancher sur un poste « pour voir à qui elle appartient » est exactement ce que l'attaquant a prévu.",
+      "reponses": [
+        { "libelle": "Je la remets à la DSI sans la brancher", "correcte": true },
+        { "libelle": "Je la branche sur mon poste pour retrouver son propriétaire", "correcte": false },
+        { "libelle": "Je la branche sur un vieux poste isolé, ce sera sans risque", "correcte": false },
+        { "libelle": "Je la jette : ce n'est pas mon problème", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Pourquoi une clé USB piégée est-elle dangereuse même sans ouvrir de fichier ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Une clé USB n'est pas seulement un espace de stockage : c'est un appareil qui déclare lui-même ce qu'il est. Une clé piégée peut se présenter comme un clavier et taper des commandes à votre place, en une fraction de seconde, sans qu'aucun fichier ne soit ouvert. D'autres exploitent des failles dans la façon dont le système reconnaît le matériel branché. Certaines, plus brutales, détruisent physiquement la carte mère par une décharge électrique. Face à cela, l'antivirus est démuni : il analyse des fichiers, pas des déclarations de matériel. Et le formatage ne répare rien, puisque le piège est dans l'électronique, pas dans les données.",
+      "reponses": [
+        { "libelle": "Elle peut se déclarer comme un clavier et taper des commandes", "correcte": true },
+        { "libelle": "Elle peut exploiter une faille dans la reconnaissance du matériel branché", "correcte": true },
+        { "libelle": "Certaines détruisent physiquement la carte mère", "correcte": true },
+        { "libelle": "L'antivirus détecte de toute façon ce type d'attaque", "correcte": false },
+        { "libelle": "Un formatage préalable élimine le risque", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Vous devez transporter des dossiers entre la Mairie et Technosud. Quelle solution privilégier ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "La meilleure clé USB est celle qu'on n'utilise pas : si les deux sites accèdent au même espace partagé, le fichier n'a aucune raison de voyager. Quand le support physique s'impose vraiment, la clé doit être chiffrée et fournie par la DSI — c'est ce qui fait qu'une perte reste un désagrément au lieu d'être une violation de données à notifier. Et le contenu s'efface une fois le transfert fait, plutôt que de s'accumuler pendant deux ans. Ce qu'il faut proscrire : la clé personnelle qui sert aussi aux photos de famille, et le mot de passe écrit sur l'étiquette — qui rend le chiffrement purement décoratif.",
+      "reponses": [
+        { "libelle": "L'espace partagé accessible depuis les deux sites, sans support physique", "correcte": true },
+        { "libelle": "Si la clé est indispensable, une clé chiffrée fournie par la DSI", "correcte": true },
+        { "libelle": "Effacer le contenu de la clé une fois le transfert terminé", "correcte": true },
+        { "libelle": "Ma clé personnelle, celle qui contient aussi mes photos", "correcte": false },
+        { "libelle": "Une clé chiffrée dont le mot de passe est écrit sur l'étiquette", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Quels autres appareils branchés en USB méritent la même prudence ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Tout ce qui se branche communique. Un chargeur ou un câble donné en salon professionnel peut contenir de l'électronique supplémentaire — ces objets existent et se vendent librement. Une borne de recharge publique, dans une gare ou un aéroport, expose au même risque : c'est pourquoi on recommande un câble de charge seule, ou une batterie externe. Un disque dur emprunté à un collègue a la même histoire qu'une clé : on ne sait pas où il est passé. En revanche, la souris et le clavier fournis avec le poste par la DSI font partie de l'équipement, et il n'y a aucune raison de s'en méfier.",
+      "reponses": [
+        { "libelle": "Un chargeur ou un câble reçu en cadeau lors d'un salon", "correcte": true },
+        { "libelle": "Une borne de recharge USB publique en gare ou en aéroport", "correcte": true },
+        { "libelle": "Un disque dur externe emprunté à un collègue", "correcte": true },
+        { "libelle": "La souris fournie avec le poste par la DSI", "correcte": false },
+        { "libelle": "Le clavier installé par la DSI lors de la livraison du poste", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Que faire d'une clé USB de service dont on n'a plus l'usage ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Une clé rendue au tiroir commun ou glissée dans une brocante emporte ses anciens fichiers avec elle : la suppression ordinaire ne fait que retirer l'entrée du répertoire, et les données se récupèrent avec des outils gratuits. La restituer à la DSI est le bon geste, parce qu'elle sait effacer réellement ou détruire. Si la clé était chiffrée, la question est plus simple, mais le retour à la DSI reste la règle — ne serait-ce que pour l'inventaire. Ce qui n'a pas de sens, c'est de la garder à titre personnel « puisqu'elle allait être jetée » : elle appartient à la collectivité, et elle a contenu ses données.",
+      "reponses": [
+        { "libelle": "La restituer à la DSI pour effacement réel ou destruction", "correcte": true },
+        { "libelle": "Signaler ce qu'elle a contenu si c'étaient des données sensibles", "correcte": true },
+        { "libelle": "La reformater rapidement et la remettre dans le tiroir commun", "correcte": false },
+        { "libelle": "La garder pour un usage personnel puisqu'elle allait être jetée", "correcte": false },
+        { "libelle": "Supprimer les fichiers un par un, ce qui les rend irrécupérables", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Un prestataire vous demande de brancher sa clé sur un poste pour installer une mise à jour de son logiciel métier. Que faites-vous ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Le prestataire est de bonne foi dans l'immense majorité des cas ; le problème est que sa clé a circulé sur d'autres postes, chez d'autres clients, et personne ne sait ce qu'elle a rencontré. Plusieurs incidents en collectivité ont eu cette origine exacte. La bonne pratique est de faire passer l'intervention par la DSI, qui décide du support et vérifie ce qui est installé, et de préférer un téléchargement depuis la source officielle du prestataire. Rien de tout cela ne remet en cause sa compétence, et un intervenant habitué aux collectivités trouvera la demande normale.",
+      "reponses": [
+        { "libelle": "Faire passer l'intervention par la DSI avant tout branchement", "correcte": true },
+        { "libelle": "Privilégier un téléchargement depuis la source officielle du prestataire", "correcte": true },
+        { "libelle": "Brancher : le prestataire est un partenaire de longue date", "correcte": false },
+        { "libelle": "Brancher, puis lancer un antivirus juste après", "correcte": false },
+        { "libelle": "Demander à un collègue de le faire à ma place", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Vous constatez qu'un poste de l'accueil a un port USB accessible au public. Que faites-vous ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Un port USB à portée du public est une porte ouverte : quelques secondes suffisent, et il ne se passe rien de visible. Le signaler à la DSI permet de le neutraliser — obturateur physique, désactivation logicielle, ou simple déplacement de l'unité centrale hors de portée. En attendant, tourner le poste ou le mettre hors d'atteinte est déjà utile. Le verrouillage de la session est indispensable mais ne suffit pas ici : une clé qui se fait passer pour un clavier n'a pas besoin d'une session ouverte pour agir au démarrage. Et compter sur la surveillance de l'agent est illusoire : il est occupé, c'est son métier.",
+      "reponses": [
+        { "libelle": "Le signaler à la DSI pour neutralisation du port", "correcte": true },
+        { "libelle": "Déplacer l'unité centrale hors de portée en attendant", "correcte": true },
+        { "libelle": "Rien : le verrouillage de session suffit à protéger le poste", "correcte": false },
+        { "libelle": "Rien : l'agent d'accueil surveille en permanence", "correcte": false },
+        { "libelle": "En parler à sa hiérarchie pour que le sujet soit tracé", "correcte": true }
+      ]
+    }
+  ]
+}

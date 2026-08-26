@@ -1,0 +1,106 @@
+{
+  "code": "accueil-du-public",
+  "theme": "Manipulation",
+  "titre": "Face au public",
+  "accroche": "Au guichet, la faille n'est pas dans l'ordinateur.",
+  "intro": "État civil, CCAS, Population, régies, Police Municipale, accueil des écoles : une partie des agents de Châtillon passe sa journée face à des gens qu'elle ne connaît pas, avec l'obligation d'être aidante. C'est exactement la situation qu'un manipulateur recherche. Cette semaine, sept scènes de guichet. Plusieurs réponses peuvent être justes : cochez tout ce qui vous semble correct, puis validez.",
+  "duree_minutes": 8,
+  "badge": {
+    "code": "guichet_sur",
+    "libelle": "Guichet sûr",
+    "emoji": "🛎️",
+    "description": "Défi accueil du public réussi à 80 % ou plus."
+  },
+  "questions": [
+    {
+      "enonce": "Une personne se présente à l'état civil et demande une copie intégrale d'un acte de naissance qui n'est pas le sien. Que faites-vous ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "La copie intégrale d'un acte de naissance de moins de 75 ans n'est pas délivrable à n'importe qui : la loi la réserve à l'intéressé majeur, à ses ascendants et descendants, à son conjoint et à quelques professionnels habilités. C'est le cadre, et il ne se négocie pas au guichet. Il faut donc vérifier la qualité du demandeur et son identité — c'est précisément ce contrôle qui protège les personnes contre l'usurpation, car un acte intégral porte tout ce qu'il faut pour ouvrir un compte au nom d'un autre. Face à l'insistance ou à la pression, la bonne réponse est d'appliquer la règle et d'appeler un responsable ; l'émotion du demandeur, sincère ou jouée, ne modifie pas le droit. Et un extrait sans filiation, lui, se délivre librement.",
+      "reponses": [
+        { "libelle": "Vérifier la qualité du demandeur : intéressé, ascendant, descendant, conjoint", "correcte": true },
+        { "libelle": "Vérifier son identité par une pièce officielle", "correcte": true },
+        { "libelle": "Proposer un extrait sans filiation, librement communicable", "correcte": true },
+        { "libelle": "Délivrer l'acte : le demandeur semble sincère et il est pressé", "correcte": false },
+        { "libelle": "Délivrer l'acte s'il connaît la date de naissance et le nom des parents", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Un homme au téléphone se présente comme agent d'une autre commune et demande des renseignements sur un administré. Comment réagir ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Se présenter comme un collègue est la manœuvre la plus économique qui soit : elle ne coûte rien et elle fonctionne, parce qu'entre agents on s'entraide. Rien ne prouve pourtant l'identité de la voix. La bonne pratique est de proposer de rappeler au standard de la commune concernée — un vrai collègue trouvera cela normal, un escroc trouvera une raison de refuser. Il faut aussi se demander à quel titre la demande est faite : entre communes, les échanges de données ont un cadre, et « c'est pour un dossier » n'en est pas un. En cas d'hésitation, la demande écrite via le service compétent règle tout, et la DPO répond vite.",
+      "reponses": [
+        { "libelle": "Proposer de rappeler au standard de la commune concernée", "correcte": true },
+        { "libelle": "Demander à quel titre et pour quel dossier la demande est faite", "correcte": true },
+        { "libelle": "Renvoyer vers une demande écrite passant par le service compétent", "correcte": true },
+        { "libelle": "Répondre : entre collègues de la fonction publique, l'entraide est normale", "correcte": false },
+        { "libelle": "Répondre s'il connaît déjà le nom et l'adresse de la personne", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Votre poste d'accueil est visible depuis la file d'attente. Quelles précautions prendre ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "La confidentialité au guichet se joue autant sur l'écran que sur la parole. Orienter l'écran, ou l'équiper d'un filtre de confidentialité, empêche la personne suivante de lire le dossier de la précédente. Verrouiller la session dès qu'on s'éloigne du poste — même trente secondes pour chercher un formulaire — est le geste le plus rentable de la journée. Fermer le dossier en cours avant d'appeler le suivant évite le mélange. Et ce qui vaut pour l'écran vaut pour le comptoir : un document oublié à côté du clavier finit par être lu. Baisser la voix aide, mais ne remplace aucun de ces gestes.",
+      "reponses": [
+        { "libelle": "Orienter l'écran ou poser un filtre de confidentialité", "correcte": true },
+        { "libelle": "Verrouiller la session dès qu'on quitte le poste, même brièvement", "correcte": true },
+        { "libelle": "Fermer le dossier en cours avant d'appeler la personne suivante", "correcte": true },
+        { "libelle": "Ne laisser aucun document nominatif sur le comptoir", "correcte": true },
+        { "libelle": "Se contenter de parler moins fort", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Une personne en gilet, badge à la ceinture, se présente pour « intervenir sur le réseau ». Que faites-vous ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Le faux technicien est un classique qui marche justement parce que personne n'ose demander à quelqu'un d'équipé de justifier sa présence. Un badge n'est pas une preuve : il s'imprime. Ce qui compte, c'est qu'une intervention soit attendue — donc qu'un service l'ait commandée, et la DSI le sait. Un appel de trente secondes règle la question. Tant que ce n'est pas fait, la personne n'accède pas seule aux locaux techniques et n'est pas laissée sans accompagnement dans les bureaux : ce n'est pas de la suspicion, c'est la règle pour tout intervenant extérieur. Un vrai technicien la connaît et l'attend.",
+      "reponses": [
+        { "libelle": "Appeler la DSI pour vérifier qu'une intervention est bien prévue", "correcte": true },
+        { "libelle": "Ne pas la laisser accéder seule aux locaux techniques", "correcte": true },
+        { "libelle": "L'accompagner tant que la vérification n'est pas faite", "correcte": true },
+        { "libelle": "Le badge et la tenue suffisent à établir son identité", "correcte": false },
+        { "libelle": "Lui ouvrir : il connaît le nom du prestataire habituel", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Quels comportements, chez un visiteur, doivent éveiller votre attention ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Aucun de ces signaux n'est une preuve, mais leur accumulation dessine un scénario connu. La pression sur l'horaire — « je repasse pas, faites une exception » — vise à empêcher la vérification. Flatter l'agent ou invoquer un proche haut placé cherche à créer une dette. Poser des questions sur l'organisation interne, les absences, les procédures, c'est de la reconnaissance : cela sert à préparer un appel plus tard. Et une demande insistante d'accès à un poste ou à une imprimante n'a jamais de bonne raison. En revanche, être ému en évoquant un dossier difficile n'a rien de suspect : c'est le quotidien d'un guichet, et cela mérite de l'attention, pas de la méfiance.",
+      "reponses": [
+        { "libelle": "L'insistance pour obtenir une exception « juste cette fois »", "correcte": true },
+        { "libelle": "Les questions sur l'organisation interne, les horaires ou les absences", "correcte": true },
+        { "libelle": "L'évocation d'un proche haut placé dans la collectivité", "correcte": true },
+        { "libelle": "La demande d'utiliser un poste ou une imprimante du service", "correcte": true },
+        { "libelle": "L'émotion en évoquant une situation personnelle difficile", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "En fin de journée, que faut-il ranger avant de quitter le poste d'accueil ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Les locaux sont fréquentés le soir : entretien, livraisons, réunions associatives. Ce qui reste sur un bureau est lisible par des gens qui n'ont rien demandé, et un vol opportuniste n'a besoin que d'une minute. Les dossiers d'administrés se rangent sous clé, les impressions oubliées se récupèrent — le bac de l'imprimante partagée est un formidable gisement de données —, la session se ferme et les clés des armoires ne restent pas dans la serrure. Éteindre l'écran, en revanche, ne protège de rien : la session reste ouverte derrière, il suffit de bouger la souris.",
+      "reponses": [
+        { "libelle": "Les dossiers d'administrés, rangés sous clé", "correcte": true },
+        { "libelle": "Les impressions oubliées dans le bac de l'imprimante", "correcte": true },
+        { "libelle": "Fermer la session, pas seulement éteindre l'écran", "correcte": true },
+        { "libelle": "Les clés des armoires, qui ne restent pas dans la serrure", "correcte": true },
+        { "libelle": "Rien : les locaux sont fermés et personne n'y entre", "correcte": false }
+      ]
+    },
+    {
+      "enonce": "Un administré vous demande votre adresse mail personnelle pour « aller plus vite ». Que répondez-vous ?",
+      "multiple": false,
+      "points": 10,
+      "explication": "Un échange qui sort de la messagerie de la Ville sort aussi de son cadre : plus de traçabilité, plus de continuité si vous êtes absent, plus de protection pour vous en cas de litige — et une adresse personnelle qui circule, avec tout ce que cela promet ensuite. Le refus n'a rien de désobligeant et il s'explique en une phrase : l'adresse du service est faite pour cela, et elle garantit que quelqu'un répondra même en votre absence. C'est d'ailleurs un meilleur service rendu à l'administré qu'un canal privé qui s'interrompt au premier congé.",
+      "reponses": [
+        { "libelle": "Que les échanges passent par l'adresse du service, qui reste suivie en mon absence", "correcte": true },
+        { "libelle": "Je la donne : cela simplifie vraiment le traitement du dossier", "correcte": false },
+        { "libelle": "Je la donne mais je lui demande de ne pas la diffuser", "correcte": false },
+        { "libelle": "Je lui donne mon numéro de portable personnel à la place", "correcte": false }
+      ]
+    }
+  ]
+}

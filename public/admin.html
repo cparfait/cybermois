@@ -19,6 +19,27 @@
   .stat-admin .v { font-family: var(--police-titre); font-weight: 900; font-size: 1.9rem; color: var(--vert-fonce); line-height: 1; }
   .stat-admin .l { font-family: var(--police-ui); font-size: .78rem; color: var(--encre-douce); margin-top: .3rem; }
 
+  /* Une tuile qui ouvre un detail doit se signaler comme telle, sans devenir
+     un bouton vert de plus : le releve reste lisible d'un coup d'oeil. */
+  .stat-cliquable { cursor: pointer; text-align: left; width: 100%; font: inherit;
+    transition: border-color .15s, box-shadow .15s, transform .15s; }
+  .stat-cliquable:hover, .stat-cliquable:focus-visible {
+    border-color: var(--vert-fonce); box-shadow: 0 2px 8px rgba(0, 110, 70, .14); transform: translateY(-1px); }
+
+  /* Le nom d'un service ouvre sa composition : c'est un declencheur, pas un
+     lien de navigation, d'ou le bouton. */
+  .lien-service { background: none; border: 0; padding: 0; font: inherit; font-weight: 700;
+    color: var(--vert-fonce); cursor: pointer; text-align: inherit;
+    text-decoration: underline; text-underline-offset: .18em;
+    text-decoration-color: var(--bordure); }
+  .lien-service:hover, .lien-service:focus-visible { text-decoration-color: currentColor; }
+  td.num .lien-service { font-weight: 400; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stat-cliquable { transition: none; }
+    .stat-cliquable:hover, .stat-cliquable:focus-visible { transform: none; }
+  }
+
   /* Bandeau de statistiques compact : sept tuiles sur deux rangees aeraient
      l'ecran sans rien apprendre de plus. Elles tiennent sur une seule ligne
      des que la fenetre le permet. */

@@ -1,10 +1,7 @@
-import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import path from 'node:path';
 import { db } from './db.js';
 import { config } from './config.js';
-
-const DOSSIER = path.resolve(process.cwd(), 'content');
+import { lireModule, lireProgramme } from './modules.js';
 
 /**
  * Date d'ouverture d'une semaine : debut de campagne + (semaine - 1) * 7 jours.
@@ -20,46 +17,70 @@ export function dateOuverture(semaine) {
 }
 
 /**
- * Charge les defis depuis content/*.json.
- * Idempotent : reimporter met a jour titres et questions sans perdre les participations.
- * Les defis deja joues ne sont pas ecrases sauf si force = true.
+ * Verse dans les defis le contenu des modules programmes.
+ *
+ * La programmation dit quel module se joue quelle semaine ; cette fonction
+ * en tire les questionnaires. Elle est idempotente : la rejouer met a jour
+ * titres et questions sans toucher aux participations.
+ *
+ * Un defi deja joue n'est pas reecrit sans force : ses participants ont
+ * repondu a des questions qui doivent rester celles qu'ils ont vues.
  */
 export function importerContenus({ force = false } = {}) {
-  const fichiers = fs.readdirSync(DOSSIER).filter((f) => /^semaine-\d+\.json$/.test(f)).sort();
   const rapport = [];
+  const programme = lireProgramme();
 
-  for (const fichier of fichiers) {
-    const defi = JSON.parse(fs.readFileSync(path.join(DOSSIER, fichier), 'utf8'));
-    const existant = db.prepare('SELECT id FROM defis WHERE semaine = ?').get(defi.semaine);
+  for (const { semaine, module_code: code } of programme) {
+    const module = lireModule(code);
+    if (!module) {
+      rapport.push({ semaine, statut: 'introuvable', motif: `module ${code}` });
+      continue;
+    }
+
+    const existant = db.prepare('SELECT id FROM defis WHERE semaine = ?').get(semaine);
+    const badge = module.badge || {};
 
     if (existant) {
       const joue = db.prepare('SELECT COUNT(*) AS n FROM participations WHERE defi_id = ?').get(existant.id).n;
       if (joue > 0 && !force) {
-        rapport.push({ semaine: defi.semaine, statut: 'ignore', motif: `${joue} participation(s) enregistree(s)` });
+        rapport.push({ semaine, statut: 'ignore', motif: `${joue} participation(s) enregistree(s)` });
         continue;
       }
       db.prepare(`UPDATE defis SET titre = ?, accroche = ?, intro = ?, duree_minutes = ?, ouvre_le = ?,
-                    badge_code = ?, badge_libelle = ?, badge_emoji = ?, badge_description = ?,
+                    module_code = ?, badge_code = ?, badge_libelle = ?, badge_emoji = ?, badge_description = ?,
                     maj_le = datetime('now') WHERE id = ?`)
-        .run(defi.titre, defi.accroche, defi.intro, defi.duree_minutes || 7, dateOuverture(defi.semaine),
-             defi.badge?.code || null, defi.badge?.libelle || null,
-             defi.badge?.emoji || null, defi.badge?.description || null, existant.id);
+        .run(module.titre, module.accroche, module.intro, module.duree_minutes || 7, dateOuverture(semaine),
+             module.code, badge.code || null, badge.libelle || null,
+             badge.emoji || null, badge.description || null, existant.id);
       db.prepare('DELETE FROM questions WHERE defi_id = ?').run(existant.id);
-      insererQuestions(existant.id, defi.questions);
-      rapport.push({ semaine: defi.semaine, statut: 'mis a jour', questions: defi.questions.length });
+      insererQuestions(existant.id, module.questions);
+      rapport.push({ semaine, module: module.code, statut: 'mis a jour', questions: module.questions.length });
     } else {
       const res = db.prepare(`
-        INSERT INTO defis (semaine, titre, accroche, intro, duree_minutes, ouvre_le, publie,
+        INSERT INTO defis (semaine, titre, accroche, intro, duree_minutes, ouvre_le, publie, module_code,
                            badge_code, badge_libelle, badge_emoji, badge_description)
-        VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)
-      `).run(defi.semaine, defi.titre, defi.accroche, defi.intro, defi.duree_minutes || 7,
-             dateOuverture(defi.semaine), defi.badge?.code || null, defi.badge?.libelle || null,
-             defi.badge?.emoji || null, defi.badge?.description || null);
-      insererQuestions(res.lastInsertRowid, defi.questions);
-      rapport.push({ semaine: defi.semaine, statut: 'cree', questions: defi.questions.length });
+        VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)
+      `).run(semaine, module.titre, module.accroche, module.intro, module.duree_minutes || 7,
+             dateOuverture(semaine), module.code, badge.code || null, badge.libelle || null,
+             badge.emoji || null, badge.description || null);
+      insererQuestions(res.lastInsertRowid, module.questions);
+      rapport.push({ semaine, module: module.code, statut: 'cree', questions: module.questions.length });
     }
   }
-  return rapport;
+
+  // Une semaine deprogrammee n'a plus de raison d'apparaitre au portail. On ne
+  // supprime que ce que personne n'a joue : le reste se depublie a la main.
+  const programmees = new Set(programme.map((p) => p.semaine));
+  for (const d of db.prepare('SELECT id, semaine FROM defis').all()) {
+    if (programmees.has(d.semaine)) continue;
+    const joue = db.prepare('SELECT COUNT(*) AS n FROM participations WHERE defi_id = ?').get(d.id).n;
+    if (joue > 0) { rapport.push({ semaine: d.semaine, statut: 'conserve', motif: `${joue} participation(s)` }); continue; }
+    db.prepare('DELETE FROM questions WHERE defi_id = ?').run(d.id);
+    db.prepare('DELETE FROM defis WHERE id = ?').run(d.id);
+    rapport.push({ semaine: d.semaine, statut: 'deprogramme' });
+  }
+
+  return rapport.sort((a, b) => a.semaine - b.semaine);
 }
 
 function insererQuestions(defiId, questions) {

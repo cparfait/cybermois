@@ -164,6 +164,7 @@ export async function chargerAgents() {
           <option value="jamais_connecte"${etatFiltres.etat === 'jamais_connecte' ? ' selected' : ''}>Jamais connectés</option>
           <option value="inactifs"${etatFiltres.etat === 'inactifs' ? ' selected' : ''}>Aucun défi terminé</option>
           <option value="sans_email"${etatFiltres.etat === 'sans_email' ? ' selected' : ''}>Sans adresse mail</option>
+          <option value="joueurs"${etatFiltres.etat === 'joueurs' ? ' selected' : ''}>Ont joué</option>
           <option value="exclus"${etatFiltres.etat === 'exclus' ? ' selected' : ''}>Exclus</option>
         </select>
       </div>
@@ -1025,4 +1026,16 @@ async function formulaireServices(filtreInitial = '') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) { alerte('alerte', e.message); }
   });
+}
+
+/**
+ * Ouvre la liste des agents deja filtree.
+ *
+ * Les tuiles du tableau de bord donnent un chiffre ; la question qui suit est
+ * toujours « lesquels ? ». Ce point d'entree evite de refaire a la main le
+ * filtre que la tuile designe deja.
+ */
+export function filtrerAgents(etat, service = '') {
+  etatFiltres = { recherche: '', service, etat, page: 1, parPage: etatFiltres.parPage };
+  return chargerAgents();
 }
