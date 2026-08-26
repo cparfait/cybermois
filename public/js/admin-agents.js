@@ -331,7 +331,7 @@ function formulaireImport() {
       <details class="aide-admin" style="margin-bottom:1.2rem">
         <summary>Comment produire le fichier depuis l'Active Directory</summary>
         <p>Sur un contrôleur de domaine ou un poste doté des outils RSAT, en PowerShell :</p>
-        <code class="bloc">Get-ADUser -Filter "Enabled -eq 'True'" -SearchBase "OU=Agents,DC=ville,DC=local" -Properties DisplayName, Mail, Department | Select-Object SamAccountName, DisplayName, Mail, Department, DistinguishedName | Export-Csv -Path C:\\temp\\agents.csv -NoTypeInformation -Encoding UTF8 -Delimiter ";"</code>
+        <code class="bloc">Get-ADUser -Filter "Enabled -eq 'True'" -SearchBase "OU=Utilisateurs,OU=CHATILLON,DC=chatillon,DC=lan" -Properties DisplayName, Mail, Department | Select-Object SamAccountName, DisplayName, Mail, Department, DistinguishedName | Export-Csv -Path C:\\temp\\agents.csv -NoTypeInformation -Encoding UTF8 -Delimiter ";"</code>
         <p style="margin-top:.8rem">Ouvrez ensuite le fichier dans Excel pour retirer les comptes
         de service, les boîtes partagées et les comptes génériques, puis enregistrez-le.
         Les colonnes reconnues sont, quelle que soit leur casse ou leurs accents :</p>

@@ -24,7 +24,7 @@ L'import règle les trois. C'est l'opération la plus utile de la phase de prép
 Sur un contrôleur de domaine, ou un poste doté des outils RSAT :
 
 ```bash
-Get-ADUser -Filter "Enabled -eq 'True'" -SearchBase "OU=Agents,DC=ville,DC=local" -Properties DisplayName, Mail, Department | Select-Object SamAccountName, DisplayName, Mail, Department, DistinguishedName | Export-Csv -Path C:\temp\agents.csv -NoTypeInformation -Encoding UTF8 -Delimiter ";"
+Get-ADUser -Filter "Enabled -eq 'True'" -SearchBase "OU=Utilisateurs,OU=CHATILLON,DC=chatillon,DC=lan" -Properties DisplayName, Mail, Department | Select-Object SamAccountName, DisplayName, Mail, Department, DistinguishedName | Export-Csv -Path C:\temp\agents.csv -NoTypeInformation -Encoding UTF8 -Delimiter ";"
 ```
 
 Quelques précisions utiles :

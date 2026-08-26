@@ -49,7 +49,7 @@ Copiez la longue chaîne obtenue : c'est la valeur de `LDAP_CA_BASE64`.
 Pour vérifier au préalable quelle autorité signe vos DC :
 
 ```bash
-openssl s_client -connect dc01.ville.local:636 -showcerts
+openssl s_client -connect 192.168.2.9:636 -showcerts
 ```
 
 ### Le nom du réseau Docker de Nginx Proxy Manager
@@ -87,14 +87,15 @@ la recette. Un intervalle de 5 minutes convient.
 |---|---|---|
 | `SESSION_SECRET` | *(la chaîne ci-dessus)* | |
 | `RESEAU_PROXY` | `npm_default` | Le nom relevé à l'étape 1 |
-| `LDAP_URL` | `ldaps://dc01.ville.local:636` | Votre contrôleur de domaine |
-| `LDAP_BIND_DN` | `CN=svc-cybermois,OU=Comptes de service,DC=…` | Le compte de service |
+| `LDAP_URL` | `ldaps://192.168.2.9:636` | Votre contrôleur de domaine |
+| `LDAP_BIND_DN` | `ad.cybermois@chatillon.lan` | Le compte de service |
 | `LDAP_BIND_PASSWORD` | *(mot de passe du compte de service)* | |
-| `LDAP_BASE_DN` | `DC=ville,DC=local` | Racine de recherche |
+| `LDAP_BASE_DN` | `DC=chatillon,DC=lan` | Racine de recherche |
 | `LDAP_CA_BASE64` | *(la chaîne base64)* | |
+| `LDAP_ADMIN_GROUP` | `GG-Cybermois-Admins` | Accès au back-office |
 | `SERVICE_OU_DEPTH` | `1` | À ajuster selon vos OU |
 | `ADMIN_LOGINS` | `c.parfait` | Séparés par des virgules |
-| `SMTP_HOST` | *(votre relais)* | |
+| `SMTP_HOST` | `chatillon92-fr.mail.protection.outlook.com` | Direct Send, sans authentification |
 | `MAIL_GROUPE_DIFFUSION` | *(groupe de distribution)* | |
 | `MAIL_ENVOI_ACTIF` | `false` | **À laisser à false jusqu'à la fin de la recette** |
 | `CAMPAGNE_DEBUT` | `2026-10-05` | |
@@ -157,9 +158,14 @@ curl -sk https://cybermois.chatillon92.fr/sante
 Doit répondre `{"ok":true,...}`. Si vous obtenez une erreur 502, NPM ne joint pas le
 conteneur : vérifiez que les deux sont bien sur le même réseau Docker.
 
-Connectez-vous ensuite avec votre compte AD, puis ouvrez **Administration → Technique** :
-le diagnostic teste en direct la liaison LDAPS et le relais SMTP, et affiche la
-configuration réellement chargée. C'est le point de contrôle principal.
+Connectez-vous ensuite avec le **compte administrateur local** — ses identifiants sont
+affichés une seule fois dans les journaux du conteneur au premier démarrage — puis ouvrez
+**Administration → Configuration**. C'est là que tout se règle : saisissez les valeurs,
+cliquez sur **Tester la connexion**, corrigez ce que le test signale, puis enregistrez.
+
+Rien n'oblige à passer par les variables de la pile : celles-ci ne servent qu'à démarrer
+avec des valeurs de départ. Tout réglage saisi dans l'interface les remplace, et s'applique
+sans redémarrer le conteneur.
 
 Enfin, **Administration → Agents → Importer un export d'annuaire** pour charger l'effectif.
 

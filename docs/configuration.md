@@ -51,7 +51,7 @@ Les valeurs par défaut reprennent celles de vos autres applications :
 | Réglage | Valeur | Remarque |
 |---|---|---|
 | Serveur | `ldaps://192.168.2.9:636` | Chiffré. `ldap://…:389` fonctionne aussi, mais fait circuler les mots de passe en clair. |
-| Compte de service | `svc-cybermois@chatillon.lan` | Le DN complet est également accepté. |
+| Compte de service | `ad.cybermois@chatillon.lan` | Le DN complet est également accepté. |
 | Base de recherche | `DC=chatillon,DC=lan` | |
 | Groupe des administrateurs | `GG-Cybermois-Admins` | Nom court ou DN complet. |
 | Profondeur d'OU | `1` | L'OU contenant directement l'agent. |

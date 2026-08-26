@@ -46,7 +46,7 @@ services:
       # Tous les reglages ci-dessous peuvent aussi se saisir dans
       # Administration > Configuration, ou ils prendront le pas sur ces valeurs.
       LDAP_URL: ${LDAP_URL:-ldaps://192.168.2.9:636}
-      LDAP_BIND_DN: ${LDAP_BIND_DN:-svc-cybermois@chatillon.lan}
+      LDAP_BIND_DN: ${LDAP_BIND_DN:-ad.cybermois@chatillon.lan}
       LDAP_BIND_PASSWORD: ${LDAP_BIND_PASSWORD}
       LDAP_BASE_DN: ${LDAP_BASE_DN:-DC=chatillon,DC=lan}
       LDAP_USER_FILTER: ${LDAP_USER_FILTER:-(&(objectClass=user)(objectCategory=person)(sAMAccountName={{login}}))}
