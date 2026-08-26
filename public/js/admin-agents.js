@@ -627,31 +627,62 @@ async function formulaireServices() {
 
       ${avecProposition ? `
         <div class="message message-info" style="margin-bottom:1rem">
-          ${avecProposition} service(s) ont une OU parente identifiable dans l'annuaire.
+          ${avecProposition} libellé(s) reçoivent une proposition de regroupement.
           <button class="btn btn-secondaire" id="btn-appliquer-propositions"
                   style="padding:.3rem .8rem;font-size:.82rem;margin-left:.5rem">Appliquer les propositions</button>
         </div>` : ''}
 
-      <div class="tableau-defilant"><table class="admin">
+      <div class="barre-filtres" style="margin-bottom:.8rem">
+        <div class="champ-admin" style="flex:1;min-width:220px">
+          <label for="rech-regroupement">Filtrer les libellés</label>
+          <input type="search" id="rech-regroupement" placeholder="Centre de Loisirs, Crêche, Elus…">
+        </div>
+        <button type="button" class="btn btn-secondaire" id="btn-cocher-visibles" style="padding:.55rem 1rem">
+          Cocher les lignes affichées
+        </button>
+        <button type="button" class="btn btn-secondaire" id="btn-decocher-tout" style="padding:.55rem 1rem">
+          Tout décocher
+        </button>
+      </div>
+
+      <div id="barre-affectation" hidden class="message message-info" style="margin-bottom:.8rem">
+        <div class="barre-filtres">
+          <div class="champ-admin" style="flex:1;min-width:240px">
+            <label for="nom-groupe"><span id="nb-lignes-cochees"></span> — nom à leur donner</label>
+            <input type="text" id="nom-groupe" list="cibles-connues" placeholder="Education">
+          </div>
+          <button type="button" class="btn btn-principal" id="btn-affecter" style="padding:.55rem 1rem">
+            Appliquer à ces lignes
+          </button>
+        </div>
+      </div>
+
+      <div class="tableau-defilant"><table class="admin" id="table-regroupement">
         <thead><tr>
+          <th style="width:32px"></th>
           <th>Libellé dans l'annuaire</th>
           <th class="num">Agents</th>
-          <th>Arborescence des OU</th>
           <th>Nom affiché dans la campagne</th>
         </tr></thead>
-        <tbody>${d.inventaire.map((i, index) => `
-          <tr${i.regroupe ? ' style="background:var(--vert-clair-fond)"' : ''}>
+        <tbody>${d.inventaire.map((i) => `
+          <tr data-libelle="${echapper(i.source.toLowerCase())}"${i.regroupe ? ' style="background:var(--vert-clair-fond)"' : ''}>
+            <td><input type="checkbox" class="case-regroupement"
+                       aria-label="Sélectionner ${echapper(i.source)}"
+                       style="width:18px;height:18px;accent-color:var(--vert-fonce)"></td>
             <td><strong>${echapper(i.source)}</strong></td>
             <td class="num">${i.effectif}</td>
-            <td class="discret" style="font-size:.8rem">
-              ${i.chaineOu.length ? echapper(i.chaineOu.join(' ← ')) : '<span class="discret">—</span>'}
-            </td>
             <td>
-              <input type="text" class="cible-service" data-source="${echapper(i.source)}"
-                     data-proposition="${echapper(i.proposition || '')}"
-                     value="${echapper(i.cible)}" list="cibles-connues"
-                     aria-label="Service affiché pour ${echapper(i.source)}"
-                     style="min-width:220px">
+              <div class="rang" style="flex-wrap:nowrap;gap:.4rem">
+                <input type="text" class="cible-service" data-source="${echapper(i.source)}"
+                       data-proposition="${echapper(i.proposition || '')}"
+                       value="${echapper(i.cible)}" list="cibles-connues"
+                       aria-label="Nom affiché pour ${echapper(i.source)}"
+                       style="min-width:200px">
+                <button type="button" class="btn btn-secondaire" data-annuler
+                        title="Revenir au libellé de l'annuaire"
+                        aria-label="Annuler le regroupement de ${echapper(i.source)}"
+                        style="padding:.4rem .7rem;font-size:.9rem;flex:0 0 auto">↺</button>
+              </div>
             </td>
           </tr>`).join('')}
         </tbody>
@@ -671,11 +702,80 @@ async function formulaireServices() {
 
   const majApercu = () => {
     const distincts = new Set(champs().map((c) => c.value.trim()).filter(Boolean));
+    const regroupes = champs().filter((c) => c.value.trim() && c.value.trim() !== c.dataset.source).length;
     document.getElementById('apercu-regroupement').textContent =
-      `${d.inventaire.length} libellés → ${distincts.size} service(s) au classement`;
+      `${d.inventaire.length} libellés → ${distincts.size} service(s) au classement`
+      + ` · ${regroupes} ligne(s) modifiée(s)`;
+
+    // Une ligne modifiee se repere sans avoir a comparer les deux colonnes
+    for (const c of champs()) {
+      const modifie = c.value.trim() && c.value.trim() !== c.dataset.source;
+      c.closest('tr').style.background = modifie ? 'var(--vert-clair-fond)' : '';
+    }
   };
   majApercu();
   zone.addEventListener('input', (e) => { if (e.target.matches('.cible-service')) majApercu(); });
+
+  // Refuser une proposition ne doit pas obliger a retaper le libellé d'origine
+  zone.addEventListener('click', (e) => {
+    if (!e.target.matches('[data-annuler]')) return;
+    const champ = e.target.closest('.rang').querySelector('.cible-service');
+    champ.value = champ.dataset.source;
+    majApercu();
+  });
+
+  /* ---- Affectation groupee : donner le meme nom a plusieurs libelles ---- */
+
+  const lignes = () => [...zone.querySelectorAll('#table-regroupement tbody tr')];
+  const cochees = () => lignes().filter((l) => l.querySelector('.case-regroupement').checked);
+
+  const majSelection = () => {
+    const n = cochees().length;
+    document.getElementById('barre-affectation').hidden = n === 0;
+    document.getElementById('nb-lignes-cochees').textContent =
+      `${n} libellé${n > 1 ? 's' : ''} sélectionné${n > 1 ? 's' : ''}`;
+  };
+
+  zone.addEventListener('change', (e) => {
+    if (e.target.matches('.case-regroupement')) majSelection();
+  });
+
+  const filtrer = () => {
+    const q = document.getElementById('rech-regroupement').value.trim().toLowerCase();
+    for (const l of lignes()) l.hidden = q ? !l.dataset.libelle.includes(q) : false;
+  };
+
+  let minuteurRegroupement;
+  document.getElementById('rech-regroupement').addEventListener('input', () => {
+    clearTimeout(minuteurRegroupement);
+    minuteurRegroupement = setTimeout(filtrer, 200);
+  });
+
+  document.getElementById('btn-cocher-visibles').addEventListener('click', () => {
+    for (const l of lignes()) {
+      if (!l.hidden) l.querySelector('.case-regroupement').checked = true;
+    }
+    majSelection();
+  });
+
+  document.getElementById('btn-decocher-tout').addEventListener('click', () => {
+    for (const l of lignes()) l.querySelector('.case-regroupement').checked = false;
+    majSelection();
+  });
+
+  document.getElementById('btn-affecter').addEventListener('click', () => {
+    const nom = document.getElementById('nom-groupe').value.trim();
+    if (!nom) return alerte('alerte', 'Indiquez le nom à donner à ces libellés.');
+
+    for (const l of cochees()) {
+      l.querySelector('.cible-service').value = nom;
+      l.querySelector('.case-regroupement').checked = false;
+    }
+    document.getElementById('nom-groupe').value = '';
+    majSelection();
+    majApercu();
+    alerte('alerte', `« ${nom} » appliqué. Vérifiez le tableau, puis enregistrez.`, 'succes');
+  });
 
   document.getElementById('btn-appliquer-propositions')?.addEventListener('click', () => {
     for (const c of champs()) {
