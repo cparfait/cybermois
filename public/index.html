@@ -11,7 +11,10 @@
   .page-connexion { display: grid; place-items: center; min-height: 100vh; padding: 2rem 1rem; }
   .bloc-connexion { width: min(100%, 460px); }
   .entete-connexion { text-align: center; margin-bottom: 1.75rem; }
-  .entete-connexion img { height: 84px; width: auto; margin-bottom: 1rem; }
+  /* Le fichier source fait 826 x 1169 px : l'agrandissement ne coute aucune
+     nettete. La borne haute evite qu'il ne repousse le formulaire sous la
+     ligne de flottaison sur un portable. */
+  .entete-connexion img { height: clamp(96px, 15vh, 132px); width: auto; margin-bottom: 1.1rem; }
   .surtitre {
     font-family: var(--police-ui); font-size: .72rem; font-weight: 700;
     letter-spacing: .16em; text-transform: uppercase; color: var(--vert-clair-texte);
