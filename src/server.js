@@ -8,7 +8,7 @@ import cron from 'node-cron';
 
 import { config } from './lib/config.js';
 import { db } from './lib/db.js';
-import { purgerSessions } from './lib/session.js';
+import { purgerSessions, exigerAdmin } from './lib/session.js';
 import { importerContenus } from './lib/seed.js';
 import { envoyerRelances, envoyerResultats } from './lib/mail.js';
 import { verifierModeDemo, estModeDemo, motDePasseDemo } from './lib/annuaire-demo.js';
@@ -92,8 +92,11 @@ enregistrerStatiques(app, {
   '/profil': 'profil.html',
   '/attestation': 'attestation.html',
   '/mentions': 'mentions.html',
-  '/administration': 'admin.html',
-  '/configuration': 'admin.html',
+  // La page d'administration se garde comme ses API. Sans cela elle s'ouvrait
+  // pour tout agent connecte : les panneaux echouaient en 403, mais l'ecran
+  // etait la, ce qui ressemble a s'y meprendre a un droit accorde.
+  '/administration': { fichier: 'admin.html', garde: exigerAdmin },
+  '/configuration': { fichier: 'admin.html', garde: exigerAdmin },
 });
 
 app.get('/sante', async () => ({

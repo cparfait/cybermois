@@ -29,12 +29,23 @@ try {
   const ouverts = defis.filter((d) => d.ouvert).length;
   const progression = ouverts ? Math.round((faits / defis.length) * 100) : 0;
 
+  // Le titre suit l'avancement plutot que de repeter le nom du service, qui
+  // tenait sur deux lignes des qu'il etait long et ecrasait tout le bandeau.
+  const titre = faits === 0
+    ? 'À vous de jouer'
+    : faits >= defis.length
+      ? 'Vous avez tout relevé'
+      : faits >= ouverts
+        ? 'Vous êtes à jour'
+        : `Il vous reste ${ouverts - faits} défi${ouverts - faits > 1 ? 's' : ''} à relever`;
+
   document.getElementById('heros').innerHTML = `
     <section class="heros">
       <p class="surtitre">Bonjour ${echapper((agent.nomComplet || '').split(' ')[0] || '')}</p>
-      <h1>Faites gagner ${echapper(agent.service)}</h1>
+      <h1>${echapper(titre)}</h1>
       <p style="max-width:52ch;margin:0">
-        Chaque défi terminé rapporte des points à votre service. Comptez 5 à 8 minutes,
+        Vous jouez pour <strong>${echapper(agent.service)}</strong>.
+        Chaque défi terminé lui rapporte des points. Comptez 5 à 8 minutes,
         et il n'y a rien à installer.
       </p>
       <div class="compteurs">

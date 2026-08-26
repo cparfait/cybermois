@@ -71,12 +71,21 @@ function lireEtTransformer(cheminRelatif, transformer) {
   return contenu;
 }
 
-/** Enregistre les routes servant le HTML, le JavaScript et les styles versionnes. */
+/**
+ * Enregistre les routes servant le HTML, le JavaScript et les styles versionnes.
+ *
+ * Une page peut se declarer sous la forme `'fichier.html'` ou
+ * `{ fichier, garde }`. La garde est un hook Fastify execute avant l'envoi :
+ * sans elle, la page d'administration s'ouvrait pour tout agent connecte. Ses
+ * appels d'API echouaient bien en 403, mais l'ecran s'affichait - ce qui, vu
+ * de l'utilisateur, ne se distingue pas d'un droit accorde.
+ */
 export function enregistrerStatiques(app, pages) {
   const sansTraversee = (nom) => /^[A-Za-z0-9._-]+$/.test(nom) && !nom.includes('..');
 
-  for (const [route, fichier] of Object.entries(pages)) {
-    app.get(route, async (requete, reponse) => reponse
+  for (const [route, valeur] of Object.entries(pages)) {
+    const { fichier, garde } = typeof valeur === 'string' ? { fichier: valeur } : valeur;
+    app.get(route, garde ? { preHandler: garde } : {}, async (requete, reponse) => reponse
       .type('text/html; charset=utf-8')
       // Le HTML se revalide a chaque fois : c'est lui qui porte les URL versionnees
       .header('Cache-Control', 'no-cache')
