@@ -3,11 +3,15 @@
   "version": "1.0.0",
   "description": "Portail de sensibilisation cyber gamifie - LDAPS, classement par service, relances et resultats par mail",
   "type": "module",
-  "engines": { "node": ">=22.5.0" },
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "seed": "node src/lib/seed.js"
+    "seed": "node src/lib/seed.js",
+    "admin": "node src/lib/cli-admin.js",
+    "diagnostic": "node tests/diagnostic-ad.mjs"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

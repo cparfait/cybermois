@@ -71,6 +71,17 @@ Trois documents selon votre besoin :
 | [`docs/effectif-et-services.md`](docs/effectif-et-services.md) | Import de l'effectif, regroupement des sous-OU |
 | [`docs/exploitation.md`](docs/exploitation.md) | Incidents fréquents, sauvegarde, dépannage |
 
+### Compte administrateur local
+
+```bash
+npm run admin -- lister
+npm run admin -- definir admin "une phrase de passe"
+```
+
+Le compte est créé au premier démarrage et ses identifiants s'affichent **une seule fois**
+dans les journaux. S'ils ont été perdus, la commande ci-dessus redéfinit le mot de passe.
+En conteneur : `docker compose exec cybermois npm run admin -- definir admin "…"`.
+
 ### Diagnostic préalable
 
 Avant toute chose, vérifiez la configuration sans rien modifier :
@@ -313,6 +324,7 @@ node tests/dn.test.mjs            # extraction du service depuis le DN
 node tests/import.test.mjs        # analyse des exports CSV, cas dégradés
 node tests/regroupement.test.mjs  # proposition de regroupement des sous-OU
 node tests/groupes.test.mjs       # appartenance a un groupe AD (nom court ou DN)
+node tests/parametres.test.mjs    # configuration en base, chiffrement, remise a zero
 node tests/simulation.mjs         # campagne complète (serveur démarré requis)
 node tests/diagnostic-ad.mjs      # diagnostic AD et SMTP sur configuration réelle
 ```

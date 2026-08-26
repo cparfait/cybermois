@@ -142,15 +142,36 @@ function lire(source, chemin) {
   return chemin.reduce((noeud, c) => (noeud === undefined ? undefined : noeud[c]), source);
 }
 
+/**
+ * Instantane des valeurs issues de l'environnement, pris avant toute
+ * application des parametres stockes.
+ * Sans lui, retirer un parametre de la base ne suffirait pas a revenir a la
+ * valeur d'environnement : l'objet config conserverait la derniere valeur
+ * appliquee jusqu'au prochain redemarrage.
+ */
+const VALEURS_ENVIRONNEMENT = Object.fromEntries(
+  DESCRIPTEUR.map((d) => {
+    const v = lire(config, d.chemin);
+    return [d.cle, Array.isArray(v) ? [...v] : v];
+  })
+);
+
 /** Applique les parametres stockes sur l'objet config, en memoire. */
 export function appliquerParametres() {
+  // On repart systematiquement de l'environnement, puis on superpose la base :
+  // le resultat ne depend donc pas de l'ordre des modifications passees.
+  for (const d of DESCRIPTEUR) {
+    const v = VALEURS_ENVIRONNEMENT[d.cle];
+    ecrire(config, d.chemin, Array.isArray(v) ? [...v] : v);
+  }
+
   const lignes = db.prepare('SELECT cle, valeur, chiffre FROM parametres').all();
   let appliques = 0;
 
   for (const ligne of lignes) {
     const d = PAR_CLE[ligne.cle];
     if (!d) continue;
-    let brut = ligne.chiffre ? dechiffrer(ligne.valeur) : ligne.valeur;
+    const brut = ligne.chiffre ? dechiffrer(ligne.valeur) : ligne.valeur;
     if (brut === null) continue; // secret illisible : on conserve la valeur d'environnement
     ecrire(config, d.chemin, convertir(d, brut));
     appliques++;

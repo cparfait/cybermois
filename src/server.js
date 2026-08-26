@@ -64,8 +64,19 @@ await app.register(statique, {
   root: path.resolve(process.cwd(), 'public'),
   prefix: '/',
   index: false,
-  cacheControl: config.env === 'production',
-  maxAge: config.env === 'production' ? '1h' : 0,
+  cacheControl: false,
+  // Le code (HTML, JS, CSS) est revalide a chaque chargement : le navigateur
+  // ne renvoie le fichier que s'il a change, sinon il recoit un 304 tres leger.
+  // Sans cela, une mise a jour livre du HTML neuf a des navigateurs qui
+  // executent encore l'ancien JavaScript - panne silencieuse et difficile a
+  // diagnostiquer. Les images, elles, ne changent pas : cache long.
+  setHeaders: (reponse, chemin) => {
+    if (/\.(html|js|css)$/i.test(chemin)) {
+      reponse.setHeader('Cache-Control', 'no-cache');
+    } else {
+      reponse.setHeader('Cache-Control', 'public, max-age=604800');
+    }
+  },
 });
 
 await app.register(routesAuth);
