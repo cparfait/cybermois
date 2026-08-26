@@ -164,12 +164,26 @@ export default async function routesAdmin(app) {
       }
     }
 
-    db.prepare(`UPDATE defis SET titre = ?, accroche = ?, intro = ?, duree_minutes = ?, ouvre_le = ?, publie = ?, maj_le = datetime('now') WHERE id = ?`)
+    // Un badge sans code n'existe pas : on en derive un du libelle pour que le
+    // badge suive le defi meme quand l'administrateur le renomme.
+    const codeBadge = corps.badge?.code
+      || (corps.badge?.libelle
+        ? corps.badge.libelle.normalize('NFD').replace(/[̀-ͯ]/g, '')
+            .toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 40)
+        : defi.badge_code);
+
+    db.prepare(`UPDATE defis SET titre = ?, accroche = ?, intro = ?, duree_minutes = ?, ouvre_le = ?, publie = ?,
+                  badge_code = ?, badge_libelle = ?, badge_emoji = ?, badge_description = ?,
+                  maj_le = datetime('now') WHERE id = ?`)
       .run(
         corps.titre ?? defi.titre, corps.accroche ?? defi.accroche, corps.intro ?? defi.intro,
         Number(corps.duree_minutes) || defi.duree_minutes,
         corps.ouvre_le || defi.ouvre_le,
         corps.publie === undefined ? defi.publie : (corps.publie ? 1 : 0),
+        corps.badge?.libelle ? codeBadge : defi.badge_code,
+        corps.badge?.libelle ?? defi.badge_libelle,
+        corps.badge?.emoji ?? defi.badge_emoji,
+        corps.badge?.description ?? defi.badge_description,
         defi.id
       );
 

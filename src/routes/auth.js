@@ -42,6 +42,23 @@ export default async function routesAuth(app) {
     const { login, motDePasse } = requete.body || {};
     const ip = requete.ip;
 
+    // Comptes locaux d'abord : la verification est locale et immediate, et cela
+    // evite d'exiger de l'administrateur qu'il pense a basculer le formulaire.
+    // Meme principe que dans les autres applications de la collectivite.
+    const local = verifierAdminLocal(login, motDePasse);
+    if (local.ok) {
+      const token = creerSession(local.agent.id);
+      journaliser(local.agent.login, 'connexion_locale_ok', 'via le formulaire commun', ip);
+      return reponse
+        .setCookie(COOKIE, token, optionsCookie())
+        .send({
+          ok: true,
+          local: true,
+          provisoire: local.provisoire,
+          agent: { nomComplet: local.agent.nom_complet, service: local.agent.service, estAdmin: true },
+        });
+    }
+
     const resultat = estModeDemo()
       ? await authentifierDemo(login, motDePasse)
       : await authentifier(login, motDePasse);
@@ -49,6 +66,14 @@ export default async function routesAuth(app) {
     if (!resultat.ok) {
       journaliser(login, 'connexion_echec', resultat.motif + (resultat.erreur ? ` (${resultat.erreur})` : ''), ip);
       requete.log.warn({ login, motif: resultat.motif }, 'echec de connexion');
+
+      // Un identifiant connu comme compte local mais dont le mot de passe ne
+      // passe pas : le dire, plutot que de laisser chercher du cote de l'annuaire.
+      if (local.motif === 'mot_de_passe_invalide') {
+        return reponse.code(401).send({
+          erreur: "Mot de passe incorrect pour ce compte d'administration locale.",
+        });
+      }
       return reponse.code(401).send({ erreur: MESSAGES[resultat.motif] || 'Connexion impossible.' });
     }
 

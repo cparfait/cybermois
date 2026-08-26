@@ -4,6 +4,12 @@
   "accroche": "8 messages sous vos yeux. Lesquels sentent l'arnaque ?",
   "intro": "Le hameçonnage reste la porte d'entrée numéro un des cyberattaques contre les collectivités. Cette semaine, vous jouez au douanier : à vous de repérer les indices qui trahissent un faux message. Plusieurs réponses peuvent être justes : cochez tout ce qui vous semble correct, puis validez.",
   "duree_minutes": 8,
+  "badge": {
+    "code": "detecteur",
+    "libelle": "Détecteur",
+    "emoji": "🕵️",
+    "description": "Défi hameçonnage réussi à 80 % ou plus."
+  },
   "questions": [
     {
       "enonce": "Quels éléments de ce message doivent vous alerter ?",

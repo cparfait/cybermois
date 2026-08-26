@@ -127,7 +127,7 @@ CREATE INDEX IF NOT EXISTS idx_journal_horodatage ON journal(horodatage);
  * existante et on n'ajoute que ce qui manque. Une base deja en service se met
  * ainsi a jour sans perdre de donnees.
  */
-function ajouterColonne(table, colonne, definition) {
+export function ajouterColonne(table, colonne, definition) {
   const colonnes = db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name);
   if (!colonnes.includes(colonne)) {
     db.exec(`ALTER TABLE ${table} ADD COLUMN ${colonne} ${definition}`);
@@ -144,6 +144,13 @@ ajouterColonne('agents', 'note', 'TEXT');
 // Service tel que lu dans l'annuaire, avant application de la table de
 // correspondance. Le conserver permet de rejouer un regroupement a tout moment.
 ajouterColonne('agents', 'service_ad', 'TEXT');
+
+// Chaque defi porte son badge : cable sur le numero de semaine, il devenait
+// faux des qu'on changeait de theme ou qu'on inserait une semaine.
+ajouterColonne('defis', 'badge_code', 'TEXT');
+ajouterColonne('defis', 'badge_libelle', 'TEXT');
+ajouterColonne('defis', 'badge_emoji', 'TEXT');
+ajouterColonne('defis', 'badge_description', 'TEXT');
 
 export function journaliser(login, action, detail, ip) {
   db.prepare('INSERT INTO journal (login, action, detail, ip) VALUES (?, ?, ?, ?)')

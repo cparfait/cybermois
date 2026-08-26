@@ -291,6 +291,21 @@ async function ouvrirEditeur(semaine) {
         le jour venu. Les défis déjà parus restent accessibles quand les suivants s'ouvrent.
       </p>
 
+      <h3 style="margin-top:1.5rem">Badge de ce défi</h3>
+      <p class="discret" style="margin-top:-.3em">
+        Décerné à partir de 80 % de réussite. Chaque défi porte le sien : si vous changez de
+        thème, changez aussi le badge, sinon il ne voudra plus rien dire.
+      </p>
+      <div class="grille grille-2">
+        <div class="champ-admin"><label for="ed-badge-libelle">Nom du badge</label>
+          <input type="text" id="ed-badge-libelle" value="${echapper(defi.badge?.libelle || '')}" placeholder="Coffre-fort"></div>
+        <div class="champ-admin" style="max-width:120px"><label for="ed-badge-emoji">Emoji</label>
+          <input type="text" id="ed-badge-emoji" value="${echapper(defi.badge?.emoji || '')}" placeholder="🔐" maxlength="4"></div>
+        <div class="champ-admin" style="grid-column:1/-1"><label for="ed-badge-description">Description</label>
+          <input type="text" id="ed-badge-description" value="${echapper(defi.badge?.description || '')}"
+                 placeholder="Défi mots de passe réussi à 80 % ou plus."></div>
+      </div>
+
       <h3 style="margin-top:1.5rem">Questions</h3>
       <div id="liste-questions">${defi.questions.map(rendreQuestion).join('')}</div>
       <button type="button" class="btn btn-secondaire" id="btn-ajouter-question">+ Ajouter une question</button>
@@ -364,6 +379,12 @@ async function ouvrirEditeur(semaine) {
           duree_minutes: Number(document.getElementById('ed-duree').value),
           ouvre_le: document.getElementById('ed-ouvre').value,
           publie: document.getElementById('ed-publie').checked,
+          badge: {
+            code: defi.badge?.code || null,
+            libelle: document.getElementById('ed-badge-libelle').value.trim(),
+            emoji: document.getElementById('ed-badge-emoji').value.trim(),
+            description: document.getElementById('ed-badge-description').value.trim(),
+          },
           questions,
         },
       });

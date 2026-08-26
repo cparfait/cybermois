@@ -31,27 +31,80 @@ export function bonusRapidite(score, dureeSecondes, nbQuestions) {
 
 /* ---------------------------------------------------------------- Badges */
 
-export const BADGES = [
-  { code: 'premier_pas', libelle: 'Premier pas', emoji: '🚀', description: 'Vous avez terminé votre premier défi.' },
-  { code: 'sans_faute', libelle: 'Sans faute', emoji: '🎯', description: 'Un défi terminé avec 100 % de bonnes réponses.' },
-  { code: 'oeil_de_lynx', libelle: 'Œil de lynx', emoji: '👁️', description: 'Défi hameçonnage réussi à 80 % ou plus.' },
-  { code: 'coffre_fort', libelle: 'Coffre-fort', emoji: '🔐', description: 'Défi mots de passe réussi à 80 % ou plus.' },
-  { code: 'gardien', libelle: 'Gardien du poste', emoji: '🛡️', description: 'Défi poste de travail réussi à 80 % ou plus.' },
-  { code: 'sang_froid', libelle: 'Sang-froid', emoji: '🧊', description: 'Défi ingénierie sociale réussi à 80 % ou plus.' },
-  { code: 'rapide', libelle: 'Éclair', emoji: '⚡', description: 'Un défi terminé avec le bonus de rapidité maximal.' },
-  { code: 'assidu', libelle: 'Assidu', emoji: '📅', description: 'Vous avez participé à 3 défis.' },
-  { code: 'cyber_heros', libelle: 'Cyber-Héros', emoji: '🏆', description: 'Les 4 défis du Cybermois terminés.' },
-  { code: 'ambassadeur', libelle: 'Ambassadeur', emoji: '🌟', description: 'Les 4 défis terminés avec plus de 90 % de réussite.' },
+/**
+ * Deux familles de badges.
+ *
+ * Les GENERIQUES, ci-dessous, ne dependent d'aucun contenu : ils recompensent
+ * une maniere de jouer et restent valables d'une annee sur l'autre.
+ *
+ * Les badges de DEFI sont portes par les defis eux-memes, en base. Cables sur
+ * le numero de semaine, ils devenaient faux des qu'on changeait un theme ou
+ * qu'on inserait une semaine - et un badge inatteignable est pire que pas de
+ * badge du tout.
+ *
+ * Chaque condition ci-dessous est verifiee atteignable par la simulation.
+ */
+export const BADGES_GENERIQUES = [
+  {
+    code: 'premier_pas', libelle: 'Premier pas', emoji: '🚀',
+    description: 'Vous avez terminé votre premier défi.',
+  },
+  {
+    code: 'oeil_de_lynx', libelle: 'Œil de lynx', emoji: '👁️',
+    description: 'Un défi terminé sans jamais cocher une mauvaise réponse.',
+  },
+  {
+    code: 'sans_faute', libelle: 'Sans faute', emoji: '🎯',
+    description: 'Un défi terminé avec la totalité des points.',
+  },
+  {
+    code: 'assidu', libelle: 'Assidu', emoji: '📅',
+    description: 'Trois défis terminés.',
+  },
+  {
+    code: 'cyber_heros', libelle: 'Cyber-Héros', emoji: '🏆',
+    description: 'Tous les défis de la campagne terminés.',
+  },
+  {
+    code: 'ambassadeur', libelle: 'Ambassadeur', emoji: '🌟',
+    description: 'Tous les défis terminés avec 80 % de réussite au total.',
+  },
 ];
 
-const BADGE_PAR_SEMAINE = { 1: 'coffre_fort', 2: 'oeil_de_lynx', 3: 'gardien', 4: 'sang_froid' };
+/** Badges portes par les defis publies, dans l'ordre des semaines. */
+export function badgesDefis() {
+  return db.prepare(`
+    SELECT semaine, badge_code AS code, badge_libelle AS libelle,
+           badge_emoji AS emoji, badge_description AS description
+    FROM defis
+    WHERE publie = 1 AND badge_code IS NOT NULL AND badge_code <> ''
+    ORDER BY semaine
+  `).all();
+}
 
-/** Attribue les badges gagnes apres une participation. Renvoie les nouveaux badges. */
-export function attribuerBadges(agentId, { semaine, score, scoreMax, bonusMax }) {
+/** Catalogue complet, pour l'affichage du profil. */
+export function tousLesBadges() {
+  return [...BADGES_GENERIQUES, ...badgesDefis()];
+}
+
+// Conserve pour compatibilite avec le code existant
+export const BADGES = BADGES_GENERIQUES;
+
+/**
+ * Attribue les badges gagnes apres une participation.
+ * `erreurs` compte les questions ou l'agent a coche au moins une mauvaise
+ * proposition : oublier une bonne reponse n'est pas se tromper.
+ */
+export function attribuerBadges(agentId, { semaine, score, scoreMax, erreurs = null } = {}) {
   const nouveaux = [];
+  const catalogue = tousLesBadges();
   const donner = (code) => {
+    if (!code) return;
     const res = db.prepare('INSERT OR IGNORE INTO badges_agent (agent_id, code) VALUES (?, ?)').run(agentId, code);
-    if (res.changes > 0) nouveaux.push(BADGES.find((b) => b.code === code));
+    if (res.changes > 0) {
+      const b = catalogue.find((x) => x.code === code);
+      if (b) nouveaux.push(b);
+    }
   };
 
   const parts = db.prepare(
@@ -60,10 +113,16 @@ export function attribuerBadges(agentId, { semaine, score, scoreMax, bonusMax })
 
   donner('premier_pas');
   if (scoreMax > 0 && score >= scoreMax) donner('sans_faute');
-  if (scoreMax > 0 && score / scoreMax >= 0.8 && BADGE_PAR_SEMAINE[semaine]) donner(BADGE_PAR_SEMAINE[semaine]);
-  if (bonusMax) donner('rapide');
-  // Le seuil du parcours complet suit le nombre reel de defis publies :
-  // ajouter une semaine ne doit pas decerner « Cyber-Heros » par anticipation.
+  if (erreurs === 0) donner('oeil_de_lynx');
+
+  // Le badge du defi qui vient d'etre joue, a partir de 80 % de reussite
+  if (scoreMax > 0 && score / scoreMax >= 0.8) {
+    const badge = db.prepare('SELECT badge_code FROM defis WHERE semaine = ?').get(semaine);
+    donner(badge?.badge_code);
+  }
+
+  // Les seuils suivent le nombre reel de defis publies : ajouter une semaine
+  // ne doit pas decerner « Cyber-Heros » par anticipation.
   const defisPublies = db.prepare('SELECT COUNT(*) AS n FROM defis WHERE publie = 1').get().n || 4;
 
   if (parts.length >= Math.min(3, defisPublies)) donner('assidu');
@@ -71,7 +130,7 @@ export function attribuerBadges(agentId, { semaine, score, scoreMax, bonusMax })
     donner('cyber_heros');
     const total = parts.reduce((s, p) => s + p.score, 0);
     const totalMax = parts.reduce((s, p) => s + p.score_max, 0);
-    if (totalMax > 0 && total / totalMax >= 0.9) donner('ambassadeur');
+    if (totalMax > 0 && total / totalMax >= 0.8) donner('ambassadeur');
   }
 
   return nouveaux;

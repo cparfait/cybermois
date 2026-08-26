@@ -2,7 +2,7 @@ import { db, journaliser } from '../lib/db.js';
 import { config } from '../lib/config.js';
 import { exigerAuth } from '../lib/session.js';
 import {
-  attribuerBadges, BADGES,
+  attribuerBadges, tousLesBadges,
   classementServices, classementAgents, rangAgent, rangService, statistiquesGlobales,
 } from '../lib/scoring.js';
 import {
@@ -186,7 +186,10 @@ export default async function routesJeu(app) {
       }
 
       nouveauxBadges = attribuerBadges(requete.agent.id, {
-        semaine: defi.semaine, score: etat.score, scoreMax: etat.scoreMax, bonusMax: false,
+        semaine: defi.semaine, score: etat.score, scoreMax: etat.scoreMax,
+        // Cocher une mauvaise proposition n'est pas la meme chose qu'en oublier
+        // une bonne : seul le premier cas empeche « Œil de lynx ».
+        erreurs: etat.erreurs,
       });
 
       journaliser(requete.agent.login, 'defi_termine',
@@ -250,7 +253,9 @@ export default async function routesJeu(app) {
         bonnes: p.bonnes, total: p.total_questions, termineLe: p.termine_le,
       })),
       scoreTotal: participations.reduce((s, p) => s + p.score, 0),
-      badges: BADGES.map((b) => ({ ...b, obtenu: !!codesObtenus[b.code], obtenuLe: codesObtenus[b.code] || null })),
+      badges: tousLesBadges().map((b) => ({
+        ...b, obtenu: !!codesObtenus[b.code], obtenuLe: codesObtenus[b.code] || null,
+      })),
       rangService: rangService(requete.agent.service),
       rangAgent: rangAgent(requete.agent.id),
       complet: participations.length >= totalDefis && totalDefis > 0,

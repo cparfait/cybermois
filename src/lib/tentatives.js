@@ -1,4 +1,4 @@
-import { db } from './db.js';
+import { db, ajouterColonne } from './db.js';
 import { noterQuestion } from './scoring.js';
 
 /**
@@ -28,6 +28,11 @@ CREATE TABLE IF NOT EXISTS tentatives (
 `);
 
 /** Questions deja repondues dans la tentative en cours. */
+// Cette migration vit ici, et non dans db.js : la table est creee par ce
+// module, qui est charge apres.
+// Distingue l'agent qui a oublie une bonne reponse de celui qui s'est trompe.
+ajouterColonne('tentatives', 'a_tort', 'INTEGER NOT NULL DEFAULT 0');
+
 export function progression(agentId, defiId) {
   return db.prepare(
     'SELECT question_id, points, points_max, parfaite FROM tentatives WHERE agent_id = ? AND defi_id = ?'
@@ -43,19 +48,19 @@ export function repondre(agentId, defiId, question, choix) {
   const note = noterQuestion(question, choix);
   const choisis = [...new Set((choix || []).map(Number))];
 
-  db.prepare(`
-    INSERT INTO tentatives (agent_id, defi_id, question_id, choix, points, points_max, parfaite)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(agent_id, defi_id, question_id) DO UPDATE SET
-      choix = excluded.choix, points = excluded.points,
-      points_max = excluded.points_max, parfaite = excluded.parfaite,
-      repondu_le = datetime('now')
-  `).run(agentId, defiId, question.id, JSON.stringify(choisis),
-    note.points, question.points, note.parfaite ? 1 : 0);
-
   const bonnes = question.reponses.filter((r) => r.correcte);
   const oubliees = bonnes.filter((r) => !choisis.includes(r.id));
   const tort = question.reponses.filter((r) => !r.correcte && choisis.includes(r.id));
+
+  db.prepare(`
+    INSERT INTO tentatives (agent_id, defi_id, question_id, choix, points, points_max, parfaite, a_tort)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(agent_id, defi_id, question_id) DO UPDATE SET
+      choix = excluded.choix, points = excluded.points,
+      points_max = excluded.points_max, parfaite = excluded.parfaite,
+      a_tort = excluded.a_tort, repondu_le = datetime('now')
+  `).run(agentId, defiId, question.id, JSON.stringify(choisis),
+    note.points, question.points, note.parfaite ? 1 : 0, tort.length ? 1 : 0);
 
   return {
     questionId: question.id,
@@ -86,7 +91,8 @@ export function totaux(agentId, defiId) {
     SELECT COUNT(*) AS repondues,
            COALESCE(SUM(points), 0)     AS score,
            COALESCE(SUM(points_max), 0) AS scoreMax,
-           COALESCE(SUM(parfaite), 0)   AS parfaites
+           COALESCE(SUM(parfaite), 0)   AS parfaites,
+           COALESCE(SUM(a_tort), 0)     AS erreurs
     FROM tentatives WHERE agent_id = ? AND defi_id = ?
   `).get(agentId, defiId);
 }

@@ -38,15 +38,23 @@ export function importerContenus({ force = false } = {}) {
         rapport.push({ semaine: defi.semaine, statut: 'ignore', motif: `${joue} participation(s) enregistree(s)` });
         continue;
       }
-      db.prepare(`UPDATE defis SET titre = ?, accroche = ?, intro = ?, duree_minutes = ?, ouvre_le = ?, maj_le = datetime('now') WHERE id = ?`)
-        .run(defi.titre, defi.accroche, defi.intro, defi.duree_minutes || 7, dateOuverture(defi.semaine), existant.id);
+      db.prepare(`UPDATE defis SET titre = ?, accroche = ?, intro = ?, duree_minutes = ?, ouvre_le = ?,
+                    badge_code = ?, badge_libelle = ?, badge_emoji = ?, badge_description = ?,
+                    maj_le = datetime('now') WHERE id = ?`)
+        .run(defi.titre, defi.accroche, defi.intro, defi.duree_minutes || 7, dateOuverture(defi.semaine),
+             defi.badge?.code || null, defi.badge?.libelle || null,
+             defi.badge?.emoji || null, defi.badge?.description || null, existant.id);
       db.prepare('DELETE FROM questions WHERE defi_id = ?').run(existant.id);
       insererQuestions(existant.id, defi.questions);
       rapport.push({ semaine: defi.semaine, statut: 'mis a jour', questions: defi.questions.length });
     } else {
-      const res = db.prepare(
-        'INSERT INTO defis (semaine, titre, accroche, intro, duree_minutes, ouvre_le, publie) VALUES (?, ?, ?, ?, ?, ?, 1)'
-      ).run(defi.semaine, defi.titre, defi.accroche, defi.intro, defi.duree_minutes || 7, dateOuverture(defi.semaine));
+      const res = db.prepare(`
+        INSERT INTO defis (semaine, titre, accroche, intro, duree_minutes, ouvre_le, publie,
+                           badge_code, badge_libelle, badge_emoji, badge_description)
+        VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)
+      `).run(defi.semaine, defi.titre, defi.accroche, defi.intro, defi.duree_minutes || 7,
+             dateOuverture(defi.semaine), defi.badge?.code || null, defi.badge?.libelle || null,
+             defi.badge?.emoji || null, defi.badge?.description || null);
       insererQuestions(res.lastInsertRowid, defi.questions);
       rapport.push({ semaine: defi.semaine, statut: 'cree', questions: defi.questions.length });
     }
@@ -74,6 +82,10 @@ export function exporterDefi(semaine) {
   return {
     semaine: defi.semaine, titre: defi.titre, accroche: defi.accroche, intro: defi.intro,
     duree_minutes: defi.duree_minutes,
+    badge: defi.badge_code ? {
+      code: defi.badge_code, libelle: defi.badge_libelle,
+      emoji: defi.badge_emoji, description: defi.badge_description,
+    } : null,
     questions: questions.map((q) => ({
       enonce: q.enonce, contexte: q.contexte, multiple: !!q.multiple, points: q.points, explication: q.explication,
       reponses: db.prepare('SELECT libelle, correcte FROM reponses WHERE question_id = ? ORDER BY ordre').all(q.id)

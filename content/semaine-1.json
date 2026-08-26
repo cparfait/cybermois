@@ -4,6 +4,12 @@
   "accroche": "Vos mots de passe tiennent-ils vraiment la route ?",
   "intro": "Un mot de passe, c'est la clé de votre bureau numérique. Cette semaine, on regarde ce qui protège vraiment un compte... et ce qui ne protège rien du tout. Plusieurs réponses peuvent être justes : cochez tout ce qui vous semble correct, puis validez.",
   "duree_minutes": 6,
+  "badge": {
+    "code": "coffre_fort",
+    "libelle": "Coffre-fort",
+    "emoji": "🔐",
+    "description": "Défi mots de passe réussi à 80 % ou plus."
+  },
   "questions": [
     {
       "enonce": "Parmi ces mots de passe, lesquels sont réellement solides ?",
@@ -12,11 +18,26 @@
       "points": 10,
       "explication": "La longueur prime sur la complexité. « Chatillon2026! » et « Azerty123! » respectent les règles de complexité classiques mais figurent dans tous les dictionnaires d'attaque : ils tombent en quelques secondes. Une phrase de passe longue, même sans caractère exotique, résiste bien mieux. Retenez : 4 mots aléatoires valent mieux qu'un mot tordu.",
       "reponses": [
-        { "libelle": "Chatillon2026!", "correcte": false },
-        { "libelle": "girafe-tabouret-pluie-42", "correcte": true },
-        { "libelle": "Azerty123!", "correcte": false },
-        { "libelle": "J'ai adopté 2 chats en 2019 !", "correcte": true },
-        { "libelle": "P@ssw0rd", "correcte": false }
+        {
+          "libelle": "Chatillon2026!",
+          "correcte": false
+        },
+        {
+          "libelle": "girafe-tabouret-pluie-42",
+          "correcte": true
+        },
+        {
+          "libelle": "Azerty123!",
+          "correcte": false
+        },
+        {
+          "libelle": "J'ai adopté 2 chats en 2019 !",
+          "correcte": true
+        },
+        {
+          "libelle": "P@ssw0rd",
+          "correcte": false
+        }
       ]
     },
     {
@@ -25,11 +46,26 @@
       "points": 10,
       "explication": "Un gestionnaire de mots de passe est aujourd'hui la recommandation officielle de l'ANSSI : il génère et retient des mots de passe uniques à votre place. Le carnet fermé à clé dans un tiroir est toléré s'il ne quitte pas le bureau. En revanche, le fichier Excel « codes.xlsx », le post-it sous le clavier et le partage entre collègues sont à proscrire : en cas d'incident, plus personne ne peut savoir qui a fait quoi.",
       "reponses": [
-        { "libelle": "Utiliser un gestionnaire de mots de passe validé par la DSI", "correcte": true },
-        { "libelle": "Un fichier Excel nommé « codes.xlsx » sur le lecteur partagé", "correcte": false },
-        { "libelle": "Un carnet papier rangé dans un tiroir fermant à clé", "correcte": true },
-        { "libelle": "Un post-it collé sous le clavier", "correcte": false },
-        { "libelle": "Partager son mot de passe avec un collègue de confiance pendant les congés", "correcte": false }
+        {
+          "libelle": "Utiliser un gestionnaire de mots de passe validé par la DSI",
+          "correcte": true
+        },
+        {
+          "libelle": "Un fichier Excel nommé « codes.xlsx » sur le lecteur partagé",
+          "correcte": false
+        },
+        {
+          "libelle": "Un carnet papier rangé dans un tiroir fermant à clé",
+          "correcte": true
+        },
+        {
+          "libelle": "Un post-it collé sous le clavier",
+          "correcte": false
+        },
+        {
+          "libelle": "Partager son mot de passe avec un collègue de confiance pendant les congés",
+          "correcte": false
+        }
       ]
     },
     {
@@ -38,10 +74,22 @@
       "points": 10,
       "explication": "C'est le « credential stuffing » : les attaquants récupèrent les couples identifiant/mot de passe volés sur un site et les rejouent automatiquement sur des centaines d'autres services, dont les webmails et VPN professionnels. C'est aujourd'hui le premier vecteur de compromission des collectivités. D'où la règle absolue : un mot de passe unique par service, surtout pour le travail.",
       "reponses": [
-        { "libelle": "Rien, les deux comptes sont indépendants", "correcte": false },
-        { "libelle": "Votre compte professionnel devient vulnérable : les attaquants rejouent le couple volé sur d'autres services", "correcte": true },
-        { "libelle": "Seul le site de e-commerce est concerné, mon employeur me protège", "correcte": false },
-        { "libelle": "L'antivirus de la collectivité bloquera automatiquement la tentative", "correcte": false }
+        {
+          "libelle": "Rien, les deux comptes sont indépendants",
+          "correcte": false
+        },
+        {
+          "libelle": "Votre compte professionnel devient vulnérable : les attaquants rejouent le couple volé sur d'autres services",
+          "correcte": true
+        },
+        {
+          "libelle": "Seul le site de e-commerce est concerné, mon employeur me protège",
+          "correcte": false
+        },
+        {
+          "libelle": "L'antivirus de la collectivité bloquera automatiquement la tentative",
+          "correcte": false
+        }
       ]
     },
     {
@@ -50,11 +98,26 @@
       "points": 15,
       "explication": "La MFA ajoute une seconde preuve (code, application, clé physique) en plus du mot de passe. Même si votre mot de passe fuite, l'attaquant reste bloqué. Attention toutefois : elle ne vous dispense pas d'un bon mot de passe, et elle ne protège pas si vous validez vous-même une notification que vous n'avez pas déclenchée — c'est le « MFA fatigue ». Une demande de validation que vous n'attendez pas se refuse, et se signale.",
       "reponses": [
-        { "libelle": "Elle protège le compte même si le mot de passe a fuité", "correcte": true },
-        { "libelle": "Elle rend le mot de passe inutile, on peut en prendre un simple", "correcte": false },
-        { "libelle": "Elle bloque l'attaquant qui ne possède pas votre téléphone ou votre clé", "correcte": true },
-        { "libelle": "Elle est inefficace si vous validez une notification que vous n'avez pas demandée", "correcte": true },
-        { "libelle": "Elle chiffre automatiquement tous vos documents", "correcte": false }
+        {
+          "libelle": "Elle protège le compte même si le mot de passe a fuité",
+          "correcte": true
+        },
+        {
+          "libelle": "Elle rend le mot de passe inutile, on peut en prendre un simple",
+          "correcte": false
+        },
+        {
+          "libelle": "Elle bloque l'attaquant qui ne possède pas votre téléphone ou votre clé",
+          "correcte": true
+        },
+        {
+          "libelle": "Elle est inefficace si vous validez une notification que vous n'avez pas demandée",
+          "correcte": true
+        },
+        {
+          "libelle": "Elle chiffre automatiquement tous vos documents",
+          "correcte": false
+        }
       ]
     },
     {
@@ -63,10 +126,22 @@
       "points": 10,
       "explication": "Sur un poste professionnel géré par la DSI, l'enregistrement dans le navigateur est acceptable si la session Windows est verrouillée dès que vous quittez votre bureau. Le vrai danger, c'est le poste partagé ou personnel : n'importe qui ouvrant le navigateur accède alors à vos comptes. En cas de doute, la règle est simple : demandez à la DSI quelle est la solution retenue chez vous.",
       "reponses": [
-        { "libelle": "Toujours accepter, c'est plus pratique", "correcte": false },
-        { "libelle": "Acceptable sur mon poste professionnel personnel et verrouillé ; jamais sur un poste partagé ou personnel", "correcte": true },
-        { "libelle": "Toujours refuser, c'est systématiquement dangereux", "correcte": false },
-        { "libelle": "Accepter puis noter le mot de passe sur papier en secours", "correcte": false }
+        {
+          "libelle": "Toujours accepter, c'est plus pratique",
+          "correcte": false
+        },
+        {
+          "libelle": "Acceptable sur mon poste professionnel personnel et verrouillé ; jamais sur un poste partagé ou personnel",
+          "correcte": true
+        },
+        {
+          "libelle": "Toujours refuser, c'est systématiquement dangereux",
+          "correcte": false
+        },
+        {
+          "libelle": "Accepter puis noter le mot de passe sur papier en secours",
+          "correcte": false
+        }
       ]
     },
     {
@@ -75,11 +150,26 @@
       "points": 15,
       "explication": "Toute anomalie inexpliquée sur un compte justifie un changement immédiat et un signalement à la DSI. La règle du changement tous les 3 mois « par principe » a en revanche été abandonnée par l'ANSSI et le NIST : elle poussait les utilisateurs à faire motdepasse1, motdepasse2... Mieux vaut un mot de passe long, unique, et changé uniquement en cas de doute réel.",
       "reponses": [
-        { "libelle": "Vous recevez une notification de connexion que vous n'avez pas faite", "correcte": true },
-        { "libelle": "Vous l'avez saisi sur un site après avoir cliqué sur un lien reçu par mail", "correcte": true },
-        { "libelle": "Cela fait 3 mois que vous ne l'avez pas changé et tout va bien", "correcte": false },
-        { "libelle": "Un collègue ou un prestataire a pu le voir ou le connaître", "correcte": true },
-        { "libelle": "Vous partez en congés", "correcte": false }
+        {
+          "libelle": "Vous recevez une notification de connexion que vous n'avez pas faite",
+          "correcte": true
+        },
+        {
+          "libelle": "Vous l'avez saisi sur un site après avoir cliqué sur un lien reçu par mail",
+          "correcte": true
+        },
+        {
+          "libelle": "Cela fait 3 mois que vous ne l'avez pas changé et tout va bien",
+          "correcte": false
+        },
+        {
+          "libelle": "Un collègue ou un prestataire a pu le voir ou le connaître",
+          "correcte": true
+        },
+        {
+          "libelle": "Vous partez en congés",
+          "correcte": false
+        }
       ]
     },
     {
@@ -88,10 +178,22 @@
       "points": 10,
       "explication": "Avec du matériel grand public, un mot de passe de 8 caractères, même « complexe », tombe en quelques heures. À 12 caractères on passe à plusieurs siècles, à 16 c'est hors de portée. C'est pourquoi on parle désormais de phrase de passe : la longueur est le seul facteur qui compte vraiment.",
       "reponses": [
-        { "libelle": "Quelques heures", "correcte": true },
-        { "libelle": "Quelques mois", "correcte": false },
-        { "libelle": "Plusieurs années", "correcte": false },
-        { "libelle": "Plusieurs siècles", "correcte": false }
+        {
+          "libelle": "Quelques heures",
+          "correcte": true
+        },
+        {
+          "libelle": "Quelques mois",
+          "correcte": false
+        },
+        {
+          "libelle": "Plusieurs années",
+          "correcte": false
+        },
+        {
+          "libelle": "Plusieurs siècles",
+          "correcte": false
+        }
       ]
     }
   ]

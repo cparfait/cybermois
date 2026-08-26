@@ -41,9 +41,13 @@ async function jouer(cookie, semaine, niveau) {
   const defi = await (await fetch(`${BASE}/api/defis/${semaine}`, { headers: { cookie } })).json();
   if (defi.erreur) throw new Error(defi.erreur);
 
-  const reponses = {};
+  const dejaFaites = new Set(defi.dejaRepondu || []);
+
+  // Le defi se joue question par question : on suit le meme chemin que l'agent.
   for (const q of defi.questions) {
-    // On ne connait pas les bonnes reponses cote client : on simule un agent
+    if (dejaFaites.has(q.id)) continue;
+
+    // Les bonnes reponses ne sont pas connues du client : on simule un agent
     // qui coche un sous-ensemble plausible, module par son niveau.
     const nb = q.multiple ? Math.max(1, Math.round(q.reponses.length * 0.5)) : 1;
     const choix = [];
@@ -51,16 +55,19 @@ async function jouer(cookie, semaine, niveau) {
       if (choix.length >= nb) break;
       if (alea() < niveau * 0.75 + 0.15) choix.push(r.id);
     }
-    reponses[q.id] = choix.length ? choix : [q.reponses[0].id];
+    if (!choix.length) choix.push(q.reponses[0].id);
+
+    const rep = await fetch(`${BASE}/api/defis/${semaine}/questions/${q.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', cookie },
+      body: JSON.stringify({ choix }),
+    });
+    if (!rep.ok) throw new Error((await rep.json()).erreur);
   }
 
-  const r = await fetch(`${BASE}/api/defis/${semaine}/valider`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', cookie },
-    body: JSON.stringify({ reponses, dureeSecondes: Math.round(defi.questions.length * (15 + alea() * 30)) }),
-  });
-  const res = await r.json();
-  if (!r.ok) throw new Error(res.erreur);
+  const fin = await fetch(`${BASE}/api/defis/${semaine}/terminer`, { method: 'POST', headers: { cookie } });
+  const res = await fin.json();
+  if (!fin.ok) throw new Error(res.erreur);
   return res;
 }
 

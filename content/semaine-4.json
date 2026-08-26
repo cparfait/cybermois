@@ -4,6 +4,12 @@
   "accroche": "Le maillon le plus attaqué n'est pas la machine. C'est nous.",
   "intro": "Pas besoin de percer un pare-feu quand il suffit de convaincre quelqu'un d'ouvrir la porte. Faux DGS au téléphone, faux prestataire, fausse urgence : cette dernière semaine est consacrée à l'ingénierie sociale. Plusieurs réponses peuvent être justes : cochez tout ce qui vous semble correct, puis validez.",
   "duree_minutes": 8,
+  "badge": {
+    "code": "sang_froid",
+    "libelle": "Sang-froid",
+    "emoji": "🧊",
+    "description": "Défi ingénierie sociale réussi à 80 % ou plus."
+  },
   "questions": [
     {
       "enonce": "Vous recevez ce message. Quels signaux trahissent une arnaque au président ?",
