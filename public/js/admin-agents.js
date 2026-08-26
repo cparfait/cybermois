@@ -4,6 +4,7 @@ import { formulaireResultatsAgent } from '/js/admin-corrections.js';
 import { formulaireServices as formulaireEffectifsServices } from '/js/admin-services.js';
 import { formulaireRattachement } from '/js/admin-rattachement.js';
 import { formulaireReferentiel } from '/js/admin-referentiel.js';
+import { formulaireNonReferences } from '/js/admin-non-references.js';
 
 let etatFiltres = { recherche: '', service: '', etat: '', page: 1, parPage: 50 };
 let dernierImport = null;
@@ -112,6 +113,7 @@ export async function chargerAgents() {
     <div class="barre-outils" style="margin-bottom:1.2rem">
       <button class="btn btn-principal" id="btn-ouvrir-sync">Synchroniser depuis l'annuaire</button>
       <button class="btn btn-secondaire" id="btn-ouvrir-referentiel">Référentiel des services</button>
+      <button class="btn btn-secondaire" id="btn-ouvrir-nonref">Services non référencés</button>
       <button class="btn btn-secondaire" id="btn-ouvrir-effectifs">Services participants</button>
       <button class="btn btn-secondaire" id="btn-ouvrir-services">Renommer et regrouper</button>
       <button class="btn btn-secondaire" id="btn-ouvrir-rattachement">Agents sans service</button>
@@ -355,6 +357,8 @@ function brancher(d) {
     .addEventListener('click', () => formulaireRattachement(chargerAgents));
   document.getElementById('btn-ouvrir-referentiel')
     .addEventListener('click', () => formulaireReferentiel(chargerAgents));
+  document.getElementById('btn-ouvrir-nonref')
+    .addEventListener('click', () => formulaireNonReferences(chargerAgents));
 }
 
 /* ------------------------------------------------- Ajout et modification */

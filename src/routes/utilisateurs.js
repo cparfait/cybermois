@@ -715,6 +715,107 @@ export default async function routesUtilisateurs(app) {
     referentiel: nomsReferentiel(),
   }));
 
+  /**
+   * Les libelles d'annuaire qui ne correspondent a aucun service du referentiel.
+   *
+   * C'est la liste de travail : tant qu'un libelle y figure, ses agents
+   * apparaissent au classement sous un nom que la collectivite ne reconnait
+   * pas, et deux graphies du meme service comptent pour deux.
+   *
+   * On donne le rapprochement le plus probable avec son degre de confiance,
+   * parce qu'une suggestion fausse presentee comme sure coute plus cher que
+   * pas de suggestion du tout.
+   */
+  app.get('/api/admin/services/non-references', async () => {
+    const reference = nomsReferentiel();
+    const cles = new Set(reference.map(cleComparaison));
+
+    const inventaire = inventaireServices();
+    // Le libelle est reference des lors que sa cible actuelle - donc apres
+    // regroupement - figure au referentiel. C'est bien la cible qui parait au
+    // classement, pas le libelle brut.
+    const hors = inventaire.filter((i) => !cles.has(cleComparaison(i.cible)));
+
+    const rapproches = reference.length
+      ? rapprocher(hors.map((h) => ({ libelle: h.cible, effectif: h.effectif })), reference)
+      : [];
+    const parLibelle = new Map(rapproches.map((r) => [r.libelle, r]));
+
+    return {
+      referentiel: reference,
+      total: inventaire.length,
+      references: inventaire.length - hors.length,
+      agents: hors.reduce((n, h) => n + h.effectif, 0),
+      services: hors.map((h) => {
+        const r = parLibelle.get(h.cible);
+        return {
+          source: h.source,
+          cible: h.cible,
+          regroupe: h.regroupe,
+          effectif: h.effectif,
+          chaineOu: h.chaineOu,
+          proposition: r?.proposition || null,
+          confiance: r?.confiance || 'aucune',
+          motif: r?.motif || null,
+          score: r?.score || 0,
+          candidats: r?.candidats || [],
+        };
+      }).sort((a, b) => b.effectif - a.effectif || a.cible.localeCompare(b.cible, 'fr')),
+    };
+  });
+
+  /**
+   * Traite les libelles hors referentiel : les uns pointent vers un service
+   * reconnu, les autres entrent au referentiel parce qu'ils en manquaient.
+   *
+   * Les regles existantes sont conservees : enregistrerRegroupements() remplace
+   * la table entiere, envoyer la seule selection de cet ecran effacerait le
+   * travail fait ailleurs.
+   */
+  app.post('/api/admin/services/non-references', async (requete, reponse) => {
+    const affectations = Array.isArray(requete.body?.affectations) ? requete.body.affectations : [];
+    const ajouts = Array.isArray(requete.body?.ajouts) ? requete.body.ajouts : [];
+    if (!affectations.length && !ajouts.length) {
+      return reponse.code(400).send({ erreur: 'Aucune décision transmise.' });
+    }
+
+    let entres = 0;
+    if (ajouts.length) {
+      const existants = nomsReferentiel();
+      const cles = new Set(existants.map(cleComparaison));
+      const nouveaux = ajouts.map(normaliser).filter((n) => n && !cles.has(cleComparaison(n)));
+      if (nouveaux.length) {
+        enregistrerReferentiel([...existants, ...nouveaux], requete.agent.login);
+        entres = nouveaux.length;
+      }
+    }
+
+    let touches = 0;
+    let regles = 0;
+    if (affectations.length) {
+      const fusion = new Map(lireRegroupements().map((r) => [r.source, r.cible]));
+      for (const a of affectations) {
+        const source = normaliser(a.source);
+        const cible = normaliser(a.cible);
+        if (source && cible) fusion.set(source, cible);
+      }
+      const liste = [...fusion].map(([source, cible]) => ({ source, cible }));
+      ({ touches } = enregistrerRegroupements(liste));
+      regles = affectations.length;
+    }
+
+    journaliser(requete.agent.login, 'services_non_references',
+      `${regles} rattachement(s), ${entres} ajout(s) au referentiel, ${touches} agent(s) deplace(s)`,
+      requete.ip);
+
+    const bouts = [];
+    if (regles) bouts.push(`${regles} libellé(s) rattaché(s) au référentiel`);
+    if (entres) bouts.push(`${entres} service(s) ajouté(s) au référentiel`);
+    if (touches) bouts.push(`${touches} agent(s) ont changé de service`);
+
+    return { ok: true, touches, entres, message: `${bouts.join(', ')}.` };
+  });
+
   app.post('/api/admin/services/regroupements', async (requete, reponse) => {
     const regles = Array.isArray(requete.body?.regles) ? requete.body.regles : null;
     if (!regles) return reponse.code(400).send({ erreur: 'Liste de règles attendue.' });
