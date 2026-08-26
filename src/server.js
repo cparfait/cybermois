@@ -15,6 +15,7 @@ import { verifierModeDemo, estModeDemo, motDePasseDemo } from './lib/annuaire-de
 import { verifierChiffrement } from './lib/ldap.js';
 import { appliquerParametres, configurationUtilisable } from './lib/parametres.js';
 import { amorcerAdminLocal } from './lib/admin-local.js';
+import { enregistrerStatiques } from './lib/statiques.js';
 
 import routesAuth from './routes/auth.js';
 import routesJeu from './routes/jeu.js';
@@ -65,17 +66,11 @@ await app.register(statique, {
   prefix: '/',
   index: false,
   cacheControl: false,
-  // Le code (HTML, JS, CSS) est revalide a chaque chargement : le navigateur
-  // ne renvoie le fichier que s'il a change, sinon il recoit un 304 tres leger.
-  // Sans cela, une mise a jour livre du HTML neuf a des navigateurs qui
-  // executent encore l'ancien JavaScript - panne silencieuse et difficile a
-  // diagnostiquer. Les images, elles, ne changent pas : cache long.
-  setHeaders: (reponse, chemin) => {
-    if (/\.(html|js|css)$/i.test(chemin)) {
-      reponse.setHeader('Cache-Control', 'no-cache');
-    } else {
-      reponse.setHeader('Cache-Control', 'public, max-age=604800');
-    }
+  // Ne sert plus que les images et ressources annexes : elles changent rarement,
+  // d'ou un cache long. Le HTML, le JavaScript et les styles passent par
+  // enregistrerStatiques, qui fait figurer une empreinte du code dans leur URL.
+  setHeaders: (reponse) => {
+    reponse.setHeader('Cache-Control', 'public, max-age=604800');
   },
 });
 
@@ -87,17 +82,17 @@ await app.register(routesConfiguration);
 
 /* ------------------------------------------------------------------ Pages */
 
-const page = (fichier) => async (requete, reponse) => reponse.sendFile(fichier);
-
-app.get('/', page('index.html'));
-app.get('/accueil', page('accueil.html'));
-app.get('/defi/:semaine', page('defi.html'));
-app.get('/classement', page('classement.html'));
-app.get('/profil', page('profil.html'));
-app.get('/attestation', page('attestation.html'));
-app.get('/mentions', page('mentions.html'));
-app.get('/administration', page('admin.html'));
-app.get('/configuration', page('admin.html'));
+enregistrerStatiques(app, {
+  '/': 'index.html',
+  '/accueil': 'accueil.html',
+  '/defi/:semaine': 'defi.html',
+  '/classement': 'classement.html',
+  '/profil': 'profil.html',
+  '/attestation': 'attestation.html',
+  '/mentions': 'mentions.html',
+  '/administration': 'admin.html',
+  '/configuration': 'admin.html',
+});
 
 app.get('/sante', async () => ({
   ok: true,
