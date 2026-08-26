@@ -221,7 +221,7 @@ export async function analyserSynchronisation() {
  */
 export async function appliquerSynchronisation({
   accepter = [], appliquerModifications = true,
-  exclureDesactives = true, exclureDisparus = false,
+  exclureDesactives = true, exclureDisparus = false, supprimerDisparus = false,
 } = {}, parQui) {
   const lecture = await listerAgentsAnnuaire();
   if (!lecture.ok) return { ok: false, message: lecture.message };
@@ -252,7 +252,31 @@ export async function appliquerSynchronisation({
     "UPDATE agents SET exclu = 1, exclu_motif = 'annuaire', note = COALESCE(note, ?) WHERE login = ?"
   );
 
-  let ajoutes = 0; let misAJour = 0; let desactives = 0; let retires = 0;
+  /**
+   * Efface un agent et tout ce qui s'y rattache.
+   *
+   * Sans les tables liees, la suppression laisserait des participations
+   * orphelines qui continueraient de peser dans les moyennes d'un service
+   * dont plus personne ne fait partie. On descend donc jusqu'aux reponses,
+   * qui pendent aux participations et non a l'agent.
+   *
+   * Le journal et la table des corrections ne sont pas touches : ils portent
+   * la trace de ce qui a ete fait, et c'est precisement ce qui ne doit pas
+   * disparaitre avec le compte.
+   */
+  const supprimerAgent = (id) => {
+    db.prepare(`
+      DELETE FROM reponses_agent
+      WHERE participation_id IN (SELECT id FROM participations WHERE agent_id = ?)
+    `).run(id);
+    for (const table of ['participations', 'tentatives', 'badges_agent', 'sessions', 'admins_locaux']) {
+      db.prepare(`DELETE FROM ${table} WHERE agent_id = ?`).run(id);
+    }
+    db.prepare('DELETE FROM agents WHERE id = ?').run(id);
+  };
+
+  let ajoutes = 0; let misAJour = 0; let desactives = 0; let retires = 0; let supprimes = 0;
+  const effaces = [];
   let refusesSansAdresse = 0;
 
   db.exec('BEGIN');
@@ -286,9 +310,19 @@ export async function appliquerSynchronisation({
       }
     }
 
-    if (exclureDisparus) {
+    if (supprimerDisparus || exclureDisparus) {
       for (const [login, existant] of enBase) {
-        if (parLogin.has(login) || existant.exclu || existant.origine === 'local') continue;
+        // Un compte local ne vient pas de l'annuaire : son absence n'a aucun
+        // sens, et le supprimer couperait l'acces a l'administration.
+        if (parLogin.has(login) || existant.origine === 'local') continue;
+
+        if (supprimerDisparus) {
+          effaces.push(login);
+          supprimerAgent(existant.id);
+          supprimes++;
+          continue;
+        }
+        if (existant.exclu) continue;
         exclure.run("Absent de l'annuaire lors de la derniere synchronisation", login);
         retires++;
       }
@@ -301,15 +335,24 @@ export async function appliquerSynchronisation({
   }
 
   journaliser(parQui, 'synchronisation_annuaire',
-    `${ajoutes} ajoutes, ${misAJour} mis a jour, ${desactives} desactives, ${retires} retires`, null);
+    `${ajoutes} ajoutes, ${misAJour} mis a jour, ${desactives} desactives, ${retires} retires`
+    + (supprimes ? `, ${supprimes} supprimes` : ''), null);
+
+  // Une suppression ne se rattrape pas : le journal doit garder qui a disparu,
+  // meme si la fiche, elle, n'existe plus.
+  if (supprimes) {
+    journaliser(parQui, 'agents_supprimes',
+      `${supprimes} compte(s) absent(s) de l'annuaire : ${effaces.join(', ')}`, null);
+  }
 
   return {
     ok: true,
-    ajoutes, misAJour, desactives, retires, refusesSansAdresse,
+    ajoutes, misAJour, desactives, retires, supprimes, refusesSansAdresse,
     message: `${ajoutes} agent(s) ajouté(s)`
       + (misAJour ? `, ${misAJour} fiche(s) mise(s) à jour` : '')
       + (desactives ? `, ${desactives} compte(s) désactivé(s) dans l'annuaire écarté(s)` : '')
       + (retires ? `, ${retires} disparu(s) de l'annuaire écarté(s)` : '')
+      + (supprimes ? `, ${supprimes} compte(s) supprimé(s) avec leurs résultats` : '')
       + (refusesSansAdresse ? `, ${refusesSansAdresse} sans adresse mail non retenu(s)` : '')
       + '.',
   };

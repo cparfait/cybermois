@@ -114,12 +114,43 @@ function rendre() {
           <span><strong>Écarter ${r.desactives} compte(s) désactivé(s)</strong><br>
           <span class="discret">Sortis des effectifs, des relances et des statistiques. Résultats conservés.</span></span>
         </label>
-        <label style="display:flex;gap:.6rem;align-items:flex-start;font-weight:400">
-          <input type="checkbox" id="sync-disparus" style="width:20px;height:20px;flex:0 0 auto;accent-color:var(--vert-fonce)">
-          <span><strong>Écarter ${r.disparus} compte(s) absent(s) de l'annuaire</strong><br>
-          <span class="discret">Prudence : une base de recherche trop restrictive les ferait tous sortir de la campagne.</span></span>
-        </label>
       </div>
+
+      ${r.disparus ? `
+        <fieldset style="margin:1rem 0;border:1px solid var(--bordure);border-radius:var(--rayon);padding:.9rem 1rem">
+          <legend class="ui" style="font-weight:700;padding:0 .4rem">
+            ${r.disparus} compte(s) absent(s) de l'annuaire
+          </legend>
+          <p class="discret" style="margin:0 0 .7rem;font-size:.86rem">
+            Ils existent ici mais l'annuaire ne les renvoie plus : compte supprimé,
+            déplacé hors de la base de recherche, ou identifiant modifié.
+            <strong>Vérifiez avant de choisir</strong> — une base de recherche trop
+            restrictive les ferait tous sortir d'un coup.
+          </p>
+          <div class="rang" style="flex-direction:column;align-items:stretch;gap:.55rem">
+            <label style="display:flex;gap:.6rem;align-items:flex-start;font-weight:400">
+              <input type="radio" name="sync-disparus" value="rien" checked
+                     style="width:20px;height:20px;flex:0 0 auto;accent-color:var(--vert-fonce)">
+              <span><strong>Ne rien faire</strong><br>
+              <span class="discret">Ils restent dans la campagne. À choisir si vous n'avez pas encore vérifié.</span></span>
+            </label>
+            <label style="display:flex;gap:.6rem;align-items:flex-start;font-weight:400">
+              <input type="radio" name="sync-disparus" value="ecarter"
+                     style="width:20px;height:20px;flex:0 0 auto;accent-color:var(--vert-fonce)">
+              <span><strong>Écarter</strong><br>
+              <span class="discret">Sortis des effectifs, des relances et des classements. Résultats conservés,
+              et ils reviennent d'eux-mêmes si le compte réapparaît.</span></span>
+            </label>
+            <label style="display:flex;gap:.6rem;align-items:flex-start;font-weight:400">
+              <input type="radio" name="sync-disparus" value="supprimer"
+                     style="width:20px;height:20px;flex:0 0 auto;accent-color:var(--erreur)">
+              <span><strong style="color:var(--erreur)">Supprimer définitivement</strong><br>
+              <span class="discret">La fiche, les participations, les réponses et les badges sont effacés.
+              ${d.disparus.reduce((n, a) => n + (a.defis || 0), 0)} défi(s) joué(s) au total seraient perdus.
+              <strong>Irréversible.</strong> Le journal conserve la liste des identifiants supprimés.</span></span>
+            </label>
+          </div>
+        </fieldset>` : ''}
 
       ${bloc(d.modifies, 'Détail des modifications', (m) => `<strong>${echapper(m.nomComplet)}</strong> — `
         + m.changements.map((c) => `${echapper(c.champ)} : ${echapper(c.avant)} → <strong>${echapper(c.apres)}</strong>`).join(' · '))}
@@ -220,14 +251,36 @@ function brancher() {
 
   rendreExclusions();
 
+  /** Que faire des comptes absents : ne rien faire, ecarter, ou supprimer. */
+  const choixDisparus = () =>
+    document.querySelector('input[name="sync-disparus"]:checked')?.value || 'rien';
+
   document.getElementById('btn-appliquer-sync').addEventListener('click', async () => {
     const bouton = document.getElementById('btn-appliquer-sync');
 
-    if (document.getElementById('sync-disparus').checked && analyse.resume.disparus > 0) {
-      if (!confirm(
-        `Écarter ${analyse.resume.disparus} agent(s) absent(s) de l'annuaire ?\n\n`
-        + 'Si la base de recherche est trop restrictive, ce sont des agents légitimes qui sortiraient de la campagne.'
-      )) return;
+    const choix = choixDisparus();
+    const nb = analyse.resume.disparus;
+    const paragraphes = (...bouts) => bouts.join(String.fromCharCode(10, 10));
+
+    if (choix === 'ecarter' && nb > 0 && !confirm(paragraphes(
+      `Écarter ${nb} agent(s) absent(s) de l'annuaire ?`,
+      'Si la base de recherche est trop restrictive, ce sont des agents légitimes qui sortiraient de la campagne.'
+    ))) return;
+
+    // La suppression efface des résultats que rien ne restaurera. On demande
+    // donc le nombre plutôt qu'un simple « OK » : ce n'est pas la même décision
+    // que l'exclusion, et le geste ne doit pas l'être non plus.
+    if (choix === 'supprimer' && nb > 0) {
+      const defis = (analyse.disparus || []).reduce((n, a) => n + (a.defis || 0), 0);
+      const saisi = prompt(paragraphes(
+        `Supprimer définitivement ${nb} compte(s) et tous leurs résultats ?`,
+        `${defis} défi(s) joué(s) seront effacés. Cette action est irréversible.`,
+        `Tapez ${nb} pour confirmer.`
+      ));
+      if (saisi === null) return;
+      if (saisi.trim() !== String(nb)) {
+        return alerte('alerte', 'Suppression annulée : le nombre saisi ne correspond pas.');
+      }
     }
 
     bouton.disabled = true;
@@ -239,7 +292,8 @@ function brancher() {
           accepter: cases().filter((c) => c.checked).map((c) => c.value),
           appliquerModifications: document.getElementById('sync-modifications').checked,
           exclureDesactives: document.getElementById('sync-desactives').checked,
-          exclureDisparus: document.getElementById('sync-disparus').checked,
+          exclureDisparus: choixDisparus() === 'ecarter',
+          supprimerDisparus: choixDisparus() === 'supprimer',
         },
       });
       alerte('alerte', r.message, 'succes');
