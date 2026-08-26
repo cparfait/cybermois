@@ -48,11 +48,11 @@ services:
       LDAP_URL: ${LDAP_URL:-ldaps://192.168.2.9:636}
       LDAP_BIND_DN: ${LDAP_BIND_DN:-ad.cybermois@chatillon.lan}
       LDAP_BIND_PASSWORD: ${LDAP_BIND_PASSWORD}
-      LDAP_BASE_DN: ${LDAP_BASE_DN:-DC=chatillon,DC=lan}
+      LDAP_BASE_DN: ${LDAP_BASE_DN:-OU=Utilisateurs,OU=CHATILLON,DC=chatillon,DC=lan}
       LDAP_USER_FILTER: ${LDAP_USER_FILTER:-(&(objectClass=user)(objectCategory=person)(sAMAccountName={{login}}))}
       LDAP_REQUIRED_GROUP: ${LDAP_REQUIRED_GROUP:-}
       # Membres autorises au back-office : nom court ou DN complet
-      LDAP_ADMIN_GROUP: ${LDAP_ADMIN_GROUP:-GG-Cybermois-Admins}
+      LDAP_ADMIN_GROUP: ${LDAP_ADMIN_GROUP:-CN=GRP_APPLI_CYBERMOIS_ADMIN,OU=GRP_APPLICATIONS,OU=zzzGroupes,OU=Utilisateurs,OU=CHATILLON,DC=chatillon,DC=lan}
       # Certificat de l'AC interne, en base64 sur une seule ligne.
       # Windows : [Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\chemin\ca.crt"))
       LDAP_CA_BASE64: ${LDAP_CA_BASE64:-}
@@ -60,9 +60,11 @@ services:
       LDAP_AUTORISER_NON_CHIFFRE: ${LDAP_AUTORISER_NON_CHIFFRE:-false}
 
       # ---------- Rattachement au service ----------
-      SERVICE_SOURCE: ${SERVICE_SOURCE:-ou}
+      # Le service vient de l'attribut « department » : l'arborescence decrit
+      # les sites (TECHNOSUD, MAIRIE, CTM) et non les services.
+      SERVICE_SOURCE: ${SERVICE_SOURCE:-attr}
       SERVICE_ATTRIBUTE: ${SERVICE_ATTRIBUTE:-department}
-      SERVICE_OU_DEPTH: ${SERVICE_OU_DEPTH:-1}
+      SERVICE_OU_DEPTH: ${SERVICE_OU_DEPTH:-3}
 
       # ---------- Administration ----------
       ADMIN_LOGINS: ${ADMIN_LOGINS:-c.parfait}

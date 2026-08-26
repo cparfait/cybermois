@@ -90,10 +90,11 @@ la recette. Un intervalle de 5 minutes convient.
 | `LDAP_URL` | `ldaps://192.168.2.9:636` | Votre contrôleur de domaine |
 | `LDAP_BIND_DN` | `ad.cybermois@chatillon.lan` | Le compte de service |
 | `LDAP_BIND_PASSWORD` | *(mot de passe du compte de service)* | |
-| `LDAP_BASE_DN` | `DC=chatillon,DC=lan` | Racine de recherche |
+| `LDAP_BASE_DN` | `OU=Utilisateurs,OU=CHATILLON,DC=chatillon,DC=lan` | Racine de recherche. Trop large, la synchronisation ramène les comptes de service ; trop étroite, elle déclare des agents « absents de l'annuaire ». |
 | `LDAP_CA_BASE64` | *(la chaîne base64)* | |
-| `LDAP_ADMIN_GROUP` | `GG-Cybermois-Admins` | Accès au back-office |
-| `SERVICE_OU_DEPTH` | `1` | À ajuster selon vos OU |
+| `LDAP_ADMIN_GROUP` | `CN=GRP_APPLI_CYBERMOIS_ADMIN,OU=GRP_APPLICATIONS,OU=zzzGroupes,OU=Utilisateurs,OU=CHATILLON,DC=chatillon,DC=lan` | Accès au back-office |
+| `SERVICE_SOURCE` | `attr` | Le service se lit dans un attribut, pas dans l'arborescence |
+| `SERVICE_ATTRIBUTE` | `department` | Les OU décrivent les sites (TECHNOSUD, MAIRIE, CTM), pas les services |
 | `ADMIN_LOGINS` | `c.parfait` | Séparés par des virgules |
 | `SMTP_HOST` | `chatillon92-fr.mail.protection.outlook.com` | Direct Send, sans authentification |
 | `MAIL_GROUPE_DIFFUSION` | *(groupe de distribution)* | |
@@ -104,6 +105,19 @@ la recette. Un intervalle de 5 minutes convient.
 les liens des mails et conditionne le drapeau `secure` du cookie de session.
 
 Puis **Deploy the stack**. La première construction prend une à deux minutes.
+
+### Ce que fait le conteneur au premier démarrage
+
+1. Il crée le compte administrateur local et **affiche son mot de passe une seule
+   fois** dans les journaux — lisibles dans Portainer, *Containers > cybermois > Logs*.
+   Notez-le immédiatement : il est haché ensuite, et plus personne ne peut le relire.
+   Pour le redéfinir : `npm run admin -- definir admin "…"` dans une console du conteneur.
+2. Il charge les modules programmés dans les défis.
+3. Il refuse de démarrer si `LDAP_URL=demo` avec `NODE_ENV=production` : l'annuaire
+   simulé n'a rien à faire en service.
+
+Le point de contrôle `/sante` répond `{"ok":true,…}` et sert au *healthcheck* Docker :
+la pile passe en **healthy** au bout d'une vingtaine de secondes.
 
 ---
 
