@@ -98,6 +98,7 @@ export async function analyserSynchronisation() {
   const modifies = [];
   const desactives = [];
   const ecartes = [];
+  const sansAdresse = [];
   const vusDansAnnuaire = new Set();
 
   for (const a of lecture.agents) {
@@ -123,6 +124,12 @@ export async function analyserSynchronisation() {
     }
 
     if (!existant) {
+      // Sans adresse, l'agent ne recevra jamais ni lancement ni relance :
+      // l'inclure ne ferait que degrader le taux de participation de son service.
+      if (config.sync.exigerEmail && !a.email) {
+        sansAdresse.push({ ...a, service: resoudreService(a.serviceAd) });
+        continue;
+      }
       nouveaux.push({ ...a, service: resoudreService(a.serviceAd) });
       continue;
     }
@@ -149,6 +156,12 @@ export async function analyserSynchronisation() {
     }
   }
 
+  // Agents deja en base qui n'ont pas d'adresse : signales, jamais ecartes
+  // d'office - certains ont peut-etre deja joue.
+  const enBaseSansAdresse = [...enBase.values()]
+    .filter((a) => !a.exclu && a.origine !== 'local' && !a.email)
+    .map((a) => ({ login: a.login, nomComplet: a.nom_complet, service: a.service, defis: a.defis }));
+
   const disparus = [...enBase.values()]
     .filter((a) => !vusDansAnnuaire.has(a.login) && !a.exclu && a.origine !== 'local')
     .map((a) => ({ login: a.login, nomComplet: a.nom_complet, service: a.service, defis: a.defis }));
@@ -174,7 +187,8 @@ export async function analyserSynchronisation() {
       desactives: desactives.length,
       disparus: disparus.length,
       ecartes: ecartes.length,
-      sansEmail: nouveaux.filter((n) => !n.email).length,
+      sansAdresse: sansAdresse.length,
+      enBaseSansAdresse: enBaseSansAdresse.length,
       services: parService.size,
     },
     nouveauxParService: [...parService.entries()]
@@ -191,6 +205,9 @@ export async function analyserSynchronisation() {
     desactives,
     disparus,
     ecartes: ecartes.slice(0, 100),
+    sansAdresse: sansAdresse.slice(0, 200),
+    enBaseSansAdresse,
+    exigerEmail: config.sync.exigerEmail,
     exclusions,
   };
 }
@@ -222,12 +239,15 @@ export async function appliquerSynchronisation({
   const exclure = db.prepare('UPDATE agents SET exclu = 1, note = COALESCE(note, ?) WHERE login = ?');
 
   let ajoutes = 0; let misAJour = 0; let desactives = 0; let retires = 0;
+  let refusesSansAdresse = 0;
 
   db.exec('BEGIN');
   try {
     for (const login of retenus) {
       const a = parLogin.get(login);
       if (!a || !a.actif || enBase.has(login)) continue;
+      // Verification cote serveur : la regle ne doit pas dependre du formulaire
+      if (config.sync.exigerEmail && !a.email) { refusesSansAdresse++; continue; }
       inserer.run(a.login, a.nomComplet, a.email, resoudreService(a.serviceAd), a.serviceAd, a.dn,
         config.adminLogins.includes(a.login) ? 1 : 0);
       ajoutes++;
@@ -271,11 +291,12 @@ export async function appliquerSynchronisation({
 
   return {
     ok: true,
-    ajoutes, misAJour, desactives, retires,
+    ajoutes, misAJour, desactives, retires, refusesSansAdresse,
     message: `${ajoutes} agent(s) ajouté(s)`
       + (misAJour ? `, ${misAJour} fiche(s) mise(s) à jour` : '')
       + (desactives ? `, ${desactives} compte(s) désactivé(s) dans l'annuaire écarté(s)` : '')
       + (retires ? `, ${retires} disparu(s) de l'annuaire écarté(s)` : '')
+      + (refusesSansAdresse ? `, ${refusesSansAdresse} sans adresse mail non retenu(s)` : '')
       + '.',
   };
 }

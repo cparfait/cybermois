@@ -48,6 +48,7 @@ function rendre() {
         <div class="stat-admin"><div class="v">${r.desactives}</div><div class="l">désactivés dans l'annuaire</div></div>
         <div class="stat-admin"><div class="v">${r.disparus}</div><div class="l">absents de l'annuaire</div></div>
         <div class="stat-admin"><div class="v">${r.ecartes}</div><div class="l">écartés par vos règles</div></div>
+        <div class="stat-admin"><div class="v">${r.sansAdresse}</div><div class="l">écartés faute d'adresse mail</div></div>
         <div class="stat-admin"><div class="v">${r.services}</div><div class="l">services concernés</div></div>
       </div>
 
@@ -132,6 +133,29 @@ function rendre() {
 
       ${bloc(d.ecartes, `${r.ecartes} compte(s) écarté(s) par vos règles`, (a) => `${echapper(a.nomComplet)} `
         + `<span class="discret">(${echapper(a.login)}) — ${echapper(a.motif)}</span>`)}
+
+      ${d.exigerEmail && r.sansAdresse ? `
+        <details style="margin-top:.6rem">
+          <summary class="ui" style="cursor:pointer;font-weight:700">${r.sansAdresse} compte(s) sans adresse mail, non retenus</summary>
+          <p class="discret" style="font-size:.84rem;margin:.4rem 0">
+            Ils ne recevraient ni le message de lancement ni les relances : les compter
+            dégraderait le taux de participation de leur service sans qu'ils puissent jouer.
+            Pour les inclure malgré tout, décochez la règle dans
+            Administration → Configuration → Rattachement au service.
+          </p>
+          <ul class="ui" style="font-size:.84rem">
+            ${d.sansAdresse.slice(0, 80).map((a) => `<li>${echapper(a.nomComplet)} <span class="discret">(${echapper(a.login)}) — ${echapper(a.service)}</span></li>`).join('')}
+          </ul>
+          ${d.sansAdresse.length > 80 ? `<p class="discret">… ${r.sansAdresse - 80} autre(s)</p>` : ''}
+        </details>` : ''}
+
+      ${r.enBaseSansAdresse ? `
+        <div class="message message-alerte" style="margin-top:.8rem">
+          ${r.enBaseSansAdresse} agent(s) déjà présent(s) n'ont pas d'adresse mail.
+          Ils ne sont pas écartés automatiquement — certains ont peut-être déjà joué —
+          mais ils ne recevront aucune relance. Repérez-les dans la liste des agents,
+          filtre « Sans adresse mail ».
+        </div>` : ''}
 
       <div class="rang" style="margin-top:1.5rem;border-top:1px solid var(--bordure);padding-top:1.2rem">
         <button class="btn btn-principal" id="btn-appliquer-sync">Valider et appliquer</button>

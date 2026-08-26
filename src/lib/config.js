@@ -45,6 +45,12 @@ export const config = {
 
   adminLogins: liste(process.env.ADMIN_LOGINS),
 
+  sync: {
+    // Un agent sans adresse ne recoit ni lancement ni relance : il ne jouera
+    // jamais, tout en pesant sur le taux de participation de son service.
+    exigerEmail: bool(process.env.SYNC_EXIGER_EMAIL, true),
+  },
+
   smtp: {
     host: process.env.SMTP_HOST || '',
     port: num(process.env.SMTP_PORT, 25),

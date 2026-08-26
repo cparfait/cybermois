@@ -206,6 +206,11 @@ export default async function routesUtilisateurs(app) {
     const resultat = preparerImport(texte, { ouDepth: config.service.ouDepth });
     if (!resultat.ok) return reponse.code(400).send(resultat);
 
+    // Meme regle que la synchronisation : sans adresse, l'agent ne recevrait
+    // ni lancement ni relance et fausserait le taux de son service.
+    const sansAdresse = config.sync.exigerEmail ? resultat.agents.filter((a) => !a.email) : [];
+    if (config.sync.exigerEmail) resultat.agents = resultat.agents.filter((a) => a.email);
+
     // Confrontation a l'existant, pour annoncer exactement ce qui va se passer
     const existants = new Map(
       db.prepare('SELECT login, id, service, nom_complet FROM agents').all().map((a) => [a.login, a])
@@ -225,6 +230,9 @@ export default async function routesUtilisateurs(app) {
 
     return {
       ...resultat,
+      exigerEmail: config.sync.exigerEmail,
+      sansAdresse: sansAdresse.slice(0, 100),
+      nbSansAdresse: sansAdresse.length,
       // On n'expose qu'un echantillon : 500 agents en JSON alourdiraient l'affichage
       agents: resultat.agents.slice(0, 50),
       rejets: resultat.rejets.slice(0, 50),
@@ -247,6 +255,10 @@ export default async function routesUtilisateurs(app) {
 
     const resultat = preparerImport(texte, { ouDepth: config.service.ouDepth });
     if (!resultat.ok) return reponse.code(400).send(resultat);
+
+    const nbSansAdresse = config.sync.exigerEmail
+      ? resultat.agents.filter((a) => !a.email).length : 0;
+    if (config.sync.exigerEmail) resultat.agents = resultat.agents.filter((a) => a.email);
 
     const inserer = db.prepare(`
       INSERT INTO agents (login, nom_complet, email, service, service_ad, service_brut, origine, est_admin)
@@ -295,8 +307,10 @@ export default async function routesUtilisateurs(app) {
         nouveaux, misAJour, exclus,
         rejetes: resultat.rejets.length,
         services: resultat.services.length,
+        nbSansAdresse,
         message: `Import terminé : ${nouveaux} agent(s) ajouté(s), ${misAJour} mis à jour`
           + (exclus ? `, ${exclus} exclu(s) car absent(s) du fichier` : '')
+          + (nbSansAdresse ? `, ${nbSansAdresse} écarté(s) faute d'adresse mail` : '')
           + (resultat.rejets.length ? `, ${resultat.rejets.length} ligne(s) rejetée(s)` : '')
           + `. ${resultat.services.length} services identifiés.`,
       };

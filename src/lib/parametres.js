@@ -89,6 +89,10 @@ export const DESCRIPTEUR = [
   { cle: 'service.ouDepth', chemin: ['service', 'ouDepth'], type: 'entier', groupe: 'service',
     libelle: 'Profondeur d\'OU', aide: '1 = l\'OU contenant directement l\'agent. Les sous-OU se traitent ensuite par regroupement.' },
 
+  { cle: 'sync.exigerEmail', chemin: ['sync', 'exigerEmail'], type: 'booleen', groupe: 'service',
+    libelle: "N'importer que les comptes ayant une adresse mail",
+    aide: 'Un agent sans adresse ne recoit ni lancement ni relance : il ne jouera jamais et fausserait le taux de participation de son service.' },
+
   { cle: 'adminLogins', chemin: ['adminLogins'], type: 'liste', groupe: 'general',
     libelle: 'Administrateurs', aide: 'Identifiants AD separes par des virgules.' },
 
