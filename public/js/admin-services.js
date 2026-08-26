@@ -52,13 +52,13 @@ function rendre(services) {
         service, cochez-le et utilisez « Réintégrer ».
       </div>
 
-      <div class="rang" style="align-items:flex-end;margin-bottom:.8rem">
-        <div class="champ-admin" style="flex:1;min-width:240px;margin-bottom:0">
+      <div class="barre-filtres" style="margin-bottom:.9rem">
+        <div class="champ-admin" style="flex:1;min-width:260px">
           <label for="rech-service">Rechercher un service</label>
           <input type="search" id="rech-service" value="${echapper(recherche)}" placeholder="Elus, Crêche, Centre de Loisirs…">
         </div>
-        <button class="btn btn-secondaire" id="btn-tout-services" style="margin-bottom:0">Tout cocher</button>
-        <button class="btn btn-secondaire" id="btn-rien-services" style="margin-bottom:0">Tout décocher</button>
+        <button class="btn btn-secondaire" id="btn-tout-services" style="padding:.55rem 1rem">Tout cocher</button>
+        <button class="btn btn-secondaire" id="btn-rien-services" style="padding:.55rem 1rem">Tout décocher</button>
       </div>
 
       <div id="barre-services" hidden class="message message-alerte" style="margin-bottom:1rem">

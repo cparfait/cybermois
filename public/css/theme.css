@@ -256,13 +256,24 @@ main { padding: 2rem 0 4rem; }
 /* ---------- Formulaires ---------- */
 
 label { font-family: var(--police-ui); font-weight: 600; font-size: .9rem; display: block; margin-bottom: .35rem; }
-input[type='text'], input[type='password'], input[type='number'], input[type='email'], select, textarea {
+/* Enumerer les types un a un laissait de cote « search », « date » et
+   « file », qui gardaient alors la taille par defaut du navigateur : des
+   champs minuscules au milieu d'une ligne large. On part donc de tous les
+   champs, en retirant ceux qui ne doivent pas s'etirer. */
+input:not([type='checkbox']):not([type='radio']):not([type='submit']):not([type='button']),
+select, textarea {
   width: 100%; padding: .7rem .9rem;
   border: 1px solid var(--bordure-forte); border-radius: var(--rayon-sm);
   background: var(--surface); color: var(--encre);
   font-family: var(--police-ui); font-size: 1rem;
+  /* Sans cela, un champ de recherche deborde de son conteneur en flex */
+  min-width: 0;
 }
 input:focus-visible, select:focus-visible, textarea:focus-visible { border-color: var(--vert-fonce); }
+
+/* Le navigateur ajoute une croix de suppression a sa facon : on l'aligne */
+input[type='search'] { -webkit-appearance: none; appearance: none; }
+input[type='file'] { padding: .5rem .7rem; cursor: pointer; }
 
 .message { padding: .85rem 1rem; border-radius: var(--rayon-sm); font-family: var(--police-ui); font-size: .9rem; border-left: 4px solid; }
 .message-erreur { background: var(--erreur-fond); color: var(--erreur); border-color: var(--erreur); }
