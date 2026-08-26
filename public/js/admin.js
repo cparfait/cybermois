@@ -147,8 +147,12 @@ chargeurs.defis = async () => {
     cible.innerHTML = `
       <details class="aide-admin">
         <summary>Comment fonctionne la planification</summary>
+        <p>Le catalogue contient des modules prêts à jouer ; le tableau ci-dessous ne montre que
+        ceux que vous avez <strong>programmés</strong>. Pour en ajouter, en retirer ou en changer
+        l'ordre, utilisez « Programme de la campagne » juste en dessous — le catalogue complet s'y
+        parcourt, avec un aperçu de chaque questionnaire.</p>
         <p>Chaque défi s'ouvre automatiquement à sa date d'ouverture, à condition d'être publié.
-        Modifier la date de début de campagne décale les quatre semaines de 7 jours en 7 jours.
+        Modifier la date de début de campagne décale les semaines de 7 jours en 7 jours.
         Un défi dépublié disparaît du portail sans que les participations soient perdues.</p>
       </details>
 
@@ -165,7 +169,7 @@ chargeurs.defis = async () => {
           <label for="debut-campagne">Ouverture de la semaine 1</label>
           <input type="date" id="debut-campagne" value="${defis[0]?.ouvre_le || ''}">
         </div>
-        <button class="btn btn-secondaire" id="btn-replanifier">Replanifier les 4 semaines</button>
+        <button class="btn btn-secondaire" id="btn-replanifier">Replanifier les semaines</button>
       </div>
 
       <div class="tableau-defilant"><table class="admin">

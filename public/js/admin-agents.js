@@ -644,20 +644,36 @@ async function formulaireServices(filtreInitial = '') {
     return;
   }
 
-  // Tous les noms de service connus : ceux deja utilises, plus ceux que les
-  // propositions feraient apparaitre. Un champ libre filtrait la liste a la
-  // frappe, on ne voyait donc jamais l'ensemble de ce qui existe.
-  // Le referentiel fait foi quand il est renseigne : les listes deroulantes
-  // n'offrent alors que des services reconnus par la collectivite.
-  const noms = [...new Set([
-    ...(d.referentiel || []),
+  // Le referentiel fait foi : c'est la liste des services que la collectivite
+  // reconnait, et le regroupement ne fait que pointer dessus. Y ajouter les
+  // libelles bruts de l'annuaire rendait la liste inutilisable - on y
+  // retrouvait « Action culturelle » et « Action Culturelle », c'est-a-dire
+  // exactement ce que le regroupement doit supprimer.
+  const referentiel = [...(d.referentiel || [])].sort((a, b) => a.localeCompare(b, 'fr'));
+
+  // Sans referentiel, on se rabat sur ce qui existe : mieux vaut une liste
+  // imparfaite que pas de liste du tout.
+  const secours = [...new Set([
     ...d.inventaire.map((i) => i.cible),
     ...d.inventaire.map((i) => i.proposition).filter(Boolean),
   ])].sort((a, b) => a.localeCompare(b, 'fr'));
 
-  const listeOptions = (valeur) => noms
-    .map((n) => `<option value="${echapper(n)}"${n === valeur ? ' selected' : ''}>${echapper(n)}</option>`)
-    .join('');
+  const noms = referentiel.length ? referentiel : secours;
+
+  const option = (n, valeur) =>
+    `<option value="${echapper(n)}"${n === valeur ? ' selected' : ''}>${echapper(n)}</option>`;
+
+  /**
+   * La valeur courante d'une ligne peut precéder le referentiel. La masquer
+   * changerait silencieusement le regroupement en vigueur : on la garde, a
+   * part, pour qu'elle se voie et se corrige.
+   */
+  const listeOptions = (valeur) => {
+    const dedans = noms.map((n) => option(n, valeur)).join('');
+    if (!valeur || noms.includes(valeur)) return dedans;
+    return `<optgroup label="Hors référentiel">${option(valeur, valeur)}</optgroup>`
+      + `<optgroup label="Référentiel">${dedans}</optgroup>`;
+  };
 
   const avecProposition = d.inventaire.filter((i) => !i.regroupe && i.proposition).length;
 
