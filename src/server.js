@@ -12,10 +12,12 @@ import { purgerSessions } from './lib/session.js';
 import { importerContenus } from './lib/seed.js';
 import { envoyerRelances, envoyerResultats } from './lib/mail.js';
 import { verifierModeDemo, estModeDemo, motDePasseDemo } from './lib/annuaire-demo.js';
+import { verifierChiffrement } from './lib/ldap.js';
 
 import routesAuth from './routes/auth.js';
 import routesJeu from './routes/jeu.js';
 import routesAdmin from './routes/admin.js';
+import routesUtilisateurs from './routes/utilisateurs.js';
 
 const app = Fastify({
   logger: {
@@ -24,7 +26,7 @@ const app = Fastify({
     redact: ['req.body.motDePasse', 'req.headers.cookie', 'req.headers.authorization'],
   },
   trustProxy: true, // Nginx Proxy Manager en frontal
-  bodyLimit: 512 * 1024,
+  bodyLimit: 4 * 1024 * 1024, // marge pour l'import d'un effectif complet en CSV
 });
 
 await app.register(cookie, { secret: config.sessionSecret });
@@ -66,6 +68,7 @@ await app.register(statique, {
 await app.register(routesAuth);
 await app.register(routesJeu);
 await app.register(routesAdmin);
+await app.register(routesUtilisateurs);
 
 /* ------------------------------------------------------------------ Pages */
 
@@ -141,6 +144,9 @@ try {
   if (estModeDemo()) {
     app.log.warn(`MODE DEMONSTRATION actif : annuaire simule, mot de passe commun "${motDePasseDemo()}". Ne jamais utiliser en production.`);
   }
+
+  const avertissement = verifierChiffrement();
+  if (avertissement) app.log.warn(avertissement);
 
   const rapport = importerContenus();
   app.log.info({ rapport }, 'contenus des defis charges');

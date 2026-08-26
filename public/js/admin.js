@@ -1,8 +1,9 @@
 import { api, echapper, initialiserPage, alerte, formaterDate } from '/js/commun.js';
+import { chargerAgents } from '/js/admin-agents.js';
 
 await initialiserPage('/administration');
 
-const NOMS = ['suivi', 'defis', 'mails', 'exports', 'technique'];
+const NOMS = ['suivi', 'defis', 'agents', 'mails', 'exports', 'technique'];
 const onglets = NOMS.map((nom) => ({
   nom,
   bouton: document.getElementById(`onglet-${nom}`),
@@ -44,7 +45,8 @@ chargeurs.suivi = async () => {
 
     cible.innerHTML = `
       <div class="grille grille-3" style="margin-bottom:1.5rem">
-        <div class="stat-admin"><div class="v">${s.inscrits}</div><div class="l">agents connectés au moins une fois</div></div>
+        <div class="stat-admin"><div class="v">${s.inscrits}</div><div class="l">agents dans la campagne</div></div>
+        <div class="stat-admin"><div class="v">${s.connectes}</div><div class="l">se sont connectés</div></div>
         <div class="stat-admin"><div class="v">${s.joueurs}</div><div class="l">agents ayant joué</div></div>
         <div class="stat-admin"><div class="v">${tauxGlobal} %</div><div class="l">taux de participation</div></div>
         <div class="stat-admin"><div class="v">${s.participations}</div><div class="l">défis terminés</div></div>
@@ -52,11 +54,17 @@ chargeurs.suivi = async () => {
         <div class="stat-admin"><div class="v">${s.points_cumules}</div><div class="l">points cumulés</div></div>
       </div>
 
-      <div class="message message-info" style="margin-bottom:1.5rem">
-        Le nombre d'agents « inscrits » correspond aux agents s'étant connectés au moins une fois.
-        Un agent qui ne s'est jamais connecté n'apparaît pas encore : le taux réel se calcule sur l'effectif
-        de la collectivité, à rapprocher de l'export.
-      </div>
+      ${s.connectes === s.inscrits ? `
+        <div class="message message-alerte" style="margin-bottom:1.5rem">
+          Aucun effectif n'a été importé : les agents n'apparaissent qu'à leur première connexion,
+          donc le taux de participation affiché est trompeur. Importez votre export d'annuaire dans
+          l'onglet <strong>Agents</strong> pour obtenir un taux juste et pouvoir relancer ceux qui
+          ne sont jamais venus.
+        </div>` : `
+        <div class="message message-info" style="margin-bottom:1.5rem">
+          Effectif de référence : <strong>${s.inscrits} agents</strong>, dont ${s.connectes} se sont
+          déjà connectés et ${s.joueurs} ont terminé au moins un défi.
+        </div>`}
 
       <h2>Participation par semaine</h2>
       <div class="tableau-defilant"><table class="admin">
@@ -302,6 +310,10 @@ async function ouvrirEditeur(semaine) {
 
   zone.scrollIntoView({ behavior: 'smooth' });
 }
+
+/* ============================================================== Agents */
+
+chargeurs.agents = chargerAgents;
 
 /* ============================================================== Mails */
 

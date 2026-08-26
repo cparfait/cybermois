@@ -205,6 +205,7 @@ export async function envoyerRelances(semaine, { simulation = false } = {}) {
   const cibles = db.prepare(`
     SELECT a.* FROM agents a
     WHERE a.email IS NOT NULL AND a.email <> ''
+      AND a.exclu = 0
       AND NOT EXISTS (SELECT 1 FROM participations p WHERE p.agent_id = a.id AND p.defi_id = ? AND p.entrainement = 0)
   `).all(defi.id);
 

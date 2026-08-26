@@ -11,7 +11,17 @@ function echapperFiltre(valeur) {
 function optionsTls() {
   if (!config.ldap.url.startsWith('ldaps://')) return undefined;
   const tls = { rejectUnauthorized: config.ldap.rejectUnauthorized };
-  if (config.ldap.caFile && fs.existsSync(config.ldap.caFile)) {
+
+  // Deux facons de fournir l'autorite de certification interne.
+  // Le base64 est prioritaire : il se colle dans une variable d'environnement,
+  // ce qui evite de monter un fichier - impraticable via Portainer.
+  if (config.ldap.caBase64) {
+    try {
+      tls.ca = [Buffer.from(config.ldap.caBase64.replace(/\s+/g, ''), 'base64')];
+    } catch {
+      throw new Error('LDAP_CA_BASE64 illisible : verifiez le collage de la valeur.');
+    }
+  } else if (config.ldap.caFile && fs.existsSync(config.ldap.caFile)) {
     tls.ca = [fs.readFileSync(config.ldap.caFile)];
   }
   return tls;
@@ -122,6 +132,26 @@ export async function authentifier(login, motDePasse) {
   };
 }
 
+/**
+ * Garde-fou au demarrage.
+ * En ldap:// simple, le mot de passe de l'agent transite en clair sur le reseau.
+ * C'est acceptable le temps d'une mise au point locale, jamais en production :
+ * on exige alors une autorisation explicite pour eviter la mise en service
+ * par inadvertance d'une configuration de test.
+ */
+export function verifierChiffrement() {
+  if (config.ldap.url === 'demo' || config.ldap.url.startsWith('ldaps://')) return null;
+
+  if (config.env === 'production' && !config.ldap.autoriserNonChiffre) {
+    throw new Error(
+      `LDAP_URL=${config.ldap.url} n'est pas chiffre : les mots de passe des agents circuleraient `
+      + 'en clair sur le reseau. Passez en ldaps:// (port 636) avant la mise en service. '
+      + "Pour une recette en production a vos risques, ajoutez LDAP_AUTORISER_NON_CHIFFRE=true."
+    );
+  }
+  return 'Liaison LDAP NON CHIFFREE : les mots de passe transitent en clair. Acceptable en recette, a corriger avant ouverture.';
+}
+
 /** Test de connectivite pour le back-office */
 export async function testerConnexion() {
   if (config.ldap.url === 'demo') {
@@ -133,7 +163,14 @@ export async function testerConnexion() {
     const { searchEntries } = await client.search(config.ldap.baseDn, {
       scope: 'sub', filter: '(objectClass=user)', attributes: ['dn'], sizeLimit: 1,
     });
-    return { ok: true, message: `Connexion LDAPS etablie, ${searchEntries.length} entree(s) lue(s).` };
+    const chiffre = config.ldap.url.startsWith('ldaps://');
+    return {
+      ok: true,
+      chiffre,
+      message: `Connexion ${chiffre ? 'LDAPS chiffree' : 'LDAP NON CHIFFREE'} etablie, `
+        + `${searchEntries.length} entree(s) lue(s).`
+        + (chiffre ? '' : ' Les mots de passe transitent en clair : a corriger avant ouverture.'),
+    };
   } catch (err) {
     return { ok: false, message: err.message };
   } finally {

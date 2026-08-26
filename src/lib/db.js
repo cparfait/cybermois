@@ -22,6 +22,12 @@ CREATE TABLE IF NOT EXISTS agents (
   vu_le          TEXT
 );
 
+CREATE TABLE IF NOT EXISTS regroupements_service (
+  source         TEXT PRIMARY KEY,
+  cible          TEXT NOT NULL,
+  cree_le        TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS defis (
   id             INTEGER PRIMARY KEY,
   semaine        INTEGER NOT NULL UNIQUE,
@@ -114,6 +120,30 @@ CREATE INDEX IF NOT EXISTS idx_participations_defi ON participations(defi_id);
 CREATE INDEX IF NOT EXISTS idx_agents_service ON agents(service);
 CREATE INDEX IF NOT EXISTS idx_journal_horodatage ON journal(horodatage);
 `);
+
+/**
+ * Migrations additives.
+ * SQLite ne sait pas faire ADD COLUMN IF NOT EXISTS : on lit la structure
+ * existante et on n'ajoute que ce qui manque. Une base deja en service se met
+ * ainsi a jour sans perdre de donnees.
+ */
+function ajouterColonne(table, colonne, definition) {
+  const colonnes = db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name);
+  if (!colonnes.includes(colonne)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${colonne} ${definition}`);
+  }
+}
+
+// Agents pre-importes depuis l'annuaire : effectif de reference, meme sans connexion
+ajouterColonne('agents', 'origine', "TEXT NOT NULL DEFAULT 'connexion'");
+// Agent hors campagne : ne peut pas se connecter, exclu des effectifs et des relances
+ajouterColonne('agents', 'exclu', 'INTEGER NOT NULL DEFAULT 0');
+// Droit d'opposition : compte pour son service, masque du classement individuel
+ajouterColonne('agents', 'anonyme', 'INTEGER NOT NULL DEFAULT 0');
+ajouterColonne('agents', 'note', 'TEXT');
+// Service tel que lu dans l'annuaire, avant application de la table de
+// correspondance. Le conserver permet de rejouer un regroupement a tout moment.
+ajouterColonne('agents', 'service_ad', 'TEXT');
 
 export function journaliser(login, action, detail, ip) {
   db.prepare('INSERT INTO journal (login, action, detail, ip) VALUES (?, ?, ?, ?)')

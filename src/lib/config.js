@@ -31,7 +31,9 @@ export const config = {
     userFilter: process.env.LDAP_USER_FILTER || '(&(objectClass=user)(objectCategory=person)(sAMAccountName={{login}}))',
     requiredGroup: process.env.LDAP_REQUIRED_GROUP || '',
     caFile: process.env.LDAP_CA_FILE || '',
+    caBase64: process.env.LDAP_CA_BASE64 || '',
     rejectUnauthorized: bool(process.env.LDAP_TLS_REJECT_UNAUTHORIZED, true),
+    autoriserNonChiffre: bool(process.env.LDAP_AUTORISER_NON_CHIFFRE, false),
   },
 
   service: {

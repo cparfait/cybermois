@@ -1,0 +1,113 @@
+# =============================================================================
+#  Pile Portainer - Cybermois - Ville de Chatillon
+#
+#  Portainer > Stacks > Add stack > Repository
+#    Repository URL     : https://github.com/cparfait/cybermois
+#    Repository reference : refs/heads/main
+#    Compose path       : docker-compose.portainer.yml
+#    Authentication     : activee (depot prive), jeton personnel GitHub
+#
+#  Les variables se saisissent dans « Environment variables » de Portainer.
+#  Aucun fichier a monter : le certificat de l'AC interne se fournit en base64.
+#
+#  Le conteneur ne publie aucun port sur l'hote : il est joint uniquement par
+#  Nginx Proxy Manager, via le reseau Docker partage declare plus bas.
+# =============================================================================
+
+services:
+  cybermois:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cybermois:latest
+    container_name: cybermois
+    restart: unless-stopped
+
+    environment:
+      # ---------- Serveur ----------
+      NODE_ENV: production
+      PORT: 3000
+      TZ: Europe/Paris
+      PUBLIC_URL: https://cybermois.chatillon92.fr
+      # 32 caracteres aleatoires minimum. A generer une fois, puis ne plus changer :
+      # le modifier deconnecte tous les agents en cours de session.
+      SESSION_SECRET: ${SESSION_SECRET}
+
+      # ---------- Active Directory ----------
+      LDAP_URL: ${LDAP_URL}
+      LDAP_BIND_DN: ${LDAP_BIND_DN}
+      LDAP_BIND_PASSWORD: ${LDAP_BIND_PASSWORD}
+      LDAP_BASE_DN: ${LDAP_BASE_DN}
+      LDAP_USER_FILTER: ${LDAP_USER_FILTER:-(&(objectClass=user)(objectCategory=person)(sAMAccountName={{login}}))}
+      LDAP_REQUIRED_GROUP: ${LDAP_REQUIRED_GROUP:-}
+      # Certificat de l'AC interne, en base64 sur une seule ligne.
+      # Windows : [Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\chemin\ca.crt"))
+      LDAP_CA_BASE64: ${LDAP_CA_BASE64:-}
+      LDAP_TLS_REJECT_UNAUTHORIZED: ${LDAP_TLS_REJECT_UNAUTHORIZED:-true}
+
+      # ---------- Rattachement au service ----------
+      SERVICE_SOURCE: ${SERVICE_SOURCE:-ou}
+      SERVICE_ATTRIBUTE: ${SERVICE_ATTRIBUTE:-department}
+      SERVICE_OU_DEPTH: ${SERVICE_OU_DEPTH:-1}
+
+      # ---------- Administration ----------
+      ADMIN_LOGINS: ${ADMIN_LOGINS}
+
+      # ---------- Messagerie ----------
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-25}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-Cybermois <cybermois@chatillon92.fr>}
+      MAIL_GROUPE_DIFFUSION: ${MAIL_GROUPE_DIFFUSION:-}
+      MAIL_COPIE: ${MAIL_COPIE:-}
+      # Laisser a false tant que la recette n'est pas terminee
+      MAIL_ENVOI_ACTIF: ${MAIL_ENVOI_ACTIF:-false}
+
+      # ---------- Planification ----------
+      TIMEZONE: Europe/Paris
+      CRON_RELANCE: ${CRON_RELANCE:-0 9 * * 3}
+      CRON_RESULTATS: ${CRON_RESULTATS:-0 16 * * 5}
+
+      # ---------- Campagne ----------
+      CAMPAGNE_DEBUT: ${CAMPAGNE_DEBUT:-2026-10-05}
+      CAMPAGNE_FIN: ${CAMPAGNE_FIN:-2026-10-31}
+
+    volumes:
+      # Base SQLite : volume nomme, sauvegardable depuis Portainer.
+      # C'est la SEULE donnee a conserver.
+      - cybermois-data:/app/data
+
+    networks:
+      - proxy
+
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/sante').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    labels:
+      org.opencontainers.image.title: "Cybermois"
+      org.opencontainers.image.description: "Portail de sensibilisation cyber - Ville de Chatillon"
+
+volumes:
+  cybermois-data:
+    name: cybermois-data
+
+networks:
+  # Reseau partage avec Nginx Proxy Manager.
+  # Adaptez le nom a votre installation : dans Portainer, Networks, reperez le
+  # reseau auquel appartient le conteneur nginx-proxy-manager (souvent
+  # « npm_default » ou « nginxproxymanager_default »).
+  proxy:
+    external: true
+    name: ${RESEAU_PROXY:-npm_default}

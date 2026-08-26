@@ -10,6 +10,9 @@ relèvent un défi par semaine, et font gagner des points à leur service.
 - **Questions à choix multiples** avec validation explicite et notation partielle
 - **Badges, podium, attestation imprimable**
 - **Relances et résultats hebdomadaires** envoyés automatiquement par SMTP
+- **Import de l'effectif** depuis un export d'annuaire, avec prévisualisation
+- **Regroupement des sous-OU** en services, avec proposition automatique
+- **Gestion des agents** : ajout, modification, exclusion, suppression, actions groupées
 - **Back-office** : suivi en direct, éditeur de questions, aperçu des mails, exports CSV
 - Aux couleurs de la charte graphique de la Ville, conforme aux principes du RGAA 4.1
 
@@ -55,6 +58,28 @@ node tests/simulation.mjs
 
 ---
 
+## Déploiement
+
+Trois documents selon votre besoin :
+
+| Document | Contenu |
+|---|---|
+| [`docs/deploiement-portainer.md`](docs/deploiement-portainer.md) | Pile Portainer + Nginx Proxy Manager, pas à pas |
+| [`docs/effectif-et-services.md`](docs/effectif-et-services.md) | Import de l'effectif, regroupement des sous-OU |
+| [`docs/exploitation.md`](docs/exploitation.md) | Incidents fréquents, sauvegarde, dépannage |
+
+### Diagnostic préalable
+
+Avant toute chose, vérifiez la configuration sans rien modifier :
+
+```bash
+node tests/diagnostic-ad.mjs
+```
+
+Il contrôle la joignabilité du contrôleur de domaine, le certificat, le compte de service,
+puis analyse l'annuaire et vous indique **quelle valeur de `SERVICE_OU_DEPTH` retenir** au vu
+de la répartition réelle de vos OU. Aucun mot de passe n'est affiché.
+
 ## Mise en service
 
 ### 1. Prérequis côté Active Directory
@@ -80,14 +105,32 @@ Si vos OU ne correspondent pas au découpage en services souhaité, basculez sur
 Get-ADUser -Filter * -Properties department | Group-Object department | Sort-Object Count -Descending
 ```
 
-### 2. Certificat LDAPS
+### 2. Chiffrement de la liaison
 
-Déposez le certificat de l'autorité de certification interne dans `certs/ca-interne.crt`,
-et laissez `LDAP_TLS_REJECT_UNAUTHORIZED=true`. Ne passez cette valeur à `false` qu'en
+En `ldaps://` (port 636), la liaison est chiffrée : c'est la configuration attendue en
+production. En `ldap://` (port 389), **le mot de passe de chaque agent circule en clair**
+sur le réseau.
+
+L'application accepte `ldap://` en développement, pour faciliter une première mise au point,
+mais **refuse de démarrer en production** sans la variable `LDAP_AUTORISER_NON_CHIFFRE=true`.
+Ce n'est pas un caprice : un portail de sensibilisation à la cybersécurité qui diffuserait
+les mots de passe en clair serait difficile à défendre.
+
+### 3. Certificat LDAPS
+
+Deux façons de fournir l'autorité de certification interne :
+
+- **`LDAP_CA_BASE64`** — le certificat encodé en base64 sur une ligne. À privilégier :
+  aucune manipulation de fichier, ce qui simplifie beaucoup un déploiement via Portainer.
+  `[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\temp\ca.cer"))`
+- **`LDAP_CA_FILE`** — le chemin d'un fichier monté dans le conteneur, par exemple
+  `certs/ca-interne.crt`.
+
+Laissez `LDAP_TLS_REJECT_UNAUTHORIZED=true`. Ne passez cette valeur à `false` qu'en
 recette, jamais en production : la validation du certificat est ce qui garantit que vous
 parlez bien à votre contrôleur de domaine.
 
-### 3. Configuration
+### 4. Configuration
 
 Reportez-vous à `.env.example`, qui documente chaque variable. Les points d'attention :
 
@@ -99,7 +142,7 @@ Reportez-vous à `.env.example`, qui documente chaque variable. Les points d'att
 | `CAMPAGNE_DEBUT` | Lundi d'ouverture de la semaine 1 ; les suivantes s'ouvrent à +7 jours |
 | `MAIL_ENVOI_ACTIF` | Laisser à `false` tant que la recette n'est pas terminée |
 
-### 4. Déploiement
+### 5. Déploiement
 
 ```bash
 docker compose up -d --build
@@ -123,7 +166,7 @@ en HTTPS.
 > sur l'IP : elle reste correcte même derrière un NAT, et 500 agents peuvent se connecter
 > le même matin sans se bloquer mutuellement.
 
-### 5. Vérification
+### 6. Vérification
 
 Connectez-vous, ouvrez **Administration → Technique** : le diagnostic teste en direct
 la liaison LDAPS et le relais SMTP, et affiche la configuration effectivement chargée.
@@ -239,10 +282,13 @@ src/
     scoring.js           Barème, badges, classements
     mail.js              Gabarits et envoi des messages
     seed.js              Import et export des contenus
+    services.js          Regroupement des sous-OU en services
+    import-csv.js        Analyse tolérante des exports d'annuaire
   routes/
     auth.js              Connexion, déconnexion
     jeu.js               Défis, validation, classements, profil
     admin.js             Back-office, exports, mails
+    utilisateurs.js      Agents : import, ajout, exclusion, regroupements
 content/semaine-*.json   Contenus pédagogiques, éditables
 public/                  Interface (HTML, CSS, modules ES — aucun outil de build)
 tests/                   Tests de dates, d'extraction de DN, simulation de campagne
@@ -256,9 +302,12 @@ un tiers.
 ## Tests
 
 ```bash
-node tests/dates.test.mjs      # planification des semaines, changement d'heure
-node tests/dn.test.mjs         # extraction du service depuis le DN
-node tests/simulation.mjs      # campagne complète (serveur démarré requis)
+node tests/dates.test.mjs         # planification des semaines, changement d'heure
+node tests/dn.test.mjs            # extraction du service depuis le DN
+node tests/import.test.mjs        # analyse des exports CSV, cas dégradés
+node tests/regroupement.test.mjs  # proposition de regroupement des sous-OU
+node tests/simulation.mjs         # campagne complète (serveur démarré requis)
+node tests/diagnostic-ad.mjs      # diagnostic AD et SMTP sur configuration réelle
 ```
 
 ## Après la campagne

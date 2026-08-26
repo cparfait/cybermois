@@ -93,6 +93,7 @@ export function classementServices() {
       COUNT(p.id)                                   AS defis_joues
     FROM agents a
     LEFT JOIN participations p ON p.agent_id = a.id AND p.entrainement = 0
+    WHERE a.exclu = 0
     GROUP BY a.service
     ORDER BY score_moyen DESC, taux_participation DESC, service ASC
   `).all();
@@ -102,13 +103,18 @@ export function classementServices() {
 export function classementAgents(limite = 100) {
   return db.prepare(`
     SELECT
-      a.id, a.nom_complet, a.service,
+      a.id,
+      -- Droit d'opposition : l'agent compte pour son service mais n'est plus nomme
+      CASE WHEN a.anonyme = 1 THEN 'Agent anonyme' ELSE a.nom_complet END AS nom_complet,
+      a.anonyme,
+      a.service,
       COALESCE(SUM(p.score), 0)  AS score_total,
       COUNT(p.id)                AS defis_joues,
       COALESCE(SUM(p.bonnes), 0) AS bonnes_total,
       MIN(p.termine_le)          AS premiere_participation
     FROM agents a
     JOIN participations p ON p.agent_id = a.id AND p.entrainement = 0
+    WHERE a.exclu = 0
     GROUP BY a.id
     ORDER BY score_total DESC, defis_joues DESC, premiere_participation ASC
     LIMIT ?
@@ -133,10 +139,13 @@ export function rangService(service) {
 export function statistiquesGlobales() {
   const g = db.prepare(`
     SELECT
-      (SELECT COUNT(*) FROM agents)                                            AS inscrits,
-      (SELECT COUNT(DISTINCT agent_id) FROM participations WHERE entrainement = 0) AS joueurs,
+      (SELECT COUNT(*) FROM agents WHERE exclu = 0)                            AS inscrits,
+      (SELECT COUNT(*) FROM agents WHERE exclu = 0 AND vu_le IS NOT NULL)      AS connectes,
+      (SELECT COUNT(DISTINCT p.agent_id) FROM participations p
+         JOIN agents a ON a.id = p.agent_id
+        WHERE p.entrainement = 0 AND a.exclu = 0)                              AS joueurs,
       (SELECT COUNT(*) FROM participations WHERE entrainement = 0)             AS participations,
-      (SELECT COUNT(DISTINCT service) FROM agents)                             AS services,
+      (SELECT COUNT(DISTINCT service) FROM agents WHERE exclu = 0)             AS services,
       (SELECT COALESCE(SUM(score), 0) FROM participations WHERE entrainement = 0) AS points_cumules
   `).get();
 

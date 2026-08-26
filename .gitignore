@@ -6,3 +6,4 @@ certs/
 .DS_Store
 Thumbs.db
 public/img/logo-chatillon-source.png
+.recette-tmp/
