@@ -67,6 +67,84 @@ export default async function routesAdmin(app) {
     return defi;
   });
 
+  /** Creation d'un defi. Il arrive masque : on le publie une fois redige. */
+  app.post('/api/admin/defis', async (requete, reponse) => {
+    const c = requete.body || {};
+    const titre = String(c.titre || '').trim();
+    if (!titre) return reponse.code(400).send({ erreur: 'Le titre est obligatoire.' });
+
+    // Numero libre le plus petit : on rebouche les trous laisses par une suppression
+    const occupees = new Set(db.prepare('SELECT semaine FROM defis').all().map((d) => d.semaine));
+    let semaine = Number(c.semaine) || 0;
+    if (semaine) {
+      if (occupees.has(semaine)) {
+        return reponse.code(409).send({ erreur: `La semaine ${semaine} existe déjà.` });
+      }
+    } else {
+      semaine = 1;
+      while (occupees.has(semaine)) semaine++;
+    }
+
+    const res = db.prepare(`
+      INSERT INTO defis (semaine, titre, accroche, intro, duree_minutes, ouvre_le, publie)
+      VALUES (?, ?, ?, ?, ?, ?, 0)
+    `).run(
+      semaine, titre,
+      String(c.accroche || '').trim(),
+      String(c.intro || '').trim(),
+      Number(c.duree_minutes) || 7,
+      c.ouvre_le || dateOuverture(semaine)
+    );
+
+    // Une question d'amorce, pour que l'editeur ne s'ouvre pas sur un ecran vide
+    const q = db.prepare(
+      'INSERT INTO questions (defi_id, ordre, enonce, contexte, multiple, points, explication) VALUES (?, 1, ?, NULL, 1, 10, ?)'
+    ).run(res.lastInsertRowid, 'Nouvelle question — remplacez cet énoncé', '');
+    const r = db.prepare('INSERT INTO reponses (question_id, ordre, libelle, correcte) VALUES (?, ?, ?, ?)');
+    r.run(q.lastInsertRowid, 1, 'Première réponse (bonne)', 1);
+    r.run(q.lastInsertRowid, 2, 'Deuxième réponse', 0);
+
+    journaliser(requete.agent.login, 'defi_cree', `semaine=${semaine} titre=${titre}`, requete.ip);
+    return {
+      ok: true,
+      semaine,
+      message: `Défi « ${titre} » créé en semaine ${semaine}, pour l'instant masqué. `
+        + 'Rédigez les questions, puis publiez-le.',
+    };
+  });
+
+  /** Suppression d'un defi. Les participations partent avec : confirmation exigee. */
+  app.delete('/api/admin/defis/:semaine', async (requete, reponse) => {
+    const semaine = Number(requete.params.semaine);
+    const defi = db.prepare('SELECT * FROM defis WHERE semaine = ?').get(semaine);
+    if (!defi) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
+
+    const participations = db.prepare(
+      'SELECT COUNT(*) AS n FROM participations WHERE defi_id = ?'
+    ).get(defi.id).n;
+
+    if (participations > 0 && !requete.body?.confirmerPerteResultats) {
+      return reponse.code(409).send({
+        erreur: `« ${defi.titre} » a été joué ${participations} fois. Le supprimer effacera `
+          + 'définitivement ces résultats et modifiera tous les classements. '
+          + 'Préférez le masquer : il disparaît du portail sans perdre les scores.',
+        participations,
+        confirmationRequise: true,
+      });
+    }
+
+    db.prepare('DELETE FROM defis WHERE id = ?').run(defi.id); // cascade questions et participations
+    journaliser(requete.agent.login, 'defi_supprime', `semaine=${semaine} (${participations} participations)`, requete.ip);
+
+    return {
+      ok: true,
+      message: `Défi « ${defi.titre} » supprimé.`
+        + (participations ? ` ${participations} participation(s) effacée(s).` : '')
+        + ' Attention : il sera recréé au prochain rechargement des contenus si un fichier '
+        + `content/semaine-${semaine}.json existe encore.`,
+    };
+  });
+
   app.post('/api/admin/defis/:semaine', async (requete, reponse) => {
     const semaine = Number(requete.params.semaine);
     const defi = db.prepare('SELECT * FROM defis WHERE semaine = ?').get(semaine);

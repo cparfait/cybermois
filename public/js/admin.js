@@ -122,6 +122,11 @@ chargeurs.defis = async () => {
         Un défi dépublié disparaît du portail sans que les participations soient perdues.</p>
       </details>
 
+      <div class="rang" style="margin-bottom:1.5rem">
+        <button class="btn btn-principal" id="btn-creer-defi">Créer un défi</button>
+        <span class="discret ui">Il arrive masqué : rédigez les questions, puis publiez-le.</span>
+      </div>
+
       <div class="carte" style="margin-bottom:1.5rem">
         <h2>Calendrier de la campagne</h2>
         <div class="champ-admin" style="max-width:280px">
@@ -144,6 +149,8 @@ chargeurs.defis = async () => {
               <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem" data-publier="${d.semaine}" data-etat="${d.publie}">
                 ${d.publie ? 'Masquer' : 'Publier'}
               </button>
+              <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem;border-color:var(--erreur);color:var(--erreur)"
+                      data-supprimer-defi="${d.semaine}" data-titre="${echapper(d.titre)}">Supprimer</button>
             </td>
           </tr>`).join('')}
         </tbody></table></div>
@@ -170,6 +177,43 @@ chargeurs.defis = async () => {
 
     cible.querySelectorAll('[data-editer]').forEach((b) =>
       b.addEventListener('click', () => ouvrirEditeur(Number(b.dataset.editer))));
+
+    document.getElementById('btn-creer-defi').addEventListener('click', async () => {
+      const titre = prompt('Titre du nouveau défi :');
+      if (!titre?.trim()) return;
+      try {
+        const r = await api('/api/admin/defis', { method: 'POST', body: { titre: titre.trim() } });
+        alerte('alerte', r.message, 'succes');
+        dejaCharge.delete('defis');
+        await chargeurs.defis();
+        ouvrirEditeur(r.semaine);
+      } catch (e) { alerte('alerte', e.message); }
+    });
+
+    cible.querySelectorAll('[data-supprimer-defi]').forEach((b) =>
+      b.addEventListener('click', async () => {
+        const semaine = Number(b.dataset.supprimerDefi);
+        if (!confirm(`Supprimer le défi « ${b.dataset.titre} » ?`)) return;
+        try {
+          const r = await api(`/api/admin/defis/${semaine}`, { method: 'DELETE' });
+          alerte('alerte', r.message, 'succes');
+          dejaCharge.delete('defis'); chargeurs.defis();
+        } catch (e) {
+          // Le serveur refuse tant que la perte des resultats n'est pas confirmee
+          if (/a été joué/.test(e.message)) {
+            if (!confirm(`${e.message}
+
+Confirmer la suppression définitive ?`)) return;
+            try {
+              const r = await api(`/api/admin/defis/${semaine}`, {
+                method: 'DELETE', body: { confirmerPerteResultats: true },
+              });
+              alerte('alerte', r.message, 'succes');
+              dejaCharge.delete('defis'); chargeurs.defis();
+            } catch (e2) { alerte('alerte', e2.message); }
+          } else alerte('alerte', e.message);
+        }
+      }));
   } catch (erreur) { cible.innerHTML = `<div class="message message-erreur">${echapper(erreur.message)}</div>`; }
 };
 

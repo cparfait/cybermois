@@ -62,8 +62,12 @@ export function attribuerBadges(agentId, { semaine, score, scoreMax, bonusMax })
   if (scoreMax > 0 && score >= scoreMax) donner('sans_faute');
   if (scoreMax > 0 && score / scoreMax >= 0.8 && BADGE_PAR_SEMAINE[semaine]) donner(BADGE_PAR_SEMAINE[semaine]);
   if (bonusMax) donner('rapide');
-  if (parts.length >= 3) donner('assidu');
-  if (parts.length >= 4) {
+  // Le seuil du parcours complet suit le nombre reel de defis publies :
+  // ajouter une semaine ne doit pas decerner « Cyber-Heros » par anticipation.
+  const defisPublies = db.prepare('SELECT COUNT(*) AS n FROM defis WHERE publie = 1').get().n || 4;
+
+  if (parts.length >= Math.min(3, defisPublies)) donner('assidu');
+  if (parts.length >= defisPublies) {
     donner('cyber_heros');
     const total = parts.reduce((s, p) => s + p.score, 0);
     const totalMax = parts.reduce((s, p) => s + p.score_max, 0);
