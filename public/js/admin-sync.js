@@ -127,6 +127,31 @@ function rendre() {
             <strong>Vérifiez avant de choisir</strong> — une base de recherche trop
             restrictive les ferait tous sortir d'un coup.
           </p>
+
+          <div class="rang" style="margin-bottom:.6rem">
+            <button type="button" class="btn btn-secondaire" id="btn-tout-disparus"
+                    style="padding:.3rem .7rem;font-size:.8rem">Tout cocher</button>
+            <button type="button" class="btn btn-secondaire" id="btn-rien-disparus"
+                    style="padding:.3rem .7rem;font-size:.8rem">Tout décocher</button>
+            <span class="discret ui" id="compteur-disparus" style="font-size:.84rem"></span>
+          </div>
+
+          <ul style="list-style:none;padding:0;margin:0 0 .9rem;max-height:220px;overflow-y:auto;
+                     border:1px solid var(--bordure);border-radius:var(--rayon);padding:.5rem .7rem">
+            ${d.disparus.map((a) => `
+              <li style="padding:.18rem 0">
+                <label style="display:flex;gap:.5rem;align-items:baseline;font-weight:400">
+                  <input type="checkbox" class="case-disparu" value="${echapper(a.login)}" checked
+                         style="width:17px;height:17px;flex:0 0 auto;accent-color:var(--vert-fonce)">
+                  <span>${echapper(a.nomComplet)}
+                    <span class="discret" style="font-size:.84rem">(${echapper(a.login)} — ${echapper(a.service)})</span>
+                    ${a.defis ? `<strong style="color:var(--alerte)"> — ${a.defis} défi(s) joué(s)</strong>` : ''}
+                  </span>
+                </label>
+              </li>`).join('')}
+          </ul>
+
+          <p class="ui" style="margin:0 0 .5rem;font-weight:700;font-size:.88rem">Que faire des comptes cochés ?</p>
           <div class="rang" style="flex-direction:column;align-items:stretch;gap:.55rem">
             <label style="display:flex;gap:.6rem;align-items:flex-start;font-weight:400">
               <input type="radio" name="sync-disparus" value="rien" checked
@@ -146,21 +171,16 @@ function rendre() {
                      style="width:20px;height:20px;flex:0 0 auto;accent-color:var(--erreur)">
               <span><strong style="color:var(--erreur)">Supprimer définitivement</strong><br>
               <span class="discret">La fiche, les participations, les réponses et les badges sont effacés.
-              ${d.disparus.reduce((n, a) => n + (a.defis || 0), 0)} défi(s) joué(s) au total seraient perdus.
               <strong>Irréversible.</strong> Le journal conserve la liste des identifiants supprimés.</span></span>
             </label>
           </div>
         </fieldset>` : ''}
-
       ${bloc(d.modifies, 'Détail des modifications', (m) => `<strong>${echapper(m.nomComplet)}</strong> — `
         + m.changements.map((c) => `${echapper(c.champ)} : ${echapper(c.avant)} → <strong>${echapper(c.apres)}</strong>`).join(' · '))}
 
       ${bloc(d.desactives, 'Comptes désactivés dans l’annuaire', (a) => `${echapper(a.nomComplet)} `
         + `<span class="discret">(${echapper(a.service)})</span>`
         + (a.defis ? ` — ${a.defis} défi(s) joué(s), résultats conservés` : ''))}
-
-      ${bloc(d.disparus, 'Absents de l’annuaire', (a) => `${echapper(a.nomComplet)} `
-        + `<span class="discret">(${echapper(a.service)})</span>${a.defis ? ` — ${a.defis} défi(s) joué(s)` : ''}`, 'var(--alerte)')}
 
       ${bloc(d.ecartes, `${r.ecartes} compte(s) écarté(s) par vos règles`, (a) => `${echapper(a.nomComplet)} `
         + `<span class="discret">(${echapper(a.login)}) — ${echapper(a.motif)}</span>`)}
@@ -255,12 +275,35 @@ function brancher() {
   const choixDisparus = () =>
     document.querySelector('input[name="sync-disparus"]:checked')?.value || 'rien';
 
+  const casesDisparus = () => [...zone.querySelectorAll('.case-disparu')];
+  const disparusCoches = () => casesDisparus().filter((c) => c.checked).map((c) => c.value);
+
+  const majDisparus = () => {
+    const compteur = document.getElementById('compteur-disparus');
+    if (!compteur) return;
+    const n = disparusCoches().length;
+    compteur.textContent = `${n} compte(s) coché(s) sur ${casesDisparus().length}`;
+  };
+  majDisparus();
+  zone.addEventListener('change', (e) => { if (e.target.matches('.case-disparu')) majDisparus(); });
+  document.getElementById('btn-tout-disparus')?.addEventListener('click', () => {
+    casesDisparus().forEach((c) => { c.checked = true; }); majDisparus();
+  });
+  document.getElementById('btn-rien-disparus')?.addEventListener('click', () => {
+    casesDisparus().forEach((c) => { c.checked = false; }); majDisparus();
+  });
+
   document.getElementById('btn-appliquer-sync').addEventListener('click', async () => {
     const bouton = document.getElementById('btn-appliquer-sync');
 
     const choix = choixDisparus();
-    const nb = analyse.resume.disparus;
+    const choisis = disparusCoches();
+    const nb = choisis.length;
     const paragraphes = (...bouts) => bouts.join(String.fromCharCode(10, 10));
+
+    if (choix !== 'rien' && nb === 0) {
+      return alerte('alerte', 'Aucun compte absent n’est coché : décochez l’action, ou cochez des comptes.');
+    }
 
     if (choix === 'ecarter' && nb > 0 && !confirm(paragraphes(
       `Écarter ${nb} agent(s) absent(s) de l'annuaire ?`,
@@ -271,7 +314,9 @@ function brancher() {
     // donc le nombre plutôt qu'un simple « OK » : ce n'est pas la même décision
     // que l'exclusion, et le geste ne doit pas l'être non plus.
     if (choix === 'supprimer' && nb > 0) {
-      const defis = (analyse.disparus || []).reduce((n, a) => n + (a.defis || 0), 0);
+      const defis = (analyse.disparus || [])
+        .filter((a) => choisis.includes(a.login))
+        .reduce((n, a) => n + (a.defis || 0), 0);
       const saisi = prompt(paragraphes(
         `Supprimer définitivement ${nb} compte(s) et tous leurs résultats ?`,
         `${defis} défi(s) joué(s) seront effacés. Cette action est irréversible.`,
@@ -294,6 +339,7 @@ function brancher() {
           exclureDesactives: document.getElementById('sync-desactives').checked,
           exclureDisparus: choixDisparus() === 'ecarter',
           supprimerDisparus: choixDisparus() === 'supprimer',
+          disparusChoisis: choisis,
         },
       });
       alerte('alerte', r.message, 'succes');

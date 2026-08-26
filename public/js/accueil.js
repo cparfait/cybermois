@@ -1,5 +1,25 @@
 import { api, echapper, initialiserPage, alerte } from '/js/commun.js';
 
+/**
+ * Ce qu'on montre d'un defi qui n'est pas encore ouvert.
+ *
+ * Annoncer « Semaine 3 : Poste sous surveillance » trois semaines a l'avance
+ * dissout l'effet de surprise, et donne le temps de reviser le mauvais sujet.
+ * Le serveur ne renvoie donc plus rien du contenu ; il reste a occuper la
+ * carte avec autre chose qu'un blanc.
+ *
+ * L'index vient du numero de semaine : le message ne change pas d'un
+ * rechargement a l'autre, ce qui serait deroutant.
+ */
+const TEASERS = [
+  { icone: '🛰️', titre: 'Transmission programmée', texte: 'Un signal chiffré est en approche. Rien à décoder pour l’instant.' },
+  { icone: '🔐', titre: 'Sous scellés', texte: 'Ce défi existe. Il ne parlera pas avant l’heure.' },
+  { icone: '🧩', titre: 'Dossier classé', texte: 'Le contenu est verrouillé. Revenez le jour dit, on vous ouvrira.' },
+  { icone: '📡', titre: 'Signal détecté', texte: 'Quelque chose se prépare du côté de la DSI. Patience.' },
+  { icone: '🧊', titre: 'En cours de déchiffrement', texte: 'Les questions existent déjà. Elles refroidissent encore.' },
+  { icone: '🕵️', titre: 'Confidentiel défense', texte: 'Même vous n’avez pas l’habilitation. Pas encore.' },
+];
+
 const agent = await initialiserPage('/accueil');
 
 try {
@@ -43,12 +63,27 @@ try {
     const classe = p ? 'termine' : defi.ouvert ? '' : 'verrouille';
     const pourcentage = p && p.scoreMax ? Math.round((p.score / p.scoreMax) * 100) : 0;
 
-    let action;
+    const date = new Date(defi.ouvreLe + 'T00:00:00')
+      .toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+    // Un defi a venir ne dit rien de lui-meme : le serveur ne renvoie ni son
+    // titre ni son accroche. On affiche une carte scellee plutot qu'un trou.
     if (!defi.ouvert) {
-      const date = new Date(defi.ouvreLe + 'T00:00:00')
-        .toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-      action = `<p class="discret" style="margin:0">🔒 Ouverture le ${date}</p>`;
-    } else if (p) {
+      const t = TEASERS[(defi.semaine - 1) % TEASERS.length];
+      return `
+        <article class="carte carte-defi verrouille carte-scellee">
+          <p class="numero-semaine">Semaine ${defi.semaine}</p>
+          <div class="sceau" aria-hidden="true"><span class="sceau-icone">${t.icone}</span></div>
+          <h3 style="margin-bottom:.2em">${echapper(t.titre)}</h3>
+          <p class="accroche" style="margin-top:0">${echapper(t.texte)}</p>
+          <div class="pied-carte">
+            <p class="discret" style="margin:0">🔒 Descellement le ${date}</p>
+          </div>
+        </article>`;
+    }
+
+    let action;
+    if (p) {
       action = `<a class="btn btn-secondaire btn-bloc" href="/defi/${defi.semaine}">Revoir les corrections</a>`;
     } else {
       action = `<a class="btn btn-principal btn-bloc" href="/defi/${defi.semaine}">Je relève le défi</a>`;

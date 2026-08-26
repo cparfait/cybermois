@@ -17,6 +17,29 @@
 
   .carte-defi { display: flex; flex-direction: column; position: relative; border-top: 5px solid var(--vert-clair); }
   .carte-defi.verrouille { opacity: .62; }
+
+  /* Carte scellee : un defi a venir ne montre rien de son contenu, il faut
+     donc que l'attente elle-meme ait l'air voulue. */
+  .carte-scellee { opacity: 1; border-top-color: var(--bordure); text-align: center; }
+  .carte-scellee h3 { font-size: 1.05rem; }
+  .carte-scellee .accroche { font-style: italic; }
+
+  .sceau { display: grid; place-items: center; width: 74px; height: 74px; margin: .4rem auto .8rem;
+    border-radius: 50%; background: var(--fond-doux); border: 2px dashed var(--bordure);
+    position: relative; }
+  .sceau-icone { font-size: 2rem; line-height: 1; }
+
+  /* Le balayage tourne lentement : il signale une attente, il ne reclame pas
+     l'attention d'un agent qui lit la carte d'a cote. */
+  .sceau::before { content: ''; position: absolute; inset: -6px; border-radius: 50%;
+    border: 2px solid transparent; border-top-color: var(--vert-clair);
+    animation: balayage 3.2s linear infinite; }
+
+  @keyframes balayage { to { transform: rotate(360deg); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sceau::before { animation: none; border-top-color: var(--bordure); }
+  }
   .carte-defi.termine { border-top-color: var(--succes); }
   .numero-semaine { font-family: var(--police-ui); font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--vert-clair-texte); }
   .accroche { font-style: italic; color: var(--encre-douce); }

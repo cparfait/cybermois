@@ -159,6 +159,16 @@ export async function analyserSynchronisation() {
     }
   }
 
+  /**
+   * Les listes du sas suivent sinon l'ordre de lecture de l'annuaire, qui n'en
+   * est pas un : relire trois cents noms pour verifier qu'un agent y figure
+   * suppose de pouvoir les parcourir. Le tri est accentue - « Élus » se range
+   * avec les E, pas apres les Z.
+   */
+  const parNom = (liste) =>
+    [...liste].sort((a, b) => String(a.nomComplet || a.login || '')
+      .localeCompare(String(b.nomComplet || b.login || ''), 'fr', { sensitivity: 'base' }));
+
   // Agents deja en base qui n'ont pas d'adresse : signales, jamais ecartes
   // d'office - certains ont peut-etre deja joue.
   const enBaseSansAdresse = [...enBase.values()]
@@ -199,17 +209,17 @@ export async function analyserSynchronisation() {
         service,
         effectif: agents.length,
         sansEmail: agents.filter((a) => !a.email).length,
-        agents: agents.map((a) => ({
+        agents: parNom(agents).map((a) => ({
           login: a.login, nomComplet: a.nomComplet, email: a.email, serviceAd: a.serviceAd, dn: a.dn,
         })),
       }))
       .sort((a, b) => b.effectif - a.effectif || a.service.localeCompare(b.service, 'fr')),
-    modifies: modifies.slice(0, 200),
-    desactives,
-    disparus,
-    ecartes: ecartes.slice(0, 100),
-    sansAdresse: sansAdresse.slice(0, 200),
-    enBaseSansAdresse,
+    modifies: parNom(modifies).slice(0, 200),
+    desactives: parNom(desactives),
+    disparus: parNom(disparus),
+    ecartes: parNom(ecartes).slice(0, 100),
+    sansAdresse: parNom(sansAdresse).slice(0, 200),
+    enBaseSansAdresse: parNom(enBaseSansAdresse),
     exigerEmail: config.sync.exigerEmail,
     exclusions,
   };
@@ -222,6 +232,7 @@ export async function analyserSynchronisation() {
 export async function appliquerSynchronisation({
   accepter = [], appliquerModifications = true,
   exclureDesactives = true, exclureDisparus = false, supprimerDisparus = false,
+  disparusChoisis = null,
 } = {}, parQui) {
   const lecture = await listerAgentsAnnuaire();
   if (!lecture.ok) return { ok: false, message: lecture.message };
@@ -311,10 +322,19 @@ export async function appliquerSynchronisation({
     }
 
     if (supprimerDisparus || exclureDisparus) {
+      // Une selection explicite l'emporte : tous les absents ne relevent pas
+      // du meme sort - un depart definitif se supprime, un compte deplace par
+      // erreur ne doit surtout pas l'etre. Sans liste, on traite l'ensemble,
+      // ce qui reste le comportement des appels programmatiques.
+      const choisis = Array.isArray(disparusChoisis)
+        ? new Set(disparusChoisis.map((l) => String(l).toLowerCase()))
+        : null;
+
       for (const [login, existant] of enBase) {
         // Un compte local ne vient pas de l'annuaire : son absence n'a aucun
         // sens, et le supprimer couperait l'acces a l'administration.
         if (parLogin.has(login) || existant.origine === 'local') continue;
+        if (choisis && !choisis.has(login)) continue;
 
         if (supprimerDisparus) {
           effaces.push(login);

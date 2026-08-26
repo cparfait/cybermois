@@ -369,6 +369,7 @@ export default async function routesUtilisateurs(app) {
       exclureDesactives: c.exclureDesactives !== false,
       exclureDisparus: !!c.exclureDisparus,
       supprimerDisparus: !!c.supprimerDisparus,
+      disparusChoisis: Array.isArray(c.disparusChoisis) ? c.disparusChoisis : null,
     }, requete.agent.login);
 
     if (!resultat.ok) return reponse.code(500).send({ erreur: resultat.message });

@@ -50,15 +50,24 @@ export default async function routesJeu(app) {
     ).all(requete.agent.id);
     const parDefi = Object.fromEntries(faits.map((f) => [f.defi_id, f]));
 
-    return defis.map((d) => ({
+    return defis.map((d) => {
+      const ouvert = estOuvert(d);
+
+      // Un defi a venir ne livre rien de son contenu : ni titre, ni accroche,
+      // ni nombre de questions. L'effet de surprise fait partie de la
+      // campagne, et le masquer a l'ecran seulement ne masquerait rien - la
+      // reponse de l'API se lit dans n'importe quel navigateur.
+      return {
       semaine: d.semaine,
-      titre: d.titre,
-      accroche: d.accroche,
-      dureeMinutes: d.duree_minutes,
+      titre: ouvert ? d.titre : null,
+      accroche: ouvert ? d.accroche : null,
+      dureeMinutes: ouvert ? d.duree_minutes : null,
       ouvreLe: d.ouvre_le,
-      ouvert: estOuvert(d),
+      ouvert,
       paru: estParu(d),
-      nbQuestions: db.prepare('SELECT COUNT(*) AS n FROM questions WHERE defi_id = ?').get(d.id).n,
+      nbQuestions: ouvert
+        ? db.prepare('SELECT COUNT(*) AS n FROM questions WHERE defi_id = ?').get(d.id).n
+        : null,
       participation: parDefi[d.id]
         ? {
             score: parDefi[d.id].score,
@@ -67,7 +76,8 @@ export default async function routesJeu(app) {
             total: parDefi[d.id].total_questions,
           }
         : null,
-    }));
+      };
+    });
   });
 
   /* ------------------------------------------ Contenu d'un defi (sans les corrections) */
