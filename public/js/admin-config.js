@@ -79,11 +79,6 @@ export async function chargerConfiguration() {
   const parGroupe = (cle) => descripteur.filter((p) => p.groupe === cle).map(champ).join('');
 
   cible.innerHTML = `
-    <div class="rang" style="margin-bottom:1.5rem;padding:1rem;background:var(--vert-fonce-clair);border-radius:var(--rayon)">
-      <button type="button" class="btn btn-principal" id="btn-test-rapide">Tester la connexion Active Directory</button>
-      <span class="discret ui">Utilise les valeurs affichées ci-dessous, avant même de les enregistrer.</span>
-    </div>
-
     ${d.etat.ok ? `
       <div class="message message-succes" style="margin-bottom:1.5rem">
         Configuration complète : les agents peuvent se connecter
@@ -201,11 +196,6 @@ function brancher() {
 
   document.getElementById('btn-recharger-config').addEventListener('click', () => chargerConfiguration());
 
-  // Raccourci en tete de page : la section Active Directory est loin en bas
-  document.getElementById('btn-test-rapide')?.addEventListener('click', () => {
-    document.getElementById('resultat-ldap')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    document.getElementById('btn-test-ldap')?.click();
-  });
 
   document.getElementById('btn-enregistrer-config').addEventListener('click', async () => {
     const bouton = document.getElementById('btn-enregistrer-config');
