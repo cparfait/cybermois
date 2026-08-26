@@ -60,9 +60,31 @@ function rendre() {
       </p>
 
       <div class="message message-info" style="margin:1rem 0">
-        Le rattachement décidé ici <strong>résiste aux synchronisations</strong> : l'annuaire ne
-        l'écrasera pas. La correction propre reste de renseigner « department » dans l'Active
-        Directory — elle profiterait à toutes vos applications, pas seulement à celle-ci.
+        <p style="margin:0 0 .5rem">
+          Ces agents n'ont pas d'attribut « department » renseigné dans l'annuaire.
+          Le rattachement décidé ici <strong>résiste aux synchronisations</strong> : il ne sera
+          pas écrasé, même si l'annuaire reste en l'état.
+        </p>
+        <details>
+          <summary class="ui" style="cursor:pointer;font-weight:700">
+            Corriger l'annuaire plutôt que le contourner
+          </summary>
+          <p style="margin:.5rem 0">
+            Un « department » renseigné profite à toutes vos applications. L'export ci-dessous
+            reprend ces agents avec le service déduit de leur emplacement : relisez la colonne
+            <em>DepartementPropose</em>, corrigez ce qui doit l'être, puis appliquez.
+          </p>
+          <p style="margin:.5rem 0">
+            <a class="btn btn-secondaire" href="/api/admin/agents/non-rattaches.csv"
+               style="padding:.4rem .8rem;font-size:.82rem">Exporter la liste à corriger</a>
+          </p>
+          <p style="margin:.5rem 0 0">Puis, sur un poste disposant des outils RSAT :</p>
+          <code class="bloc">Import-Csv C:\\temp\\cybermois-a-corriger-dans-ad.csv -Delimiter ";" -Encoding UTF8 | ForEach-Object { Set-ADUser -Identity $_.SamAccountName -Department $_.DepartementPropose -WhatIf }</code>
+          <p class="discret" style="margin:.5rem 0 0;font-size:.82rem">
+            <strong>-WhatIf</strong> n'écrit rien : il affiche ce qui serait fait. Retirez-le
+            une fois la liste vérifiée.
+          </p>
+        </details>
       </div>
 
       <div class="rang" style="margin-bottom:1rem">

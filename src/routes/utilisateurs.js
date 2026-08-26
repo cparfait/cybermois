@@ -533,6 +533,50 @@ export default async function routesUtilisateurs(app) {
     };
   });
 
+  /**
+   * Export des agents sans service, avec le service deduit de leur emplacement.
+   * Sert a corriger l'annuaire lui-meme plutot qu'a le contourner : un
+   * « department » renseigne profite a toutes les applications, pas seulement
+   * a celle-ci.
+   */
+  app.get('/api/admin/agents/non-rattaches.csv', async (requete, reponse) => {
+    const agents = db.prepare(`
+      SELECT login, nom_complet, email, service_brut
+      FROM agents
+      WHERE service = 'Non rattache' AND exclu = 0 AND origine <> 'local'
+      ORDER BY nom_complet
+    `).all();
+
+    const existants = db.prepare(`
+      SELECT DISTINCT service FROM agents WHERE exclu = 0 AND service <> 'Non rattache'
+    `).all().map((s) => s.service);
+    const parCle = new Map(existants.map((e) => [cleComparaison(e), e]));
+
+    // Echappement CSV sans expression reguliere : une classe de caracteres
+    // contenant un saut de ligne se prete mal aux modifications automatisees.
+    const echapper = (v) => {
+      const t = v === null || v === undefined ? '' : String(v);
+      const aProteger = t.includes('"') || t.includes(';') || t.includes(String.fromCharCode(10));
+      return aProteger ? '"' + t.split('"').join('""') + '"' : t;
+    };
+
+    const lignes = agents.map((a) => {
+      const ous = chaineOu(a.service_brut);
+      const indice = ous[0] || '';
+      const propose = parCle.get(cleComparaison(indice)) || indice;
+      return [a.login, a.nom_complet, a.email || '', indice, propose, ous.join(' < ')]
+        .map(echapper).join(';');
+    });
+
+    const entetes = 'SamAccountName;Nom;Adresse;OU;DepartementPropose;Arborescence';
+
+    journaliser(requete.agent.login, 'export_non_rattaches', `${agents.length} agents`, requete.ip);
+    const RETOUR = String.fromCharCode(13, 10);
+    return reponse.type('text/csv; charset=utf-8')
+      .header('Content-Disposition', 'attachment; filename="cybermois-a-corriger-dans-ad.csv"')
+      .send('﻿' + [entetes, ...lignes].join(RETOUR));
+  });
+
   /** Rattachement, definitif : l'annuaire ne l'ecrasera plus. */
   app.post('/api/admin/agents/rattachement', async (requete, reponse) => {
     const affectations = Array.isArray(requete.body?.affectations) ? requete.body.affectations : [];
