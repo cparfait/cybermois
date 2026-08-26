@@ -15,6 +15,7 @@ import {
   etatReferentiel, enregistrerReferentiel, initialiserDepuisDonnees,
   analyserCollage, appliquerReferentiel, nomsReferentiel,
 } from '../lib/referentiel.js';
+import { rapprocher } from '../lib/rapprochement.js';
 
 export default async function routesUtilisateurs(app) {
   app.addHook('preHandler', exigerAdmin);
@@ -426,6 +427,41 @@ export default async function routesUtilisateurs(app) {
     return {
       ok: true, ...r,
       message: `${r.ajoutes} service(s) ajouté(s) depuis les données. Référentiel : ${r.total} service(s).`,
+    };
+  });
+
+  /**
+   * Propose un service du referentiel pour chaque libellé d'annuaire.
+   * N'ecrit rien : c'est une aide a la decision, pas une decision.
+   */
+  app.get('/api/admin/referentiel/suggestions', async () => {
+    const referentiel = nomsReferentiel();
+    if (!referentiel.length) {
+      return { referentiel: [], suggestions: [], message: 'Le référentiel est vide.' };
+    }
+
+    const libelles = db.prepare(`
+      SELECT COALESCE(NULLIF(service_ad, ''), service) AS libelle, COUNT(*) AS effectif
+      FROM agents
+      WHERE exclu = 0 AND origine <> 'local' AND service_force = 0
+      GROUP BY libelle
+      ORDER BY effectif DESC
+    `).all();
+
+    const suggestions = rapprocher(libelles, referentiel);
+    const parConfiance = (c) => suggestions.filter((s) => s.confiance === c);
+
+    return {
+      referentiel,
+      suggestions,
+      resume: {
+        libelles: suggestions.length,
+        sure: parConfiance('sure').length,
+        probable: parConfiance('probable').length,
+        incertaine: parConfiance('incertaine').length,
+        aucune: parConfiance('aucune').length,
+        agentsSurs: parConfiance('sure').reduce((n, s) => n + s.effectif, 0),
+      },
     };
   });
 

@@ -681,12 +681,18 @@ async function formulaireServices(filtreInitial = '') {
         le classement se recalcule sans qu'il faille réimporter quoi que ce soit.</p>
       </details>
 
-      ${avecProposition ? `
-        <div class="message message-info" style="margin-bottom:1rem">
-          ${avecProposition} libellé(s) reçoivent une proposition de regroupement.
+      <div class="rang" style="margin-bottom:1rem">
+        <button class="btn btn-principal" id="btn-suggerer"
+                style="padding:.45rem .9rem;font-size:.85rem">Proposer un rapprochement</button>
+        ${avecProposition ? `
           <button class="btn btn-secondaire" id="btn-appliquer-propositions"
-                  style="padding:.3rem .8rem;font-size:.82rem;margin-left:.5rem">Appliquer les propositions</button>
-        </div>` : ''}
+                  style="padding:.45rem .9rem;font-size:.85rem">
+            Regrouper les familles (${avecProposition})
+          </button>` : ''}
+        <span class="discret ui" id="etat-suggestions"></span>
+      </div>
+
+      <div id="resultat-suggestions"></div>
 
       <div class="barre-filtres" style="margin-bottom:.8rem">
         <div class="champ-admin" style="flex:1;min-width:220px">
@@ -878,6 +884,120 @@ async function formulaireServices(filtreInitial = '') {
     majSelection();
     majApercu();
     alerte('alerte', `« ${nom} » appliqué. Vérifiez le tableau, puis enregistrez.`, 'succes');
+  });
+
+  /**
+   * Rapprochement avec le referentiel : on remplit d'office ce qui est sur,
+   * on montre le reste sans y toucher. Une suggestion fausse presentee comme
+   * sure coute plus cher que pas de suggestion du tout.
+   */
+  document.getElementById('btn-suggerer').addEventListener('click', async () => {
+    const bouton = document.getElementById('btn-suggerer');
+    const zoneResultat = document.getElementById('resultat-suggestions');
+    bouton.disabled = true;
+    bouton.textContent = 'Analyse…';
+
+    let r;
+    try {
+      r = await api('/api/admin/referentiel/suggestions');
+    } catch (e) {
+      alerte('alerte', e.message);
+      bouton.disabled = false;
+      bouton.textContent = 'Proposer un rapprochement';
+      return;
+    }
+
+    bouton.disabled = false;
+    bouton.textContent = 'Proposer un rapprochement';
+
+    if (!r.referentiel.length) {
+      zoneResultat.innerHTML = `
+        <div class="message message-alerte">
+          Le référentiel est vide. Renseignez-le d'abord dans « Référentiel des services » :
+          c'est lui qui sert de cible au rapprochement.
+        </div>`;
+      return;
+    }
+
+    const parLibelle = new Map(r.suggestions.map((s) => [s.libelle, s]));
+    const appliquer = (niveaux) => {
+      let n = 0;
+      for (const c of champs()) {
+        const s = parLibelle.get(c.dataset.source);
+        if (!s || !s.proposition || !niveaux.includes(s.confiance)) continue;
+        if (![...c.options].some((o) => o.value === s.proposition)) ajouterNom(s.proposition);
+        c.value = s.proposition;
+        n++;
+      }
+      majApercu();
+      return n;
+    };
+
+    const n = appliquer(['sure']);
+    document.getElementById('etat-suggestions').textContent =
+      `${n} libellé(s) rapproché(s) avec certitude`;
+
+    const aVerifier = r.suggestions.filter((s) => ['probable', 'incertaine'].includes(s.confiance));
+    const sans = r.suggestions.filter((s) => s.confiance === 'aucune');
+
+    zoneResultat.innerHTML = `
+      <div class="message message-info" style="margin-bottom:1rem">
+        <p style="margin:0 0 .5rem">
+          <strong>${r.resume.sure} libellé(s) rapproché(s)</strong> — ${r.resume.agentsSurs} agents.
+          Ils sont déjà renseignés dans le tableau, vérifiez-les avant d'enregistrer.
+        </p>
+
+        ${aVerifier.length ? `
+          <details style="margin-top:.6rem">
+            <summary class="ui" style="cursor:pointer;font-weight:700">
+              ${aVerifier.length} rapprochement(s) à confirmer
+            </summary>
+            <p class="discret" style="font-size:.84rem;margin:.4rem 0">
+              Non appliqués : le doute est réel. Cochez ceux qui vous conviennent.
+            </p>
+            <ul class="ui" style="font-size:.84rem;list-style:none;padding:0">
+              ${aVerifier.map((s) => `
+                <li style="padding:.2rem 0">
+                  <label style="display:flex;gap:.5rem;align-items:baseline;font-weight:400">
+                    <input type="checkbox" class="case-suggestion"
+                           data-libelle="${echapper(s.libelle)}" data-cible="${echapper(s.proposition)}"
+                           style="width:16px;height:16px;accent-color:var(--vert-fonce)">
+                    <span>${echapper(s.libelle)} <span class="discret">(${s.effectif})</span>
+                      → <strong>${echapper(s.proposition)}</strong>
+                      <span class="discret">— ${echapper(s.motif || '')}</span></span>
+                  </label>
+                </li>`).join('')}
+            </ul>
+            <button type="button" class="btn btn-secondaire" id="btn-appliquer-suggestions"
+                    style="padding:.35rem .8rem;font-size:.82rem">Appliquer les rapprochements cochés</button>
+          </details>` : ''}
+
+        ${sans.length ? `
+          <details style="margin-top:.6rem">
+            <summary class="ui" style="cursor:pointer;font-weight:700">
+              ${sans.length} libellé(s) sans correspondance
+            </summary>
+            <p class="discret" style="font-size:.84rem;margin:.4rem 0">
+              Aucun service du référentiel ne leur ressemble. À traiter à la main, ou à
+              ajouter au référentiel s'il en manque.
+            </p>
+            <ul class="ui" style="font-size:.84rem;columns:2">
+              ${sans.slice(0, 60).map((s) => `<li>${echapper(s.libelle)} <span class="discret">(${s.effectif})</span></li>`).join('')}
+            </ul>
+          </details>` : ''}
+      </div>`;
+
+    document.getElementById('btn-appliquer-suggestions')?.addEventListener('click', () => {
+      const choisies = [...zoneResultat.querySelectorAll('.case-suggestion:checked')];
+      for (const c of choisies) {
+        const champ = champs().find((x) => x.dataset.source === c.dataset.libelle);
+        if (!champ) continue;
+        ajouterNom(c.dataset.cible);
+        champ.value = c.dataset.cible;
+      }
+      majApercu();
+      alerte('alerte', `${choisies.length} rapprochement(s) reporté(s) dans le tableau.`, 'succes');
+    });
   });
 
   document.getElementById('btn-appliquer-propositions')?.addEventListener('click', () => {

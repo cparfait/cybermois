@@ -75,7 +75,7 @@ function rendre() {
         <div class="editeur-question" data-groupe="${i}">
           <div class="barre-filtres" style="margin-bottom:.6rem">
             <div style="flex:1;min-width:200px">
-              <strong class="ui">${g.indiceOu ? `Sous « ${echapper(g.indiceOu)} »` : 'Sans indice dans l\\'annuaire'}</strong>
+              <strong class="ui">${g.indiceOu ? `Sous « ${echapper(g.indiceOu)} »` : "Sans indice dans l'annuaire"}</strong>
               <span class="discret"> — ${g.agents.length} agent(s)</span>
               ${g.proposition && g.existe
                 ? `<br><span class="discret" style="font-size:.8rem">correspond au service existant « ${echapper(g.proposition)} »</span>`
