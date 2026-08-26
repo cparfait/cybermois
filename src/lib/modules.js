@@ -29,6 +29,11 @@ CREATE TABLE IF NOT EXISTS programme (
 // la campagne finie, quel questionnaire a reellement ete pose.
 ajouterColonne('defis', 'module_code', 'TEXT');
 
+// Une date propre a la semaine. Vide, l'ouverture se calcule a partir du debut
+// de campagne - le rythme hebdomadaire couvre la plupart des cas, mais un jour
+// ferie ou une semaine de vacances scolaires ne s'y plient pas.
+ajouterColonne('programme', 'ouvre_le', 'TEXT');
+
 /** Lit un module du catalogue. Renvoie null s'il n'existe pas. */
 export function lireModule(code) {
   const fichier = path.join(DOSSIER, `${path.basename(code)}.json`);
@@ -63,7 +68,7 @@ export function listerModules() {
 }
 
 export const lireProgramme = () =>
-  db.prepare('SELECT semaine, module_code FROM programme ORDER BY semaine').all();
+  db.prepare('SELECT semaine, module_code, ouvre_le FROM programme ORDER BY semaine').all();
 
 /**
  * Etat des semaines : ce qui est programme, ce qui est deja joue, et ce qu'on
@@ -84,7 +89,10 @@ export function etatProgramme() {
       semaine: p.semaine,
       module_code: p.module_code,
       titre: d?.titre || lireModule(p.module_code)?.titre || null,
-      ouvre_le: d?.ouvre_le || null,
+      // La date effective vient du defi ; celle du programme dit seulement si
+      // elle a ete fixee a la main, ce que l'ecran doit pouvoir distinguer.
+      ouvre_le: d?.ouvre_le || p.ouvre_le || null,
+      date_forcee: p.ouvre_le || null,
       publie: d ? !!d.publie : false,
       participations: d?.participations || 0,
       verrouille: (d?.participations || 0) > 0,
@@ -109,8 +117,14 @@ export function enregistrerProgramme(entrees, parQui) {
     if (!Number.isInteger(semaine) || semaine < 1 || !code) continue;
     if (vues.has(semaine)) continue;
     if (!lireModule(code)) throw new Error(`Module inconnu : ${code}`);
+
+    // Une date mal formee vaut absence de date : on retombe alors sur le
+    // calcul hebdomadaire plutot que d'ecrire une ouverture invalide.
+    const brut = String(e.ouvre_le || '').trim();
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(brut) ? brut : null;
+
     vues.add(semaine);
-    propres.push({ semaine, code });
+    propres.push({ semaine, code, date });
   }
 
   // Une semaine deja jouee ne se reprogramme pas : les participations
@@ -131,8 +145,8 @@ export function enregistrerProgramme(entrees, parQui) {
   db.exec('BEGIN');
   try {
     db.exec('DELETE FROM programme');
-    const inserer = db.prepare('INSERT INTO programme (semaine, module_code) VALUES (?, ?)');
-    for (const p of propres) inserer.run(p.semaine, p.code);
+    const inserer = db.prepare('INSERT INTO programme (semaine, module_code, ouvre_le) VALUES (?, ?, ?)');
+    for (const p of propres) inserer.run(p.semaine, p.code, p.date);
     db.exec('COMMIT');
   } catch (err) {
     db.exec('ROLLBACK');

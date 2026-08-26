@@ -44,13 +44,24 @@ const options = (choisi) => parTheme().map(([theme, liste]) => `
     ${liste.map((m) => `<option value="${echapper(m.code)}"${m.code === choisi ? ' selected' : ''}>${echapper(m.titre)} — ${m.questions} questions</option>`).join('')}
   </optgroup>`).join('');
 
-/** Date d'ouverture d'une semaine, calculee comme le serveur : debut + 7 jours. */
-function ouverture(semaine) {
+/**
+ * Date d'ouverture calculee comme le serveur : debut de campagne + 7 jours par
+ * semaine. Elle sert de valeur de depart ; rien n'oblige a la garder.
+ */
+function calculee(semaine) {
   const [a, m, j] = (donnees.debut || '').split('-').map(Number);
   if (!a) return '';
   const d = new Date(Date.UTC(a, m - 1, j));
   d.setUTCDate(d.getUTCDate() + (semaine - 1) * 7);
-  return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())}`;
+}
+
+/** « lundi 12 octobre » : un champ date seul ne dit pas quel jour de semaine. */
+function enLettres(iso) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || '')) return '';
+  return new Date(`${iso}T00:00:00Z`)
+    .toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
 }
 
 function rendre(cible) {
@@ -61,12 +72,13 @@ function rendre(cible) {
       <h2>Programme de la campagne</h2>
       <p class="discret" style="margin-top:-.3em">
         ${donnees.modules.length} modules sont prêts. Choisissez ceux que vous jouez, et dans quel ordre.
-        Le contenu n'est pas modifié : vous pourrez toujours l'ajuster ensuite depuis le tableau des défis.
+        La date d'ouverture se calcule de semaine en semaine, mais chaque ligne se corrige :
+        un jour férié ou une semaine de vacances n'attendent pas le lundi suivant.
       </p>
 
       <div class="tableau-defilant" style="margin-top:1rem">
         <table class="admin">
-          <thead><tr><th style="width:70px">Semaine</th><th>Ouverture</th><th>Module</th><th style="width:110px"></th></tr></thead>
+          <thead><tr><th style="width:70px">Semaine</th><th style="width:190px">Ouverture</th><th>Module</th><th style="width:110px"></th></tr></thead>
           <tbody id="corps-programme">
             ${brouillon.map((b, i) => ligne(b, i)).join('')}
           </tbody>
@@ -118,7 +130,15 @@ const ligne = (b, i) => {
   return `
   <tr data-index="${i}"${b.verrouille ? ' style="background:var(--fond-doux)"' : ''}>
     <td><strong>S${b.semaine}</strong></td>
-    <td class="discret" style="font-size:.84rem">${echapper(ouverture(b.semaine))}</td>
+    <td>
+      <input type="date" class="date-semaine" value="${echapper(b.ouvre_le || calculee(b.semaine))}"
+             aria-label="Ouverture de la semaine ${b.semaine}"${b.verrouille ? ' disabled' : ''}
+             style="font-size:.86rem">
+      <div class="discret" style="font-size:.78rem;margin-top:.2rem">
+        ${echapper(enLettres(b.ouvre_le || calculee(b.semaine)))}
+        ${b.date_forcee ? ' · fixée à la main' : ''}
+      </div>
+    </td>
     <td>
       <select class="module-semaine" aria-label="Module de la semaine ${b.semaine}"${b.verrouille ? ' disabled' : ''}>
         <option value="">— aucun —</option>
@@ -151,6 +171,15 @@ function brancher(cible) {
     rendre(cible);
   }));
 
+  cible.querySelectorAll('.date-semaine').forEach((champ) => champ.addEventListener('change', () => {
+    const b = brouillon[Number(champ.closest('tr').dataset.index)];
+    // Une date effacee renvoie au calcul hebdomadaire : c'est le moyen de
+    // revenir en arriere sans avoir a retrouver le lundi soi-meme.
+    b.ouvre_le = champ.value || null;
+    b.date_forcee = champ.value && champ.value !== calculee(b.semaine) ? champ.value : null;
+    rendre(cible);
+  }));
+
   cible.querySelectorAll('[data-retirer]').forEach((b) => b.addEventListener('click', () => {
     brouillon.splice(Number(b.dataset.retirer), 1);
     // Les semaines se renumerotent : un trou dans le calendrier n'aurait pas de sens.
@@ -168,7 +197,13 @@ function brancher(cible) {
 
   document.getElementById('btn-enregistrer-programme').addEventListener('click', async () => {
     const programme = brouillon.filter((b) => b.module_code)
-      .map((b) => ({ semaine: b.semaine, module_code: b.module_code }));
+      .map((b) => ({
+        semaine: b.semaine,
+        module_code: b.module_code,
+        // Seule une date differente du calcul est transmise : conserver la
+        // date calculee la figerait, et « Replanifier » n'aurait plus d'effet.
+        ouvre_le: b.ouvre_le && b.ouvre_le !== calculee(b.semaine) ? b.ouvre_le : null,
+      }));
     if (!programme.length) return alerte('alerte', 'Choisissez au moins un module.');
 
     const codes = programme.map((p) => p.module_code);

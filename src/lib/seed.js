@@ -30,8 +30,10 @@ export function importerContenus({ force = false } = {}) {
   const rapport = [];
   const programme = lireProgramme();
 
-  for (const { semaine, module_code: code } of programme) {
+  for (const { semaine, module_code: code, ouvre_le: forcee } of programme) {
     const module = lireModule(code);
+    // Une date saisie a la main prime sur le rythme hebdomadaire.
+    const ouverture = forcee || dateOuverture(semaine);
     if (!module) {
       rapport.push({ semaine, statut: 'introuvable', motif: `module ${code}` });
       continue;
@@ -49,7 +51,7 @@ export function importerContenus({ force = false } = {}) {
       db.prepare(`UPDATE defis SET titre = ?, accroche = ?, intro = ?, duree_minutes = ?, ouvre_le = ?,
                     module_code = ?, badge_code = ?, badge_libelle = ?, badge_emoji = ?, badge_description = ?,
                     maj_le = datetime('now') WHERE id = ?`)
-        .run(module.titre, module.accroche, module.intro, module.duree_minutes || 7, dateOuverture(semaine),
+        .run(module.titre, module.accroche, module.intro, module.duree_minutes || 7, ouverture,
              module.code, badge.code || null, badge.libelle || null,
              badge.emoji || null, badge.description || null, existant.id);
       db.prepare('DELETE FROM questions WHERE defi_id = ?').run(existant.id);
@@ -61,7 +63,7 @@ export function importerContenus({ force = false } = {}) {
                            badge_code, badge_libelle, badge_emoji, badge_description)
         VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)
       `).run(semaine, module.titre, module.accroche, module.intro, module.duree_minutes || 7,
-             dateOuverture(semaine), module.code, badge.code || null, badge.libelle || null,
+             ouverture, module.code, badge.code || null, badge.libelle || null,
              badge.emoji || null, badge.description || null);
       insererQuestions(res.lastInsertRowid, module.questions);
       rapport.push({ semaine, module: module.code, statut: 'cree', questions: module.questions.length });

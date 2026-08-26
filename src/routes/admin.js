@@ -269,11 +269,25 @@ export default async function routesAdmin(app) {
     const debut = String(requete.body?.debut || '');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(debut)) return reponse.code(400).send({ erreur: 'Date attendue au format AAAA-MM-JJ.' });
     config.campagne.debut = debut;
+
+    // Replanifier veut dire remettre tout le calendrier au rythme hebdomadaire.
+    // Les dates fixees a la main sont donc levees : les conserver ferait
+    // reapparaitre les anciennes ouvertures au prochain import, et le bouton
+    // paraitrait sans effet sur ces semaines-la.
+    const forcees = db.prepare("SELECT COUNT(*) AS n FROM programme WHERE ouvre_le IS NOT NULL").get().n;
+    db.prepare('UPDATE programme SET ouvre_le = NULL').run();
+
     for (const d of db.prepare('SELECT semaine FROM defis').all()) {
       db.prepare('UPDATE defis SET ouvre_le = ? WHERE semaine = ?').run(dateOuverture(d.semaine), d.semaine);
     }
-    journaliser(requete.agent.login, 'campagne_replanifiee', debut, requete.ip);
-    return { ok: true, message: `Semaine 1 ouverte le ${debut}, semaines suivantes décalées de 7 jours.` };
+    journaliser(requete.agent.login, 'campagne_replanifiee',
+      `${debut}${forcees ? `, ${forcees} date(s) manuelle(s) levee(s)` : ''}`, requete.ip);
+
+    return {
+      ok: true,
+      message: `Semaine 1 ouverte le ${debut}, semaines suivantes décalées de 7 jours.`
+        + (forcees ? ` ${forcees} date(s) fixée(s) à la main ont été réalignées.` : ''),
+    };
   });
 
   /* --------------------------------------------------------------- Mails */
