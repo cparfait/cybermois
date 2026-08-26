@@ -35,7 +35,18 @@ export default async function routesUtilisateurs(app) {
     if (etat === 'inactifs') {
       conditions.push('a.exclu = 0 AND NOT EXISTS (SELECT 1 FROM participations p WHERE p.agent_id = a.id AND p.entrainement = 0)');
     }
+    if (etat === 'connectes') conditions.push('a.vu_le IS NOT NULL AND a.exclu = 0');
+    if (etat === 'annuaire') conditions.push("a.origine IN ('import', 'annuaire') AND a.exclu = 0");
+    if (etat === 'anonymes') conditions.push('a.anonyme = 1');
     const ou = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    // Pagination : a 600 agents, tout envoyer alourdit la page pour rien.
+    const parPage = Math.min(200, Math.max(10, Number(requete.query?.parPage) || 50));
+    const page = Math.max(1, Number(requete.query?.page) || 1);
+
+    const total = db.prepare(`SELECT COUNT(*) AS n FROM agents a ${ou}`).get(...valeurs).n;
+    const pages = Math.max(1, Math.ceil(total / parPage));
+    const pageCourante = Math.min(page, pages);
 
     const agents = db.prepare(`
       SELECT a.id, a.login, a.nom_complet, a.email, a.service, a.service_ad, a.origine,
@@ -47,8 +58,8 @@ export default async function routesUtilisateurs(app) {
       ${ou}
       GROUP BY a.id
       ORDER BY a.service, a.nom_complet
-      LIMIT 1000
-    `).all(...valeurs);
+      LIMIT ? OFFSET ?
+    `).all(...valeurs, parPage, (pageCourante - 1) * parPage);
 
     const services = db.prepare('SELECT service, COUNT(*) AS n FROM agents WHERE exclu = 0 GROUP BY service ORDER BY service').all();
 
@@ -58,12 +69,18 @@ export default async function routesUtilisateurs(app) {
         SUM(CASE WHEN exclu = 1 THEN 1 ELSE 0 END)        AS exclus,
         SUM(CASE WHEN vu_le IS NULL AND exclu = 0 THEN 1 ELSE 0 END) AS jamais_connectes,
         SUM(CASE WHEN (email IS NULL OR email = '') AND exclu = 0 THEN 1 ELSE 0 END) AS sans_email,
-        SUM(CASE WHEN origine = 'import' THEN 1 ELSE 0 END) AS importes,
+        -- « import » vient du CSV, « annuaire » de la synchronisation :
+        -- les deux alimentent l'effectif, les separer n'aurait aucun sens ici.
+        SUM(CASE WHEN origine IN ('import', 'annuaire') AND exclu = 0 THEN 1 ELSE 0 END) AS importes,
+        SUM(CASE WHEN vu_le IS NOT NULL AND exclu = 0 THEN 1 ELSE 0 END) AS connectes,
         SUM(CASE WHEN anonyme = 1 THEN 1 ELSE 0 END)      AS anonymes
       FROM agents
     `).get();
 
-    return { agents, services, resume, tronque: agents.length >= 1000 };
+    return {
+      agents, services, resume,
+      pagination: { page: pageCourante, pages, parPage, total },
+    };
   });
 
   /* ------------------------------------------------------------ Creation */

@@ -11,7 +11,8 @@
     "dev": "node --watch src/server.js",
     "seed": "node src/lib/seed.js",
     "admin": "node src/lib/cli-admin.js",
-    "diagnostic": "node tests/diagnostic-ad.mjs"
+    "diagnostic": "node tests/diagnostic-ad.mjs",
+    "nettoyer-demo": "node src/lib/nettoyer-demo.js"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

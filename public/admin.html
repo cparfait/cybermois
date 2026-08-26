@@ -19,9 +19,34 @@
   .stat-admin .v { font-family: var(--police-titre); font-weight: 900; font-size: 1.9rem; color: var(--vert-fonce); line-height: 1; }
   .stat-admin .l { font-family: var(--police-ui); font-size: .78rem; color: var(--encre-douce); margin-top: .3rem; }
 
+  /* Tuile cliquable : le chiffre EST le filtre, il n'y a pas de raison de
+     faire chercher ailleurs le moyen d'afficher les agents qu'il compte. */
+  .stat-cliquable {
+    display: block; width: 100%; text-align: left; cursor: pointer;
+    font: inherit; transition: border-color var(--transition), background var(--transition);
+  }
+  .stat-cliquable .v, .stat-cliquable .l { display: block; }
+  .stat-cliquable:hover { border-color: var(--vert-fonce); background: var(--vert-fonce-clair); }
+  .stat-cliquable.stat-active {
+    border-color: var(--vert-fonce); border-width: 2px;
+    background: var(--vert-fonce-clair); box-shadow: var(--ombre);
+  }
+  .stat-cliquable.stat-active .l { color: var(--vert-fonce); font-weight: 700; }
+
   table.admin { width: 100%; border-collapse: collapse; font-family: var(--police-ui); font-size: .88rem; }
   table.admin th { text-align: left; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--encre-douce); padding: .6rem .5rem; border-bottom: 2px solid var(--bordure); }
   table.admin td { padding: .6rem .5rem; border-bottom: 1px solid var(--bordure); vertical-align: top; }
+
+  /* Liste des agents : a 600 lignes, chaque retour a la ligne inutile coute
+     un ecran de defilement. On borne les colonnes et on tronque proprement. */
+  table.agents td, table.agents th { vertical-align: middle; }
+  table.agents .col-service { max-width: 190px; }
+  table.agents .col-adresse { max-width: 230px; }
+  .tronque {
+    display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  table.agents .pastille-etat { white-space: nowrap; }
+  table.agents .actions { white-space: nowrap; text-align: right; }
   .num { text-align: right; white-space: nowrap; }
 
   .pastille-etat { display: inline-block; padding: .15rem .55rem; border-radius: 20px; font-size: .74rem; font-weight: 700; }

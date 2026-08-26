@@ -22,6 +22,7 @@ import routesJeu from './routes/jeu.js';
 import routesAdmin from './routes/admin.js';
 import routesUtilisateurs from './routes/utilisateurs.js';
 import routesConfiguration from './routes/configuration.js';
+import routesCorrections from './routes/corrections.js';
 
 const app = Fastify({
   logger: {
@@ -79,6 +80,7 @@ await app.register(routesJeu);
 await app.register(routesAdmin);
 await app.register(routesUtilisateurs);
 await app.register(routesConfiguration);
+await app.register(routesCorrections);
 
 /* ------------------------------------------------------------------ Pages */
 

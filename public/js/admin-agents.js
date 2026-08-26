@@ -1,7 +1,8 @@
 import { api, echapper, alerte, formaterDate } from '/js/commun.js';
 import { formulaireSynchronisation } from '/js/admin-sync.js';
+import { formulaireResultatsAgent } from '/js/admin-corrections.js';
 
-let etatFiltres = { recherche: '', service: '', etat: '' };
+let etatFiltres = { recherche: '', service: '', etat: '', page: 1, parPage: 50 };
 let dernierImport = null;
 
 /**
@@ -18,6 +19,41 @@ async function lireFichier(fichier) {
   }
 }
 
+/**
+ * Tuile de statistique cliquable : le chiffre affiche et le filtre qui le
+ * produit sont la meme chose, il n'y a donc aucune raison de les separer.
+ */
+function tuile(valeur, libelle, etat) {
+  const actif = etatFiltres.etat === etat;
+  return `
+    <button type="button" class="stat-admin stat-cliquable${actif ? ' stat-active' : ''}"
+            data-filtre="${etat}" aria-pressed="${actif}">
+      <span class="v">${valeur}</span>
+      <span class="l">${libelle}</span>
+    </button>`;
+}
+
+const pagination = (p) => p.total
+  ? `${(p.page - 1) * p.parPage + 1}–${Math.min(p.page * p.parPage, p.total)} sur ${p.total} agent${p.total > 1 ? 's' : ''}`
+  : 'Aucun agent';
+
+/** Navigation entre pages : sans elle, 600 lignes arrivent d'un bloc. */
+function navigation(p) {
+  if (p.pages <= 1) return '';
+  return `
+    <div class="rang" style="justify-content:center;margin-top:1rem">
+      <button type="button" class="btn btn-secondaire" data-page="1" ${p.page === 1 ? 'disabled' : ''}
+              style="padding:.4rem .8rem;font-size:.85rem">Première</button>
+      <button type="button" class="btn btn-secondaire" data-page="${p.page - 1}" ${p.page === 1 ? 'disabled' : ''}
+              style="padding:.4rem .8rem;font-size:.85rem">Précédente</button>
+      <span class="ui" style="padding:0 .8rem;font-weight:700">Page ${p.page} sur ${p.pages}</span>
+      <button type="button" class="btn btn-secondaire" data-page="${p.page + 1}" ${p.page === p.pages ? 'disabled' : ''}
+              style="padding:.4rem .8rem;font-size:.85rem">Suivante</button>
+      <button type="button" class="btn btn-secondaire" data-page="${p.pages}" ${p.page === p.pages ? 'disabled' : ''}
+              style="padding:.4rem .8rem;font-size:.85rem">Dernière</button>
+    </div>`;
+}
+
 export async function chargerAgents() {
   const cible = document.getElementById('panneau-agents');
 
@@ -25,6 +61,8 @@ export async function chargerAgents() {
   if (etatFiltres.recherche) parametres.set('recherche', etatFiltres.recherche);
   if (etatFiltres.service) parametres.set('service', etatFiltres.service);
   if (etatFiltres.etat) parametres.set('etat', etatFiltres.etat);
+  parametres.set('page', etatFiltres.page);
+  parametres.set('parPage', etatFiltres.parPage);
 
   let d;
   try {
@@ -55,13 +93,17 @@ export async function chargerAgents() {
       à le contacter.</p>
     </details>
 
+    <p class="discret" style="margin-bottom:.6rem">
+      Cliquez sur un chiffre pour filtrer la liste sur les agents qu'il représente.
+    </p>
     <div class="grille grille-3" style="margin-bottom:1.5rem">
-      <div class="stat-admin"><div class="v">${r.total - r.exclus}</div><div class="l">agents dans la campagne</div></div>
-      <div class="stat-admin"><div class="v">${r.jamais_connectes}</div><div class="l">jamais connectés</div></div>
-      <div class="stat-admin"><div class="v">${r.sans_email}</div><div class="l">sans adresse mail</div></div>
-      <div class="stat-admin"><div class="v">${r.importes}</div><div class="l">issus d'un import</div></div>
-      <div class="stat-admin"><div class="v">${r.exclus}</div><div class="l">exclus de la campagne</div></div>
-      <div class="stat-admin"><div class="v">${r.anonymes}</div><div class="l">masqués du classement</div></div>
+      ${tuile(r.total - r.exclus, 'agents dans la campagne', 'actifs')}
+      ${tuile(r.connectes, 'se sont déjà connectés', 'connectes')}
+      ${tuile(r.jamais_connectes, 'jamais connectés', 'jamais_connecte')}
+      ${tuile(r.sans_email, 'sans adresse mail', 'sans_email')}
+      ${tuile(r.importes, "issus de l'annuaire", 'annuaire')}
+      ${tuile(r.exclus, 'exclus de la campagne', 'exclus')}
+      ${tuile(r.anonymes, 'masqués du classement', 'anonymes')}
     </div>
 
     <div class="rang" style="margin-bottom:1.5rem">
@@ -76,7 +118,7 @@ export async function chargerAgents() {
 
     <h2>Liste des agents</h2>
     <div class="rang" style="align-items:flex-end;margin-bottom:1rem">
-      <div class="champ-admin" style="flex:1;min-width:200px;margin-bottom:0">
+      <div class="champ-admin" style="flex:2;min-width:260px;margin-bottom:0">
         <label for="f-recherche">Rechercher</label>
         <input type="search" id="f-recherche" value="${echapper(etatFiltres.recherche)}" placeholder="nom, identifiant ou adresse">
       </div>
@@ -92,6 +134,9 @@ export async function chargerAgents() {
         <select id="f-etat">
           <option value="">Tous</option>
           <option value="actifs"${etatFiltres.etat === 'actifs' ? ' selected' : ''}>Dans la campagne</option>
+          <option value="connectes"${etatFiltres.etat === 'connectes' ? ' selected' : ''}>Déjà connectés</option>
+          <option value="annuaire"${etatFiltres.etat === 'annuaire' ? ' selected' : ''}>Issus de l'annuaire</option>
+          <option value="anonymes"${etatFiltres.etat === 'anonymes' ? ' selected' : ''}>Masqués du classement</option>
           <option value="jamais_connecte"${etatFiltres.etat === 'jamais_connecte' ? ' selected' : ''}>Jamais connectés</option>
           <option value="inactifs"${etatFiltres.etat === 'inactifs' ? ' selected' : ''}>Aucun défi terminé</option>
           <option value="sans_email"${etatFiltres.etat === 'sans_email' ? ' selected' : ''}>Sans adresse mail</option>
@@ -112,9 +157,17 @@ export async function chargerAgents() {
       </div>
     </div>
 
-    ${d.tronque ? '<div class="message message-alerte" style="margin-bottom:1rem">Affichage limité à 1000 agents. Affinez la recherche pour voir les autres.</div>' : ''}
+    <div class="rang" style="justify-content:space-between;margin-bottom:.6rem">
+      <span class="discret ui">${pagination(d.pagination)}</span>
+      <label class="discret ui" style="display:flex;align-items:center;gap:.4rem;font-weight:400">
+        Par page
+        <select id="f-par-page" style="width:auto;padding:.3rem .5rem">
+          ${[25, 50, 100, 200].map((n) => `<option value="${n}"${n === d.pagination.parPage ? ' selected' : ''}>${n}</option>`).join('')}
+        </select>
+      </label>
+    </div>
 
-    <div class="tableau-defilant"><table class="admin">
+    <div class="tableau-defilant"><table class="admin agents">
       <thead><tr>
         <th style="width:32px"><input type="checkbox" id="tout-selectionner" aria-label="Tout sélectionner" style="width:18px;height:18px;accent-color:var(--vert-fonce)"></th>
         <th>Agent</th><th>Service</th><th>Adresse</th>
@@ -122,7 +175,9 @@ export async function chargerAgents() {
       </tr></thead>
       <tbody>${d.agents.length ? d.agents.map(ligneAgent).join('')
         : '<tr><td colspan="8" class="discret">Aucun agent ne correspond à ces critères.</td></tr>'}</tbody>
-    </table></div>`;
+    </table></div>
+
+    ${navigation(d.pagination)}`;
 
   brancher(d);
 }
@@ -131,23 +186,31 @@ function ligneAgent(a) {
   const etats = [];
   if (a.exclu) etats.push('<span class="pastille-etat etat-ko">Exclu</span>');
   else if (!a.vu_le) etats.push('<span class="pastille-etat" style="background:var(--alerte-fond);color:var(--alerte)">Jamais connecté</span>');
+  else etats.push(`<span class="pastille-etat etat-ok" title="Vu le ${formaterDate(a.vu_le)}">Connecté</span>`);
   if (a.anonyme) etats.push('<span class="pastille-etat" style="background:var(--info-fond);color:var(--info)">Masqué</span>');
   if (a.est_admin) etats.push('<span class="pastille-etat etat-ok">Admin</span>');
+
+  // Le libelle d'annuaire n'apparait qu'en infobulle quand il differe du nom
+  // affiche : l'afficher sur une seconde ligne doublait la hauteur du tableau.
+  const service = a.service_ad && a.service_ad !== a.service
+    ? `<span class="tronque" title="Annuaire : ${echapper(a.service_ad)}">${echapper(a.service)} <span class="discret">*</span></span>`
+    : `<span class="tronque" title="${echapper(a.service)}">${echapper(a.service)}</span>`;
 
   return `
     <tr data-id="${a.id}">
       <td><input type="checkbox" class="case-agent" value="${a.id}" aria-label="Sélectionner ${echapper(a.nom_complet)}" style="width:18px;height:18px;accent-color:var(--vert-fonce)"></td>
-      <td><strong>${echapper(a.nom_complet)}</strong><br><span class="discret">${echapper(a.login)}</span></td>
-      <td>${echapper(a.service)}
-        ${a.service_ad && a.service_ad !== a.service
-          ? `<br><span class="discret" style="font-size:.75rem">annuaire : ${echapper(a.service_ad)}</span>` : ''}</td>
-      <td>${a.email ? echapper(a.email) : '<span class="discret">—</span>'}</td>
+      <td><strong>${echapper(a.nom_complet)}</strong><br><span class="discret" style="font-size:.78rem">${echapper(a.login)}</span></td>
+      <td class="col-service">${service}</td>
+      <td class="col-adresse">${a.email
+        ? `<span class="tronque" title="${echapper(a.email)}">${echapper(a.email)}</span>`
+        : '<span class="discret">—</span>'}</td>
       <td class="num">${a.defis_joues}</td>
       <td class="num">${a.score_total}</td>
-      <td>${etats.join(' ') || '<span class="discret">—</span>'}${a.vu_le ? `<br><span class="discret" style="font-size:.75rem">vu le ${formaterDate(a.vu_le)}</span>` : ''}</td>
-      <td style="white-space:nowrap">
-        <button class="btn btn-secondaire" style="padding:.25rem .6rem;font-size:.78rem" data-modifier="${a.id}">Modifier</button>
-        <button class="btn btn-secondaire" style="padding:.25rem .6rem;font-size:.78rem;border-color:var(--erreur);color:var(--erreur)" data-supprimer="${a.id}">Supprimer</button>
+      <td>${etats.join(' ') || '<span class="discret">—</span>'}</td>
+      <td class="actions">
+        <button class="btn btn-secondaire" style="padding:.25rem .55rem;font-size:.76rem" data-modifier="${a.id}">Modifier</button>
+        ${a.defis_joues ? `<button class="btn btn-secondaire" style="padding:.25rem .55rem;font-size:.76rem" data-resultats="${a.id}">Résultats</button>` : ''}
+        <button class="btn btn-secondaire" style="padding:.25rem .55rem;font-size:.76rem;border-color:var(--erreur);color:var(--erreur)" data-supprimer="${a.id}">Suppr.</button>
       </td>
     </tr>`;
 }
@@ -159,13 +222,37 @@ function brancher(d) {
   let minuteur;
   document.getElementById('f-recherche').addEventListener('input', (e) => {
     clearTimeout(minuteur);
-    minuteur = setTimeout(() => { etatFiltres.recherche = e.target.value.trim(); chargerAgents(); }, 350);
+    minuteur = setTimeout(() => {
+      etatFiltres.recherche = e.target.value.trim(); etatFiltres.page = 1; chargerAgents();
+    }, 350);
   });
-  document.getElementById('f-service').addEventListener('change', (e) => { etatFiltres.service = e.target.value; chargerAgents(); });
-  document.getElementById('f-etat').addEventListener('change', (e) => { etatFiltres.etat = e.target.value; chargerAgents(); });
+  document.getElementById('f-service').addEventListener('change', (e) => {
+    etatFiltres.service = e.target.value; etatFiltres.page = 1; chargerAgents();
+  });
+  document.getElementById('f-etat').addEventListener('change', (e) => {
+    etatFiltres.etat = e.target.value; etatFiltres.page = 1; chargerAgents();
+  });
   document.getElementById('btn-reinit-filtres').addEventListener('click', () => {
-    etatFiltres = { recherche: '', service: '', etat: '' }; chargerAgents();
+    etatFiltres = { recherche: '', service: '', etat: '', page: 1, parPage: etatFiltres.parPage };
+    chargerAgents();
   });
+
+  document.getElementById('f-par-page')?.addEventListener('change', (e) => {
+    etatFiltres.parPage = Number(e.target.value); etatFiltres.page = 1; chargerAgents();
+  });
+
+  cible.querySelectorAll('[data-page]').forEach((b) => b.addEventListener('click', () => {
+    etatFiltres.page = Number(b.dataset.page);
+    chargerAgents();
+    document.getElementById('panneau-agents').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+
+  // Recliquer sur la tuile active retire le filtre : pas besoin d'un bouton dedie
+  cible.querySelectorAll('[data-filtre]').forEach((b) => b.addEventListener('click', () => {
+    etatFiltres.etat = etatFiltres.etat === b.dataset.filtre ? '' : b.dataset.filtre;
+    etatFiltres.page = 1;
+    chargerAgents();
+  }));
 
   // --- Selection multiple
   const cases = () => [...cible.querySelectorAll('.case-agent')];
@@ -203,6 +290,9 @@ function brancher(d) {
   // --- Actions unitaires
   cible.querySelectorAll('[data-modifier]').forEach((b) =>
     b.addEventListener('click', () => formulaireAgent(d.agents.find((a) => a.id === Number(b.dataset.modifier)), d.services)));
+
+  cible.querySelectorAll('[data-resultats]').forEach((b) =>
+    b.addEventListener('click', () => formulaireResultatsAgent(Number(b.dataset.resultats), chargerAgents)));
 
   cible.querySelectorAll('[data-supprimer]').forEach((b) =>
     b.addEventListener('click', () => supprimer(d.agents.find((a) => a.id === Number(b.dataset.supprimer)))));

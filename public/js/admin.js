@@ -1,6 +1,7 @@
 import { api, echapper, initialiserPage, alerte, formaterDate } from '/js/commun.js';
 import { chargerAgents } from '/js/admin-agents.js';
 import { chargerConfiguration } from '/js/admin-config.js';
+import { formulaireRecalcul, chargerRegistre } from '/js/admin-corrections.js';
 
 await initialiserPage('/administration');
 
@@ -149,6 +150,8 @@ chargeurs.defis = async () => {
               <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem" data-publier="${d.semaine}" data-etat="${d.publie}">
                 ${d.publie ? 'Masquer' : 'Publier'}
               </button>
+              <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem"
+                      data-recalculer="${d.semaine}" data-titre="${echapper(d.titre)}">Recalculer</button>
               <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem;border-color:var(--erreur);color:var(--erreur)"
                       data-supprimer-defi="${d.semaine}" data-titre="${echapper(d.titre)}">Supprimer</button>
             </td>
@@ -177,6 +180,14 @@ chargeurs.defis = async () => {
 
     cible.querySelectorAll('[data-editer]').forEach((b) =>
       b.addEventListener('click', () => ouvrirEditeur(Number(b.dataset.editer))));
+
+    // Apres correction d'une question, les scores deja enregistres restent
+    // calcules sur l'ancien bareme : ce bouton les remet d'aplomb.
+    cible.querySelectorAll('[data-recalculer]').forEach((b) =>
+      b.addEventListener('click', () => formulaireRecalcul(
+        Number(b.dataset.recalculer), b.dataset.titre,
+        () => { dejaCharge.delete('suivi'); }
+      )));
 
     document.getElementById('btn-creer-defi').addEventListener('click', async () => {
       const titre = prompt('Titre du nouveau défi :');
@@ -537,6 +548,11 @@ chargeurs.exports = async () => {
         <p class="discret">Synthèse par agent, exploitable comme preuve d'action de sensibilisation en audit SSI.</p>
         <a class="btn btn-secondaire" href="/api/admin/export/attestation.csv">Télécharger</a>
       </div>
+      <div class="carte" style="border-left:4px solid var(--vert-clair)">
+        <h3>Registre des corrections</h3>
+        <p class="discret">Toute modification de résultat, avec son auteur et son motif.</p>
+        <a class="btn btn-secondaire" href="/api/admin/export/corrections.csv">Télécharger</a>
+      </div>
       <div class="carte">
         <h3>Journal des actions</h3>
         <p class="discret">Connexions, validations, actions d'administration.</p>
@@ -588,6 +604,9 @@ chargeurs.technique = async () => {
         <button class="btn btn-secondaire" id="btn-reimport-force">Recharger en forçant</button>
       </div>
 
+      <h2 style="margin-top:2rem">Registre des corrections</h2>
+      <div id="zone-registre"><p class="discret">Chargement…</p></div>
+
       <h2 style="margin-top:2rem">Journal récent</h2>
       <div class="tableau-defilant"><table class="admin" id="table-journal"><tbody><tr><td class="discret">Chargement…</td></tr></tbody></table></div>
 
@@ -610,6 +629,8 @@ chargeurs.technique = async () => {
         alerte('alerte', r.message, 'succes');
       } catch (e) { alerte('alerte', e.message); }
     });
+
+    chargerRegistre('zone-registre');
 
     const journal = await api('/api/admin/journal');
     document.getElementById('table-journal').innerHTML = `
