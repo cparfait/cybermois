@@ -64,6 +64,31 @@ export function lireRegroupements() {
   return db.prepare('SELECT source, cible FROM regroupements_service ORDER BY cible, source').all();
 }
 
+/**
+ * Composition de chaque service affiche : quels libelles d'annuaire il agrege.
+ * C'est la seule vue qui permette de verifier un regroupement apres coup.
+ */
+export function resumeRegroupements() {
+  const lignes = db.prepare(`
+    SELECT a.service,
+           COALESCE(NULLIF(a.service_ad, ''), a.service) AS source,
+           COUNT(*) AS effectif
+    FROM agents a
+    WHERE a.exclu = 0 AND a.origine <> 'local'
+    GROUP BY a.service, source
+    ORDER BY a.service COLLATE NOCASE, effectif DESC
+  `).all();
+
+  const parService = new Map();
+  for (const l of lignes) {
+    if (!parService.has(l.service)) parService.set(l.service, { service: l.service, effectif: 0, sources: [] });
+    const s = parService.get(l.service);
+    s.effectif += l.effectif;
+    s.sources.push({ source: l.source, effectif: l.effectif });
+  }
+  return [...parService.values()].sort((a, b) => b.effectif - a.effectif);
+}
+
 /** Remplace l'integralite des regles, puis recalcule le service de tous les agents. */
 export function enregistrerRegroupements(regles) {
   db.exec('BEGIN');
@@ -77,8 +102,17 @@ export function enregistrerRegroupements(regles) {
       if (source && cible && source !== cible) inserer.run(source, cible);
     }
     const touches = appliquerRegroupements();
+
+    // Le nombre d'agents deplaces a l'instant ne dit rien de l'effet des regles :
+    // reenregistrer les memes regles donne zero, alors que rien n'a change.
+    const gouvernes = db.prepare(`
+      SELECT COUNT(*) AS n FROM agents a
+      JOIN regroupements_service g ON g.source = COALESCE(NULLIF(a.service_ad, ''), a.service)
+      WHERE a.exclu = 0
+    `).get().n;
+
     db.exec('COMMIT');
-    return touches;
+    return { touches, gouvernes };
   } catch (err) {
     db.exec('ROLLBACK');
     throw err;

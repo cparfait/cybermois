@@ -123,6 +123,19 @@ export async function chargerAgents() {
 
     <div id="zone-formulaire"></div>
 
+    ${etatFiltres.service ? `
+      <div class="message message-info" style="margin-bottom:1rem">
+        <div class="rang" style="justify-content:space-between">
+          <span>Service filtré : <strong>${echapper(etatFiltres.service)}</strong></span>
+          <span class="rang">
+            <button type="button" class="btn btn-secondaire" id="btn-renommer-service"
+                    style="padding:.35rem .8rem;font-size:.82rem">Renommer ou regrouper ce service</button>
+            <button type="button" class="btn btn-secondaire" id="btn-retirer-service"
+                    style="padding:.35rem .8rem;font-size:.82rem">Retirer le filtre</button>
+          </span>
+        </div>
+      </div>` : ''}
+
     <h2 style="margin-bottom:.6rem">Liste des agents</h2>
     <div class="barre-filtres" style="margin-bottom:1rem">
       <div class="champ-admin" style="flex:2;min-width:240px">
@@ -199,9 +212,14 @@ function ligneAgent(a) {
 
   // Le libelle d'annuaire n'apparait qu'en infobulle quand il differe du nom
   // affiche : l'afficher sur une seconde ligne doublait la hauteur du tableau.
-  const service = a.service_ad && a.service_ad !== a.service
-    ? `<span class="tronque" title="Annuaire : ${echapper(a.service_ad)}">${echapper(a.service)} <span class="discret">*</span></span>`
-    : `<span class="tronque" title="${echapper(a.service)}">${echapper(a.service)}</span>`;
+  const infobulle = a.service_ad && a.service_ad !== a.service
+    ? `Annuaire : ${a.service_ad} — cliquer pour filtrer sur ce service`
+    : `${a.service} — cliquer pour filtrer sur ce service`;
+
+  const service = `
+    <button type="button" class="lien-service tronque" data-service="${echapper(a.service)}"
+            title="${echapper(infobulle)}">${echapper(a.service)}${
+      a.service_ad && a.service_ad !== a.service ? ' <span class="discret">*</span>' : ''}</button>`;
 
   return `
     <tr data-id="${a.id}">
@@ -246,6 +264,22 @@ function brancher(d) {
 
   document.getElementById('f-par-page')?.addEventListener('change', (e) => {
     etatFiltres.parPage = Number(e.target.value); etatFiltres.page = 1; chargerAgents();
+  });
+
+  // Le service affiche dans chaque ligne filtre la liste : c'est le geste
+  // naturel quand on cherche « qui est dans ce service ».
+  cible.querySelectorAll('[data-service]').forEach((b) => b.addEventListener('click', () => {
+    etatFiltres.service = b.dataset.service;
+    etatFiltres.page = 1;
+    chargerAgents();
+  }));
+
+  document.getElementById('btn-retirer-service')?.addEventListener('click', () => {
+    etatFiltres.service = ''; etatFiltres.page = 1; chargerAgents();
+  });
+
+  document.getElementById('btn-renommer-service')?.addEventListener('click', () => {
+    formulaireServices(etatFiltres.service);
   });
 
   cible.querySelectorAll('[data-page]').forEach((b) => b.addEventListener('click', () => {
@@ -589,7 +623,7 @@ async function analyser() {
 
 /* ------------------------------------------- Regroupement des services */
 
-async function formulaireServices() {
+async function formulaireServices(filtreInitial = '') {
   const zone = document.getElementById('zone-formulaire');
   zone.innerHTML = '<p class="discret">Analyse des services…</p>';
 
@@ -601,7 +635,18 @@ async function formulaireServices() {
     return;
   }
 
-  const cibles = [...new Set(d.inventaire.map((i) => i.cible))].sort((a, b) => a.localeCompare(b, 'fr'));
+  // Tous les noms de service connus : ceux deja utilises, plus ceux que les
+  // propositions feraient apparaitre. Un champ libre filtrait la liste a la
+  // frappe, on ne voyait donc jamais l'ensemble de ce qui existe.
+  const noms = [...new Set([
+    ...d.inventaire.map((i) => i.cible),
+    ...d.inventaire.map((i) => i.proposition).filter(Boolean),
+  ])].sort((a, b) => a.localeCompare(b, 'fr'));
+
+  const listeOptions = (valeur) => noms
+    .map((n) => `<option value="${echapper(n)}"${n === valeur ? ' selected' : ''}>${echapper(n)}</option>`)
+    .join('');
+
   const avecProposition = d.inventaire.filter((i) => !i.regroupe && i.proposition).length;
 
   zone.innerHTML = `
@@ -635,7 +680,8 @@ async function formulaireServices() {
       <div class="barre-filtres" style="margin-bottom:.8rem">
         <div class="champ-admin" style="flex:1;min-width:220px">
           <label for="rech-regroupement">Filtrer les libellés</label>
-          <input type="search" id="rech-regroupement" placeholder="Centre de Loisirs, Crêche, Elus…">
+          <input type="search" id="rech-regroupement" value="${echapper(filtreInitial)}"
+                 placeholder="Centre de Loisirs, Crêche, Elus…">
         </div>
         <button type="button" class="btn btn-secondaire" id="btn-cocher-visibles" style="padding:.55rem 1rem">
           Cocher les lignes affichées
@@ -647,9 +693,13 @@ async function formulaireServices() {
 
       <div id="barre-affectation" hidden class="message message-info" style="margin-bottom:.8rem">
         <div class="barre-filtres">
-          <div class="champ-admin" style="flex:1;min-width:240px">
+          <div class="champ-admin" style="flex:1;min-width:260px">
             <label for="nom-groupe"><span id="nb-lignes-cochees"></span> — nom à leur donner</label>
-            <input type="text" id="nom-groupe" list="cibles-connues" placeholder="Education">
+            <select id="nom-groupe">
+              <option value="">Choisir un service…</option>
+              ${listeOptions(null)}
+              <option value="__nouveau__">＋ Créer un service…</option>
+            </select>
           </div>
           <button type="button" class="btn btn-principal" id="btn-affecter" style="padding:.55rem 1rem">
             Appliquer à ces lignes
@@ -673,11 +723,13 @@ async function formulaireServices() {
             <td class="num">${i.effectif}</td>
             <td>
               <div class="rang" style="flex-wrap:nowrap;gap:.4rem">
-                <input type="text" class="cible-service" data-source="${echapper(i.source)}"
-                       data-proposition="${echapper(i.proposition || '')}"
-                       value="${echapper(i.cible)}" list="cibles-connues"
-                       aria-label="Nom affiché pour ${echapper(i.source)}"
-                       style="min-width:200px">
+                <select class="cible-service" data-source="${echapper(i.source)}"
+                        data-proposition="${echapper(i.proposition || '')}"
+                        aria-label="Nom affiché pour ${echapper(i.source)}"
+                        style="min-width:200px">
+                  ${listeOptions(i.cible)}
+                  <option value="__nouveau__">＋ Créer un service…</option>
+                </select>
                 <button type="button" class="btn btn-secondaire" data-annuler
                         title="Revenir au libellé de l'annuaire"
                         aria-label="Annuler le regroupement de ${echapper(i.source)}"
@@ -687,7 +739,6 @@ async function formulaireServices() {
           </tr>`).join('')}
         </tbody>
       </table></div>
-      <datalist id="cibles-connues">${cibles.map((c) => `<option value="${echapper(c)}">`).join('')}</datalist>
 
       <div class="rang" style="margin-top:1.2rem;border-top:1px solid var(--bordure);padding-top:1.2rem">
         <button class="btn btn-principal" id="btn-enregistrer-services">Enregistrer et recalculer</button>
@@ -716,10 +767,46 @@ async function formulaireServices() {
   majApercu();
   zone.addEventListener('input', (e) => { if (e.target.matches('.cible-service')) majApercu(); });
 
-  // Refuser une proposition ne doit pas obliger a retaper le libellé d'origine
+  /**
+   * Creation d'un service : le nom est ajoute a TOUTES les listes deroulantes,
+   * sinon il ne serait choisissable que sur la ligne ou il a ete cree.
+   */
+  const tousLesSelecteurs = () => [
+    ...zone.querySelectorAll('.cible-service'),
+    ...[document.getElementById('nom-groupe')].filter(Boolean),
+  ];
+
+  function ajouterNom(nom) {
+    for (const sel of tousLesSelecteurs()) {
+      if ([...sel.options].some((o) => o.value === nom)) continue;
+      const option = new Option(nom, nom);
+      // Toujours avant l'entree « Créer un service… », qui reste en dernier
+      sel.add(option, sel.querySelector('option[value="__nouveau__"]'));
+    }
+  }
+
+  function demanderNom(selecteur) {
+    const nom = (prompt('Nom du nouveau service :') || '').trim();
+    if (!nom) {
+      selecteur.value = selecteur.dataset.source ?? '';
+      return null;
+    }
+    ajouterNom(nom);
+    selecteur.value = nom;
+    return nom;
+  }
+
+  zone.addEventListener('change', (e) => {
+    if (!e.target.matches('.cible-service, #nom-groupe')) return;
+    if (e.target.value === '__nouveau__') demanderNom(e.target);
+    if (e.target.matches('.cible-service')) majApercu();
+  });
+
+  // Refuser une proposition ne doit pas obliger a retrouver le libellé d'origine
   zone.addEventListener('click', (e) => {
     if (!e.target.matches('[data-annuler]')) return;
     const champ = e.target.closest('.rang').querySelector('.cible-service');
+    ajouterNom(champ.dataset.source);
     champ.value = champ.dataset.source;
     majApercu();
   });
@@ -750,6 +837,8 @@ async function formulaireServices() {
     clearTimeout(minuteurRegroupement);
     minuteurRegroupement = setTimeout(filtrer, 200);
   });
+  // Ouverture depuis la liste des agents : le filtre est deja rempli
+  filtrer();
 
   document.getElementById('btn-cocher-visibles').addEventListener('click', () => {
     for (const l of lignes()) {
@@ -765,7 +854,10 @@ async function formulaireServices() {
 
   document.getElementById('btn-affecter').addEventListener('click', () => {
     const nom = document.getElementById('nom-groupe').value.trim();
-    if (!nom) return alerte('alerte', 'Indiquez le nom à donner à ces libellés.');
+    if (!nom || nom === '__nouveau__') {
+      return alerte('alerte', 'Choisissez un service, ou créez-en un.');
+    }
+    ajouterNom(nom);
 
     for (const l of cochees()) {
       l.querySelector('.cible-service').value = nom;
@@ -779,7 +871,9 @@ async function formulaireServices() {
 
   document.getElementById('btn-appliquer-propositions')?.addEventListener('click', () => {
     for (const c of champs()) {
-      if (c.dataset.proposition) c.value = c.dataset.proposition;
+      if (!c.dataset.proposition) continue;
+      ajouterNom(c.dataset.proposition);
+      c.value = c.dataset.proposition;
     }
     majApercu();
     alerte('alerte', 'Propositions reportées dans le tableau. Vérifiez, ajustez, puis enregistrez.', 'info');

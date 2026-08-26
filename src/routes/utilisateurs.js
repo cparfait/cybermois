@@ -4,7 +4,7 @@ import { exigerAdmin } from '../lib/session.js';
 import { preparerImport } from '../lib/import-csv.js';
 import {
   resoudreService, inventaireServices, lireRegroupements,
-  enregistrerRegroupements, appliquerRegroupements,
+  enregistrerRegroupements, appliquerRegroupements, resumeRegroupements,
 } from '../lib/services.js';
 import {
   analyserSynchronisation, appliquerSynchronisation,
@@ -439,18 +439,25 @@ export default async function routesUtilisateurs(app) {
     if (!regles) return reponse.code(400).send({ erreur: 'Liste de règles attendue.' });
 
     try {
-      const touches = enregistrerRegroupements(regles);
+      const { touches, gouvernes } = enregistrerRegroupements(regles);
       journaliser(requete.agent.login, 'regroupements_enregistres',
-                  `${regles.length} regle(s), ${touches} agent(s) reaffectes`, requete.ip);
+                  `${regles.length} regle(s), ${gouvernes} agent(s) concernes, ${touches} deplaces`, requete.ip);
       return {
         ok: true,
-        message: `${regles.length} regroupement(s) enregistré(s). ${touches} agent(s) réaffecté(s).`,
+        message: `${regles.length} règle(s) enregistrée(s), portant sur ${gouvernes} agent(s).`
+          + (touches ? ` ${touches} viennent de changer de service.` : ' Aucun changement : les règles étaient déjà appliquées.'),
         touches,
+        gouvernes,
+        resume: resumeRegroupements().filter((s) => s.sources.length > 1),
       };
     } catch (err) {
       return reponse.code(500).send({ erreur: `Enregistrement impossible : ${err.message}` });
     }
   });
+
+  app.get('/api/admin/services/composition', async () => ({
+    services: resumeRegroupements(),
+  }));
 
   app.post('/api/admin/services/reappliquer', async (requete) => {
     const touches = appliquerRegroupements();
