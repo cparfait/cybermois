@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Administration — Cybermois — Ville de Châtillon</title>
+<link rel="stylesheet" href="/css/theme.css">
+<link rel="icon" href="/img/logo-chatillon.jpg">
+<style>
+  .onglets { display: flex; gap: .3rem; border-bottom: 2px solid var(--bordure); margin: 1.5rem 0 1.5rem; flex-wrap: wrap; }
+  .onglets button {
+    font-family: var(--police-ui); font-weight: 700; font-size: .92rem; background: none;
+    border: none; border-bottom: 3px solid transparent; padding: .75rem 1.1rem;
+    cursor: pointer; color: var(--encre-douce); margin-bottom: -2px;
+  }
+  .onglets button[aria-selected="true"] { color: var(--vert-fonce); border-bottom-color: var(--vert-fonce); }
+
+  .stat-admin { background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: 1.1rem; }
+  .stat-admin .v { font-family: var(--police-titre); font-weight: 900; font-size: 1.9rem; color: var(--vert-fonce); line-height: 1; }
+  .stat-admin .l { font-family: var(--police-ui); font-size: .78rem; color: var(--encre-douce); margin-top: .3rem; }
+
+  table.admin { width: 100%; border-collapse: collapse; font-family: var(--police-ui); font-size: .88rem; }
+  table.admin th { text-align: left; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--encre-douce); padding: .6rem .5rem; border-bottom: 2px solid var(--bordure); }
+  table.admin td { padding: .6rem .5rem; border-bottom: 1px solid var(--bordure); vertical-align: top; }
+  .num { text-align: right; white-space: nowrap; }
+
+  .pastille-etat { display: inline-block; padding: .15rem .55rem; border-radius: 20px; font-size: .74rem; font-weight: 700; }
+  .etat-ok { background: var(--succes-fond); color: var(--succes); }
+  .etat-ko { background: var(--erreur-fond); color: var(--erreur); }
+
+  .editeur-question { border: 1px solid var(--bordure); border-radius: var(--rayon); padding: 1.2rem; margin-bottom: 1rem; background: var(--surface); }
+  .editeur-question textarea { min-height: 60px; resize: vertical; font-family: var(--police-ui); }
+  .ligne-reponse { display: flex; gap: .6rem; align-items: center; margin-bottom: .5rem; }
+  .ligne-reponse input[type="text"] { flex: 1; }
+  .ligne-reponse input[type="checkbox"] { width: 20px; height: 20px; flex: 0 0 auto; accent-color: var(--vert-fonce); }
+  .champ-admin { margin-bottom: .9rem; }
+  .apercu-mail { border: 1px solid var(--bordure); border-radius: var(--rayon); width: 100%; height: 620px; background: #fff; }
+  details.aide-admin { background: var(--vert-fonce-clair); border-radius: var(--rayon-sm); padding: .9rem 1.1rem; margin-bottom: 1.2rem; font-family: var(--police-ui); font-size: .88rem; }
+  details.aide-admin summary { cursor: pointer; font-weight: 700; }
+  code.bloc { display: block; background: var(--vert-fonce-clair); padding: .8rem; border-radius: var(--rayon-sm); font-size: .82rem; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
+</style>
+</head>
+<body>
+<a class="evitement" href="#contenu">Aller au contenu principal</a>
+<div id="entete"></div>
+
+<main id="contenu">
+  <div class="conteneur">
+    <h1>Administration</h1>
+    <div id="alerte" aria-live="polite"></div>
+
+    <div class="onglets" role="tablist">
+      <button role="tab" id="onglet-suivi" aria-selected="true">Suivi</button>
+      <button role="tab" id="onglet-defis" aria-selected="false">Défis</button>
+      <button role="tab" id="onglet-mails" aria-selected="false">Mails</button>
+      <button role="tab" id="onglet-exports" aria-selected="false">Exports</button>
+      <button role="tab" id="onglet-technique" aria-selected="false">Technique</button>
+    </div>
+
+    <section role="tabpanel" id="panneau-suivi" aria-labelledby="onglet-suivi"><p class="discret">Chargement…</p></section>
+    <section role="tabpanel" id="panneau-defis" aria-labelledby="onglet-defis" hidden></section>
+    <section role="tabpanel" id="panneau-mails" aria-labelledby="onglet-mails" hidden></section>
+    <section role="tabpanel" id="panneau-exports" aria-labelledby="onglet-exports" hidden></section>
+    <section role="tabpanel" id="panneau-technique" aria-labelledby="onglet-technique" hidden></section>
+  </div>
+</main>
+
+<div id="pied"></div>
+<script type="module" src="/js/admin.js"></script>
+</body>
+</html>

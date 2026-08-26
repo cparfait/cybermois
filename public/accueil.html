@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Les défis — Cybermois — Ville de Châtillon</title>
+<link rel="stylesheet" href="/css/theme.css">
+<link rel="icon" href="/img/logo-chatillon.jpg">
+<style>
+  .heros { background: var(--vert-fonce); color: #fff; border-radius: var(--rayon); padding: 2rem; margin-bottom: 2rem; position: relative; overflow: hidden; }
+  .heros::after { content: ''; position: absolute; right: -60px; top: -60px; width: 240px; height: 240px; border-radius: 50%; background: var(--vert-clair); opacity: .18; }
+  .heros h1, .heros p { color: #fff; position: relative; }
+  .heros .surtitre { font-family: var(--police-ui); font-size: .72rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; opacity: .85; margin: 0; }
+  .compteurs { display: flex; gap: 2rem; flex-wrap: wrap; margin-top: 1.5rem; position: relative; }
+  .compteur-valeur { font-family: var(--police-titre); font-size: 2rem; font-weight: 900; line-height: 1; }
+  .compteur-libelle { font-family: var(--police-ui); font-size: .8rem; opacity: .85; }
+
+  .carte-defi { display: flex; flex-direction: column; position: relative; border-top: 5px solid var(--vert-clair); }
+  .carte-defi.verrouille { opacity: .62; }
+  .carte-defi.termine { border-top-color: var(--succes); }
+  .numero-semaine { font-family: var(--police-ui); font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--vert-clair-texte); }
+  .accroche { font-style: italic; color: var(--encre-douce); }
+  .meta-defi { font-family: var(--police-ui); font-size: .82rem; color: var(--encre-douce); display: flex; gap: 1rem; flex-wrap: wrap; margin: .8rem 0 1.1rem; }
+  .resultat-defi { background: var(--succes-fond); color: var(--succes); border-radius: var(--rayon-sm); padding: .7rem .9rem; font-family: var(--police-ui); font-size: .9rem; font-weight: 600; margin-bottom: 1rem; }
+  .pied-carte { margin-top: auto; }
+
+  .jauge { height: 10px; background: var(--bordure); border-radius: 5px; overflow: hidden; margin: .5rem 0 .3rem; }
+  .jauge span { display: block; height: 100%; background: var(--vert-clair); border-radius: 5px; transition: width .6s ease; }
+</style>
+</head>
+<body>
+<a class="evitement" href="#contenu">Aller au contenu principal</a>
+<div id="entete"></div>
+
+<main id="contenu">
+  <div class="conteneur">
+    <div id="alerte"></div>
+    <div id="heros"></div>
+    <h2>Les défis de la campagne</h2>
+    <div id="defis" class="grille grille-2" aria-live="polite">
+      <p class="discret">Chargement des défis…</p>
+    </div>
+  </div>
+</main>
+
+<div id="pied"></div>
+<script type="module" src="/js/accueil.js"></script>
+</body>
+</html>

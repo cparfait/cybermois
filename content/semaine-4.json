@@ -1,0 +1,218 @@
+{
+  "semaine": 4,
+  "titre": "L'art de la manipulation",
+  "accroche": "Le maillon le plus attaqué n'est pas la machine. C'est nous.",
+  "intro": "Pas besoin de percer un pare-feu quand il suffit de convaincre quelqu'un d'ouvrir la porte. Faux DGS au téléphone, faux prestataire, fausse urgence : cette dernière semaine est consacrée à l'ingénierie sociale. Plusieurs réponses peuvent être justes : cochez tout ce qui vous semble correct, puis validez.",
+  "duree_minutes": 8,
+  "questions": [
+    {
+      "enonce": "Vous recevez ce message. Quels signaux trahissent une arnaque au président ?",
+      "contexte": "De : Madame la Maire <cabinet.maire@chatillon-mairie.org>\nObjet : Confidentiel - dossier en cours\n\nBonjour,\n\nJe suis actuellement en négociation sur un dossier sensible qui doit rester strictement confidentiel, y compris vis-à-vis du DGS.\n\nJ'ai besoin que vous procédiez aujourd'hui à un virement de 42 800 € vers le compte de notre conseil juridique. Les coordonnées suivent par retour de mail.\n\nJe compte sur votre discrétion et votre réactivité. Je suis en réunion, ne me joignez pas par téléphone.\n\nBien à vous",
+      "multiple": true,
+      "points": 20,
+      "explication": "Cette fraude, dite « au président », coûte chaque année des millions aux collectivités. Cinq marqueurs sont réunis : un domaine d'expéditeur qui imite sans être le bon, une consigne de confidentialité qui isole la victime de ses collègues, une urgence de paiement dans la journée, une interdiction explicite de vérifier par téléphone, et un contournement assumé des circuits habituels de validation. La parade tient en une phrase : aucune autorité légitime n'exige jamais de contourner une procédure. On raccroche et on rappelle sur le numéro de l'annuaire.",
+      "reponses": [
+        {
+          "libelle": "Le domaine de l'expéditeur imite celui de la mairie sans être le bon",
+          "correcte": true
+        },
+        {
+          "libelle": "L'exigence de confidentialité vis-à-vis de la hiérarchie",
+          "correcte": true
+        },
+        {
+          "libelle": "L'urgence : virement demandé le jour même",
+          "correcte": true
+        },
+        {
+          "libelle": "L'interdiction de joindre l'expéditrice par téléphone",
+          "correcte": true
+        },
+        {
+          "libelle": "Le montant, trop élevé pour être crédible",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Un homme se présente à l'accueil : « Bonjour, je viens pour la maintenance des imprimantes, c'est urgent, on m'attend au 2e. » Il n'a pas de rendez-vous connu. Que faites-vous ?",
+      "multiple": true,
+      "points": 15,
+      "explication": "L'intrusion physique est souvent le maillon oublié. Un prestataire légitime accepte sans difficulté d'attendre une vérification : c'est même le signe qu'il est légitime. Il faut vérifier auprès du service concerné, exiger une pièce d'identité et un ordre d'intervention, et l'accompagner s'il est autorisé. Ce qu'il ne faut jamais faire : le laisser circuler seul parce qu'il porte un badge ou un polo à logo — les deux se fabriquent — ni céder à l'urgence, qui est précisément l'outil de pression.",
+      "reponses": [
+        {
+          "libelle": "Je vérifie auprès du service concerné avant de le laisser entrer",
+          "correcte": true
+        },
+        {
+          "libelle": "Je demande une pièce d'identité et un ordre d'intervention",
+          "correcte": true
+        },
+        {
+          "libelle": "Je le laisse monter, il porte un polo avec le logo du prestataire",
+          "correcte": false
+        },
+        {
+          "libelle": "Je l'accompagne s'il est autorisé, plutôt que de le laisser circuler seul",
+          "correcte": true
+        },
+        {
+          "libelle": "Je le laisse passer, il a l'air pressé et je ne veux pas le retarder",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Quels leviers psychologiques les manipulateurs utilisent-ils ?",
+      "multiple": true,
+      "points": 15,
+      "explication": "Tous ces leviers sont utilisés, souvent combinés. L'urgence empêche de réfléchir. L'autorité — un supérieur, un policier, un agent des impôts — inhibe la remise en question. La peur des conséquences paralyse. La sympathie et la flatterie créent une envie d'aider. Le point commun de toutes ces techniques, c'est qu'elles visent à vous faire agir vite et seul. D'où la règle : plus une demande est pressante, plus il faut prendre le temps de vérifier.",
+      "reponses": [
+        {
+          "libelle": "L'urgence, pour empêcher la réflexion",
+          "correcte": true
+        },
+        {
+          "libelle": "L'autorité, réelle ou usurpée",
+          "correcte": true
+        },
+        {
+          "libelle": "La peur des conséquences",
+          "correcte": true
+        },
+        {
+          "libelle": "La sympathie et la flatterie",
+          "correcte": true
+        },
+        {
+          "libelle": "La documentation technique détaillée",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Au téléphone : « Bonjour, service informatique. On détecte une infection sur votre poste. Pouvez-vous me donner votre mot de passe pour que je lance la désinfection à distance ? »",
+      "multiple": false,
+      "points": 15,
+      "explication": "Aucun informaticien n'a besoin de votre mot de passe : les administrateurs disposent de leurs propres droits et d'outils de prise en main à distance. Une demande de mot de passe est, en elle-même, la preuve de la fraude. La bonne réaction : refuser, raccrocher, puis rappeler la DSI sur le numéro que vous connaissez — jamais sur celui que l'interlocuteur vous donne — et signaler l'appel, car il y en aura d'autres dans les services voisins.",
+      "reponses": [
+        {
+          "libelle": "Je donne mon mot de passe, c'est le service informatique",
+          "correcte": false
+        },
+        {
+          "libelle": "Je refuse, je raccroche et je rappelle la DSI sur le numéro de l'annuaire",
+          "correcte": true
+        },
+        {
+          "libelle": "Je donne mon mot de passe mais je le change juste après",
+          "correcte": false
+        },
+        {
+          "libelle": "Je demande son nom et je le rappelle sur le numéro qu'il m'indique",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Quelles informations, anodines en apparence, aident un attaquant à préparer son attaque ?",
+      "multiple": true,
+      "points": 15,
+      "explication": "Toutes ces informations ont de la valeur pour un attaquant. L'organigramme et les congés de la direction servent à choisir le bon moment et la bonne cible. Le format des adresses mail permet de deviner celles de tous les agents. Le nom d'un logiciel métier oriente vers des failles connues. Une photo de bureau publiée sur les réseaux peut révéler un écran, un post-it ou un badge. C'est la « reconnaissance » : la phase de collecte qui précède toute attaque ciblée sérieuse.",
+      "reponses": [
+        {
+          "libelle": "L'organigramme détaillé avec les noms et fonctions",
+          "correcte": true
+        },
+        {
+          "libelle": "Les dates de congés des cadres de direction",
+          "correcte": true
+        },
+        {
+          "libelle": "Le format des adresses mail (prenom.nom@...)",
+          "correcte": true
+        },
+        {
+          "libelle": "Le nom des logiciels métier utilisés",
+          "correcte": true
+        },
+        {
+          "libelle": "Les horaires d'ouverture au public affichés sur le site",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Vous avez un doute sur une demande reçue, mais elle vient d'un supérieur hiérarchique et vous craignez de passer pour méfiant. Quelle est la bonne attitude ?",
+      "multiple": false,
+      "points": 10,
+      "explication": "C'est le vrai sujet de cette semaine. Les attaques réussissent parce que les agents n'osent pas remettre en cause une demande venant d'en haut. Une vérification par un canal indépendant — un appel sur le numéro de l'annuaire, un passage au bureau — prend deux minutes et n'a jamais fâché personne de sérieux. Un supérieur qui s'agace d'être vérifié est soit un faux, soit un vrai problème managérial : dans les deux cas vous avez eu raison de vérifier.",
+      "reponses": [
+        {
+          "libelle": "J'exécute la demande : mon supérieur sait ce qu'il fait",
+          "correcte": false
+        },
+        {
+          "libelle": "Je vérifie par un canal indépendant, c'est toujours légitime et jamais reproché",
+          "correcte": true
+        },
+        {
+          "libelle": "J'exécute mais j'envoie un mail de couverture après coup",
+          "correcte": false
+        },
+        {
+          "libelle": "Je ne fais rien et j'attends qu'on me relance",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Un correspondant vous envoie un enregistrement vocal du DGS confirmant sa demande de virement. Que concluez-vous ?",
+      "multiple": false,
+      "points": 15,
+      "explication": "Une voix ne prouve plus rien. Les outils de clonage vocal actuels reproduisent une voix de façon convaincante à partir de quelques dizaines de secondes d'audio — un discours en conseil municipal, une interview, un message d'accueil téléphonique suffisent. Plusieurs fraudes récentes ont utilisé la voix, et même la vidéo, de dirigeants. Seule une vérification par un canal que vous initiez vous-même, vers un numéro que vous connaissez, apporte une garantie.",
+      "reponses": [
+        {
+          "libelle": "C'est une preuve suffisante, on reconnaît sa voix",
+          "correcte": false
+        },
+        {
+          "libelle": "Une voix se clone : seule une vérification par un canal que j'initie moi-même vaut preuve",
+          "correcte": true
+        },
+        {
+          "libelle": "C'est fiable si l'enregistrement est de bonne qualité",
+          "correcte": false
+        },
+        {
+          "libelle": "C'est fiable si le DGS mentionne des détails que seul lui peut connaître",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Pour finir : quelle est la meilleure définition d'une culture de sécurité qui fonctionne ?",
+      "multiple": false,
+      "points": 10,
+      "explication": "Bravo, vous arrivez au bout du Cybermois. La sécurité ne repose pas sur des agents qui ne se trompent jamais — cela n'existe pas —, ni sur la peur de la sanction, qui pousse au silence et aggrave les incidents. Elle repose sur des agents qui signalent vite, sans crainte d'être blâmés, parce que le premier réflexe collectif est d'aider et pas de juger. Merci d'y avoir consacré du temps : c'est exactement ce qui protège la collectivité.",
+      "reponses": [
+        {
+          "libelle": "Des agents qui ne commettent jamais d'erreur",
+          "correcte": false
+        },
+        {
+          "libelle": "Des agents qui signalent vite et sans crainte d'être blâmés",
+          "correcte": true
+        },
+        {
+          "libelle": "Des sanctions dissuasives en cas de faute",
+          "correcte": false
+        },
+        {
+          "libelle": "Des outils techniques suffisamment performants pour tout bloquer",
+          "correcte": false
+        }
+      ]
+    }
+  ]
+}

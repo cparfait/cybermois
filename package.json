@@ -1,0 +1,22 @@
+{
+  "name": "cybermois",
+  "version": "1.0.0",
+  "description": "Portail de sensibilisation cyber gamifie - LDAPS, classement par service, relances et resultats par mail",
+  "type": "module",
+  "engines": { "node": ">=22.5.0" },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed": "node src/lib/seed.js"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/formbody": "^8.0.2",
+    "@fastify/rate-limit": "^10.2.2",
+    "@fastify/static": "^8.0.4",
+    "fastify": "^5.2.1",
+    "ldapts": "^7.3.1",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.16"
+  }
+}

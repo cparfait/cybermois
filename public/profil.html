@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mon profil — Cybermois — Ville de Châtillon</title>
+<link rel="stylesheet" href="/css/theme.css">
+<link rel="icon" href="/img/logo-chatillon.jpg">
+<style>
+  .grille-badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
+  .badge {
+    text-align: center; padding: 1.2rem .8rem; border-radius: var(--rayon);
+    border: 2px solid var(--bordure); background: var(--surface);
+  }
+  .badge.obtenu { border-color: var(--vert-clair); background: var(--vert-clair-fond); }
+  .badge .emoji { font-size: 2.2rem; line-height: 1; filter: grayscale(1) opacity(.35); }
+  .badge.obtenu .emoji { filter: none; }
+  .badge .nom { font-family: var(--police-ui); font-weight: 700; font-size: .88rem; margin: .5rem 0 .25rem; }
+  .badge .desc { font-family: var(--police-ui); font-size: .76rem; color: var(--encre-douce); line-height: 1.4; }
+
+  .ligne-defi {
+    display: flex; align-items: center; gap: 1rem; padding: 1rem 0;
+    border-bottom: 1px solid var(--bordure); flex-wrap: wrap;
+  }
+  .ligne-defi:last-child { border-bottom: none; }
+  .pastille {
+    width: 44px; height: 44px; border-radius: 50%; flex: 0 0 auto;
+    display: grid; place-items: center; font-family: var(--police-titre);
+    font-weight: 900; color: #fff; background: var(--vert-fonce); font-size: .95rem;
+  }
+  .score-ligne { margin-left: auto; font-family: var(--police-titre); font-weight: 900; color: var(--vert-fonce); font-size: 1.15rem; white-space: nowrap; }
+</style>
+</head>
+<body>
+<a class="evitement" href="#contenu">Aller au contenu principal</a>
+<div id="entete"></div>
+
+<main id="contenu">
+  <div class="conteneur">
+    <div id="alerte"></div>
+    <div id="zone"><p class="discret">Chargement…</p></div>
+  </div>
+</main>
+
+<div id="pied"></div>
+<script type="module" src="/js/profil.js"></script>
+</body>
+</html>

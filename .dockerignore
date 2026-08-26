@@ -1,0 +1,9 @@
+node_modules
+data
+certs
+.git
+.env
+*.md
+docs
+recette
+tests

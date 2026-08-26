@@ -1,0 +1,227 @@
+{
+  "semaine": 2,
+  "titre": "Légitime ou piège ?",
+  "accroche": "8 messages sous vos yeux. Lesquels sentent l'arnaque ?",
+  "intro": "Le hameçonnage reste la porte d'entrée numéro un des cyberattaques contre les collectivités. Cette semaine, vous jouez au douanier : à vous de repérer les indices qui trahissent un faux message. Plusieurs réponses peuvent être justes : cochez tout ce qui vous semble correct, puis validez.",
+  "duree_minutes": 8,
+  "questions": [
+    {
+      "enonce": "Quels éléments de ce message doivent vous alerter ?",
+      "contexte": "De : Direction Informatique <support-dsi@chatillon92-support.fr>\nObjet : URGENT - Votre boîte mail sera supprimée sous 24h\n\nBonjour,\n\nVotre quota de messagerie est dépassé. Sans action de votre part sous 24 heures, votre compte sera définitivement supprimé et vos messages perdus.\n\nCliquez ici pour valider votre compte : http://webmail-chatillon.verify-account.ru/login\n\nCordialement,\nLe service informatique",
+      "multiple": true,
+      "points": 15,
+      "explication": "Quatre signaux ici. Le domaine de l'expéditeur (chatillon92-support.fr) n'est pas le domaine officiel : les attaquants créent des domaines qui « ressemblent ». L'urgence à 24 h et la menace de suppression servent à court-circuiter votre réflexion. Le lien pointe vers un domaine étranger (.ru) sans rapport. Enfin, la formule impersonnelle trahit un envoi de masse. Un vrai message de la DSI ne vous demandera jamais de « valider votre compte » par un lien.",
+      "reponses": [
+        {
+          "libelle": "Le domaine de l'expéditeur n'est pas le domaine officiel de la ville",
+          "correcte": true
+        },
+        {
+          "libelle": "L'urgence et la menace de suppression du compte",
+          "correcte": true
+        },
+        {
+          "libelle": "L'adresse du lien pointe vers un site étranger sans rapport",
+          "correcte": true
+        },
+        {
+          "libelle": "Le message parle de quota de messagerie, ce qui n'existe pas",
+          "correcte": false
+        },
+        {
+          "libelle": "L'absence de nom du destinataire et la formule générique",
+          "correcte": true
+        }
+      ]
+    },
+    {
+      "enonce": "Vous recevez ce message. Que faites-vous ?",
+      "contexte": "De : Marie LEROY <m.leroy@ville-chatillon.fr>\nObjet : RE: Facture rectificative marché voirie\n\nBonjour,\n\nComme convenu au téléphone, je te transmets la facture corrigée du marché voirie. Peux-tu la faire suivre à la compta avant vendredi ?\n\nPJ : Facture_rectificative_2026.zip\n\nMarie",
+      "multiple": true,
+      "points": 15,
+      "explication": "Trois indices : une pièce jointe .zip est un format d'archive qui permet de dissimuler un exécutable et n'a rien à faire dans un échange de facture. Le « RE: » simule une conversation qui n'a jamais eu lieu. Le « comme convenu au téléphone » crée un faux passé commun. La bonne réaction : ne pas ouvrir, et vérifier par un canal différent — appeler Marie sur son numéro connu de l'annuaire, pas celui indiqué dans le mail. Répondre au message ne sert à rien : si l'adresse est usurpée, vous écrivez à l'attaquant.",
+      "reponses": [
+        {
+          "libelle": "J'ouvre la pièce jointe puisque l'expéditeur est un collègue connu",
+          "correcte": false
+        },
+        {
+          "libelle": "Je n'ouvre pas : une facture ne s'envoie pas dans une archive .zip",
+          "correcte": true
+        },
+        {
+          "libelle": "J'appelle Marie sur son numéro de l'annuaire interne pour vérifier",
+          "correcte": true
+        },
+        {
+          "libelle": "Je réponds au mail pour demander confirmation",
+          "correcte": false
+        },
+        {
+          "libelle": "Je signale le message à la DSI avant toute action",
+          "correcte": true
+        }
+      ]
+    },
+    {
+      "enonce": "Comment vérifier où mène réellement un lien avant de cliquer ?",
+      "multiple": true,
+      "points": 10,
+      "explication": "Le survol du lien (sans cliquer) affiche la vraie destination en bas du navigateur ou dans une bulle : c'est le réflexe de base. Sur mobile, un appui long affiche la même information. Le texte affiché du lien ne prouve rien : on peut écrire « www.impots.gouv.fr » et pointer ailleurs. Et cliquer « pour voir » est précisément ce qu'il ne faut jamais faire.",
+      "reponses": [
+        {
+          "libelle": "Survoler le lien avec la souris sans cliquer et lire l'adresse affichée",
+          "correcte": true
+        },
+        {
+          "libelle": "Sur mobile, faire un appui long pour afficher l'adresse cible",
+          "correcte": true
+        },
+        {
+          "libelle": "Se fier au texte affiché du lien, qui indique toujours la vraie destination",
+          "correcte": false
+        },
+        {
+          "libelle": "Cliquer et fermer immédiatement la page si elle semble suspecte",
+          "correcte": false
+        },
+        {
+          "libelle": "Copier l'adresse du lien et l'examiner dans un éditeur de texte",
+          "correcte": true
+        }
+      ]
+    },
+    {
+      "enonce": "Parmi ces adresses, lesquelles sont des tentatives d'usurpation du site des impôts ?",
+      "multiple": true,
+      "points": 15,
+      "explication": "La règle de lecture d'une adresse : le domaine réel est ce qui précède immédiatement le premier « / », en partant de la droite. Dans « impots.gouv.fr.verification-fiscale.com », le vrai domaine est verification-fiscale.com. Dans « impots-gouv.fr », le tiret remplace le point : c'est un autre domaine. Dans « impots.gouv.fr.secure-paiement.net », idem. Seul « www.impots.gouv.fr » est authentique, tout comme le sous-domaine « cfspro.impots.gouv.fr » qui appartient bien au domaine impots.gouv.fr.",
+      "reponses": [
+        {
+          "libelle": "impots.gouv.fr.verification-fiscale.com",
+          "correcte": true
+        },
+        {
+          "libelle": "www.impots.gouv.fr",
+          "correcte": false
+        },
+        {
+          "libelle": "impots-gouv.fr",
+          "correcte": true
+        },
+        {
+          "libelle": "cfspro.impots.gouv.fr",
+          "correcte": false
+        },
+        {
+          "libelle": "impots.gouv.fr.secure-paiement.net",
+          "correcte": true
+        }
+      ]
+    },
+    {
+      "enonce": "Vous avez cliqué sur un lien de hameçonnage et saisi votre mot de passe. Que faites-vous ?",
+      "multiple": true,
+      "points": 15,
+      "explication": "Trois actions, dans cet ordre : changer immédiatement le mot de passe partout où il était utilisé, prévenir la DSI sans attendre, et ne surtout pas éteindre le poste — les journaux et la mémoire vive aident à comprendre l'incident. Et surtout : ne restez pas silencieux par crainte d'être blâmé. Un signalement dans l'heure, c'est un incident maîtrisé ; un signalement dans la semaine, c'est parfois toute la collectivité à l'arrêt. Personne ne vous reprochera d'avoir cliqué — tout le monde clique un jour.",
+      "reponses": [
+        {
+          "libelle": "Je change immédiatement le mot de passe concerné et partout où il servait",
+          "correcte": true
+        },
+        {
+          "libelle": "Je préviens la DSI tout de suite, même si j'ai honte",
+          "correcte": true
+        },
+        {
+          "libelle": "J'éteins le poste pour couper l'attaque",
+          "correcte": false
+        },
+        {
+          "libelle": "Je ne dis rien : si rien ne se passe dans les jours suivants, c'est que c'était sans gravité",
+          "correcte": false
+        },
+        {
+          "libelle": "Je note l'heure et ce que j'ai saisi pour aider la DSI",
+          "correcte": true
+        }
+      ]
+    },
+    {
+      "enonce": "Le hameçonnage arrive uniquement par courriel. Vrai ou faux ?",
+      "multiple": false,
+      "points": 10,
+      "explication": "Faux, et c'est une confusion fréquente. Le SMS (smishing), l'appel téléphonique (vishing), les QR codes piégés collés sur des bornes ou des affiches (quishing), les messages sur les réseaux sociaux et même les invitations d'agenda sont autant de canaux utilisés. Le réflexe est le même partout : une demande urgente qui réclame une information ou une action inhabituelle se vérifie par un autre canal.",
+      "reponses": [
+        {
+          "libelle": "Vrai, le courriel est le seul canal concerné",
+          "correcte": false
+        },
+        {
+          "libelle": "Faux : SMS, téléphone, QR codes et réseaux sociaux sont aussi utilisés",
+          "correcte": true
+        },
+        {
+          "libelle": "Vrai, sauf pour les cadres de direction",
+          "correcte": false
+        },
+        {
+          "libelle": "Faux, mais seuls les courriels sont dangereux en pratique",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Quels éléments ne prouvent EN RIEN qu'un message est légitime ?",
+      "multiple": true,
+      "points": 15,
+      "explication": "Aucun de ces éléments n'est une preuve. Le logo se copie en trois clics. Le nom affiché de l'expéditeur est librement modifiable — c'est l'adresse réelle qui compte. Le cadenas HTTPS signifie seulement que la connexion est chiffrée, pas que le site est honnête : la majorité des sites de hameçonnage sont en HTTPS. Un français impeccable est désormais la norme depuis que les attaquants utilisent des outils de rédaction automatique. Seul un contact direct par un canal connu apporte une vraie certitude.",
+      "reponses": [
+        {
+          "libelle": "La présence du logo officiel de l'organisme",
+          "correcte": true
+        },
+        {
+          "libelle": "Le nom de l'expéditeur affiché dans la messagerie",
+          "correcte": true
+        },
+        {
+          "libelle": "Le cadenas HTTPS sur le site vers lequel mène le lien",
+          "correcte": true
+        },
+        {
+          "libelle": "Un français parfait, sans faute d'orthographe",
+          "correcte": true
+        },
+        {
+          "libelle": "Une confirmation obtenue en rappelant la personne sur son numéro de l'annuaire",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Un message vous propose un remboursement de 78,40 € et demande votre RIB. Il vient d'une adresse en @ameli.fr. Que concluez-vous ?",
+      "multiple": false,
+      "points": 10,
+      "explication": "L'adresse d'expédition est trivialement falsifiable : afficher « @ameli.fr » ne coûte rien à un attaquant. Surtout, aucun organisme public ne réclame de coordonnées bancaires par courriel — l'Assurance maladie dispose déjà de votre RIB. Le petit montant crédible (78,40 € plutôt que 5 000 €) est justement une technique pour ne pas éveiller les soupçons. La seule bonne démarche : se connecter à son compte en tapant l'adresse soi-même dans le navigateur.",
+      "reponses": [
+        {
+          "libelle": "C'est légitime, l'adresse d'expédition est officielle",
+          "correcte": false
+        },
+        {
+          "libelle": "C'est une arnaque : l'adresse est falsifiable et aucun organisme ne demande de RIB par mail",
+          "correcte": true
+        },
+        {
+          "libelle": "C'est légitime car le montant est faible et réaliste",
+          "correcte": false
+        },
+        {
+          "libelle": "Je réponds en demandant confirmation avant d'envoyer mon RIB",
+          "correcte": false
+        }
+      ]
+    }
+  ]
+}

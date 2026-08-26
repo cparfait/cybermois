@@ -1,0 +1,8 @@
+node_modules/
+data/
+certs/
+.env
+*.log
+.DS_Store
+Thumbs.db
+public/img/logo-chatillon-source.png

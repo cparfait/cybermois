@@ -1,0 +1,32 @@
+# Environnement de recette : annuaire OpenLDAP de test, sans toucher a l'AD de production.
+#   docker compose -f docker-compose.yml -f docker-compose.recette.yml up -d
+services:
+  annuaire-test:
+    image: bitnami/openldap:2.6
+    container_name: cybermois-annuaire-test
+    environment:
+      LDAP_ROOT: "dc=ville,dc=local"
+      LDAP_ADMIN_USERNAME: "admin"
+      LDAP_ADMIN_PASSWORD: "recette"
+      LDAP_CUSTOM_LDIF_DIR: "/ldifs"
+      LDAP_SKIP_DEFAULT_TREE: "yes"
+    volumes:
+      - ./recette/ldif:/ldifs:ro
+    ports:
+      - "127.0.0.1:1389:1389"
+
+  cybermois:
+    environment:
+      LDAP_URL: "ldap://annuaire-test:1389"
+      LDAP_BIND_DN: "cn=admin,dc=ville,dc=local"
+      LDAP_BIND_PASSWORD: "recette"
+      LDAP_BASE_DN: "dc=ville,dc=local"
+      LDAP_USER_FILTER: "(&(objectClass=inetOrgPerson)(uid={{login}}))"
+      LDAP_TLS_REJECT_UNAUTHORIZED: "false"
+      SERVICE_SOURCE: "ou"
+      SERVICE_OU_DEPTH: "1"
+      ADMIN_LOGINS: "c.parfait"
+      MAIL_ENVOI_ACTIF: "false"
+      PUBLIC_URL: "http://localhost:3000"
+    depends_on:
+      - annuaire-test

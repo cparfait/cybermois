@@ -1,0 +1,139 @@
+import { api, echapper, initialiserPage, alerte, medaille } from '/js/commun.js';
+
+const agent = await initialiserPage('/classement');
+
+/* ------------------------------------------------------------- Onglets */
+
+const onglets = [
+  { bouton: document.getElementById('onglet-services'), panneau: document.getElementById('panneau-services') },
+  { bouton: document.getElementById('onglet-agents'), panneau: document.getElementById('panneau-agents') },
+];
+
+onglets.forEach(({ bouton }, index) => {
+  bouton.addEventListener('click', () => activerOnglet(index));
+  bouton.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    e.preventDefault();
+    const suivant = (index + (e.key === 'ArrowRight' ? 1 : onglets.length - 1)) % onglets.length;
+    activerOnglet(suivant);
+    onglets[suivant].bouton.focus();
+  });
+});
+
+function activerOnglet(actif) {
+  onglets.forEach(({ bouton, panneau }, i) => {
+    bouton.setAttribute('aria-selected', String(i === actif));
+    panneau.hidden = i !== actif;
+  });
+}
+
+/* ------------------------------------------------------------- Rendu */
+
+function podium(entrees, rendu) {
+  if (entrees.length < 3) return '';
+  const ordre = [1, 0, 2]; // 2e, 1er, 3e pour l'effet visuel
+  const classes = { 0: 'or', 1: 'argent', 2: 'bronze' };
+  return `<div class="podium">${ordre
+    .map((i) => `<div class="marche ${classes[i]}">${rendu(entrees[i], i)}</div>`)
+    .join('')}</div>`;
+}
+
+function rendreServices(donnees) {
+  const services = donnees.services;
+  const maxMoyen = Math.max(1, ...services.map((s) => s.score_moyen));
+
+  document.getElementById('podium-services').innerHTML = podium(services, (s, i) => `
+    <div class="medaille" aria-hidden="true">${medaille(i + 1)}</div>
+    <div class="nom">${echapper(s.service)}</div>
+    <div class="points">${s.score_moyen}</div>
+    <div class="sous">pts / agent · ${s.taux_participation} % de participation</div>`);
+
+  document.getElementById('table-services').innerHTML = `
+    <caption class="sr-only">Classement des services par score moyen par agent</caption>
+    <thead><tr>
+      <th scope="col">Rang</th><th scope="col">Service</th>
+      <th scope="col" class="num">Score moyen</th>
+      <th scope="col" class="num">Participation</th>
+      <th scope="col" class="num">Agents</th>
+    </tr></thead>
+    <tbody>${services.map((s, i) => `
+      <tr class="${s.service === agent.service ? 'moi' : ''}">
+        <td class="rang-cell">${medaille(i + 1) || i + 1}</td>
+        <td>${echapper(s.service)}${s.service === agent.service ? ' <span class="discret">(mon service)</span>' : ''}</td>
+        <td class="num">${s.score_moyen} pts</td>
+        <td class="num">
+          <div class="rang" style="justify-content:flex-end;gap:.5rem;flex-wrap:nowrap">
+            <span>${s.taux_participation} %</span>
+            <span class="barre-mini" aria-hidden="true"><span style="width:${Math.min(100, s.taux_participation)}%"></span></span>
+          </div>
+        </td>
+        <td class="num">${s.joueurs} / ${s.inscrits}</td>
+      </tr>`).join('')}</tbody>`;
+
+  if (!services.length) {
+    document.getElementById('table-services').innerHTML =
+      '<tbody><tr><td class="discret">Aucune participation pour le moment. Soyez le premier !</td></tr></tbody>';
+  }
+  void maxMoyen;
+}
+
+function rendreAgents(donnees) {
+  const agents = donnees.agents;
+
+  document.getElementById('podium-agents').innerHTML = podium(agents, (a, i) => `
+    <div class="medaille" aria-hidden="true">${medaille(i + 1)}</div>
+    <div class="nom">${echapper(a.nom_complet)}</div>
+    <div class="points">${a.score_total}</div>
+    <div class="sous">points · ${echapper(a.service)}</div>`);
+
+  document.getElementById('table-agents').innerHTML = `
+    <caption class="sr-only">Classement individuel des agents</caption>
+    <thead><tr>
+      <th scope="col">Rang</th><th scope="col">Agent</th><th scope="col">Service</th>
+      <th scope="col" class="num">Points</th><th scope="col" class="num">Défis</th>
+    </tr></thead>
+    <tbody>${agents.map((a, i) => `
+      <tr class="${a.nom_complet === agent.nomComplet ? 'moi' : ''}">
+        <td class="rang-cell">${medaille(i + 1) || i + 1}</td>
+        <td>${echapper(a.nom_complet)}</td>
+        <td>${echapper(a.service)}</td>
+        <td class="num">${a.score_total}</td>
+        <td class="num">${a.defis_joues}</td>
+      </tr>`).join('')}</tbody>`;
+
+  if (!agents.length) {
+    document.getElementById('table-agents').innerHTML =
+      '<tbody><tr><td class="discret">Aucune participation pour le moment.</td></tr></tbody>';
+  }
+}
+
+/* ---------------------------------------------------------- Chargement */
+
+try {
+  const donnees = await api('/api/classement');
+
+  const rs = donnees.monRangService;
+  const ra = donnees.monRangAgent;
+  document.getElementById('moi').innerHTML = `
+    <div class="encart-moi">
+      <strong>${echapper(agent.service)}</strong>
+      ${rs.rang
+        ? ` — ${rs.rang}<sup>${rs.rang === 1 ? 're' : 'e'}</sup> place sur ${rs.total} services,
+            ${rs.detail?.score_moyen ?? 0} points par agent et ${rs.detail?.taux_participation ?? 0} % de participation.`
+        : ' — pas encore classé, à vous de lancer la machine.'}
+      ${ra.rang ? `<br>Vous êtes ${ra.rang}<sup>${ra.rang === 1 ? 'er' : 'e'}</sup> sur ${ra.total} agents ayant participé.` : ''}
+    </div>`;
+
+  const s = donnees.stats;
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="v">${s.joueurs}</div><div class="l">agents ont joué</div></div>
+    <div class="stat"><div class="v">${s.inscrits ? Math.round((s.joueurs / s.inscrits) * 100) : 0} %</div><div class="l">de participation</div></div>
+    <div class="stat"><div class="v">${s.services}</div><div class="l">services en lice</div></div>
+    <div class="stat"><div class="v">${s.participations}</div><div class="l">défis terminés</div></div>
+    <div class="stat"><div class="v">${s.points_cumules}</div><div class="l">points cumulés</div></div>`;
+
+  rendreServices(donnees);
+  rendreAgents(donnees);
+} catch (erreur) {
+  alerte('alerte', erreur.message);
+}

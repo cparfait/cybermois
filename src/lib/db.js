@@ -1,0 +1,121 @@
+import { DatabaseSync } from 'node:sqlite';
+import fs from 'node:fs';
+import path from 'node:path';
+import { config } from './config.js';
+
+fs.mkdirSync(path.dirname(config.dbFile), { recursive: true });
+export const db = new DatabaseSync(config.dbFile);
+
+db.exec('PRAGMA journal_mode = WAL');
+db.exec('PRAGMA foreign_keys = ON');
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS agents (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  login          TEXT NOT NULL UNIQUE,
+  nom_complet    TEXT NOT NULL,
+  email          TEXT,
+  service        TEXT NOT NULL DEFAULT 'Non rattache',
+  service_brut   TEXT,
+  est_admin      INTEGER NOT NULL DEFAULT 0,
+  cree_le        TEXT NOT NULL DEFAULT (datetime('now')),
+  vu_le          TEXT
+);
+
+CREATE TABLE IF NOT EXISTS defis (
+  id             INTEGER PRIMARY KEY,
+  semaine        INTEGER NOT NULL UNIQUE,
+  titre          TEXT NOT NULL,
+  accroche       TEXT NOT NULL,
+  intro          TEXT NOT NULL,
+  duree_minutes  INTEGER NOT NULL DEFAULT 7,
+  ouvre_le       TEXT NOT NULL,
+  publie         INTEGER NOT NULL DEFAULT 0,
+  maj_le         TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS questions (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  defi_id        INTEGER NOT NULL REFERENCES defis(id) ON DELETE CASCADE,
+  ordre          INTEGER NOT NULL,
+  enonce         TEXT NOT NULL,
+  contexte       TEXT,
+  multiple       INTEGER NOT NULL DEFAULT 0,
+  points         INTEGER NOT NULL DEFAULT 10,
+  explication    TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS reponses (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  question_id    INTEGER NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+  ordre          INTEGER NOT NULL,
+  libelle        TEXT NOT NULL,
+  correcte       INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS participations (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  agent_id       INTEGER NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+  defi_id        INTEGER NOT NULL REFERENCES defis(id) ON DELETE CASCADE,
+  score          INTEGER NOT NULL DEFAULT 0,
+  score_max      INTEGER NOT NULL DEFAULT 0,
+  bonnes         INTEGER NOT NULL DEFAULT 0,
+  total_questions INTEGER NOT NULL DEFAULT 0,
+  duree_secondes INTEGER NOT NULL DEFAULT 0,
+  entrainement   INTEGER NOT NULL DEFAULT 0,
+  termine_le     TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(agent_id, defi_id, entrainement)
+);
+
+CREATE TABLE IF NOT EXISTS reponses_agent (
+  id               INTEGER PRIMARY KEY AUTOINCREMENT,
+  participation_id INTEGER NOT NULL REFERENCES participations(id) ON DELETE CASCADE,
+  question_id      INTEGER NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+  choix            TEXT NOT NULL,
+  correcte         INTEGER NOT NULL DEFAULT 0,
+  points_obtenus   INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS badges_agent (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  agent_id       INTEGER NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+  code           TEXT NOT NULL,
+  obtenu_le      TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(agent_id, code)
+);
+
+CREATE TABLE IF NOT EXISTS journal (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  horodatage     TEXT NOT NULL DEFAULT (datetime('now')),
+  login          TEXT,
+  action         TEXT NOT NULL,
+  detail         TEXT,
+  ip             TEXT
+);
+
+CREATE TABLE IF NOT EXISTS envois (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  horodatage     TEXT NOT NULL DEFAULT (datetime('now')),
+  type           TEXT NOT NULL,
+  semaine        INTEGER,
+  destinataires  INTEGER NOT NULL DEFAULT 0,
+  succes         INTEGER NOT NULL DEFAULT 0,
+  erreur         TEXT
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  token          TEXT PRIMARY KEY,
+  agent_id       INTEGER NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+  cree_le        TEXT NOT NULL DEFAULT (datetime('now')),
+  expire_le      TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_participations_defi ON participations(defi_id);
+CREATE INDEX IF NOT EXISTS idx_agents_service ON agents(service);
+CREATE INDEX IF NOT EXISTS idx_journal_horodatage ON journal(horodatage);
+`);
+
+export function journaliser(login, action, detail, ip) {
+  db.prepare('INSERT INTO journal (login, action, detail, ip) VALUES (?, ?, ?, ?)')
+    .run(login || null, action, detail ? String(detail).slice(0, 500) : null, ip || null);
+}

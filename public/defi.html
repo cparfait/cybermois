@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Défi — Cybermois — Ville de Châtillon</title>
+<link rel="stylesheet" href="/css/theme.css">
+<link rel="icon" href="/img/logo-chatillon.jpg">
+<style>
+  .barre-progression { position: sticky; top: 72px; z-index: 40; background: var(--fond); padding: .8rem 0 1rem; }
+  .barre-progression .piste { height: 8px; background: var(--bordure); border-radius: 4px; overflow: hidden; }
+  .barre-progression .piste span { display: block; height: 100%; background: var(--vert-clair); transition: width .35s ease; }
+  .etat-progression { font-family: var(--police-ui); font-size: .82rem; color: var(--encre-douce); display: flex; justify-content: space-between; margin-bottom: .4rem; }
+
+  .bloc-question { margin-bottom: 2.5rem; scroll-margin-top: 130px; }
+  .numero-question { font-family: var(--police-ui); font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--vert-clair-texte); }
+  .consigne { font-family: var(--police-ui); font-size: .82rem; color: var(--encre-douce); background: var(--vert-clair-fond); display: inline-block; padding: .25rem .6rem; border-radius: 20px; margin-bottom: .8rem; }
+
+  .contexte {
+    background: var(--vert-fonce-clair); border-left: 4px solid var(--vert-fonce);
+    border-radius: var(--rayon-sm); padding: 1rem 1.2rem; margin: 1rem 0 1.4rem;
+    font-family: 'Consolas', 'Courier New', monospace; font-size: .88rem; line-height: 1.65;
+    white-space: pre-wrap; word-break: break-word; overflow-x: auto;
+  }
+
+  .liste-choix { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; }
+  .choix { display: block; }
+  .choix input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .choix span.etiquette {
+    display: flex; gap: .8rem; align-items: flex-start;
+    border: 2px solid var(--bordure-forte); border-radius: var(--rayon-sm);
+    padding: .85rem 1rem; cursor: pointer; background: var(--surface);
+    font-family: var(--police-ui); font-size: .95rem; line-height: 1.45;
+    transition: border-color var(--transition), background var(--transition);
+  }
+  .choix span.etiquette:hover { border-color: var(--vert-fonce); background: var(--vert-fonce-clair); }
+  .choix input:focus-visible + span.etiquette { outline: 3px solid var(--vert-fonce); outline-offset: 2px; }
+  .choix input:checked + span.etiquette { border-color: var(--vert-fonce); background: var(--vert-fonce-clair); font-weight: 600; }
+  .case {
+    flex: 0 0 auto; width: 22px; height: 22px; border: 2px solid var(--bordure-forte);
+    display: grid; place-items: center; font-size: .8rem; color: transparent; margin-top: 1px;
+    background: var(--surface);
+  }
+  .case.carree { border-radius: 5px; }
+  .case.ronde { border-radius: 50%; }
+  .choix input:checked + span.etiquette .case { border-color: var(--vert-fonce); background: var(--vert-fonce); color: #fff; }
+
+  /* Etats de correction */
+  .choix.correcte span.etiquette { border-color: var(--succes); background: var(--succes-fond); }
+  .choix.manquee span.etiquette { border-color: var(--succes); background: var(--succes-fond); border-style: dashed; }
+  .choix.fausse span.etiquette { border-color: var(--erreur); background: var(--erreur-fond); }
+  .marque { margin-left: auto; font-weight: 700; flex: 0 0 auto; }
+
+  .explication {
+    margin-top: 1rem; padding: 1rem 1.2rem; border-radius: var(--rayon-sm);
+    border-left: 4px solid var(--vert-clair); background: var(--vert-clair-fond); font-size: .95rem;
+  }
+  .explication strong { font-family: var(--police-ui); }
+  .bandeau-note { font-family: var(--police-ui); font-weight: 700; font-size: .9rem; margin-bottom: .6rem; }
+
+  .zone-validation { position: sticky; bottom: 0; background: var(--fond); padding: 1.2rem 0 1.5rem; border-top: 1px solid var(--bordure); }
+
+  /* Ecran de resultat */
+  .score-final { text-align: center; padding: 2.5rem 1.5rem; }
+  .score-cercle {
+    width: 168px; height: 168px; border-radius: 50%; margin: 0 auto 1.2rem;
+    display: grid; place-items: center; color: #fff; background: var(--vert-fonce);
+    box-shadow: 0 8px 28px rgba(0, 110, 70, .28);
+  }
+  .score-cercle .valeur { font-family: var(--police-titre); font-size: 3rem; font-weight: 900; line-height: 1; }
+  .score-cercle .sur { font-family: var(--police-ui); font-size: .8rem; opacity: .9; }
+  .liste-badges { display: flex; gap: .6rem; flex-wrap: wrap; justify-content: center; margin: 1.5rem 0; }
+  .badge-gagne {
+    background: var(--vert-clair-fond); border: 2px solid var(--vert-clair);
+    border-radius: 30px; padding: .5rem 1rem; font-family: var(--police-ui);
+    font-size: .88rem; font-weight: 600; color: var(--encre);
+  }
+  .encart-rang { background: var(--vert-fonce-clair); border-radius: var(--rayon); padding: 1.2rem; margin: 1.5rem 0; font-family: var(--police-ui); }
+</style>
+</head>
+<body>
+<a class="evitement" href="#contenu">Aller au contenu principal</a>
+<div id="entete"></div>
+
+<main id="contenu">
+  <div class="conteneur" style="max-width:800px">
+    <div id="alerte"></div>
+    <div id="zone"><p class="discret">Chargement du défi…</p></div>
+  </div>
+</main>
+
+<div id="pied"></div>
+<script type="module" src="/js/defi.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+# Annuaire de recette reproduisant une arborescence de collectivite.
+# Le service de chaque agent est deduit de l'OU qui le contient directement.
+
+dn: dc=ville,dc=local
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+o: Ville de Chatillon
+dc: ville
+
+dn: ou=Agents,dc=ville,dc=local
+objectClass: organizationalUnit
+ou: Agents
+
+dn: ou=Direction des systemes d information,ou=Agents,dc=ville,dc=local
+objectClass: organizationalUnit
+ou: Direction des systemes d information
+
+dn: ou=Etat civil,ou=Agents,dc=ville,dc=local
+objectClass: organizationalUnit
+ou: Etat civil
+
+dn: ou=Ressources humaines,ou=Agents,dc=ville,dc=local
+objectClass: organizationalUnit
+ou: Ressources humaines
+
+dn: ou=Affaires scolaires,ou=Agents,dc=ville,dc=local
+objectClass: organizationalUnit
+ou: Affaires scolaires
+
+dn: ou=Services techniques,ou=Agents,dc=ville,dc=local
+objectClass: organizationalUnit
+ou: Services techniques
+
+dn: ou=Finances,ou=Agents,dc=ville,dc=local
+objectClass: organizationalUnit
+ou: Finances

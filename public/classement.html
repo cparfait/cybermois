@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Classement — Cybermois — Ville de Châtillon</title>
+<link rel="stylesheet" href="/css/theme.css">
+<link rel="icon" href="/img/logo-chatillon.jpg">
+<style>
+  .onglets { display: flex; gap: .3rem; border-bottom: 2px solid var(--bordure); margin: 1.5rem 0 0; }
+  .onglets button {
+    font-family: var(--police-ui); font-weight: 700; font-size: .95rem;
+    background: none; border: none; border-bottom: 3px solid transparent;
+    padding: .8rem 1.2rem; cursor: pointer; color: var(--encre-douce); margin-bottom: -2px;
+  }
+  .onglets button[aria-selected="true"] { color: var(--vert-fonce); border-bottom-color: var(--vert-fonce); }
+  .onglets button:hover { color: var(--vert-fonce); }
+
+  .podium { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; align-items: end; margin: 2rem 0; }
+  .marche { background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: 1.2rem .8rem; text-align: center; box-shadow: var(--ombre); }
+  .marche .medaille { font-size: 2.2rem; line-height: 1; }
+  .marche .nom { font-family: var(--police-ui); font-weight: 700; font-size: .95rem; margin: .5rem 0 .2rem; word-break: break-word; }
+  .marche .points { font-family: var(--police-titre); font-weight: 900; font-size: 1.5rem; color: var(--vert-fonce); }
+  .marche .sous { font-family: var(--police-ui); font-size: .78rem; color: var(--encre-douce); }
+  .marche.or { border-top: 5px solid var(--or); padding-bottom: 2rem; }
+  .marche.argent { border-top: 5px solid var(--argent); }
+  .marche.bronze { border-top: 5px solid var(--bronze); }
+  @media (max-width: 560px) { .podium { grid-template-columns: 1fr; align-items: stretch; } .marche.or { padding-bottom: 1.2rem; } }
+
+  table.classement { width: 100%; border-collapse: collapse; font-family: var(--police-ui); font-size: .95rem; }
+  table.classement th {
+    text-align: left; font-size: .74rem; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--encre-douce); padding: .7rem .6rem; border-bottom: 2px solid var(--bordure);
+  }
+  table.classement td { padding: .8rem .6rem; border-bottom: 1px solid var(--bordure); }
+  table.classement tr.moi { background: var(--vert-clair-fond); }
+  table.classement tr.moi td { font-weight: 700; }
+  .num { text-align: right; white-space: nowrap; }
+  .rang-cell { width: 52px; font-weight: 700; }
+  .barre-mini { height: 6px; background: var(--bordure); border-radius: 3px; overflow: hidden; min-width: 70px; }
+  .barre-mini span { display: block; height: 100%; background: var(--vert-clair); }
+  .encart-moi { background: var(--vert-fonce); color: #fff; border-radius: var(--rayon); padding: 1.3rem 1.5rem; font-family: var(--police-ui); margin-bottom: 1.5rem; }
+  .encart-moi strong { font-size: 1.15rem; }
+  .stats-globales { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+  .stat { background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: 1rem; text-align: center; }
+  .stat .v { font-family: var(--police-titre); font-weight: 900; font-size: 1.8rem; color: var(--vert-fonce); line-height: 1; }
+  .stat .l { font-family: var(--police-ui); font-size: .78rem; color: var(--encre-douce); margin-top: .3rem; }
+</style>
+</head>
+<body>
+<a class="evitement" href="#contenu">Aller au contenu principal</a>
+<div id="entete"></div>
+
+<main id="contenu">
+  <div class="conteneur">
+    <h1>Classement</h1>
+    <div id="alerte"></div>
+    <div id="moi"></div>
+    <div id="stats" class="stats-globales"></div>
+
+    <div class="onglets" role="tablist">
+      <button role="tab" id="onglet-services" aria-selected="true" aria-controls="panneau-services">Par service</button>
+      <button role="tab" id="onglet-agents" aria-selected="false" aria-controls="panneau-agents">Individuel</button>
+    </div>
+
+    <div role="tabpanel" id="panneau-services" aria-labelledby="onglet-services">
+      <p class="discret" style="margin-top:1rem">
+        Le score affiché est la <strong>moyenne par agent</strong> du service, pour que les petits services
+        ne soient pas désavantagés. Le taux de participation compte tout autant.
+      </p>
+      <div id="podium-services"></div>
+      <div class="tableau-defilant"><table class="classement" id="table-services"></table></div>
+    </div>
+
+    <div role="tabpanel" id="panneau-agents" aria-labelledby="onglet-agents" hidden>
+      <p class="discret" style="margin-top:1rem">Les 50 premiers agents au score cumulé sur l'ensemble des défis.</p>
+      <div id="podium-agents"></div>
+      <div class="tableau-defilant"><table class="classement" id="table-agents"></table></div>
+    </div>
+  </div>
+</main>
+
+<div id="pied"></div>
+<script type="module" src="/js/classement.js"></script>
+</body>
+</html>

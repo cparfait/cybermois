@@ -1,0 +1,276 @@
+/* ==========================================================================
+   Cybermois - Ville de Chatillon
+   Palette issue de la charte graphique officielle (Direction de la communication,
+   decembre 2020) : vert fonce #006e46 dominant, vert clair #aec80c secondaire.
+   Typographie : Montserrat pour les titres (charte), Georgia/Times pour les
+   textes - la charte autorise explicitement Times en substitution de
+   Mrs Eaves XL Serif quand celle-ci n'est pas disponible.
+
+   Accessibilite RGAA 4.1 : le vert clair #aec80c ne fait que 1,90:1 sur blanc.
+   Il est donc reserve aux aplats decoratifs (avec texte noir dessus : 9,95:1)
+   et remplace par --vert-clair-texte #5f6d00 (5,72:1) des qu'il faut ecrire.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap');
+
+:root {
+  /* Couleurs institutionnelles - ne pas modifier sans accord de la com */
+  --vert-fonce: #006e46;
+  --vert-clair: #aec80c;
+
+  /* Derivees accessibles */
+  --vert-fonce-sombre: #005435;
+  --vert-fonce-clair: #e6f1ec;
+  --vert-clair-texte: #5f6d00;
+  --vert-clair-fond: #f4f8dd;
+
+  /* Neutres */
+  --encre: #14211c;
+  --encre-douce: #4a5a53;
+  --fond: #f7faf8;
+  --surface: #ffffff;
+  --bordure: #d9e4de;
+  --bordure-forte: #b6c8bf;
+
+  /* Etats */
+  --succes: #1a7f4b;
+  --succes-fond: #e4f4ea;
+  --erreur: #b3261e;
+  --erreur-fond: #fce9e7;
+  --alerte: #8a5a00;
+  --alerte-fond: #fdf3e0;
+  --info: #0b5f8a;
+  --info-fond: #e5f2f8;
+
+  /* Podium */
+  --or: #b8860b;
+  --argent: #6e7b85;
+  --bronze: #9c5a2d;
+
+  /* Typographie */
+  --police-titre: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+  --police-texte: Georgia, 'Times New Roman', Times, serif;
+  --police-ui: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+
+  /* Mesures */
+  --rayon: 12px;
+  --rayon-sm: 8px;
+  --ombre: 0 1px 2px rgba(20, 33, 28, .06), 0 4px 16px rgba(20, 33, 28, .06);
+  --ombre-forte: 0 2px 4px rgba(20, 33, 28, .08), 0 12px 32px rgba(20, 33, 28, .12);
+  --largeur: 1080px;
+  --transition: 160ms ease;
+}
+
+/* Mode sombre : suit le reglage systeme de l'agent */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='clair']) {
+    --vert-fonce: #4fbf8b;
+    --vert-clair: #c8e04a;
+    --vert-fonce-sombre: #8fd9b6;
+    --vert-fonce-clair: #163024;
+    --vert-clair-texte: #c8e04a;
+    --vert-clair-fond: #262d0e;
+
+    --encre: #e8f0eb;
+    --encre-douce: #a9bcb2;
+    --fond: #0e1a14;
+    --surface: #16241d;
+    --bordure: #2a3d33;
+    --bordure-forte: #3d5648;
+
+    --succes: #6fd79b;
+    --succes-fond: #14301f;
+    --erreur: #ff9b91;
+    --erreur-fond: #3a1714;
+    --alerte: #f0c46a;
+    --alerte-fond: #33260c;
+    --info: #7fc6ea;
+    --info-fond: #102c3a;
+
+    --or: #e3bb4d;
+    --argent: #b6c2cb;
+    --bronze: #d69a6a;
+
+    --ombre: 0 1px 2px rgba(0, 0, 0, .4), 0 4px 16px rgba(0, 0, 0, .3);
+    --ombre-forte: 0 2px 4px rgba(0, 0, 0, .5), 0 12px 32px rgba(0, 0, 0, .45);
+  }
+}
+
+:root[data-theme='sombre'] {
+  --vert-fonce: #4fbf8b;
+  --vert-clair: #c8e04a;
+  --vert-fonce-sombre: #8fd9b6;
+  --vert-fonce-clair: #163024;
+  --vert-clair-texte: #c8e04a;
+  --vert-clair-fond: #262d0e;
+  --encre: #e8f0eb;
+  --encre-douce: #a9bcb2;
+  --fond: #0e1a14;
+  --surface: #16241d;
+  --bordure: #2a3d33;
+  --bordure-forte: #3d5648;
+  --succes: #6fd79b;
+  --succes-fond: #14301f;
+  --erreur: #ff9b91;
+  --erreur-fond: #3a1714;
+  --alerte: #f0c46a;
+  --alerte-fond: #33260c;
+  --info: #7fc6ea;
+  --info-fond: #102c3a;
+  --or: #e3bb4d;
+  --argent: #b6c2cb;
+  --bronze: #d69a6a;
+  --ombre: 0 1px 2px rgba(0, 0, 0, .4), 0 4px 16px rgba(0, 0, 0, .3);
+  --ombre-forte: 0 2px 4px rgba(0, 0, 0, .5), 0 12px 32px rgba(0, 0, 0, .45);
+}
+
+/* ---------- Base ---------- */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--fond);
+  color: var(--encre);
+  font-family: var(--police-texte);
+  font-size: 17px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, .titre { font-family: var(--police-titre); font-weight: 700; line-height: 1.2; color: var(--encre); }
+h1 { font-size: clamp(1.7rem, 4vw, 2.4rem); font-weight: 900; margin: 0 0 .4em; }
+h2 { font-size: clamp(1.3rem, 3vw, 1.65rem); margin: 0 0 .5em; }
+h3 { font-size: 1.15rem; margin: 0 0 .4em; }
+
+a { color: var(--vert-fonce); text-decoration: underline; text-underline-offset: 2px; }
+a:hover { color: var(--vert-fonce-sombre); }
+
+/* Focus visible : obligation RGAA 10.7 */
+:focus-visible {
+  outline: 3px solid var(--vert-fonce);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Lien d'evitement RGAA 12.7 */
+.evitement {
+  position: absolute; left: -9999px; top: 0; z-index: 999;
+  background: var(--vert-fonce); color: #fff; padding: .8rem 1.2rem;
+  font-family: var(--police-ui); font-weight: 600; text-decoration: none;
+}
+.evitement:focus { left: 0; color: #fff; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Mise en page ---------- */
+
+.conteneur { width: min(100% - 2rem, var(--largeur)); margin-inline: auto; }
+
+.entete-site {
+  background: var(--surface);
+  border-bottom: 3px solid var(--vert-clair);
+  box-shadow: var(--ombre);
+  position: sticky; top: 0; z-index: 50;
+}
+.entete-interne {
+  display: flex; align-items: center; gap: 1rem;
+  padding: .7rem 0; flex-wrap: wrap;
+}
+.logo-ville { height: 46px; width: auto; display: block; }
+.marque {
+  font-family: var(--police-titre); font-weight: 900;
+  font-size: 1.05rem; letter-spacing: -.01em; color: var(--vert-fonce);
+  line-height: 1.15; margin-right: auto;
+}
+.marque span { display: block; font-weight: 600; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--encre-douce); }
+
+.nav-principale { display: flex; gap: .25rem; flex-wrap: wrap; align-items: center; }
+.nav-principale a {
+  font-family: var(--police-ui); font-size: .88rem; font-weight: 600;
+  text-decoration: none; color: var(--encre-douce);
+  padding: .5rem .8rem; border-radius: var(--rayon-sm);
+  transition: background var(--transition), color var(--transition);
+}
+.nav-principale a:hover { background: var(--vert-fonce-clair); color: var(--vert-fonce); }
+.nav-principale a[aria-current='page'] { background: var(--vert-fonce); color: #fff; }
+
+main { padding: 2rem 0 4rem; }
+
+.pied-site {
+  border-top: 1px solid var(--bordure);
+  padding: 1.5rem 0; margin-top: 3rem;
+  font-size: .85rem; color: var(--encre-douce);
+  font-family: var(--police-ui);
+}
+
+/* ---------- Cartes ---------- */
+
+.carte {
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  padding: 1.5rem;
+  box-shadow: var(--ombre);
+}
+.grille { display: grid; gap: 1.25rem; }
+.grille-2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.grille-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
+/* ---------- Boutons ---------- */
+
+.btn {
+  font-family: var(--police-ui); font-size: .95rem; font-weight: 700;
+  padding: .75rem 1.5rem; border-radius: var(--rayon-sm);
+  border: 2px solid transparent; cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+  transition: background var(--transition), color var(--transition), transform var(--transition);
+}
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-principal { background: var(--vert-fonce); color: #fff; }
+.btn-principal:hover:not(:disabled) { background: var(--vert-fonce-sombre); color: #fff; transform: translateY(-1px); }
+.btn-secondaire { background: transparent; color: var(--vert-fonce); border-color: var(--bordure-forte); }
+.btn-secondaire:hover:not(:disabled) { background: var(--vert-fonce-clair); border-color: var(--vert-fonce); }
+.btn-accent { background: var(--vert-clair); color: #111; }
+.btn-accent:hover:not(:disabled) { filter: brightness(.94); color: #111; transform: translateY(-1px); }
+.btn-bloc { width: 100%; }
+
+/* ---------- Formulaires ---------- */
+
+label { font-family: var(--police-ui); font-weight: 600; font-size: .9rem; display: block; margin-bottom: .35rem; }
+input[type='text'], input[type='password'], input[type='number'], input[type='email'], select, textarea {
+  width: 100%; padding: .7rem .9rem;
+  border: 1px solid var(--bordure-forte); border-radius: var(--rayon-sm);
+  background: var(--surface); color: var(--encre);
+  font-family: var(--police-ui); font-size: 1rem;
+}
+input:focus-visible, select:focus-visible, textarea:focus-visible { border-color: var(--vert-fonce); }
+
+.message { padding: .85rem 1rem; border-radius: var(--rayon-sm); font-family: var(--police-ui); font-size: .9rem; border-left: 4px solid; }
+.message-erreur { background: var(--erreur-fond); color: var(--erreur); border-color: var(--erreur); }
+.message-succes { background: var(--succes-fond); color: var(--succes); border-color: var(--succes); }
+.message-info { background: var(--info-fond); color: var(--info); border-color: var(--info); }
+.message-alerte { background: var(--alerte-fond); color: var(--alerte); border-color: var(--alerte); }
+
+/* ---------- Utilitaires ---------- */
+
+.ui { font-family: var(--police-ui); }
+.discret { color: var(--encre-douce); font-size: .88rem; }
+.centre { text-align: center; }
+.pile { display: flex; flex-direction: column; gap: 1rem; }
+.rang { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.tableau-defilant { overflow-x: auto; -webkit-overflow-scrolling: touch; }
