@@ -107,12 +107,14 @@ Vos autres applications utilisent le **Direct Send Microsoft 365** :
 Le bouton **Tester** vérifie la joignabilité du relais, et envoie un vrai message si vous
 indiquez une adresse.
 
-**Deux limites du Direct Send à connaître avant de compter dessus.** Il ne délivre qu'aux
-destinataires de votre propre locataire : parfait pour une campagne interne, inopérant vers
-l'extérieur. Et comme le conteneur émettra depuis une adresse IP nouvelle, vos messages
-peuvent être classés en indésirables si cette adresse ne figure pas dans l'enregistrement
-SPF du domaine. Faites le test grandeur nature tôt, et regardez le dossier « courrier
-indésirable » : c'est le genre de détail qui ne se découvre qu'au premier envoi de masse.
+**Le Direct Send a deux limites, levées dans notre cas.** Il ne délivre qu'aux destinataires
+du locataire : sans objet ici, la campagne n'écrit qu'à des adresses `@chatillon92.fr`.
+Et il exige que l'adresse IP émettrice figure dans l'enregistrement SPF du domaine :
+c'est déjà le cas, l'infrastructure émet depuis une adresse connue.
+
+Faites malgré tout un envoi réel avant l'ouverture, en vous mettant temporairement comme
+groupe de diffusion : c'est la seule façon de vérifier le rendu du message dans Outlook, et
+de s'assurer qu'il n'atterrit pas en indésirables.
 
 ---
 
