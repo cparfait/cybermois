@@ -5,6 +5,15 @@ await initialiserPage('/accueil');
 const semaine = Number(location.pathname.split('/').pop());
 const zone = document.getElementById('zone');
 
+// Le jeton d'apercu vit dans l'URL du navigateur, mais c'est l'API qui decide
+// d'ouvrir un defi scelle : il doit donc accompagner chaque appel. Sans cela le
+// lien partage affichait bien la page, et se faisait refuser au premier octet
+// demande au serveur.
+const jetonApercu = new URLSearchParams(location.search).get('apercu') || '';
+const avecApercu = (chemin) => (jetonApercu
+  ? `${chemin}${chemin.includes('?') ? '&' : '?'}apercu=${encodeURIComponent(jetonApercu)}`
+  : chemin);
+
 let defi = null;
 let index = 0;          // question affichee
 let choix = new Set();  // selection en cours
@@ -12,7 +21,7 @@ let choix = new Set();  // selection en cours
 /* --------------------------------------------------------------- Chargement */
 
 try {
-  defi = await api(`/api/defis/${semaine}`);
+  defi = await api(avecApercu(`/api/defis/${semaine}`));
   // On reprend la ou l'agent s'etait arrete : une session perdue ne doit pas
   // l'obliger a tout refaire.
   const repondues = new Set(defi.dejaRepondu || []);
@@ -52,7 +61,13 @@ function afficherIntro(dejaFaites) {
     <p style="font-style:italic;color:var(--encre-douce);margin-top:0">${echapper(defi.accroche)}</p>
     <div class="carte" style="margin:1.5rem 0">${echapper(defi.intro)}</div>
 
-    ${defi.entrainement ? `
+    ${defi.apercu ? `
+      <div class="message message-alerte" style="margin-bottom:1.5rem">
+        <strong>Aperçu — rien n'est enregistré.</strong> Vous jouez ce défi avant son
+        ouverture : aucun score, aucun badge, aucune trace au classement. Le parcours est
+        celui que verront les agents, à l'identique.
+      </div>`
+    : defi.entrainement ? `
       <div class="message message-info" style="margin-bottom:1.5rem">
         Vous avez déjà terminé ce défi : votre score est enregistré et ne changera plus.
         Vous pouvez le refaire librement, en mode entraînement.
@@ -152,7 +167,7 @@ async function validerQuestion() {
   bouton.textContent = 'Correction…';
 
   try {
-    const r = await api(`/api/defis/${semaine}/questions/${q.id}`, {
+    const r = await api(avecApercu(`/api/defis/${semaine}/questions/${q.id}`), {
       method: 'POST', body: { choix: [...choix] },
     });
     afficherCorrection(q, r);
@@ -265,7 +280,7 @@ async function terminer() {
 
   let r;
   try {
-    r = await api(`/api/defis/${semaine}/terminer`, { method: 'POST' });
+    r = await api(avecApercu(`/api/defis/${semaine}/terminer`), { method: 'POST' });
   } catch (erreur) {
     alerte('alerte', erreur.message);
     bouton.disabled = false;

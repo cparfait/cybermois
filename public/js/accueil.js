@@ -71,7 +71,10 @@ try {
 
   document.getElementById('defis').innerHTML = defis.map((defi) => {
     const p = defi.participation;
-    const classe = p ? 'termine' : defi.ouvert ? '' : 'verrouille';
+    // Le defi jouable de la semaine se signale : sur quatre cartes, il faut
+    // voir d'un regard laquelle attend quelque chose.
+    const aJouer = defi.ouvert && !p;
+    const classe = p ? 'termine' : defi.ouvert ? 'a-jouer' : 'verrouille';
     const pourcentage = p && p.scoreMax ? Math.round((p.score / p.scoreMax) * 100) : 0;
 
     const date = new Date(defi.ouvreLe + 'T00:00:00')
@@ -102,7 +105,8 @@ try {
 
     return `
       <article class="carte carte-defi ${classe}">
-        <p class="numero-semaine">Semaine ${defi.semaine}</p>
+        ${aJouer ? '<span class="halo" aria-hidden="true"></span>' : ''}
+        <p class="numero-semaine">Semaine ${defi.semaine}${aJouer ? ' · à relever' : ''}</p>
         <h3 style="margin-bottom:.2em">${echapper(defi.titre)}</h3>
         <p class="accroche" style="margin-top:0">${echapper(defi.accroche)}</p>
         <p class="meta-defi">

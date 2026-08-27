@@ -28,7 +28,10 @@ export const config = {
     bindDn: process.env.LDAP_BIND_DN || '',
     bindPassword: process.env.LDAP_BIND_PASSWORD || '',
     baseDn: process.env.LDAP_BASE_DN || '',
-    userFilter: process.env.LDAP_USER_FILTER || '(&(objectClass=user)(objectCategory=person)(sAMAccountName={{login}}))',
+    // Identifiant OU adresse : les agents saisissent l'un pour l'autre, et un
+    // refus a ce moment-la se solde par un appel a la DSI, pas par une
+    // seconde tentative.
+    userFilter: process.env.LDAP_USER_FILTER || '(&(objectClass=user)(objectCategory=person)(|(sAMAccountName={{login}})(userPrincipalName={{login}})(mail={{login}})))',
     requiredGroup: process.env.LDAP_REQUIRED_GROUP || '',
     adminGroup: process.env.LDAP_ADMIN_GROUP || '',
     caFile: process.env.LDAP_CA_FILE || '',
@@ -42,6 +45,10 @@ export const config = {
     attribut: process.env.SERVICE_ATTRIBUTE || 'department',
     ouDepth: num(process.env.SERVICE_OU_DEPTH, 1),
   },
+
+  // Adresse de la deleguee a la protection des donnees, citee dans les
+  // mentions legales. Elle change de personne plus souvent que le code.
+  contactDpo: process.env.CONTACT_DPO || 'dpo@chatillon92.fr',
 
   adminLogins: liste(process.env.ADMIN_LOGINS),
 

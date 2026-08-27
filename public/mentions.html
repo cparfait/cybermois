@@ -113,7 +113,7 @@
     </p>
     <p>
       Pour exercer ces droits, contactez la <strong>déléguée à la protection des données</strong> de la Ville de
-      Châtillon. Vous pouvez également introduire une réclamation auprès de la CNIL.
+      Châtillon : <a href="mailto:" id="contact-dpo">…</a>
     </p>
 
     <h2>Cookies</h2>
@@ -156,5 +156,18 @@
     <p style="margin:0">Cybermois 2026 — Ville de Châtillon, Direction des systèmes d'information.</p>
   </div>
 </footer>
+<script type="module">
+  // L'adresse vient de la configuration : un changement de personne se regle
+  // dans l'administration, sans toucher a cette page.
+  const lien = document.getElementById('contact-dpo');
+  try {
+    const r = await fetch('/api/public/contacts');
+    const { dpo } = await r.json();
+    if (dpo) { lien.href = `mailto:${dpo}`; lien.textContent = dpo; }
+    else lien.replaceWith(document.createTextNode('adresse disponible auprès de la DSI'));
+  } catch {
+    lien.replaceWith(document.createTextNode('adresse disponible auprès de la DSI'));
+  }
+</script>
 </body>
 </html>

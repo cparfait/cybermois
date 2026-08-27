@@ -61,6 +61,10 @@ const bool = (v) => /^(true|1|oui|yes)$/i.test(String(v));
 export const DESCRIPTEUR = [
   { cle: 'publicUrl', chemin: ['publicUrl'], type: 'texte', groupe: 'general',
     libelle: 'Adresse du portail', aide: "Telle que les agents la voient. Alimente les liens des mails et le drapeau securise du cookie de session." },
+  { cle: 'contactDpo', chemin: ['contactDpo'], type: 'texte', groupe: 'general',
+    libelle: 'Adresse de la DPO',
+    aide: 'Figure dans les mentions légales, pour l’exercice des droits. '
+      + 'Un changement de personne se règle ici, sans toucher au code.' },
 
   { cle: 'ldap.url', chemin: ['ldap', 'url'], type: 'ldap-hote', groupe: 'ldap',
     libelle: "Adresse du controleur de domaine", aide: "L'IP ou le nom : 192.168.2.9, ou dc01.chatillon.lan. "
@@ -72,7 +76,9 @@ export const DESCRIPTEUR = [
   { cle: 'ldap.baseDn', chemin: ['ldap', 'baseDn'], type: 'texte', groupe: 'ldap',
     libelle: 'Base de recherche', aide: 'DC=chatillon,DC=lan, ou une OU precise pour restreindre le perimetre.' },
   { cle: 'ldap.userFilter', chemin: ['ldap', 'userFilter'], type: 'texte', groupe: 'ldap',
-    libelle: 'Filtre de recherche', aide: '{{login}} est remplace par la saisie de l\'agent.' },
+    libelle: 'Filtre de recherche',
+    aide: '{{login}} est remplace par la saisie de l agent. Le filtre par defaut accepte '
+      + "l'identifiant comme l'adresse mail : sAMAccountName, userPrincipalName et mail." },
   { cle: 'ldap.requiredGroup', chemin: ['ldap', 'requiredGroup'], type: 'texte', groupe: 'ldap',
     libelle: 'Groupe obligatoire', aide: 'DN complet d\'un groupe de securite. Laisser vide pour n\'exclure personne.' },
   { cle: 'ldap.adminGroup', chemin: ['ldap', 'adminGroup'], type: 'texte', groupe: 'ldap',
@@ -124,7 +130,10 @@ export const DESCRIPTEUR = [
   { cle: 'campagne.debut', chemin: ['campagne', 'debut'], type: 'texte', groupe: 'planification',
     libelle: 'Ouverture de la semaine 1', aide: 'AAAA-MM-JJ. Les semaines suivantes s\'ouvrent a +7 jours.' },
   { cle: 'campagne.fin', chemin: ['campagne', 'fin'], type: 'texte', groupe: 'planification',
-    libelle: 'Fin de campagne', aide: 'AAAA-MM-JJ.' },
+    libelle: 'Fin de campagne',
+    aide: "AAAA-MM-JJ. Dernier jour de saisie : le lendemain, plus aucune reponse "
+      + "n'est enregistree et le classement devient definitif. Les defis restent "
+      + 'consultables, les corrections relisibles.' },
 ];
 
 const PAR_CLE = Object.fromEntries(DESCRIPTEUR.map((d) => [d.cle, d]));
@@ -166,7 +175,35 @@ const VALEURS_ENVIRONNEMENT = Object.fromEntries(
 );
 
 /** Applique les parametres stockes sur l'objet config, en memoire. */
+/**
+ * Le filtre d'authentification d'origine n'acceptait que l'identifiant.
+ *
+ * Les agents saisissent leur adresse une fois sur deux, et un refus a ce
+ * moment-la se solde par un appel a la DSI. Le defaut accepte desormais les
+ * deux ; une instance deja configuree porte encore l'ancien en base, ou il
+ * prime sur le defaut.
+ *
+ * On ne remplace que le filtre d'origine, mot pour mot : un filtre modifie a
+ * la main traduit une intention, et l'ecraser serait pire que le laisser.
+ */
+const FILTRE_ORIGINE = '(&(objectClass=user)(objectCategory=person)(sAMAccountName={{login}}))';
+
+function migrerFiltreAuthentification() {
+  const stocke = db.prepare("SELECT valeur FROM parametres WHERE cle = 'ldap.userFilter'").get()?.valeur;
+  if (stocke !== FILTRE_ORIGINE) return false;
+
+  const nouveau = '(&(objectClass=user)(objectCategory=person)'
+    + '(|(sAMAccountName={{login}})(userPrincipalName={{login}})(mail={{login}})))';
+  db.prepare("UPDATE parametres SET valeur = ?, maj_le = datetime('now') WHERE cle = 'ldap.userFilter'")
+    .run(nouveau);
+  journaliser('migration', 'filtre_authentification_elargi',
+    "l'adresse mail est acceptee comme identifiant", null);
+  return true;
+}
+
 export function appliquerParametres() {
+  migrerFiltreAuthentification();
+
   // On repart systematiquement de l'environnement, puis on superpose la base :
   // le resultat ne depend donc pas de l'ordre des modifications passees.
   for (const d of DESCRIPTEUR) {

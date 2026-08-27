@@ -41,6 +41,35 @@
     .sceau::before { animation: none; border-top-color: var(--bordure); }
   }
   .carte-defi.termine { border-top-color: var(--succes); }
+
+  /* Le defi de la semaine : un filet lumineux tourne autour de la carte.
+     Le trace vient d'un degrade conique qui pivote, decoupe en anneau par un
+     masque - donc une seule couche animee, et la carte reste lisible. */
+  .carte-defi.a-jouer { border-top-color: transparent; }
+
+  .halo {
+    position: absolute; inset: -2px; border-radius: inherit; z-index: 0;
+    padding: 2px; pointer-events: none;
+    background: conic-gradient(from 0deg,
+      transparent 0deg, transparent 200deg,
+      var(--vert-clair) 280deg, var(--vert-fonce) 330deg, transparent 360deg);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    animation: ronde 4s linear infinite;
+  }
+
+  /* Le contenu passe devant le filet, sans quoi le degrade le traverserait. */
+  .carte-defi > *:not(.halo) { position: relative; z-index: 1; }
+
+  @keyframes ronde { to { rotate: 360deg; } }
+
+  /* Un mouvement perpetuel derange a la longue : il se pose apres trois tours,
+     le temps d'attirer l'oeil sans s'imposer. */
+  @media (prefers-reduced-motion: reduce) {
+    .halo { animation: none; background: var(--vert-clair); }
+  }
   .numero-semaine { font-family: var(--police-ui); font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--vert-clair-texte); }
   .accroche { font-style: italic; color: var(--encre-douce); }
   .meta-defi { font-family: var(--police-ui); font-size: .82rem; color: var(--encre-douce); display: flex; gap: 1rem; flex-wrap: wrap; margin: .8rem 0 1.1rem; }

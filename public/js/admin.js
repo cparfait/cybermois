@@ -138,6 +138,13 @@ function allerVers(cible) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+/** Date du jour au format AAAA-MM-JJ, en heure locale. */
+function aujourdhuiIso() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
 /* ============================================================== Défis */
 
 chargeurs.defis = async () => {
@@ -179,12 +186,20 @@ chargeurs.defis = async () => {
             <td>S${d.semaine}</td>
             <td>${echapper(d.titre)}</td>
             <td>${d.ouvre_le}</td>
-            <td><span class="pastille-etat ${d.publie ? 'etat-ok' : 'etat-ko'}">${d.publie ? 'Publié' : 'Masqué'}</span></td>
+            <td>
+              <span class="pastille-etat ${d.publie ? 'etat-ok' : 'etat-ko'}">${d.publie ? 'Publié' : 'Masqué'}</span>
+              ${!d.publie && d.ouvre_le <= aujourdhuiIso() ? `
+                <br><span class="discret" style="font-size:.76rem;color:var(--alerte)">
+                  sa date est passée : publiez-le pour qu'il s'ouvre
+                </span>` : ''}
+            </td>
             <td>
               <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem" data-editer="${d.semaine}">Modifier</button>
               <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem" data-publier="${d.semaine}" data-etat="${d.publie}">
                 ${d.publie ? 'Masquer' : 'Publier'}
               </button>
+              <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem"
+                      data-tester-defi="${d.semaine}">Tester</button>
               <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem"
                       data-apercu-defi="${d.semaine}" data-ouvert="${d.apercuOuvert ? '1' : ''}">
                 ${d.apercuOuvert ? 'Aperçu actif' : 'Lien d’aperçu'}
@@ -226,6 +241,9 @@ chargeurs.defis = async () => {
 
     cible.querySelectorAll('[data-apercu-defi]').forEach((b) =>
       b.addEventListener('click', () => lienApercu(Number(b.dataset.apercuDefi), !!b.dataset.ouvert)));
+
+    cible.querySelectorAll('[data-tester-defi]').forEach((b) =>
+      b.addEventListener('click', () => testerDefi(Number(b.dataset.testerDefi), b)));
 
     // Apres correction d'une question, les scores deja enregistres restent
     // calcules sur l'ancien bareme : ce bouton les remet d'aplomb.
@@ -800,5 +818,37 @@ async function lienApercu(semaine, dejaOuvert) {
     });
   } catch (e) {
     zone.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`;
+  }
+}
+
+/**
+ * Ouvre le defi dans les conditions reelles, sans que rien ne compte.
+ *
+ * Relire les questions dans l'editeur ne dit pas ce que verra un agent : les
+ * animations, le rythme une question a la fois, la correction differee ne se
+ * jugent qu'en jouant. Ce bouton cree le jeton d'apercu puis ouvre le parcours
+ * dans un onglet - meme mecanique que le lien partageable, sans copier-coller.
+ *
+ * Aucune participation n'est ecrite : ni classement, ni statistiques, ni badges.
+ */
+async function testerDefi(semaine, bouton) {
+  const libelle = bouton.textContent;
+  bouton.disabled = true;
+  bouton.textContent = 'Ouverture…';
+
+  // La fenetre s'ouvre avant l'appel : demandee apres, elle passerait pour un
+  // surgissement non sollicite et serait bloquee par le navigateur.
+  const onglet = window.open('', '_blank');
+  try {
+    const r = await api(`/api/admin/defis/${semaine}/apercu`, { method: 'POST' });
+    if (onglet) onglet.location = r.lien;
+    else alerte('alerte', `Fenêtre bloquée. Le lien : ${r.lien}`);
+    dejaCharge.delete('defis');
+  } catch (e) {
+    onglet?.close();
+    alerte('alerte', e.message);
+  } finally {
+    bouton.disabled = false;
+    bouton.textContent = libelle;
   }
 }

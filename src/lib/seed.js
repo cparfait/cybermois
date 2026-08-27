@@ -19,6 +19,12 @@ export function dateOuverture(semaine) {
 /**
  * Verse dans les defis le contenu des modules programmes.
  *
+ * Un defi cree est publie : sa date d'ouverture suffit a le tenir ferme
+ * jusqu'au jour dit. Exiger en plus une publication manuelle faisait doublon
+ * avec la programmation, et se soldait par des defis qui restaient scelles
+ * passe leur date sans que rien ne l'explique. « Masquer » reste possible,
+ * mais devient ce qu'il aurait toujours du etre : une exception.
+ *
  * La programmation dit quel module se joue quelle semaine ; cette fonction
  * en tire les questionnaires. Elle est idempotente : la rejouer met a jour
  * titres et questions sans toucher aux participations.
@@ -61,7 +67,7 @@ export function importerContenus({ force = false } = {}) {
       const res = db.prepare(`
         INSERT INTO defis (semaine, titre, accroche, intro, duree_minutes, ouvre_le, publie, module_code,
                            badge_code, badge_libelle, badge_emoji, badge_description)
-        VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)
       `).run(semaine, module.titre, module.accroche, module.intro, module.duree_minutes || 7,
              ouverture, module.code, badge.code || null, badge.libelle || null,
              badge.emoji || null, badge.description || null);

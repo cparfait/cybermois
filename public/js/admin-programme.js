@@ -74,6 +74,7 @@ function rendre(cible) {
         ${donnees.modules.length} modules sont prêts. Choisissez ceux que vous jouez, et dans quel ordre.
         La date d'ouverture se calcule de semaine en semaine, mais chaque ligne se corrige :
         un jour férié ou une semaine de vacances n'attendent pas le lundi suivant.
+        <br>Un défi s'ouvre <strong>tout seul à sa date</strong> : il n'y a rien à publier ensuite.
       </p>
 
       <div class="tableau-defilant" style="margin-top:1rem">
@@ -167,7 +168,26 @@ function brancher(cible) {
     n ? `${n} semaine(s), ${q} questions au total` : 'Aucun module programmé';
 
   cible.querySelectorAll('.module-semaine').forEach((sel) => sel.addEventListener('change', () => {
-    brouillon[Number(sel.closest('tr').dataset.index)].module_code = sel.value;
+    const i = Number(sel.closest('tr').dataset.index);
+    const ligne = brouillon[i];
+    const precedent = ligne.module_code;
+    const titre = (code) => donnees.modules.find((m) => m.code === code)?.titre || code;
+
+    // Remplacer un module deja place efface un choix precedent, souvent celui
+    // d'une autre session : on le dit avant, pas apres.
+    if (precedent && sel.value && sel.value !== precedent && !confirm(
+      `La semaine ${ligne.semaine} joue déjà « ${titre(precedent)} ».
+
+`
+      + `Le remplacer par « ${titre(sel.value)} » ?`
+    )) {
+      sel.value = precedent;
+      return;
+    }
+
+    // Le doublon, lui, est deja signale sous la ligne et bloque a
+    // l'enregistrement : une modale de plus n'apprendrait rien.
+    ligne.module_code = sel.value;
     rendre(cible);
   }));
 
@@ -209,6 +229,28 @@ function brancher(cible) {
     const codes = programme.map((p) => p.module_code);
     if (new Set(codes).size !== codes.length) {
       return alerte('alerte', 'Un même module est programmé deux fois.');
+    }
+
+    // Un defi s'ouvre a sa date. Programme sur une date passee, il s'ouvre
+    // donc immediatement - ce qui est parfois voulu, jamais evident.
+    const p = (n) => String(n).padStart(2, '0');
+    const d = new Date();
+    const aujourdhui = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+
+    const immediats = brouillon.filter((b) => b.module_code && !b.verrouille
+      && (b.ouvre_le || calculee(b.semaine)) <= aujourdhui);
+
+    if (immediats.length) {
+      const saut = String.fromCharCode(10);
+      const liste = immediats
+        .map((b) => `  Semaine ${b.semaine} — ${b.ouvre_le || calculee(b.semaine)}`)
+        .join(saut);
+      const message = [
+        `${immediats.length} défi(s) ont une date déjà passée et s'ouvriront immédiatement aux agents :`,
+        liste,
+        'Continuer ?',
+      ].join(saut + saut);
+      if (!confirm(message)) return;
     }
 
     try {

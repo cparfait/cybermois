@@ -99,6 +99,11 @@ enregistrerStatiques(app, {
   '/configuration': { fichier: 'admin.html', garde: exigerAdmin },
 });
 
+// Les mentions legales se consultent sans etre connecte : l'adresse de la DPO
+// doit donc etre accessible librement. Elle est de toute facon publique - c'est
+// meme son objet.
+app.get('/api/public/contacts', async () => ({ dpo: config.contactDpo || null }));
+
 app.get('/sante', async () => ({
   ok: true,
   version: '1.0.0',

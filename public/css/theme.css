@@ -237,6 +237,11 @@ main { padding: 2rem 0 4rem; }
 
 /* ---------- Boutons ---------- */
 
+/* L'attribut hidden doit l'emporter sur les regles d'affichage des composants.
+   Sans cela, un bouton masque en JavaScript - « voir plus » quand il n'y a rien
+   de plus a voir - reste affiche, et vide. */
+[hidden] { display: none !important; }
+
 .btn {
   font-family: var(--police-ui); font-size: .95rem; font-weight: 700;
   padding: .75rem 1.5rem; border-radius: var(--rayon-sm);
