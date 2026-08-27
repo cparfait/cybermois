@@ -714,13 +714,23 @@ export default async function routesUtilisateurs(app) {
 
   /* ------------------------------------------------ Regroupement des services */
 
-  app.get('/api/admin/services', async () => ({
-    inventaire: inventaireServices(),
-    regles: lireRegroupements(),
-    // Quand un referentiel existe, c'est lui qui fait foi : les listes
-    // deroulantes n'offrent plus du texte libre mais des services reconnus.
-    referentiel: nomsReferentiel(),
-  }));
+  app.get('/api/admin/services', async () => {
+    // Un libellé est « referencé » quand sa cible - donc apres regroupement -
+    // figure au referentiel. C'est cette cible qui parait au classement, pas
+    // le libellé brut : marquer sur le libellé induirait en erreur des qu'un
+    // regroupement est en place.
+    const cles = new Set(nomsReferentiel().map(cleComparaison));
+    const inventaire = inventaireServices()
+      .map((i) => ({ ...i, referencee: cles.has(cleComparaison(i.cible)) }));
+
+    return {
+      inventaire,
+      regles: lireRegroupements(),
+      // Quand un referentiel existe, c'est lui qui fait foi : les listes
+      // deroulantes n'offrent plus du texte libre mais des services reconnus.
+      referentiel: nomsReferentiel(),
+    };
+  });
 
   /**
    * Les libelles d'annuaire qui ne correspondent a aucun service du referentiel.

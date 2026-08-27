@@ -680,6 +680,9 @@ async function formulaireServices(filtreInitial = '') {
   };
 
   const avecProposition = d.inventaire.filter((i) => !i.regroupe && i.proposition).length;
+  // Ce qui reste a faire : un libellé dont la cible n'est pas au referentiel
+  // parait au classement sous un nom que la collectivite ne reconnait pas.
+  const aClasser = d.inventaire.filter((i) => !i.referencee).length;
 
   zone.innerHTML = `
     <div class="carte" style="margin-bottom:1.5rem;border-left:4px solid var(--vert-clair)">
@@ -711,6 +714,14 @@ async function formulaireServices(filtreInitial = '') {
             Regrouper les familles (${avecProposition})
           </button>` : ''}
         <span class="discret ui" id="etat-suggestions"></span>
+      </div>
+
+      <div class="rang" role="group" aria-label="Filtrer par état" style="margin-bottom:.9rem">
+        ${[['tous', `Tous (${d.inventaire.length})`],
+           ['aclasser', `À classer (${aClasser})`],
+           ['references', `Au référentiel (${d.inventaire.length - aClasser})`]].map(([cle, libelle]) => `
+          <button type="button" class="btn btn-secondaire" data-etat-libelle="${cle}"
+                  style="padding:.35rem .9rem;font-size:.85rem">${libelle}</button>`).join('')}
       </div>
 
       <div id="resultat-suggestions"></div>
@@ -753,11 +764,17 @@ async function formulaireServices(filtreInitial = '') {
           <th>Nom affiché dans la campagne</th>
         </tr></thead>
         <tbody>${d.inventaire.map((i) => `
-          <tr data-libelle="${echapper(i.source.toLowerCase())}"${i.regroupe ? ' style="background:var(--vert-clair-fond)"' : ''}>
+          <tr data-libelle="${echapper(i.source.toLowerCase())}"
+              style="border-left:4px solid ${i.referencee ? 'var(--succes)' : 'var(--alerte)'}${i.regroupe ? ';background:var(--vert-clair-fond)' : ''}">
             <td><input type="checkbox" class="case-regroupement"
                        aria-label="Sélectionner ${echapper(i.source)}"
                        style="width:18px;height:18px;accent-color:var(--vert-fonce)"></td>
-            <td><strong>${echapper(i.source)}</strong></td>
+            <td>
+              <strong>${echapper(i.source)}</strong>
+              ${i.referencee
+                ? '<br><span class="pastille-etat etat-ok" style="font-size:.68rem">au référentiel</span>'
+                : '<br><span class="pastille-etat" style="font-size:.68rem;background:var(--alerte-fond);color:var(--alerte)">à classer</span>'}
+            </td>
             <td class="num">
               <button type="button" class="lien-service" data-voir-libelle="${echapper(i.source)}"
                       title="Voir les agents de ce libellé">${i.effectif}</button>
@@ -841,6 +858,28 @@ async function formulaireServices(filtreInitial = '') {
     if (!e.target.matches('.cible-service, #nom-groupe')) return;
     if (e.target.value === '__nouveau__') demanderNom(e.target);
     if (e.target.matches('.cible-service')) majApercu();
+  });
+
+  // Un filtre d'etat, en complement de la recherche : sur quatre-vingt-dix-huit
+  // libellés, ce qui compte est de ne plus voir ceux qui sont deja regles.
+  zone.addEventListener('click', (e) => {
+    const bouton = e.target.closest('[data-etat-libelle]');
+    if (!bouton) return;
+    const etat = bouton.dataset.etatLibelle;
+
+    zone.querySelectorAll('[data-etat-libelle]').forEach((b) => {
+      const actif = b.dataset.etatLibelle === etat;
+      b.classList.toggle('btn-principal', actif);
+      b.classList.toggle('btn-secondaire', !actif);
+    });
+
+    d.inventaire.forEach((i, rang) => {
+      const ligne = zone.querySelectorAll('#table-regroupement tbody tr')[rang];
+      if (!ligne) return;
+      ligne.hidden = etat === 'aclasser' ? i.referencee
+        : etat === 'references' ? !i.referencee
+          : false;
+    });
   });
 
   // « Accueil - 14 agents » : la question suivante est toujours « lesquels ? ».
