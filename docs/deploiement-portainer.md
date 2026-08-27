@@ -41,7 +41,7 @@ que bolt monte. La pile le monte en lecture seule sur `/certs`, et
 `LDAP_CA_FILE` indique le fichier à lire :
 
 ```
-LDAP_CA_FILE=/certs/ca_chatillon.crt
+LDAP_CA_FILE=/certs/ca.pem
 ```
 
 Adaptez le nom au contenu réel du dossier :

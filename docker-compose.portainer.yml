@@ -68,7 +68,7 @@ services:
       LDAP_ADMIN_GROUP: ${LDAP_ADMIN_GROUP:-CN=GRP_APPLI_CYBERMOIS_ADMIN,OU=GRP_APPLICATIONS,OU=zzzGroupes,OU=Utilisateurs,OU=CHATILLON,DC=chatillon,DC=lan}
       # Certificat de l'AC interne, monté depuis l'hôte comme pour bolt.
       # Adaptez le nom du fichier au contenu de /home/sysadmin/docker/ca_chatillon.
-      LDAP_CA_FILE: ${LDAP_CA_FILE:-/certs/ca_chatillon.crt}
+      LDAP_CA_FILE: ${LDAP_CA_FILE:-/certs/ca.pem}
       LDAP_TLS_REJECT_UNAUTHORIZED: ${LDAP_TLS_REJECT_UNAUTHORIZED:-true}
       # Garde-fou : le démarrage refuse une liaison ldap:// non chiffrée en
       # production. À ne lever que pour un diagnostic, jamais en service.
