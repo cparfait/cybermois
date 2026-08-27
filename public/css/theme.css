@@ -61,68 +61,17 @@
   --transition: 160ms ease;
 }
 
-/* Mode sombre : suit le reglage systeme de l'agent */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='clair']) {
-    --vert-fonce: #4fbf8b;
-    --vert-clair: #c8e04a;
-    --vert-fonce-sombre: #8fd9b6;
-    --vert-fonce-clair: #163024;
-    --vert-clair-texte: #c8e04a;
-    --vert-clair-fond: #262d0e;
-
-    --encre: #e8f0eb;
-    --encre-douce: #a9bcb2;
-    --fond: #0e1a14;
-    --surface: #16241d;
-    --bordure: #2a3d33;
-    --bordure-forte: #3d5648;
-
-    --succes: #6fd79b;
-    --succes-fond: #14301f;
-    --erreur: #ff9b91;
-    --erreur-fond: #3a1714;
-    --alerte: #f0c46a;
-    --alerte-fond: #33260c;
-    --info: #7fc6ea;
-    --info-fond: #102c3a;
-
-    --or: #e3bb4d;
-    --argent: #b6c2cb;
-    --bronze: #d69a6a;
-
-    --ombre: 0 1px 2px rgba(0, 0, 0, .4), 0 4px 16px rgba(0, 0, 0, .3);
-    --ombre-forte: 0 2px 4px rgba(0, 0, 0, .5), 0 12px 32px rgba(0, 0, 0, .45);
-  }
-}
-
-:root[data-theme='sombre'] {
-  --vert-fonce: #4fbf8b;
-  --vert-clair: #c8e04a;
-  --vert-fonce-sombre: #8fd9b6;
-  --vert-fonce-clair: #163024;
-  --vert-clair-texte: #c8e04a;
-  --vert-clair-fond: #262d0e;
-  --encre: #e8f0eb;
-  --encre-douce: #a9bcb2;
-  --fond: #0e1a14;
-  --surface: #16241d;
-  --bordure: #2a3d33;
-  --bordure-forte: #3d5648;
-  --succes: #6fd79b;
-  --succes-fond: #14301f;
-  --erreur: #ff9b91;
-  --erreur-fond: #3a1714;
-  --alerte: #f0c46a;
-  --alerte-fond: #33260c;
-  --info: #7fc6ea;
-  --info-fond: #102c3a;
-  --or: #e3bb4d;
-  --argent: #b6c2cb;
-  --bronze: #d69a6a;
-  --ombre: 0 1px 2px rgba(0, 0, 0, .4), 0 4px 16px rgba(0, 0, 0, .3);
-  --ombre-forte: 0 2px 4px rgba(0, 0, 0, .5), 0 12px 32px rgba(0, 0, 0, .45);
-}
+/* Theme clair pour tous.
+ *
+ * Le portail suivait le reglage systeme de l'agent : un poste configure en
+ * sombre affichait donc une charte que la Ville n'a pas validee, et les
+ * captures d'ecran d'un agent ne ressemblaient pas a celles d'un autre.
+ *
+ * « color-scheme » compte autant que les couleurs : sans lui, les controles
+ * natifs - listes deroulantes, champs de date, barres de defilement - restent
+ * sombres sur un poste sombre, au milieu d'une page claire.
+ */
+:root { color-scheme: light; }
 
 /* ---------- Base ---------- */
 
