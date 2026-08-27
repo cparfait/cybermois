@@ -10,6 +10,7 @@ import {
   testerSmtp, envoyerRelances, envoyerResultats,
   mailLancement, mailRelance, mailResultats,
 } from '../lib/mail.js';
+import { creerJetonApercu, revoquerJetonApercu, lienApercu } from '../lib/apercu.js';
 
 const csv = (lignes, entetes) => {
   const echapper = (v) => {
@@ -110,7 +111,9 @@ export default async function routesAdmin(app) {
     return { message: `${bouts.join(', ')}.`, rapport };
   });
 
-  app.get('/api/admin/defis', async () => db.prepare('SELECT * FROM defis ORDER BY semaine').all());
+  app.get('/api/admin/defis', async () => db.prepare('SELECT * FROM defis ORDER BY semaine').all()
+    // Le jeton lui-meme ne sort pas d'ici : il n'est rendu qu'a sa creation.
+    .map(({ jeton_apercu: jeton, ...d }) => ({ ...d, apercuOuvert: !!jeton })));
 
   app.get('/api/admin/defis/:semaine', async (requete, reponse) => {
     const defi = exporterDefi(Number(requete.params.semaine));
@@ -259,6 +262,35 @@ export default async function routesAdmin(app) {
     return { ok: true, publie: !!publie };
   });
 
+  /* ------------------------------------------------- Apercu avant ouverture */
+
+  /**
+   * Un lien qui ouvre un defi encore scelle, sans que rien ne compte.
+   *
+   * Faire relire un questionnaire par la DPO, ou l'essayer avec un collegue,
+   * suppose de pouvoir y jouer avant l'ouverture. Le jeton porte l'acces ; le
+   * fait que rien ne compte est structurel - aucune participation n'est ecrite.
+   */
+  app.post('/api/admin/defis/:semaine/apercu', async (requete, reponse) => {
+    const cree = creerJetonApercu(requete.params.semaine, requete.agent.login);
+    if (!cree) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
+
+    return {
+      ok: true,
+      ...cree,
+      lien: lienApercu(config.publicUrl, cree.semaine, cree.jeton),
+      message: "Lien d'aperçu créé. Il ouvre ce défi avant sa date, et rien de ce qui "
+        + "s'y joue n'entre au classement. Révoquez-le après vos essais.",
+    };
+  });
+
+  app.delete('/api/admin/defis/:semaine/apercu', async (requete, reponse) => {
+    if (!revoquerJetonApercu(requete.params.semaine, requete.agent.login)) {
+      return reponse.code(404).send({ erreur: 'Défi introuvable.' });
+    }
+    return { ok: true, message: "Lien d'aperçu révoqué : il ne fonctionne plus." };
+  });
+
   app.post('/api/admin/reimporter', async (requete) => {
     const rapport = importerContenus({ force: !!requete.body?.force });
     journaliser(requete.agent.login, 'reimport_contenus', JSON.stringify(rapport), requete.ip);
@@ -384,12 +416,59 @@ export default async function routesAdmin(app) {
   /* --------------------------------------------------------------- Divers */
   app.get('/api/admin/journal', async () => db.prepare('SELECT * FROM journal ORDER BY id DESC LIMIT 200').all());
 
+  /**
+   * Efface les resultats d'un seul agent.
+   *
+   * Pendant une recette on joue, on recommence, on fait jouer un collegue :
+   * remettre toute la base a zero pour cela detruirait aussi les essais des
+   * autres. Les comptes, les defis et le parametrage ne sont pas touches.
+   */
+  app.post('/api/admin/agents/:id/reinitialiser', async (requete, reponse) => {
+    const id = Number(requete.params.id);
+    const agent = db.prepare('SELECT id, login, nom_complet FROM agents WHERE id = ?').get(id);
+    if (!agent) return reponse.code(404).send({ erreur: 'Agent introuvable.' });
+
+    let efface = 0;
+    db.exec('BEGIN');
+    try {
+      efface += db.prepare(`
+        DELETE FROM reponses_agent
+        WHERE participation_id IN (SELECT id FROM participations WHERE agent_id = ?)
+      `).run(id).changes;
+      for (const table of ['participations', 'tentatives', 'badges_agent']) {
+        efface += db.prepare(`DELETE FROM ${table} WHERE agent_id = ?`).run(id).changes;
+      }
+      db.exec('COMMIT');
+    } catch (err) {
+      db.exec('ROLLBACK');
+      return reponse.code(500).send({ erreur: `Remise à zéro interrompue : ${err.message}` });
+    }
+
+    journaliser(requete.agent.login, 'agent_reinitialise',
+      `${agent.login} : ${efface} ligne(s) effacee(s)`, requete.ip);
+
+    return {
+      ok: true,
+      efface,
+      message: `Résultats de ${agent.nom_complet} effacés : participations, réponses, `
+        + 'tentatives en cours et badges. Le compte est conservé et peut rejouer.',
+    };
+  });
+
   app.post('/api/admin/reinitialiser', async (requete, reponse) => {
     if (requete.body?.confirmation !== 'REINITIALISER') {
       return reponse.code(400).send({ erreur: 'Confirmation manquante. Envoyez { "confirmation": "REINITIALISER" }.' });
     }
-    db.exec('DELETE FROM reponses_agent; DELETE FROM participations; DELETE FROM badges_agent; DELETE FROM envois;');
-    journaliser(requete.agent.login, 'reinitialisation', 'participations et badges effaces', requete.ip);
-    return { ok: true, message: 'Participations, badges et historique d\'envois effacés. Les comptes agents et les défis sont conservés.' };
+    // Les tentatives manquaient : sans elles, un defi rejoue apres remise a
+    // zero affichait ses questions comme deja repondues.
+    db.exec('DELETE FROM reponses_agent; DELETE FROM participations; '
+      + 'DELETE FROM tentatives; DELETE FROM badges_agent; DELETE FROM envois;');
+    journaliser(requete.agent.login, 'reinitialisation',
+      'participations, tentatives et badges effaces', requete.ip);
+    return {
+      ok: true,
+      message: "Participations, tentatives, badges et historique d'envois effacés. "
+        + 'Les comptes agents, les défis et le paramétrage sont conservés.',
+    };
   });
 }

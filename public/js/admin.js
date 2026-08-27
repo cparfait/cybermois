@@ -186,6 +186,10 @@ chargeurs.defis = async () => {
                 ${d.publie ? 'Masquer' : 'Publier'}
               </button>
               <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem"
+                      data-apercu-defi="${d.semaine}" data-ouvert="${d.apercuOuvert ? '1' : ''}">
+                ${d.apercuOuvert ? 'Aperçu actif' : 'Lien d’aperçu'}
+              </button>
+              <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem"
                       data-recalculer="${d.semaine}" data-titre="${echapper(d.titre)}">Recalculer</button>
               <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem;border-color:var(--erreur);color:var(--erreur)"
                       data-supprimer-defi="${d.semaine}" data-titre="${echapper(d.titre)}">Supprimer</button>
@@ -219,6 +223,9 @@ chargeurs.defis = async () => {
 
     cible.querySelectorAll('[data-editer]').forEach((b) =>
       b.addEventListener('click', () => ouvrirEditeur(Number(b.dataset.editer))));
+
+    cible.querySelectorAll('[data-apercu-defi]').forEach((b) =>
+      b.addEventListener('click', () => lienApercu(Number(b.dataset.apercuDefi), !!b.dataset.ouvert)));
 
     // Apres correction d'une question, les scores deja enregistres restent
     // calcules sur l'ancien bareme : ce bouton les remet d'aplomb.
@@ -713,3 +720,85 @@ chargeurs.technique = async () => {
 
 chargeurs.suivi();
 dejaCharge.add('suivi');
+
+/**
+ * Lien d'apercu d'un defi.
+ *
+ * Faire relire un questionnaire par la DPO, ou l'essayer avec un collegue,
+ * suppose de pouvoir y jouer avant l'ouverture. Le lien le permet, et rien de
+ * ce qui s'y joue ne compte : aucune participation n'est enregistree, donc ni
+ * classement, ni statistiques, ni badges.
+ *
+ * Le jeton n'est montre qu'a sa creation. Regenerer en produit un nouveau et
+ * invalide le precedent - c'est aussi la facon de reprendre la main sur un
+ * lien qui aurait trop circule.
+ */
+async function lienApercu(semaine, dejaOuvert) {
+  const zone = document.getElementById('editeur');
+  zone.innerHTML = '<div class="carte"><p class="discret">Génération du lien…</p></div>';
+  zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  try {
+    const r = await api(`/api/admin/defis/${semaine}/apercu`, { method: 'POST' });
+    zone.innerHTML = `
+      <div class="carte" style="border-left:4px solid var(--vert-clair)">
+        <h2>Aperçu de la semaine ${r.semaine} — ${echapper(r.titre)}</h2>
+        <p class="discret" style="margin-top:-.3em">
+          Ce lien ouvre le défi <strong>avant sa date</strong>. Rien de ce qui s'y joue
+          n'entre au classement, aux statistiques ni aux badges : aucune participation
+          n'est enregistrée. Le destinataire doit être connecté au portail.
+        </p>
+
+        <div class="champ-admin" style="margin-top:1rem">
+          <label for="lien-apercu">Lien à partager</label>
+          <input type="text" id="lien-apercu" readonly value="${echapper(r.lien)}"
+                 onclick="this.select()" style="font-family:var(--police-ui);font-size:.86rem">
+        </div>
+
+        <div class="rang" style="margin-top:1rem">
+          <button class="btn btn-principal" id="btn-copier-apercu"
+                  style="padding:.45rem .9rem;font-size:.85rem">Copier le lien</button>
+          <button class="btn btn-secondaire" id="btn-revoquer-apercu"
+                  style="padding:.45rem .9rem;font-size:.85rem;border-color:var(--erreur);color:var(--erreur)">
+            Révoquer
+          </button>
+          <button class="btn btn-secondaire" id="btn-fermer-apercu"
+                  style="padding:.45rem .9rem;font-size:.85rem">Fermer</button>
+        </div>
+
+        ${dejaOuvert ? `
+          <p class="message message-alerte" style="margin-top:1rem">
+            Un lien existait déjà pour ce défi : il vient d'être remplacé et ne fonctionne plus.
+          </p>` : ''}
+      </div>`;
+
+    document.getElementById('btn-copier-apercu').addEventListener('click', async () => {
+      const champ = document.getElementById('lien-apercu');
+      champ.select();
+      try {
+        await navigator.clipboard.writeText(champ.value);
+        alerte('alerte', 'Lien copié.', 'succes');
+      } catch {
+        // Le presse-papier est refuse hors contexte securise : la selection
+        // laisse au moins le Ctrl+C a portee.
+        alerte('alerte', 'Copie automatique refusée par le navigateur : le lien est sélectionné, faites Ctrl+C.');
+      }
+    });
+
+    document.getElementById('btn-revoquer-apercu').addEventListener('click', async () => {
+      try {
+        const rep = await api(`/api/admin/defis/${semaine}/apercu`, { method: 'DELETE' });
+        alerte('alerte', rep.message, 'succes');
+        zone.innerHTML = '';
+        dejaCharge.delete('defis'); chargeurs.defis();
+      } catch (e) { alerte('alerte', e.message); }
+    });
+
+    document.getElementById('btn-fermer-apercu').addEventListener('click', () => {
+      zone.innerHTML = '';
+      dejaCharge.delete('defis'); chargeurs.defis();
+    });
+  } catch (e) {
+    zone.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`;
+  }
+}

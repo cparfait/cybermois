@@ -33,6 +33,10 @@ CREATE TABLE IF NOT EXISTS tentatives (
 // Distingue l'agent qui a oublie une bonne reponse de celui qui s'est trompe.
 ajouterColonne('tentatives', 'a_tort', 'INTEGER NOT NULL DEFAULT 0');
 
+// Une reponse donnee en apercu ne doit pas preremplir la vraie tentative :
+// on la marque, et le parcours reel efface ces lignes avant de commencer.
+ajouterColonne('tentatives', 'apercu', 'INTEGER NOT NULL DEFAULT 0');
+
 export function progression(agentId, defiId) {
   return db.prepare(
     'SELECT question_id, points, points_max, parfaite FROM tentatives WHERE agent_id = ? AND defi_id = ?'
@@ -40,7 +44,7 @@ export function progression(agentId, defiId) {
 }
 
 /** Corrige une question, enregistre la reponse, et renvoie de quoi l'expliquer. */
-export function repondre(agentId, defiId, question, choix) {
+export function repondre(agentId, defiId, question, choix, { apercu = false } = {}) {
   question.reponses = db.prepare(
     'SELECT id, libelle, correcte FROM reponses WHERE question_id = ? ORDER BY ordre'
   ).all(question.id);
@@ -53,14 +57,14 @@ export function repondre(agentId, defiId, question, choix) {
   const tort = question.reponses.filter((r) => !r.correcte && choisis.includes(r.id));
 
   db.prepare(`
-    INSERT INTO tentatives (agent_id, defi_id, question_id, choix, points, points_max, parfaite, a_tort)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO tentatives (agent_id, defi_id, question_id, choix, points, points_max, parfaite, a_tort, apercu)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(agent_id, defi_id, question_id) DO UPDATE SET
       choix = excluded.choix, points = excluded.points,
       points_max = excluded.points_max, parfaite = excluded.parfaite,
-      a_tort = excluded.a_tort, repondu_le = datetime('now')
+      a_tort = excluded.a_tort, apercu = excluded.apercu, repondu_le = datetime('now')
   `).run(agentId, defiId, question.id, JSON.stringify(choisis),
-    note.points, question.points, note.parfaite ? 1 : 0, tort.length ? 1 : 0);
+    note.points, question.points, note.parfaite ? 1 : 0, tort.length ? 1 : 0, apercu ? 1 : 0);
 
   return {
     questionId: question.id,
@@ -106,4 +110,18 @@ export function detailTentative(agentId, defiId) {
   return db.prepare(
     'SELECT question_id, choix, points, parfaite FROM tentatives WHERE agent_id = ? AND defi_id = ?'
   ).all(agentId, defiId);
+}
+
+/**
+ * Efface les tentatives d'un agent sur un defi.
+ *
+ * `apercuSeulement` sert avant un parcours reel : les reponses donnees en
+ * apercu ne doivent pas le preremplir, sans quoi l'agent trouverait son defi
+ * a moitie fait le lundi de l'ouverture.
+ */
+export function effacerTentatives(agentId, defiId, { apercuSeulement = false } = {}) {
+  const condition = apercuSeulement ? ' AND apercu = 1' : '';
+  return db.prepare(
+    `DELETE FROM tentatives WHERE agent_id = ? AND defi_id = ?${condition}`
+  ).run(agentId, defiId).changes;
 }

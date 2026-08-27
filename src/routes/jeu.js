@@ -6,8 +6,9 @@ import {
   classementServices, classementAgents, rangAgent, rangService, statistiquesGlobales,
 } from '../lib/scoring.js';
 import {
-  progression, repondre, totaux, effacerTentative, detailTentative,
+  progression, repondre, totaux, effacerTentative, detailTentative, effacerTentatives,
 } from '../lib/tentatives.js';
+import { jetonValide } from '../lib/apercu.js';
 
 /** Date du jour en heure locale : passer par toISOString reculerait d'un jour le soir. */
 function aujourdhui() {
@@ -86,11 +87,21 @@ export default async function routesJeu(app) {
     if (!defi) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
     // Apres la cloture le defi reste consultable : on peut relire les
     // corrections, mais plus rien ne s'enregistre.
-    if (!estParu(defi)) return reponse.code(403).send({ erreur: `Ce défi ouvre le ${defi.ouvre_le}.` });
+    // Un jeton d'apercu ouvre un defi encore scelle, pour relecture ou test.
+    // Rien de ce qui s'y joue ne comptera : ce n'est pas un reglage, c'est le
+    // chemin de code - aucune participation n'est ecrite plus bas.
+    const apercu = jetonValide(defi, requete.query?.apercu);
+    if (!apercu && !estParu(defi)) {
+      return reponse.code(403).send({ erreur: `Ce défi ouvre le ${defi.ouvre_le}.` });
+    }
 
     const dejaFait = db.prepare(
       'SELECT id FROM participations WHERE agent_id = ? AND defi_id = ? AND entrainement = 0'
     ).get(requete.agent.id, defi.id);
+
+    // Les reponses d'un apercu ne doivent pas preremplir le parcours reel :
+    // sans cela l'agent trouverait son defi a moitie fait le lundi d'ouverture.
+    if (!apercu) effacerTentatives(requete.agent.id, defi.id, { apercuSeulement: true });
 
     const questions = db.prepare('SELECT * FROM questions WHERE defi_id = ? ORDER BY ordre').all(defi.id);
 
@@ -100,8 +111,10 @@ export default async function routesJeu(app) {
       accroche: defi.accroche,
       intro: defi.intro,
       dureeMinutes: defi.duree_minutes,
-      // Rejouer est possible mais ne rapporte plus de points : mode entrainement
-      entrainement: !!dejaFait,
+      // Rejouer est possible mais ne rapporte plus de points : mode entrainement.
+      // Un apercu l'est toujours, par construction.
+      entrainement: apercu || !!dejaFait,
+      apercu,
       close: campagneClose(),
       // Permet de reprendre ou l'agent s'etait arrete
       dejaRepondu: progression(requete.agent.id, defi.id).map((p) => p.question_id),
@@ -128,7 +141,10 @@ export default async function routesJeu(app) {
         close: true,
       });
     }
-    if (!estOuvert(defi)) return reponse.code(403).send({ erreur: "Ce défi n'est pas ouvert." });
+    const apercu = jetonValide(defi, requete.query?.apercu);
+    if (!apercu && !estOuvert(defi)) {
+      return reponse.code(403).send({ erreur: "Ce défi n'est pas ouvert." });
+    }
 
     const question = db.prepare('SELECT * FROM questions WHERE id = ? AND defi_id = ?')
       .get(Number(requete.params.questionId), defi.id);
@@ -143,7 +159,7 @@ export default async function routesJeu(app) {
       return reponse.code(409).send({ erreur: 'Vous avez déjà répondu à cette question.' });
     }
 
-    const correction = repondre(requete.agent.id, defi.id, question, choix);
+    const correction = repondre(requete.agent.id, defi.id, question, choix, { apercu });
     const etat = totaux(requete.agent.id, defi.id);
     const nbQuestions = db.prepare('SELECT COUNT(*) AS n FROM questions WHERE defi_id = ?').get(defi.id).n;
 
@@ -172,10 +188,17 @@ export default async function routesJeu(app) {
       });
     }
 
+    const apercu = jetonValide(defi, requete.query?.apercu);
     const dejaFait = db.prepare(
       'SELECT id FROM participations WHERE agent_id = ? AND defi_id = ? AND entrainement = 0'
     ).get(requete.agent.id, defi.id);
-    const entrainement = dejaFait ? 1 : 0;
+    // Un apercu ne compte jamais : aucune participation n'est ecrite, donc rien
+    // n'entre au classement, aux statistiques ni aux badges.
+    const entrainement = (apercu || dejaFait) ? 1 : 0;
+
+    // Les traces de l'apercu partent avec lui : le parcours reel doit trouver
+    // un defi vierge le jour de son ouverture.
+    if (apercu) effacerTentatives(requete.agent.id, defi.id, { apercuSeulement: true });
 
     let nouveauxBadges = [];
     if (!entrainement) {

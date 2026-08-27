@@ -34,6 +34,11 @@ ajouterColonne('defis', 'module_code', 'TEXT');
 // ferie ou une semaine de vacances scolaires ne s'y plient pas.
 ajouterColonne('programme', 'ouvre_le', 'TEXT');
 
+// Jeton d'apercu : permet de faire jouer un defi avant son ouverture, sans que
+// le resultat compte. Nul par defaut - un apercu se demande, il ne trouve pas
+// une porte ouverte par accident.
+ajouterColonne('defis', 'jeton_apercu', 'TEXT');
+
 /** Lit un module du catalogue. Renvoie null s'il n'existe pas. */
 export function lireModule(code) {
   const fichier = path.join(DOSSIER, `${path.basename(code)}.json`);

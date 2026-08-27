@@ -242,6 +242,8 @@ function ligneAgent(a) {
       <td class="actions">
         <button class="btn btn-secondaire" style="padding:.25rem .55rem;font-size:.76rem" data-modifier="${a.id}">Modifier</button>
         ${a.defis_joues ? `<button class="btn btn-secondaire" style="padding:.25rem .55rem;font-size:.76rem" data-resultats="${a.id}">Résultats</button>` : ''}
+        ${a.defis_joues ? `<button class="btn btn-secondaire" style="padding:.25rem .55rem;font-size:.76rem;border-color:var(--alerte);color:var(--alerte)"
+                data-remise-a-zero="${a.id}" data-nom="${echapper(a.nom_complet)}">Effacer ses essais</button>` : ''}
         <button class="btn btn-secondaire" style="padding:.25rem .55rem;font-size:.76rem;border-color:var(--erreur);color:var(--erreur)" data-supprimer="${a.id}">Suppr.</button>
       </td>
     </tr>`;
@@ -338,6 +340,23 @@ function brancher(d) {
   // --- Actions unitaires
   cible.querySelectorAll('[data-modifier]').forEach((b) =>
     b.addEventListener('click', () => formulaireAgent(d.agents.find((a) => a.id === Number(b.dataset.modifier)), d.services)));
+
+  // Pendant une recette on joue, on recommence, on fait jouer un collegue.
+  // Remettre toute la base a zero pour cela detruirait les essais des autres.
+  cible.querySelectorAll('[data-remise-a-zero]').forEach((b) => b.addEventListener('click', async () => {
+    if (!confirm(
+      `Effacer tous les résultats de ${b.dataset.nom} ?
+
+`
+      + 'Participations, réponses, tentatives en cours et badges. Le compte est conservé '
+      + 'et pourra rejouer depuis le début.'
+    )) return;
+    try {
+      const r = await api(`/api/admin/agents/${b.dataset.remiseAZero}/reinitialiser`, { method: 'POST' });
+      alerte('alerte', r.message, 'succes');
+      chargerAgents();
+    } catch (e) { alerte('alerte', e.message); }
+  }));
 
   cible.querySelectorAll('[data-resultats]').forEach((b) =>
     b.addEventListener('click', () => formulaireResultatsAgent(Number(b.dataset.resultats), chargerAgents)));
