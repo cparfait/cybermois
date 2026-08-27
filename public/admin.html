@@ -35,6 +35,11 @@
   .lien-service:hover, .lien-service:focus-visible { text-decoration-color: currentColor; }
   td.num .lien-service { font-weight: 400; }
 
+  /* Boite de dialogue : le fond assombri vient du navigateur, on ne redefinit
+     que ce qui doit s'accorder au reste de l'administration. */
+  dialog::backdrop { background: rgba(0, 0, 0, .45); }
+  dialog { background: var(--surface); color: var(--encre); }
+
   @media (prefers-reduced-motion: reduce) {
     .stat-cliquable { transition: none; }
     .stat-cliquable:hover, .stat-cliquable:focus-visible { transform: none; }

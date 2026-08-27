@@ -758,7 +758,10 @@ async function formulaireServices(filtreInitial = '') {
                        aria-label="Sélectionner ${echapper(i.source)}"
                        style="width:18px;height:18px;accent-color:var(--vert-fonce)"></td>
             <td><strong>${echapper(i.source)}</strong></td>
-            <td class="num">${i.effectif}</td>
+            <td class="num">
+              <button type="button" class="lien-service" data-voir-libelle="${echapper(i.source)}"
+                      title="Voir les agents de ce libellé">${i.effectif}</button>
+            </td>
             <td>
               <div class="rang" style="flex-wrap:nowrap;gap:.4rem">
                 <select class="cible-service" data-source="${echapper(i.source)}"
@@ -838,6 +841,12 @@ async function formulaireServices(filtreInitial = '') {
     if (!e.target.matches('.cible-service, #nom-groupe')) return;
     if (e.target.value === '__nouveau__') demanderNom(e.target);
     if (e.target.matches('.cible-service')) majApercu();
+  });
+
+  // « Accueil - 14 agents » : la question suivante est toujours « lesquels ? ».
+  zone.addEventListener('click', (e) => {
+    const voir = e.target.closest('[data-voir-libelle]');
+    if (voir) agentsDuLibelle(voir.dataset.voirLibelle);
   });
 
   // Refuser une proposition ne doit pas obliger a retrouver le libellé d'origine
@@ -1058,4 +1067,71 @@ async function formulaireServices(filtreInitial = '') {
 export function filtrerAgents(etat, service = '') {
   etatFiltres = { recherche: '', service, etat, page: 1, parPage: etatFiltres.parPage };
   return chargerAgents();
+}
+
+/**
+ * Liste des agents portant un libellé d'annuaire.
+ *
+ * Devant « Accueil - 14 agents », la question suivante est toujours
+ * « lesquels ? » : quatorze personnes derriere un mot aussi vague peuvent
+ * relever de trois services differents. Sans cette liste, il fallait quitter
+ * l'ecran, filtrer la liste des agents, puis revenir - et recommencer au
+ * libelle suivant.
+ *
+ * On utilise <dialog>, qui apporte la fermeture par Echap, le retour du focus
+ * et le fond inerte sans qu'on ait a les reecrire.
+ */
+async function agentsDuLibelle(libelle) {
+  document.getElementById('modale-libelle')?.remove();
+
+  const modale = document.createElement('dialog');
+  modale.id = 'modale-libelle';
+  modale.style.cssText = 'max-width:min(680px,92vw);width:100%;border:0;border-radius:var(--rayon);'
+    + 'padding:0;box-shadow:0 12px 40px rgba(0,0,0,.22)';
+  modale.innerHTML = `
+    <div style="padding:1.4rem 1.6rem">
+      <div class="rang" style="justify-content:space-between;align-items:flex-start;margin-bottom:.6rem">
+        <h2 style="margin:0;font-size:1.15rem">${echapper(libelle)}</h2>
+        <button type="button" class="btn btn-secondaire" data-fermer-modale
+                style="padding:.3rem .7rem;font-size:.8rem">Fermer</button>
+      </div>
+      <p class="discret" id="corps-modale-libelle" style="margin:0">Chargement…</p>
+    </div>`;
+  document.body.appendChild(modale);
+  modale.showModal();
+
+  modale.addEventListener('click', (e) => {
+    // Un clic sur le fond ferme : la cible est alors la boite de dialogue
+    // elle-meme, jamais son contenu.
+    if (e.target === modale || e.target.closest('[data-fermer-modale]')) modale.close();
+  });
+  modale.addEventListener('close', () => modale.remove());
+
+  const corps = modale.querySelector('#corps-modale-libelle');
+  try {
+    const r = await api(`/api/admin/agents?libelle=${encodeURIComponent(libelle)}&parPage=200`);
+    const agents = r.agents || [];
+    const total = r.pagination?.total ?? agents.length;
+
+    corps.outerHTML = agents.length ? `
+      <p class="discret ui" style="margin:0 0 .5rem;font-size:.84rem">
+        ${agents.length}${total > agents.length ? ` sur ${total}` : ''} agent(s) ·
+        service actuel : <strong>${echapper(agents[0].service)}</strong>
+      </p>
+      <div class="tableau-defilant" style="max-height:52vh;overflow-y:auto">
+        <table class="admin">
+          <thead><tr><th>Agent</th><th>Adresse</th><th>Service</th></tr></thead>
+          <tbody>${agents.map((a) => `
+            <tr${a.exclu ? ' style="opacity:.55"' : ''}>
+              <td><strong>${echapper(a.nom_complet)}</strong>
+                <br><span class="discret" style="font-size:.8rem">${echapper(a.login)}</span></td>
+              <td class="discret" style="font-size:.84rem">${echapper(a.email || '—')}</td>
+              <td>${echapper(a.service)}${a.exclu ? ' <span class="discret">— exclu</span>' : ''}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>` : '<p class="discret">Aucun agent pour ce libellé.</p>';
+  } catch (e) {
+    corps.outerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`;
+  }
 }

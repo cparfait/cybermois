@@ -34,6 +34,13 @@ export default async function routesUtilisateurs(app) {
       valeurs.push(`%${recherche}%`, `%${recherche}%`, `%${recherche}%`);
     }
     if (service) { conditions.push('a.service = ?'); valeurs.push(service); }
+    // Le libelle brut de l'annuaire, et non le service resolu : l'ecran de
+    // regroupement raisonne sur ce qui arrive de l'AD, pas sur le resultat.
+    const libelle = String(requete.query?.libelle || '').trim();
+    if (libelle) {
+      conditions.push("COALESCE(NULLIF(a.service_ad, ''), a.service) = ?");
+      valeurs.push(libelle);
+    }
     if (etat === 'exclus') conditions.push('a.exclu = 1');
     if (etat === 'actifs') conditions.push('a.exclu = 0');
     if (etat === 'jamais_connecte') conditions.push('a.vu_le IS NULL AND a.exclu = 0');
