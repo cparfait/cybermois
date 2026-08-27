@@ -410,6 +410,18 @@ async function ouvrirEditeur(semaine) {
           <input type="text" id="ed-video-titre" value="${echapper(defi.video?.titre || '')}"
                  placeholder="Mots de passe — campagne « Voilà » (0:56)"></div>
       </div>
+      <div class="rang" style="margin-top:.6rem;align-items:center;flex-wrap:wrap">
+        <label for="ed-video-fichier" class="btn btn-secondaire"
+               style="padding:.45rem .9rem;font-size:.85rem;cursor:pointer;margin:0">
+          Déposer un fichier vidéo
+        </label>
+        <input type="file" id="ed-video-fichier" accept="video/mp4,video/webm,video/ogg"
+               style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
+        <span class="discret ui" id="etat-envoi-video" style="font-size:.84rem">
+          MP4, WebM ou OGV — servi depuis le serveur, sans passer par Internet.
+        </span>
+      </div>
+
       <div id="apercu-video-editeur" style="margin-top:.6rem"></div>
 
       <h3 style="margin-top:1.5rem">Questions</h3>
@@ -749,7 +761,16 @@ chargeurs.technique = async () => {
     });
 
     document.getElementById('btn-reinit').addEventListener('click', async () => {
-      if (!confirm('Effacer toutes les participations et tous les badges ? Cette action est irréversible.')) return;
+      // On enumere ce qui part : « participations et badges » laissait croire
+      // que les dates de connexion survivaient, ce qui n'est plus le cas.
+      if (!confirm(
+        'Effacer tous les résultats ?'
+        + String.fromCharCode(10, 10)
+        + 'Participations, réponses, tentatives en cours, badges, historique des envois '
+        + 'et dates de première connexion — le taux de participation repart de zéro.'
+        + String.fromCharCode(10, 10)
+        + 'Les comptes agents, les défis et le paramétrage sont conservés. Action irréversible.'
+      )) return;
       try {
         const r = await api('/api/admin/reinitialiser', { method: 'POST', body: { confirmation: 'REINITIALISER' } });
         alerte('alerte', r.message, 'succes');
@@ -967,6 +988,66 @@ function brancherApercuVideo() {
     });
   };
 
+  brancherEnvoiVideo(champ, majApercu);
   champ.addEventListener('input', majApercu);
   majApercu();
+}
+
+/**
+ * Dépôt d'un fichier vidéo servi par la collectivité.
+ *
+ * Cinq cents agents qui regardent la même vidéo sur YouTube la même semaine,
+ * cela se voit sur le lien Internet d'une commune. Un fichier déposé ici est
+ * servi depuis le serveur : le trafic reste interne, et aucun tiers n'est
+ * appelé — donc plus de vignette de consentement côté agent non plus.
+ *
+ * L'envoi passe par XMLHttpRequest et non fetch : lui seul rend la progression,
+ * et sur trente méga-octets une barre immobile ferait croire à un blocage.
+ */
+function brancherEnvoiVideo(champUrl, majApercu) {
+  const entree = document.getElementById('ed-video-fichier');
+  const etat = document.getElementById('etat-envoi-video');
+  if (!entree || !etat) return;
+
+  entree.addEventListener('change', () => {
+    const fichier = entree.files?.[0];
+    if (!fichier) return;
+
+    const mo = (fichier.size / 1024 / 1024).toFixed(1);
+    etat.textContent = `Envoi de ${fichier.name} (${mo} Mo)…`;
+
+    const donnees = new FormData();
+    donnees.append('fichier', fichier);
+
+    const requete = new XMLHttpRequest();
+    requete.open('POST', '/api/admin/videos');
+
+    requete.upload.addEventListener('progress', (e) => {
+      if (!e.lengthComputable) return;
+      etat.textContent = `Envoi… ${Math.round((e.loaded / e.total) * 100)} %`;
+    });
+
+    requete.addEventListener('load', () => {
+      let r = {};
+      try { r = JSON.parse(requete.responseText); } catch { /* reponse illisible */ }
+
+      if (requete.status >= 200 && requete.status < 300 && r.url) {
+        champUrl.value = r.url;
+        majApercu();
+        etat.textContent = r.message || 'Vidéo déposée.';
+        alerte('alerte', "Vidéo déposée. Enregistrez le défi pour qu'elle s'applique.", 'succes');
+      } else {
+        etat.textContent = r.erreur || `Échec de l'envoi (code ${requete.status}).`;
+        alerte('alerte', etat.textContent);
+      }
+      entree.value = '';
+    });
+
+    requete.addEventListener('error', () => {
+      etat.textContent = "L'envoi a échoué : le serveur n'a pas répondu.";
+      entree.value = '';
+    });
+
+    requete.send(donnees);
+  });
 }

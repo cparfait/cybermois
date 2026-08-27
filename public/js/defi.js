@@ -115,6 +115,13 @@ function afficherIntro(dejaFaites) {
 function reconnaitreVideo(url) {
   const brut = String(url || '');
 
+  // Fichier depose par la collectivite : servi par ce serveur, sur le reseau
+  // interne. Aucun tiers n'est appele, donc rien a consentir - la video se
+  // lance directement, sans vignette intermediaire.
+  if (/^\/videos\/[A-Za-z0-9._-]+$/.test(brut)) {
+    return { hebergeur: 'la Ville', local: true, source: brut };
+  }
+
   const yt = brut.match(
     /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
   );
@@ -157,11 +164,26 @@ function blocVideo(video) {
       </div>`;
   }
 
+  const entete = `
+    <h2 style="margin:0 0 .2em;font-size:1.1rem">
+      ${echapper(video.titre || 'À regarder avant de commencer')}
+    </h2>`;
+
+  // Fichier local : rien a consentir, donc rien a cliquer avant de voir.
+  if (v.local) {
+    return `
+      <section class="carte bloc-video" style="margin:1.5rem 0">
+        ${entete}
+        <div class="cadre-video">
+          <video src="${echapper(v.source)}" controls preload="metadata"
+                 style="width:100%;height:100%"></video>
+        </div>
+      </section>`;
+  }
+
   return `
     <section class="carte bloc-video" style="margin:1.5rem 0">
-      <h2 style="margin:0 0 .2em;font-size:1.1rem">
-        ${echapper(video.titre || 'À regarder avant de commencer')}
-      </h2>
+      ${entete}
       <div id="lecteur-video" class="vignette-video"
            data-embed="${echapper(v.embed)}">
         <button type="button" class="btn btn-principal" id="btn-lire-video">

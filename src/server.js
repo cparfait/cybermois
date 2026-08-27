@@ -4,6 +4,7 @@ import cookie from '@fastify/cookie';
 import formbody from '@fastify/formbody';
 import statique from '@fastify/static';
 import rateLimit from '@fastify/rate-limit';
+import multipart from '@fastify/multipart';
 import cron from 'node-cron';
 
 import { config } from './lib/config.js';
@@ -16,6 +17,7 @@ import { verifierChiffrement } from './lib/ldap.js';
 import { appliquerParametres, configurationUtilisable } from './lib/parametres.js';
 import { amorcerAdminLocal } from './lib/admin-local.js';
 import { enregistrerStatiques } from './lib/statiques.js';
+import { dossierVideos, TAILLE_MAX } from './lib/videos.js';
 
 import routesAuth from './routes/auth.js';
 import routesJeu from './routes/jeu.js';
@@ -39,6 +41,9 @@ await app.register(formbody);
 // hook 'preHandler' : indispensable pour que la limitation par compte puisse lire
 // le login dans le corps de la requete, qui n'est pas encore analyse en 'onRequest'.
 await app.register(rateLimit, { global: false, hook: 'preHandler' });
+// Televersement des videos. La limite vaut pour ce seul usage : le reste des
+// requetes reste borne par bodyLimit, bien plus bas.
+await app.register(multipart, { limits: { fileSize: TAILLE_MAX, files: 1 } });
 
 // En-tetes de securite
 app.addHook('onSend', async (requete, reponse) => {
@@ -77,6 +82,22 @@ await app.register(statique, {
   // enregistrerStatiques, qui fait figurer une empreinte du code dans leur URL.
   setHeaders: (reponse) => {
     reponse.setHeader('Cache-Control', 'public, max-age=604800');
+  },
+});
+
+// Videos deposees par la collectivite. Elles vivent dans le volume monte, a
+// cote de la base : servies d'ici, elles ne sortent pas du reseau interne -
+// c'est tout l'interet par rapport a un hebergeur public quand cinq cents
+// agents regardent la meme video la meme semaine.
+await app.register(statique, {
+  root: dossierVideos(),
+  prefix: '/videos/',
+  decorateReply: false,
+  index: false,
+  // Le nom du fichier derive de son contenu : une video ne change jamais sous
+  // la meme adresse, on peut donc la mettre en cache sans reserve.
+  setHeaders: (reponse) => {
+    reponse.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
   },
 });
 

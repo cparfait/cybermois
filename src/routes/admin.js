@@ -11,6 +11,9 @@ import {
   mailLancement, mailRelance, mailResultats,
 } from '../lib/mail.js';
 import { creerJetonApercu, revoquerJetonApercu, lienApercu } from '../lib/apercu.js';
+import {
+  enregistrerVideo, listerVideos, supprimerVideo, formatsLisibles, TAILLE_MAX,
+} from '../lib/videos.js';
 
 const csv = (lignes, entetes) => {
   const echapper = (v) => {
@@ -301,6 +304,84 @@ export default async function routesAdmin(app) {
     return { ok: true, message: "Lien d'aperçu révoqué : il ne fonctionne plus." };
   });
 
+  /* --------------------------------------------- Vidéos hébergées sur place */
+
+  /**
+   * Depot d'une video servie par la collectivite.
+   *
+   * Cinq cents agents qui regardent la meme video sur YouTube la meme semaine,
+   * cela se voit sur le lien Internet d'une commune. Un fichier depose ici est
+   * servi depuis le serveur : le trafic reste interne, et aucun tiers n'est
+   * appele - donc aucun consentement a demander non plus.
+   */
+  app.post('/api/admin/videos', async (requete, reponse) => {
+    const fichier = await requete.file();
+    if (!fichier) return reponse.code(400).send({ erreur: 'Aucun fichier reçu.' });
+
+    let resultat;
+    try {
+      resultat = await enregistrerVideo(fichier.file, fichier.mimetype);
+    } catch (err) {
+      return reponse.code(400).send({ erreur: err.message });
+    }
+
+    // Le flux signale lui-meme un depassement de la limite : sans ce controle,
+    // un fichier tronque serait enregistre comme s'il etait complet.
+    if (fichier.file.truncated) {
+      supprimerVideo(resultat.nom);
+      return reponse.code(413).send({
+        erreur: `Fichier trop volumineux : ${Math.round(TAILLE_MAX / 1024 / 1024)} Mo au maximum.`,
+      });
+    }
+
+    const mo = Math.round(resultat.octets / 1024 / 1024);
+    journaliser(requete.agent.login, 'video_deposee', `${resultat.nom} (${mo} Mo)`, requete.ip);
+
+    return {
+      ok: true,
+      ...resultat,
+      message: `Vidéo déposée (${mo} Mo). Elle est servie depuis le serveur : `
+        + "aucun appel à un service extérieur, et le trafic ne sort pas du réseau.",
+    };
+  });
+
+  /** Les fichiers deposes, avec le defi qui s'en sert. */
+  app.get('/api/admin/videos', async () => {
+    const usages = new Map(
+      db.prepare('SELECT semaine, titre, video_url FROM defis WHERE video_url IS NOT NULL')
+        .all().map((d) => [d.video_url, d])
+    );
+    return {
+      videos: listerVideos().map((v) => ({ ...v, utiliseePar: usages.get(v.url) || null })),
+      tailleMax: TAILLE_MAX,
+      formats: formatsLisibles(),
+    };
+  });
+
+  app.delete('/api/admin/videos/:nom', async (requete, reponse) => {
+    // Supprimer un fichier encore reference laisserait un defi pointant vers
+    // le vide, ce qui ne se verrait qu'a l'ouverture par un agent.
+    const url = `/videos/${requete.params.nom}`;
+    const utilisee = db.prepare('SELECT semaine FROM defis WHERE video_url = ?').get(url);
+    if (utilisee) {
+      return reponse.code(409).send({
+        erreur: `Cette vidéo est utilisée par la semaine ${utilisee.semaine}. `
+          + 'Retirez-la du défi avant de supprimer le fichier.',
+      });
+    }
+
+    try {
+      if (!supprimerVideo(requete.params.nom)) {
+        return reponse.code(404).send({ erreur: 'Fichier introuvable.' });
+      }
+    } catch (err) {
+      return reponse.code(400).send({ erreur: err.message });
+    }
+
+    journaliser(requete.agent.login, 'video_supprimee', requete.params.nom, requete.ip);
+    return { ok: true, message: 'Vidéo supprimée.' };
+  });
+
   app.post('/api/admin/reimporter', async (requete) => {
     const rapport = importerContenus({ force: !!requete.body?.force });
     journaliser(requete.agent.login, 'reimport_contenus', JSON.stringify(rapport), requete.ip);
@@ -448,6 +529,10 @@ export default async function routesAdmin(app) {
       for (const table of ['participations', 'tentatives', 'badges_agent']) {
         efface += db.prepare(`DELETE FROM ${table} WHERE agent_id = ?`).run(id).changes;
       }
+      // La date de premiere connexion aussi : sans elle, l'agent reste compte
+      // parmi ceux qui « se sont connectes », et le taux de participation d'une
+      // recette ne repart jamais de zero.
+      efface += db.prepare('UPDATE agents SET vu_le = NULL WHERE id = ?').run(id).changes;
       db.exec('COMMIT');
     } catch (err) {
       db.exec('ROLLBACK');
@@ -470,15 +555,23 @@ export default async function routesAdmin(app) {
       return reponse.code(400).send({ erreur: 'Confirmation manquante. Envoyez { "confirmation": "REINITIALISER" }.' });
     }
     // Les tentatives manquaient : sans elles, un defi rejoue apres remise a
-    // zero affichait ses questions comme deja repondues.
+    // zero affichait ses questions comme deja repondues. Les dates de premiere
+    // connexion aussi : les agents restaient sinon comptes parmi ceux qui « se
+    // sont connectes », et le taux de participation ne repartait jamais de zero.
     db.exec('DELETE FROM reponses_agent; DELETE FROM participations; '
       + 'DELETE FROM tentatives; DELETE FROM badges_agent; DELETE FROM envois;');
+    const oublies = db.prepare('UPDATE agents SET vu_le = NULL').run().changes;
+
     journaliser(requete.agent.login, 'reinitialisation',
-      'participations, tentatives et badges effaces', requete.ip);
+      `participations, tentatives, badges effaces, ${oublies} date(s) de connexion oubliee(s)`,
+      requete.ip);
+
     return {
       ok: true,
       message: "Participations, tentatives, badges et historique d'envois effacés. "
-        + 'Les comptes agents, les défis et le paramétrage sont conservés.',
+        + `${oublies} date(s) de première connexion remises à zéro : le taux de `
+        + 'participation repart de zéro. Les comptes agents, les défis et le '
+        + 'paramétrage sont conservés.',
     };
   });
 }
