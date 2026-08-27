@@ -58,7 +58,9 @@ app.addHook('onSend', async (requete, reponse) => {
       "form-action 'self'",
       // Le lecteur video n'est insere qu'apres un clic explicite : la page
       // elle-meme n'appelle jamais Google.
-      "frame-src https://www.youtube-nocookie.com",
+      // Dailymotion parce que Cybermalveillance.gouv.fr y publie son kit de
+      // sensibilisation : la source la plus legitime pour une collectivite.
+      "frame-src https://www.youtube-nocookie.com https://www.dailymotion.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
     ].join('; ')

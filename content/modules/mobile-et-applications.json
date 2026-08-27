@@ -11,6 +11,11 @@
     "emoji": "📱",
     "description": "Défi mobile et applications réussi à 80 % ou plus."
   },
+  "video": {
+    "url": "https://www.dailymotion.com/video/x8o6gp0",
+    "titre": "Sécuriser son téléphone mobile  (2:02)",
+    "source": "Cybermalveillance.gouv.fr"
+  },
   "questions": [
     {
       "enonce": "Comment verrouiller correctement un téléphone qui accède à votre messagerie professionnelle ?",
@@ -18,11 +23,26 @@
       "points": 10,
       "explication": "Un code à quatre chiffres se devine en regardant les traces de doigts sur l'écran, et les schémas de déverrouillage se lisent à distance dans le RER. Un code à six chiffres ou plus, ou la biométrie, résistent bien mieux. Le verrouillage automatique compte autant que le code lui-même : un téléphone posé déverrouillé sur un comptoir est un téléphone ouvert. Et le chiffrement, activé par défaut sur les téléphones récents à jour, est ce qui fait qu'un appareil volé reste illisible. Sans code, pas de chiffrement : les deux vont ensemble.",
       "reponses": [
-        { "libelle": "Un code d'au moins six chiffres, ou la reconnaissance biométrique", "correcte": true },
-        { "libelle": "Un verrouillage automatique après une minute d'inactivité", "correcte": true },
-        { "libelle": "Un schéma de déverrouillage simple, plus rapide à saisir", "correcte": false },
-        { "libelle": "Aucun code : le téléphone ne quitte jamais ma poche", "correcte": false },
-        { "libelle": "Vérifier que le chiffrement de l'appareil est actif", "correcte": true }
+        {
+          "libelle": "Un code d'au moins six chiffres, ou la reconnaissance biométrique",
+          "correcte": true
+        },
+        {
+          "libelle": "Un verrouillage automatique après une minute d'inactivité",
+          "correcte": true
+        },
+        {
+          "libelle": "Un schéma de déverrouillage simple, plus rapide à saisir",
+          "correcte": false
+        },
+        {
+          "libelle": "Aucun code : le téléphone ne quitte jamais ma poche",
+          "correcte": false
+        },
+        {
+          "libelle": "Vérifier que le chiffrement de l'appareil est actif",
+          "correcte": true
+        }
       ]
     },
     {
@@ -31,10 +51,22 @@
       "points": 10,
       "explication": "Une lampe torche a besoin du flash, point final. Une application qui réclame des permissions sans rapport avec sa fonction ne se trompe pas : elle collecte pour revendre, ou pire. Le bon réflexe n'est pas de refuser au coup par coup mais de se demander pourquoi l'application en a besoin — et de la remplacer si la réponse n'existe pas. Profitez-en pour faire le tour des permissions déjà accordées : les téléphones récents listent quelles applications ont utilisé le micro, l'appareil photo et la position ces derniers jours. Les surprises y sont fréquentes.",
       "reponses": [
-        { "libelle": "Je désinstalle : ces permissions n'ont aucun rapport avec sa fonction", "correcte": true },
-        { "libelle": "J'accepte : sans les permissions, l'application ne se lancera pas", "correcte": false },
-        { "libelle": "J'accepte la position seulement, c'est la moins sensible", "correcte": false },
-        { "libelle": "J'accepte : elle est très bien notée sur le magasin d'applications", "correcte": false }
+        {
+          "libelle": "Je désinstalle : ces permissions n'ont aucun rapport avec sa fonction",
+          "correcte": true
+        },
+        {
+          "libelle": "J'accepte : sans les permissions, l'application ne se lancera pas",
+          "correcte": false
+        },
+        {
+          "libelle": "J'accepte la position seulement, c'est la moins sensible",
+          "correcte": false
+        },
+        {
+          "libelle": "J'accepte : elle est très bien notée sur le magasin d'applications",
+          "correcte": false
+        }
       ]
     },
     {
@@ -43,11 +75,26 @@
       "points": 10,
       "explication": "Installer une application hors du magasin officiel, c'est contourner le seul contrôle qui existe. Ces versions « débloquées » sont le principal vecteur de logiciels espions sur mobile : elles fonctionnent parfaitement — c'est tout l'intérêt — tout en lisant vos SMS, vos codes d'authentification et vos messages. Elles ne reçoivent aucune mise à jour de sécurité, et si le téléphone accède à la messagerie de la Ville, c'est celle-ci qui est exposée. Le fait que l'application vienne d'un collègue de confiance ne change rien : il ne l'a pas fabriquée, il l'a téléchargée quelque part lui aussi.",
       "reponses": [
-        { "libelle": "Elle peut lire vos SMS et donc vos codes d'authentification", "correcte": true },
-        { "libelle": "Elle ne recevra aucune mise à jour de sécurité", "correcte": true },
-        { "libelle": "Elle expose la messagerie professionnelle si le téléphone y accède", "correcte": true },
-        { "libelle": "Rien : elle vient d'un collègue de confiance", "correcte": false },
-        { "libelle": "Rien : l'antivirus du téléphone la bloquera de toute façon", "correcte": false }
+        {
+          "libelle": "Elle peut lire vos SMS et donc vos codes d'authentification",
+          "correcte": true
+        },
+        {
+          "libelle": "Elle ne recevra aucune mise à jour de sécurité",
+          "correcte": true
+        },
+        {
+          "libelle": "Elle expose la messagerie professionnelle si le téléphone y accède",
+          "correcte": true
+        },
+        {
+          "libelle": "Rien : elle vient d'un collègue de confiance",
+          "correcte": false
+        },
+        {
+          "libelle": "Rien : l'antivirus du téléphone la bloquera de toute façon",
+          "correcte": false
+        }
       ]
     },
     {
@@ -56,10 +103,22 @@
       "points": 10,
       "explication": "Les mises à jour du système sont ce qui referme les failles utilisées pour prendre le contrôle d'un téléphone à distance. Repousser une fois n'est pas dramatique ; repousser pendant des mois laisse la porte ouverte, car les failles corrigées sont publiées et exploitées dans la foulée. Le bon compromis est de programmer l'installation le soir, en charge et en Wi-Fi. Et si votre modèle ne reçoit plus de mises à jour du tout — ce qui arrive au bout de quelques années — il ne devrait plus accéder à la messagerie professionnelle : signalez-le à la DSI.",
       "reponses": [
-        { "libelle": "Je la programme pour la nuit, en charge et en Wi-Fi", "correcte": true },
-        { "libelle": "Je la repousse indéfiniment : les mises à jour ralentissent l'appareil", "correcte": false },
-        { "libelle": "J'attends la fin de l'année pour tout faire d'un coup", "correcte": false },
-        { "libelle": "Je ne fais que les mises à jour d'applications, pas celles du système", "correcte": false }
+        {
+          "libelle": "Je la programme pour la nuit, en charge et en Wi-Fi",
+          "correcte": true
+        },
+        {
+          "libelle": "Je la repousse indéfiniment : les mises à jour ralentissent l'appareil",
+          "correcte": false
+        },
+        {
+          "libelle": "J'attends la fin de l'année pour tout faire d'un coup",
+          "correcte": false
+        },
+        {
+          "libelle": "Je ne fais que les mises à jour d'applications, pas celles du système",
+          "correcte": false
+        }
       ]
     },
     {
@@ -68,11 +127,26 @@
       "points": 10,
       "explication": "Consulter sa messagerie professionnelle sur un appareil personnel est courant et souvent utile ; encore faut-il que l'appareil soit à la hauteur. Le verrouillage et les mises à jour sont le minimum. Le second réflexe concerne les pièces jointes : un document contenant des données d'administrés téléchargé sur le téléphone y reste, et part avec lui s'il est perdu. Enfin, la sauvegarde automatique vers un cloud personnel recopie ces documents dans un espace qui n'appartient pas à la Ville — un point à vérifier une fois pour toutes. Et le jour où vous quittez la collectivité, ou changez de téléphone, le compte doit être retiré de l'ancien appareil.",
       "reponses": [
-        { "libelle": "Verrouiller l'appareil et le tenir à jour", "correcte": true },
-        { "libelle": "Éviter de télécharger localement les pièces jointes contenant des données d'administrés", "correcte": true },
-        { "libelle": "Vérifier que la sauvegarde automatique ne recopie pas ces documents dans un cloud personnel", "correcte": true },
-        { "libelle": "Retirer le compte de l'appareil avant de le revendre ou d'en changer", "correcte": true },
-        { "libelle": "Partager l'appareil avec sa famille est sans conséquence", "correcte": false }
+        {
+          "libelle": "Verrouiller l'appareil et le tenir à jour",
+          "correcte": true
+        },
+        {
+          "libelle": "Éviter de télécharger localement les pièces jointes contenant des données d'administrés",
+          "correcte": true
+        },
+        {
+          "libelle": "Vérifier que la sauvegarde automatique ne recopie pas ces documents dans un cloud personnel",
+          "correcte": true
+        },
+        {
+          "libelle": "Retirer le compte de l'appareil avant de le revendre ou d'en changer",
+          "correcte": true
+        },
+        {
+          "libelle": "Partager l'appareil avec sa famille est sans conséquence",
+          "correcte": false
+        }
       ]
     },
     {
@@ -82,11 +156,26 @@
       "points": 10,
       "explication": "L'image d'un enfant est une donnée personnelle, et l'autorisation parentale est la première condition — elle se vérifie, elle ne se présume pas. Ensuite vient le support : des photos prises avec un téléphone personnel se retrouvent dans la galerie, dans la sauvegarde cloud du parent-animateur, parfois dans les suggestions d'albums partagés. Elles doivent être transférées sur l'espace de la Ville puis effacées de l'appareil. Quant à la diffusion, elle passe par les canaux officiels du service : un groupe WhatsApp de parents créé à titre personnel échappe à tout contrôle et engage l'agent qui l'a ouvert. En cas de doute, la DPO répond vite.",
       "reponses": [
-        { "libelle": "Vérifier que l'autorisation parentale existe pour chaque enfant photographié", "correcte": true },
-        { "libelle": "Transférer les photos sur l'espace de la Ville puis les effacer du téléphone", "correcte": true },
-        { "libelle": "Passer par les canaux officiels du service pour la diffusion aux familles", "correcte": true },
-        { "libelle": "Les publier dans un groupe de messagerie créé à titre personnel avec les parents", "correcte": false },
-        { "libelle": "Les garder sur son téléphone en souvenir de l'année", "correcte": false }
+        {
+          "libelle": "Vérifier que l'autorisation parentale existe pour chaque enfant photographié",
+          "correcte": true
+        },
+        {
+          "libelle": "Transférer les photos sur l'espace de la Ville puis les effacer du téléphone",
+          "correcte": true
+        },
+        {
+          "libelle": "Passer par les canaux officiels du service pour la diffusion aux familles",
+          "correcte": true
+        },
+        {
+          "libelle": "Les publier dans un groupe de messagerie créé à titre personnel avec les parents",
+          "correcte": false
+        },
+        {
+          "libelle": "Les garder sur son téléphone en souvenir de l'année",
+          "correcte": false
+        }
       ]
     },
     {
@@ -95,11 +184,26 @@
       "points": 10,
       "explication": "Trois gestes, tous utiles, et le plus urgent est le premier : prévenir la DSI, qui peut couper l'accès à la messagerie et déclencher l'effacement à distance avant que quiconque ne cherche à ouvrir l'appareil. Le blocage de la carte SIM par l'opérateur empêche l'usage de la ligne et surtout la réception des codes d'authentification. Le dépôt de plainte suit, avec le numéro IMEI si vous l'avez noté. Ce qu'il ne faut surtout pas faire, c'est attendre le lendemain en espérant que l'appareil réapparaisse : les premières heures sont précisément celles où la perte se joue.",
       "reponses": [
-        { "libelle": "Prévenir la DSI immédiatement pour couper les accès et effacer à distance", "correcte": true },
-        { "libelle": "Faire bloquer la carte SIM par l'opérateur", "correcte": true },
-        { "libelle": "Déposer plainte, avec le numéro IMEI si vous le connaissez", "correcte": true },
-        { "libelle": "Attendre le lendemain au cas où on me le rapporterait", "correcte": false },
-        { "libelle": "Changer les mots de passe des comptes accessibles depuis l'appareil", "correcte": true }
+        {
+          "libelle": "Prévenir la DSI immédiatement pour couper les accès et effacer à distance",
+          "correcte": true
+        },
+        {
+          "libelle": "Faire bloquer la carte SIM par l'opérateur",
+          "correcte": true
+        },
+        {
+          "libelle": "Déposer plainte, avec le numéro IMEI si vous le connaissez",
+          "correcte": true
+        },
+        {
+          "libelle": "Attendre le lendemain au cas où on me le rapporterait",
+          "correcte": false
+        },
+        {
+          "libelle": "Changer les mots de passe des comptes accessibles depuis l'appareil",
+          "correcte": true
+        }
       ]
     }
   ]

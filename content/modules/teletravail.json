@@ -11,6 +11,11 @@
     "emoji": "🏠",
     "description": "Défi télétravail réussi à 80 % ou plus."
   },
+  "video": {
+    "url": "https://www.dailymotion.com/video/x7nwhg7",
+    "titre": "Wi-Fi public : empêcher le vol de ses données  (1:12)",
+    "source": "Cybermalveillance.gouv.fr"
+  },
   "questions": [
     {
       "enonce": "Vous travaillez depuis chez vous sur le portable de la Ville. Quelles pratiques sont acceptables ?",
@@ -18,11 +23,26 @@
       "points": 10,
       "explication": "Le portable professionnel reste un équipement de la collectivité, administré par la DSI, avec ses mises à jour et son antivirus : c'est ce qui justifie qu'on l'utilise plutôt que sa propre machine. Se connecter par le tunnel sécurisé fourni est la règle, y compris pour ce qui semble anodin. Le verrouiller quand on s'éloigne vaut chez soi comme au bureau : un enfant qui envoie un mail depuis votre session n'est pas un scénario théorique. Ce qui n'est pas acceptable : prêter la machine à un proche, même pour cinq minutes de démarches, et travailler sur son ordinateur familial parce que « l'écran est plus grand » — cette machine-là, personne ne la surveille.",
       "reponses": [
-        { "libelle": "Utiliser le portable fourni, et lui seul, pour les dossiers de la Ville", "correcte": true },
-        { "libelle": "Se connecter par le tunnel sécurisé fourni par la DSI", "correcte": true },
-        { "libelle": "Verrouiller la session dès que je quitte la pièce", "correcte": true },
-        { "libelle": "Prêter le portable à un proche pour une démarche rapide", "correcte": false },
-        { "libelle": "Basculer sur l'ordinateur familial quand c'est plus confortable", "correcte": false }
+        {
+          "libelle": "Utiliser le portable fourni, et lui seul, pour les dossiers de la Ville",
+          "correcte": true
+        },
+        {
+          "libelle": "Se connecter par le tunnel sécurisé fourni par la DSI",
+          "correcte": true
+        },
+        {
+          "libelle": "Verrouiller la session dès que je quitte la pièce",
+          "correcte": true
+        },
+        {
+          "libelle": "Prêter le portable à un proche pour une démarche rapide",
+          "correcte": false
+        },
+        {
+          "libelle": "Basculer sur l'ordinateur familial quand c'est plus confortable",
+          "correcte": false
+        }
       ]
     },
     {
@@ -31,11 +51,26 @@
       "points": 10,
       "explication": "La box est le seul équipement réseau du télétravailleur, et personne ne s'en occupe. Trois gestes suffisent et durent des années. Changer le mot de passe d'administration de la box, souvent resté celui d'usine — il est public, modèle par modèle. Vérifier que le Wi-Fi est en WPA2 ou WPA3, et non en WEP, cassable en quelques minutes. Et désactiver le WPS, ce bouton d'appairage commode dont la faiblesse est connue depuis longtemps. Le nom du réseau n'a aucune importance sur le plan de la sécurité, et masquer ce nom ne protège de rien : les outils d'attaque le retrouvent immédiatement.",
       "reponses": [
-        { "libelle": "Changer le mot de passe d'administration livré d'usine", "correcte": true },
-        { "libelle": "Vérifier que le Wi-Fi est en WPA2 ou WPA3", "correcte": true },
-        { "libelle": "Désactiver le WPS, dont les faiblesses sont connues", "correcte": true },
-        { "libelle": "Masquer le nom du réseau, ce qui le rend indétectable", "correcte": false },
-        { "libelle": "Renommer le réseau avec son nom de famille, pour s'y retrouver", "correcte": false }
+        {
+          "libelle": "Changer le mot de passe d'administration livré d'usine",
+          "correcte": true
+        },
+        {
+          "libelle": "Vérifier que le Wi-Fi est en WPA2 ou WPA3",
+          "correcte": true
+        },
+        {
+          "libelle": "Désactiver le WPS, dont les faiblesses sont connues",
+          "correcte": true
+        },
+        {
+          "libelle": "Masquer le nom du réseau, ce qui le rend indétectable",
+          "correcte": false
+        },
+        {
+          "libelle": "Renommer le réseau avec son nom de famille, pour s'y retrouver",
+          "correcte": false
+        }
       ]
     },
     {
@@ -44,11 +79,26 @@
       "points": 10,
       "explication": "Deux fuites classiques en visio, et aucune n'est technique. La première est l'arrière-plan : un tableau blanc, un courrier posé, une porte ouverte sur une pièce où quelqu'un travaille. Le flou ou l'image de fond règlent la question en un clic. La seconde est le partage d'écran : partager tout l'écran expose les notifications qui s'affichent, les onglets ouverts et le nom des fichiers récents — partager la seule fenêtre utile évite tout cela. S'ajoute la question du son : un casque évite que la réunion soit audible du couloir de l'immeuble. Enregistrer une réunion, enfin, ne se fait pas à la discrétion d'un participant : les autres doivent le savoir.",
       "reponses": [
-        { "libelle": "Activer le flou d'arrière-plan ou une image de fond", "correcte": true },
-        { "libelle": "Partager la seule fenêtre utile plutôt que l'écran entier", "correcte": true },
-        { "libelle": "Utiliser un casque pour que la réunion ne soit pas audible autour", "correcte": true },
-        { "libelle": "Prévenir les participants avant tout enregistrement", "correcte": true },
-        { "libelle": "Enregistrer systématiquement, pour pouvoir y revenir", "correcte": false }
+        {
+          "libelle": "Activer le flou d'arrière-plan ou une image de fond",
+          "correcte": true
+        },
+        {
+          "libelle": "Partager la seule fenêtre utile plutôt que l'écran entier",
+          "correcte": true
+        },
+        {
+          "libelle": "Utiliser un casque pour que la réunion ne soit pas audible autour",
+          "correcte": true
+        },
+        {
+          "libelle": "Prévenir les participants avant tout enregistrement",
+          "correcte": true
+        },
+        {
+          "libelle": "Enregistrer systématiquement, pour pouvoir y revenir",
+          "correcte": false
+        }
       ]
     },
     {
@@ -57,10 +107,22 @@
       "points": 10,
       "explication": "Le papier est le maillon qu'on oublie. Un document contenant des données d'administrés qui part dans le bac de tri finit dans un local à poubelles accessible à tout l'immeuble — et une commune en a déjà fait les frais. La règle est simple : ce qui est imprimé à la maison revient au bureau pour être détruit dans les circuits prévus, ou est détruit avec un moyen sûr si vous en disposez. Le déchirer en quatre ne suffit pas : un document reconstitué à la main reste lisible, et ces choses-là se font.",
       "reponses": [
-        { "libelle": "Je le rapporte au bureau pour destruction dans les circuits prévus", "correcte": true },
-        { "libelle": "Je le mets au tri sélectif : c'est du papier", "correcte": false },
-        { "libelle": "Je le déchire en quatre avant de le jeter", "correcte": false },
-        { "libelle": "Je le garde chez moi, cela évite de le réimprimer", "correcte": false }
+        {
+          "libelle": "Je le rapporte au bureau pour destruction dans les circuits prévus",
+          "correcte": true
+        },
+        {
+          "libelle": "Je le mets au tri sélectif : c'est du papier",
+          "correcte": false
+        },
+        {
+          "libelle": "Je le déchire en quatre avant de le jeter",
+          "correcte": false
+        },
+        {
+          "libelle": "Je le garde chez moi, cela évite de le réimprimer",
+          "correcte": false
+        }
       ]
     },
     {
@@ -70,11 +132,26 @@
       "points": 10,
       "explication": "Les portails d'accès à distance sont la cible favorite de l'hameçonnage depuis que le télétravail s'est installé : un identifiant volé sur ce portail donne exactement ce que l'attaquant cherche, une entrée légitime dans le réseau. Le réflexe est de ne jamais passer par un lien reçu, mais de taper soi-même l'adresse habituelle ou d'utiliser son favori. Et de signaler, parce que la campagne vise toute la collectivité. Si vous avez saisi vos identifiants, changez-les immédiatement et appelez la DSI : c'est le cas où quelques minutes font une vraie différence. Vérifier le cadenas du navigateur ne prouve rien — les sites frauduleux en ont un aussi.",
       "reponses": [
-        { "libelle": "Ne pas utiliser le lien et taper moi-même l'adresse habituelle", "correcte": true },
-        { "libelle": "Signaler le message à la DSI", "correcte": true },
-        { "libelle": "Si j'ai saisi mes identifiants, les changer immédiatement et appeler la DSI", "correcte": true },
-        { "libelle": "Vérifier le cadenas du navigateur : s'il est présent, le site est légitime", "correcte": false },
-        { "libelle": "Suivre le lien : il vient du domaine de la Ville dans l'expéditeur affiché", "correcte": false }
+        {
+          "libelle": "Ne pas utiliser le lien et taper moi-même l'adresse habituelle",
+          "correcte": true
+        },
+        {
+          "libelle": "Signaler le message à la DSI",
+          "correcte": true
+        },
+        {
+          "libelle": "Si j'ai saisi mes identifiants, les changer immédiatement et appeler la DSI",
+          "correcte": true
+        },
+        {
+          "libelle": "Vérifier le cadenas du navigateur : s'il est présent, le site est légitime",
+          "correcte": false
+        },
+        {
+          "libelle": "Suivre le lien : il vient du domaine de la Ville dans l'expéditeur affiché",
+          "correcte": false
+        }
       ]
     },
     {
@@ -83,11 +160,26 @@
       "points": 10,
       "explication": "Le secret professionnel ne s'arrête pas au seuil du domicile : il s'applique aux conversations téléphoniques entendues depuis la cuisine comme aux dossiers laissés sur la table. Travailler dans une pièce où l'on peut fermer la porte n'est pas toujours possible, mais un casque et un écran orienté font déjà beaucoup. La règle la plus importante reste la session : personne d'autre que vous n'utilise votre compte, jamais, y compris pour dépanner un adolescent qui doit rendre un devoir. Ce n'est pas une question de confiance envers vos proches — c'est que tout ce qui sera fait le sera sous votre nom.",
       "reponses": [
-        { "libelle": "Le secret professionnel s'applique aussi chez moi", "correcte": true },
-        { "libelle": "Personne d'autre n'utilise ma session, même brièvement", "correcte": true },
-        { "libelle": "Les documents de travail ne restent pas visibles dans les pièces communes", "correcte": true },
-        { "libelle": "Un casque évite que les conversations soient entendues", "correcte": true },
-        { "libelle": "Mes proches peuvent consulter mes dossiers, ils sont tenus à la discrétion", "correcte": false }
+        {
+          "libelle": "Le secret professionnel s'applique aussi chez moi",
+          "correcte": true
+        },
+        {
+          "libelle": "Personne d'autre n'utilise ma session, même brièvement",
+          "correcte": true
+        },
+        {
+          "libelle": "Les documents de travail ne restent pas visibles dans les pièces communes",
+          "correcte": true
+        },
+        {
+          "libelle": "Un casque évite que les conversations soient entendues",
+          "correcte": true
+        },
+        {
+          "libelle": "Mes proches peuvent consulter mes dossiers, ils sont tenus à la discrétion",
+          "correcte": false
+        }
       ]
     },
     {
@@ -96,10 +188,22 @@
       "points": 10,
       "explication": "La panne est une situation banale qui devient un incident quand on improvise. Basculer sur son ordinateur personnel pour « ne pas perdre la journée » revient à traiter des données de la Ville sur une machine que personne n'administre, sans antivirus à jour ni chiffrement, et à y laisser des fichiers qui y resteront. Le bon geste est d'appeler la DSI, qui indiquera quoi faire — dépannage à distance, échange de matériel, ou report des tâches. Une journée décalée coûte infiniment moins cher qu'une fuite de données, et c'est à la hiérarchie, pas à l'agent, d'arbitrer la continuité du service.",
       "reponses": [
-        { "libelle": "J'appelle la DSI et je préviens ma hiérarchie", "correcte": true },
-        { "libelle": "Je bascule sur mon ordinateur personnel pour ne pas perdre la journée", "correcte": false },
-        { "libelle": "J'installe la messagerie de la Ville sur l'ordinateur familial", "correcte": false },
-        { "libelle": "Je me connecte au portail depuis l'ordinateur de mon conjoint", "correcte": false }
+        {
+          "libelle": "J'appelle la DSI et je préviens ma hiérarchie",
+          "correcte": true
+        },
+        {
+          "libelle": "Je bascule sur mon ordinateur personnel pour ne pas perdre la journée",
+          "correcte": false
+        },
+        {
+          "libelle": "J'installe la messagerie de la Ville sur l'ordinateur familial",
+          "correcte": false
+        },
+        {
+          "libelle": "Je me connecte au portail depuis l'ordinateur de mon conjoint",
+          "correcte": false
+        }
       ]
     }
   ]

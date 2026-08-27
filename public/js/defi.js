@@ -103,15 +103,38 @@ function afficherIntro(dejaFaites) {
 }
 
 /**
- * Identifiant d'une video YouTube, quelle que soit la forme de l'URL collee.
- * On accepte watch?v=, youtu.be/, /embed/ et /shorts/ : personne ne retient
- * laquelle de ces adresses est la bonne.
+ * Reconnait l'hebergeur et compose l'adresse du lecteur.
+ *
+ * YouTube pour la plupart des contenus, Dailymotion parce que c'est la que
+ * Cybermalveillance.gouv.fr publie son kit de sensibilisation - la source la
+ * plus legitime pour une collectivite, et il aurait ete absurde de l'exclure.
+ *
+ * On accepte watch?v=, youtu.be, /embed/, /shorts/ et /video/ : personne ne
+ * retient laquelle de ces adresses est la bonne.
  */
-function identifiantYoutube(url) {
-  const m = String(url || '').match(
+function reconnaitreVideo(url) {
+  const brut = String(url || '');
+
+  const yt = brut.match(
     /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
   );
-  return m ? m[1] : null;
+  if (yt) {
+    return {
+      hebergeur: 'YouTube',
+      // Domaine sans cookie : le strict minimum une fois le consentement donne.
+      embed: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(yt[1])}?rel=0&autoplay=1`,
+    };
+  }
+
+  const dm = brut.match(/dailymotion\.com\/(?:embed\/)?video\/([A-Za-z0-9]+)|dai\.ly\/([A-Za-z0-9]+)/);
+  if (dm) {
+    return {
+      hebergeur: 'Dailymotion',
+      embed: `https://www.dailymotion.com/embed/video/${encodeURIComponent(dm[1] || dm[2])}?autoplay=1`,
+    };
+  }
+
+  return null;
 }
 
 /**
@@ -124,8 +147,8 @@ function identifiantYoutube(url) {
  * consentement - il est annonce comme tel.
  */
 function blocVideo(video) {
-  const id = identifiantYoutube(video.url);
-  if (!id) {
+  const v = reconnaitreVideo(video.url);
+  if (!v) {
     return `
       <div class="carte" style="margin:1.5rem 0">
         <a href="${echapper(video.url)}" target="_blank" rel="noopener noreferrer">
@@ -139,13 +162,14 @@ function blocVideo(video) {
       <h2 style="margin:0 0 .2em;font-size:1.1rem">
         ${echapper(video.titre || 'À regarder avant de commencer')}
       </h2>
-      <div id="lecteur-video" class="vignette-video" data-video="${echapper(id)}">
+      <div id="lecteur-video" class="vignette-video"
+           data-embed="${echapper(v.embed)}">
         <button type="button" class="btn btn-principal" id="btn-lire-video">
           ▶ Regarder la vidéo
         </button>
         <p class="discret" style="margin:.7rem 0 0;font-size:.82rem;max-width:46ch">
-          La vidéo est hébergée par YouTube. Rien n'est chargé tant que vous ne cliquez
-          pas : en lançant la lecture, vous acceptez le dépôt de cookies par Google.
+          La vidéo est hébergée par ${echapper(v.hebergeur)}. Rien n'est chargé tant que vous
+          ne cliquez pas : en lançant la lecture, vous acceptez le dépôt de cookies par ce service.
         </p>
       </div>
     </section>`;
@@ -157,11 +181,9 @@ function brancherVideo() {
 
   bouton.addEventListener('click', () => {
     const zoneVideo = document.getElementById('lecteur-video');
-    const id = zoneVideo.dataset.video;
-    // Domaine « nocookie » : le strict minimum une fois le consentement donne.
     zoneVideo.outerHTML = `
       <div class="cadre-video">
-        <iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?rel=0&autoplay=1"
+        <iframe src="${echapper(zoneVideo.dataset.embed)}"
                 title="Vidéo d'introduction du défi" allow="autoplay; encrypted-media; fullscreen"
                 referrerpolicy="no-referrer" allowfullscreen loading="lazy"></iframe>
       </div>`;

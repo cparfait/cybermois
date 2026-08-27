@@ -11,6 +11,11 @@
     "emoji": "🛡️",
     "description": "Défi poste de travail réussi à 80 % ou plus."
   },
+  "video": {
+    "url": "https://www.dailymotion.com/video/x8f5him",
+    "titre": "Les gestes à adopter pour se protéger sur Internet  (1:10)",
+    "source": "Cybermalveillance.gouv.fr"
+  },
   "questions": [
     {
       "enonce": "Vous quittez votre bureau 5 minutes pour aller chercher un café. Que faites-vous ?",

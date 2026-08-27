@@ -11,6 +11,11 @@
     "emoji": "🔄",
     "description": "Défi mises à jour réussi à 80 % ou plus."
   },
+  "video": {
+    "url": "https://www.dailymotion.com/video/x906lek",
+    "titre": "Mises à jour — campagne « Voilà »  (0:45)",
+    "source": "Cybermalveillance.gouv.fr"
+  },
   "questions": [
     {
       "enonce": "À quoi sert réellement une mise à jour de sécurité ?",
@@ -18,11 +23,26 @@
       "points": 10,
       "explication": "Une mise à jour de sécurité corrige des défauts qui permettent de prendre le contrôle d'un logiciel, de lire ce qu'il manipule ou de contourner une authentification. Le point décisif tient au calendrier : la faille est publiée en même temps que le correctif, et les attaquants s'en emparent aussitôt — parfois en moins d'une semaine. Repousser, c'est donc rester exposé à une faiblesse désormais connue de tous. Une mise à jour apporte souvent aussi des nouveautés fonctionnelles, mais ce n'est pas sa raison d'être ici. Et elle ne remplace ni l'antivirus ni les sauvegardes : ces protections traitent des problèmes différents.",
       "reponses": [
-        { "libelle": "À corriger des défauts permettant de prendre le contrôle d'un logiciel", "correcte": true },
-        { "libelle": "À refermer une faille désormais publiée, donc connue des attaquants", "correcte": true },
-        { "libelle": "À remplacer l'antivirus", "correcte": false },
-        { "libelle": "À remplacer les sauvegardes", "correcte": false },
-        { "libelle": "À ralentir volontairement les ordinateurs anciens", "correcte": false }
+        {
+          "libelle": "À corriger des défauts permettant de prendre le contrôle d'un logiciel",
+          "correcte": true
+        },
+        {
+          "libelle": "À refermer une faille désormais publiée, donc connue des attaquants",
+          "correcte": true
+        },
+        {
+          "libelle": "À remplacer l'antivirus",
+          "correcte": false
+        },
+        {
+          "libelle": "À remplacer les sauvegardes",
+          "correcte": false
+        },
+        {
+          "libelle": "À ralentir volontairement les ordinateurs anciens",
+          "correcte": false
+        }
       ]
     },
     {
@@ -31,10 +51,22 @@
       "points": 10,
       "explication": "Le report ne suspend pas le risque, il l'accumule : chaque semaine ajoute des failles connues et non corrigées. Six semaines de retard, c'est un poste dont les faiblesses sont documentées publiquement et testées automatiquement par des outils qui balaient les réseaux. Le bon compromis n'est pas de tout accepter en pleine réunion, c'est de programmer l'installation à un moment qui vous arrange — fin de journée, pause déjeuner — et de laisser le redémarrage se faire. Si la mise à jour casse quelque chose dans un logiciel métier, c'est un sujet réel : il se traite avec la DSI, qui sait échelonner, pas en la repoussant indéfiniment tout seul.",
       "reponses": [
-        { "libelle": "Le poste cumule six semaines de failles connues et non corrigées", "correcte": true },
-        { "libelle": "Rien : tant que le poste fonctionne, il est protégé", "correcte": false },
-        { "libelle": "Rien : l'antivirus compense les mises à jour manquantes", "correcte": false },
-        { "libelle": "Le poste s'améliore : les mises à jour introduisent surtout des bugs", "correcte": false }
+        {
+          "libelle": "Le poste cumule six semaines de failles connues et non corrigées",
+          "correcte": true
+        },
+        {
+          "libelle": "Rien : tant que le poste fonctionne, il est protégé",
+          "correcte": false
+        },
+        {
+          "libelle": "Rien : l'antivirus compense les mises à jour manquantes",
+          "correcte": false
+        },
+        {
+          "libelle": "Le poste s'améliore : les mises à jour introduisent surtout des bugs",
+          "correcte": false
+        }
       ]
     },
     {
@@ -43,10 +75,22 @@
       "points": 10,
       "explication": "Les vraies mises à jour ne se proposent jamais depuis une page web : elles viennent du système, du magasin d'applications, ou de la DSI. Une fenêtre de navigateur qui annonce un composant obsolète est un piège classique, et le fichier proposé installe autre chose que ce qu'il annonce. La bonne réaction est de fermer l'onglet — sans cliquer sur la croix du faux bandeau, qui fait parfois partie du piège — et de signaler si le message revient, car cela peut indiquer une publicité malveillante sur un site que vos collègues visitent aussi. Vérifier la réputation du site ne sert à rien : ces bandeaux apparaissent aussi sur des sites tout à fait légitimes, par le biais des régies publicitaires.",
       "reponses": [
-        { "libelle": "Je ferme l'onglet et je signale à la DSI si le message revient", "correcte": true },
-        { "libelle": "Je clique : un composant obsolète est un risque de sécurité", "correcte": false },
-        { "libelle": "Je télécharge le fichier et je le fais analyser avant de l'ouvrir", "correcte": false },
-        { "libelle": "Je vérifie que le site est réputé, puis j'accepte", "correcte": false }
+        {
+          "libelle": "Je ferme l'onglet et je signale à la DSI si le message revient",
+          "correcte": true
+        },
+        {
+          "libelle": "Je clique : un composant obsolète est un risque de sécurité",
+          "correcte": false
+        },
+        {
+          "libelle": "Je télécharge le fichier et je le fais analyser avant de l'ouvrir",
+          "correcte": false
+        },
+        {
+          "libelle": "Je vérifie que le site est réputé, puis j'accepte",
+          "correcte": false
+        }
       ]
     },
     {
@@ -55,11 +99,26 @@
       "points": 10,
       "explication": "On pense aux ordinateurs, rarement au reste — et c'est précisément le reste qui est oublié pendant des années. Un copieur multifonction est un serveur avec un disque dur qui conserve les documents numérisés. Les caméras de vidéoprotection sont des ordinateurs connectés, régulièrement enrôlés dans des réseaux d'attaque. Les écrans interactifs des salles de réunion et des écoles embarquent un système complet. Les téléphones IP et les bornes Wi-Fi aussi. Ce ne sont pas des objets passifs : chacun est une porte, et la plupart sont livrés avec un mot de passe d'usine que personne n'a changé. Le mobilier, lui, peut rester en paix.",
       "reponses": [
-        { "libelle": "Les copieurs multifonctions, qui stockent les documents numérisés", "correcte": true },
-        { "libelle": "Les caméras de vidéoprotection", "correcte": true },
-        { "libelle": "Les écrans interactifs des salles de réunion et des écoles", "correcte": true },
-        { "libelle": "Les téléphones et les bornes Wi-Fi", "correcte": true },
-        { "libelle": "Les armoires et le mobilier de bureau", "correcte": false }
+        {
+          "libelle": "Les copieurs multifonctions, qui stockent les documents numérisés",
+          "correcte": true
+        },
+        {
+          "libelle": "Les caméras de vidéoprotection",
+          "correcte": true
+        },
+        {
+          "libelle": "Les écrans interactifs des salles de réunion et des écoles",
+          "correcte": true
+        },
+        {
+          "libelle": "Les téléphones et les bornes Wi-Fi",
+          "correcte": true
+        },
+        {
+          "libelle": "Les armoires et le mobilier de bureau",
+          "correcte": false
+        }
       ]
     },
     {
@@ -68,11 +127,26 @@
       "points": 10,
       "explication": "Un logiciel en fin de vie ne reçoit plus de correctifs : les failles découvertes après cette date restent ouvertes définitivement. C'est un problème durable, pas une gêne passagère, et il finit par contaminer son environnement — un vieux logiciel impose souvent de garder un vieux système, donc une machine entière non corrigée. C'est aussi un point que les assureurs cyber et les audits regardent de près, et qui peut peser dans la prise en charge d'un sinistre. La bonne conduite est de le signaler à la DSI pour anticiper le remplacement, pas de constater l'obsolescence le jour où plus rien ne fonctionne. Ni l'antivirus ni le pare-feu ne compensent : ils réduisent l'exposition, ils ne corrigent rien.",
       "reponses": [
-        { "libelle": "Les failles découvertes après la fin de maintenance ne seront jamais corrigées", "correcte": true },
-        { "libelle": "Il impose souvent de conserver un système ancien, donc une machine entière exposée", "correcte": true },
-        { "libelle": "C'est un point examiné lors des audits et par les assureurs", "correcte": true },
-        { "libelle": "Il faut le signaler à la DSI pour anticiper le remplacement", "correcte": true },
-        { "libelle": "L'antivirus compense l'absence de correctifs", "correcte": false }
+        {
+          "libelle": "Les failles découvertes après la fin de maintenance ne seront jamais corrigées",
+          "correcte": true
+        },
+        {
+          "libelle": "Il impose souvent de conserver un système ancien, donc une machine entière exposée",
+          "correcte": true
+        },
+        {
+          "libelle": "C'est un point examiné lors des audits et par les assureurs",
+          "correcte": true
+        },
+        {
+          "libelle": "Il faut le signaler à la DSI pour anticiper le remplacement",
+          "correcte": true
+        },
+        {
+          "libelle": "L'antivirus compense l'absence de correctifs",
+          "correcte": false
+        }
       ]
     },
     {
@@ -81,11 +155,26 @@
       "points": 10,
       "explication": "Passer par la DSI n'est pas une lourdeur administrative : c'est ce qui permet de savoir ce qui tourne sur le parc le jour où l'un de ces logiciels se révèle piégé — et les cas de logiciels gratuits populaires détournés sont réguliers. Le téléchargement depuis le site officiel de l'éditeur évite les sites de téléchargement qui reconditionnent les installeurs avec des extras. La licence compte aussi : beaucoup d'outils gratuits pour un usage personnel ne le sont pas pour une collectivité, et l'écart se règle en contentieux. Ce qui est à proscrire : l'installeur reçu d'un collègue, et la version « portable » qui contourne la demande d'installation — elle contourne le contrôle, pas le risque.",
       "reponses": [
-        { "libelle": "Demander à la DSI avant l'installation", "correcte": true },
-        { "libelle": "Télécharger depuis le site officiel de l'éditeur, jamais depuis un site tiers", "correcte": true },
-        { "libelle": "Vérifier que la licence autorise un usage en collectivité", "correcte": true },
-        { "libelle": "Utiliser l'installeur transmis par un collègue qui l'a déjà", "correcte": false },
-        { "libelle": "Prendre une version « portable » pour éviter d'avoir à demander", "correcte": false }
+        {
+          "libelle": "Demander à la DSI avant l'installation",
+          "correcte": true
+        },
+        {
+          "libelle": "Télécharger depuis le site officiel de l'éditeur, jamais depuis un site tiers",
+          "correcte": true
+        },
+        {
+          "libelle": "Vérifier que la licence autorise un usage en collectivité",
+          "correcte": true
+        },
+        {
+          "libelle": "Utiliser l'installeur transmis par un collègue qui l'a déjà",
+          "correcte": false
+        },
+        {
+          "libelle": "Prendre une version « portable » pour éviter d'avoir à demander",
+          "correcte": false
+        }
       ]
     },
     {
@@ -94,11 +183,26 @@
       "points": 10,
       "explication": "Beaucoup de correctifs ne prennent effet qu'au redémarrage : un poste laissé en veille pendant des semaines affiche « à jour » tout en fonctionnant encore avec l'ancienne version chargée en mémoire. C'est un cas fréquent et invisible. Le redémarrage permet aussi aux déploiements de la DSI de s'appliquer, et il résout au passage une bonne part des lenteurs qui font râler. Rien de tout cela n'exige de couper le poste chaque soir si la DSI ne le demande pas — c'est la régularité qui compte, pas la ferveur. Et fermer la session ne suffit pas : la session se ferme, le système reste chargé.",
       "reponses": [
-        { "libelle": "Beaucoup de correctifs ne s'appliquent qu'au redémarrage", "correcte": true },
-        { "libelle": "Un poste en veille depuis des semaines tourne encore sur l'ancienne version", "correcte": true },
-        { "libelle": "Les déploiements de la DSI s'appliquent à ce moment-là", "correcte": true },
-        { "libelle": "Fermer la session produit exactement le même effet", "correcte": false },
-        { "libelle": "Le redémarrage n'a aucun effet sur les mises à jour", "correcte": false }
+        {
+          "libelle": "Beaucoup de correctifs ne s'appliquent qu'au redémarrage",
+          "correcte": true
+        },
+        {
+          "libelle": "Un poste en veille depuis des semaines tourne encore sur l'ancienne version",
+          "correcte": true
+        },
+        {
+          "libelle": "Les déploiements de la DSI s'appliquent à ce moment-là",
+          "correcte": true
+        },
+        {
+          "libelle": "Fermer la session produit exactement le même effet",
+          "correcte": false
+        },
+        {
+          "libelle": "Le redémarrage n'a aucun effet sur les mises à jour",
+          "correcte": false
+        }
       ]
     }
   ]

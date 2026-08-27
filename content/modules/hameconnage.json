@@ -11,6 +11,11 @@
     "emoji": "🕵️",
     "description": "Défi hameçonnage réussi à 80 % ou plus."
   },
+  "video": {
+    "url": "https://www.dailymotion.com/video/x8rvpgc",
+    "titre": "Phishing / hameçonnage — campagne « Voilà »  (0:42)",
+    "source": "Cybermalveillance.gouv.fr"
+  },
   "questions": [
     {
       "enonce": "Quels éléments de ce message doivent vous alerter ?",

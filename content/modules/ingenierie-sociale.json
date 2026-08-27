@@ -11,6 +11,11 @@
     "emoji": "🧊",
     "description": "Défi ingénierie sociale réussi à 80 % ou plus."
   },
+  "video": {
+    "url": "https://www.dailymotion.com/video/x8o6guh",
+    "titre": "L’escroquerie au faux support technique  (2:05)",
+    "source": "Cybermalveillance.gouv.fr"
+  },
   "questions": [
     {
       "enonce": "Vous recevez ce message. Quels signaux trahissent une arnaque au président ?",

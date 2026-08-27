@@ -11,6 +11,11 @@
     "emoji": "🏡",
     "description": "Défi vie privée numérique réussi à 80 % ou plus."
   },
+  "video": {
+    "url": "https://www.dailymotion.com/video/x8eqk60",
+    "titre": "Usurpation d’identité : comment réagir ?  (2:08)",
+    "source": "Cybermalveillance.gouv.fr"
+  },
   "questions": [
     {
       "enonce": "Pourquoi votre adresse mail personnelle mérite-t-elle autant d'attention que la professionnelle ?",
@@ -18,11 +23,26 @@
       "points": 10,
       "explication": "L'adresse personnelle est la clé de tout le reste : c'est elle qui reçoit les liens de réinitialisation de vos autres comptes, y compris bancaires. Qui la contrôle contrôle votre vie numérique, et le rétablissement prend des semaines. Elle est aussi le point de départ des attaques contre votre employeur : un attaquant qui lit votre courrier personnel apprend où vous travaillez, qui sont vos collègues, quand vous partez en congés. Et elle contient dix ans de correspondance que vous n'auriez jamais accepté de publier. La double authentification y est donc au moins aussi utile qu'au travail — c'est même là qu'elle manque le plus souvent.",
       "reponses": [
-        { "libelle": "Elle reçoit les liens de réinitialisation de tous vos autres comptes", "correcte": true },
-        { "libelle": "Elle renseigne un attaquant sur votre employeur et vos collègues", "correcte": true },
-        { "libelle": "Elle contient un historique que vous n'accepteriez pas de rendre public", "correcte": true },
-        { "libelle": "Elle est protégée par l'hébergeur, qui garantit sa sécurité", "correcte": false },
-        { "libelle": "Elle n'a aucun lien avec la sécurité de la collectivité", "correcte": false }
+        {
+          "libelle": "Elle reçoit les liens de réinitialisation de tous vos autres comptes",
+          "correcte": true
+        },
+        {
+          "libelle": "Elle renseigne un attaquant sur votre employeur et vos collègues",
+          "correcte": true
+        },
+        {
+          "libelle": "Elle contient un historique que vous n'accepteriez pas de rendre public",
+          "correcte": true
+        },
+        {
+          "libelle": "Elle est protégée par l'hébergeur, qui garantit sa sécurité",
+          "correcte": false
+        },
+        {
+          "libelle": "Elle n'a aucun lien avec la sécurité de la collectivité",
+          "correcte": false
+        }
       ]
     },
     {
@@ -31,11 +51,26 @@
       "points": 10,
       "explication": "Une fuite expose au minimum votre adresse et un mot de passe, souvent sous une forme qui finit par se casser. Le premier geste est donc de changer ce mot de passe — et surtout de le changer partout où vous l'aviez réutilisé, car c'est exactement ce que l'attaquant va essayer, automatiquement, sur des centaines de sites. Le second est d'activer la double authentification là où c'est possible : elle rend le mot de passe volé inutilisable seul. Attendez-vous ensuite à des messages ciblés qui reprendront des informations exactes vous concernant, pour vous convaincre. Et supprimer le compte ne répare rien : les données ont déjà fuité.",
       "reponses": [
-        { "libelle": "Changer ce mot de passe, et partout où il était réutilisé", "correcte": true },
-        { "libelle": "Activer la double authentification là où c'est possible", "correcte": true },
-        { "libelle": "M'attendre à des messages ciblés reprenant des informations exactes", "correcte": true },
-        { "libelle": "Rien : je n'utilisais plus ce site depuis longtemps", "correcte": false },
-        { "libelle": "Supprimer le compte, ce qui efface les données déjà diffusées", "correcte": false }
+        {
+          "libelle": "Changer ce mot de passe, et partout où il était réutilisé",
+          "correcte": true
+        },
+        {
+          "libelle": "Activer la double authentification là où c'est possible",
+          "correcte": true
+        },
+        {
+          "libelle": "M'attendre à des messages ciblés reprenant des informations exactes",
+          "correcte": true
+        },
+        {
+          "libelle": "Rien : je n'utilisais plus ce site depuis longtemps",
+          "correcte": false
+        },
+        {
+          "libelle": "Supprimer le compte, ce qui efface les données déjà diffusées",
+          "correcte": false
+        }
       ]
     },
     {
@@ -44,11 +79,26 @@
       "points": 10,
       "explication": "Le compte séparé est la mesure la plus efficace et la moins contraignante : un profil enfant limite les installations, isole les données et évite qu'une application téléchargée sur un coup de tête ne s'exécute avec vos droits. Retirer le moyen de paiement enregistré évite la mauvaise surprise autant que le risque. Le contrôle parental complète l'ensemble, sans remplacer la conversation : expliquer pourquoi on ne clique pas sur « vous avez gagné » vaut mieux qu'un filtre qu'ils apprendront à contourner en trois mois. Ce qui n'est pas une bonne idée : partager votre session — tout ce qui sera fait le sera avec vos droits, y compris sur votre messagerie.",
       "reponses": [
-        { "libelle": "Un compte ou profil séparé pour les enfants", "correcte": true },
-        { "libelle": "Retirer le moyen de paiement enregistré", "correcte": true },
-        { "libelle": "Activer le contrôle parental et en expliquer la raison", "correcte": true },
-        { "libelle": "Leur laisser ma session, c'est plus simple", "correcte": false },
-        { "libelle": "Leur donner mon mot de passe pour qu'ils installent eux-mêmes", "correcte": false }
+        {
+          "libelle": "Un compte ou profil séparé pour les enfants",
+          "correcte": true
+        },
+        {
+          "libelle": "Retirer le moyen de paiement enregistré",
+          "correcte": true
+        },
+        {
+          "libelle": "Activer le contrôle parental et en expliquer la raison",
+          "correcte": true
+        },
+        {
+          "libelle": "Leur laisser ma session, c'est plus simple",
+          "correcte": false
+        },
+        {
+          "libelle": "Leur donner mon mot de passe pour qu'ils installent eux-mêmes",
+          "correcte": false
+        }
       ]
     },
     {
@@ -57,11 +107,26 @@
       "points": 10,
       "explication": "Publier ses vacances en direct revient à annoncer que le logement est vide, et les cambriolages qui suivent des publications sont documentés. Les dates précises, la photo de la porte d'embarquement avec la carte lisible — elle porte votre nom et votre référence de réservation — et la géolocalisation activée disent tout ce qu'il faut. La parade est simple et ne prive de rien : publier au retour. Une photo de paysage sans indication de date ne pose aucun problème, et rien n'oblige à se cacher : il s'agit seulement de décaler.",
       "reponses": [
-        { "libelle": "Les dates exactes de l'absence", "correcte": true },
-        { "libelle": "La photo de la carte d'embarquement", "correcte": true },
-        { "libelle": "La géolocalisation activée sur les publications", "correcte": true },
-        { "libelle": "Une photo de paysage publiée au retour", "correcte": false },
-        { "libelle": "Le fait d'aimer voyager", "correcte": false }
+        {
+          "libelle": "Les dates exactes de l'absence",
+          "correcte": true
+        },
+        {
+          "libelle": "La photo de la carte d'embarquement",
+          "correcte": true
+        },
+        {
+          "libelle": "La géolocalisation activée sur les publications",
+          "correcte": true
+        },
+        {
+          "libelle": "Une photo de paysage publiée au retour",
+          "correcte": false
+        },
+        {
+          "libelle": "Le fait d'aimer voyager",
+          "correcte": false
+        }
       ]
     },
     {
@@ -70,11 +135,26 @@
       "points": 10,
       "explication": "Les objets connectés arrivent avec un mot de passe d'usine et repartent rarement avec un autre. Une caméra de surveillance mal réglée diffuse l'intérieur du logement sur internet — des sites recensent celles qui sont accessibles librement, par milliers. Un assistant vocal écoute et conserve, et ses réglages de conservation méritent une visite. Un objet connecté qui ne reçoit plus de mises à jour devient une porte ouverte sur le réseau de la maison, celui-là même par lequel vous télétravaillez. Un thermomètre non connecté et un four traditionnel, eux, ne posent aucune question.",
       "reponses": [
-        { "libelle": "Une caméra de surveillance restée sur son mot de passe d'usine", "correcte": true },
-        { "libelle": "Un assistant vocal, et ses réglages de conservation des enregistrements", "correcte": true },
-        { "libelle": "Tout objet connecté qui ne reçoit plus de mises à jour", "correcte": true },
-        { "libelle": "Un thermomètre à cadran", "correcte": false },
-        { "libelle": "Un four traditionnel sans connexion", "correcte": false }
+        {
+          "libelle": "Une caméra de surveillance restée sur son mot de passe d'usine",
+          "correcte": true
+        },
+        {
+          "libelle": "Un assistant vocal, et ses réglages de conservation des enregistrements",
+          "correcte": true
+        },
+        {
+          "libelle": "Tout objet connecté qui ne reçoit plus de mises à jour",
+          "correcte": true
+        },
+        {
+          "libelle": "Un thermomètre à cadran",
+          "correcte": false
+        },
+        {
+          "libelle": "Un four traditionnel sans connexion",
+          "correcte": false
+        }
       ]
     },
     {
@@ -83,11 +163,26 @@
       "points": 10,
       "explication": "Un téléphone vendu emporte tout ce qu'on a oublié d'en retirer. La réinitialisation d'usine est indispensable, mais elle ne suffit que si l'appareil était chiffré — ce qui est le cas des modèles récents dotés d'un code, et c'est une raison de plus d'en avoir un. Avant cela, il faut se déconnecter de son compte constructeur : sans quoi l'appareil reste verrouillé à votre nom, ce qui gênera l'acheteur et laissera un lien avec vous. La carte SIM et la carte mémoire se retirent physiquement — la seconde n'est pas effacée par la réinitialisation. Supprimer les photos une à une ne rend rien irrécupérable : les données restent sur le support jusqu'à réécriture.",
       "reponses": [
-        { "libelle": "Me déconnecter de mon compte constructeur", "correcte": true },
-        { "libelle": "Retirer la carte SIM et la carte mémoire", "correcte": true },
-        { "libelle": "Réinitialiser l'appareil, chiffré au préalable", "correcte": true },
-        { "libelle": "Supprimer les photos une par une, ce qui suffit", "correcte": false },
-        { "libelle": "Formater la carte mémoire n'est pas nécessaire, la réinitialisation s'en charge", "correcte": false }
+        {
+          "libelle": "Me déconnecter de mon compte constructeur",
+          "correcte": true
+        },
+        {
+          "libelle": "Retirer la carte SIM et la carte mémoire",
+          "correcte": true
+        },
+        {
+          "libelle": "Réinitialiser l'appareil, chiffré au préalable",
+          "correcte": true
+        },
+        {
+          "libelle": "Supprimer les photos une par une, ce qui suffit",
+          "correcte": false
+        },
+        {
+          "libelle": "Formater la carte mémoire n'est pas nécessaire, la réinitialisation s'en charge",
+          "correcte": false
+        }
       ]
     },
     {
@@ -96,11 +191,26 @@
       "points": 10,
       "explication": "Les réflexes sont les mêmes qu'au travail, avec une différence : la honte, qui pousse à se taire et fait perdre les heures qui comptent. Il faut faire opposition sans attendre si des coordonnées bancaires sont en jeu, conserver tous les éléments — messages, captures, références de virement — et déposer plainte, qui est nécessaire pour la banque comme pour l'assurance. Le portail cybermalveillance.gouv.fr oriente vers les bons interlocuteurs, gratuitement. Ce qu'il ne faut surtout pas faire, c'est reprendre contact avec l'escroc : il existe une seconde arnaque, très répandue, qui consiste à rappeler la victime en promettant de récupérer les fonds. Et attendre par gêne ne fait qu'aggraver la perte.",
       "reponses": [
-        { "libelle": "Faire opposition immédiatement si des coordonnées bancaires sont en jeu", "correcte": true },
-        { "libelle": "Conserver messages, captures et références", "correcte": true },
-        { "libelle": "Déposer plainte et se faire orienter par cybermalveillance.gouv.fr", "correcte": true },
-        { "libelle": "Reprendre contact avec l'escroc pour tenter de récupérer l'argent", "correcte": false },
-        { "libelle": "Attendre quelques jours pour voir si la situation se règle seule", "correcte": false }
+        {
+          "libelle": "Faire opposition immédiatement si des coordonnées bancaires sont en jeu",
+          "correcte": true
+        },
+        {
+          "libelle": "Conserver messages, captures et références",
+          "correcte": true
+        },
+        {
+          "libelle": "Déposer plainte et se faire orienter par cybermalveillance.gouv.fr",
+          "correcte": true
+        },
+        {
+          "libelle": "Reprendre contact avec l'escroc pour tenter de récupérer l'argent",
+          "correcte": false
+        },
+        {
+          "libelle": "Attendre quelques jours pour voir si la situation se règle seule",
+          "correcte": false
+        }
       ]
     }
   ]

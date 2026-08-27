@@ -11,6 +11,11 @@
     "emoji": "✉️",
     "description": "Défi messagerie réussi à 80 % ou plus."
   },
+  "video": {
+    "url": "https://www.dailymotion.com/video/x850yrz",
+    "titre": "Pourquoi et comment sécuriser sa messagerie  (2:10)",
+    "source": "Cybermalveillance.gouv.fr"
+  },
   "questions": [
     {
       "enonce": "Vous écrivez à 180 administrés inscrits à une réunion publique. Comment procédez-vous ?",
@@ -18,10 +23,22 @@
       "points": 10,
       "explication": "Mettre 180 adresses en copie visible, c'est communiquer à chacun le carnet d'adresses des 179 autres : c'est une violation de données personnelles, et l'une des plus fréquemment notifiées à la CNIL. La copie cachée règle le problème pour un envoi ponctuel, à condition de mettre son propre service en destinataire principal. Pour un envoi récurrent, l'outil de diffusion est préférable : il gère les désinscriptions, ce que le Cci ne fait pas. Envoyer 180 messages un par un serait correct sur le fond, mais personne ne le fait jusqu'au bout — et c'est ainsi que la moitié part en copie visible.",
       "reponses": [
-        { "libelle": "En copie cachée (Cci), avec mon service en destinataire principal", "correcte": true },
-        { "libelle": "En copie visible (Cc), pour que chacun sache qui participe", "correcte": false },
-        { "libelle": "En destinataires principaux, c'est plus direct", "correcte": false },
-        { "libelle": "En copie visible mais en petits groupes de vingt, pour limiter la casse", "correcte": false }
+        {
+          "libelle": "En copie cachée (Cci), avec mon service en destinataire principal",
+          "correcte": true
+        },
+        {
+          "libelle": "En copie visible (Cc), pour que chacun sache qui participe",
+          "correcte": false
+        },
+        {
+          "libelle": "En destinataires principaux, c'est plus direct",
+          "correcte": false
+        },
+        {
+          "libelle": "En copie visible mais en petits groupes de vingt, pour limiter la casse",
+          "correcte": false
+        }
       ]
     },
     {
@@ -30,11 +47,26 @@
       "points": 10,
       "explication": "Un lien de partage vaut mieux qu'une pièce jointe : il évite d'engorger les boîtes, il permet de retirer l'accès après coup et il trace qui a téléchargé. Encore faut-il le régler : un lien « toute personne disposant du lien », sans échéance, est un document public posé sur internet, et les moteurs de recherche en trouvent régulièrement. Limitez-le au destinataire, donnez-lui une date de fin. Ce qu'il faut éviter, c'est le service de transfert gratuit trouvé au hasard, qui héberge où il veut sous des conditions que personne n'a lues, et bien sûr le dépôt sur un compte cloud personnel — le document quitte alors la Ville définitivement.",
       "reponses": [
-        { "libelle": "Un lien de partage limité au destinataire, avec une date d'expiration", "correcte": true },
-        { "libelle": "Un lien de partage ouvert à toute personne disposant de l'adresse, sans échéance", "correcte": false },
-        { "libelle": "Retirer l'accès une fois le dossier récupéré", "correcte": true },
-        { "libelle": "Un service de transfert gratuit trouvé sur internet", "correcte": false },
-        { "libelle": "Un dépôt sur mon compte cloud personnel, avec le lien par mail", "correcte": false }
+        {
+          "libelle": "Un lien de partage limité au destinataire, avec une date d'expiration",
+          "correcte": true
+        },
+        {
+          "libelle": "Un lien de partage ouvert à toute personne disposant de l'adresse, sans échéance",
+          "correcte": false
+        },
+        {
+          "libelle": "Retirer l'accès une fois le dossier récupéré",
+          "correcte": true
+        },
+        {
+          "libelle": "Un service de transfert gratuit trouvé sur internet",
+          "correcte": false
+        },
+        {
+          "libelle": "Un dépôt sur mon compte cloud personnel, avec le lien par mail",
+          "correcte": false
+        }
       ]
     },
     {
@@ -44,11 +76,26 @@
       "points": 10,
       "explication": "Une boîte partagée est utile mais elle brouille la responsabilité : quand tout le monde écrit sous la même adresse, personne n'a écrit. D'où deux exigences. L'accès doit être nominatif — chacun ouvre la boîte avec son propre compte, et la DSI sait qui y a accès — ce qui interdit le mot de passe commun noté sur un papier. Et la liste des accès doit être revue quand quelqu'un change de poste : les boîtes partagées accumulent les anciens agents pendant des années. Signer ses messages de son nom relève de la même logique, et rend le travail plus simple pour le destinataire.",
       "reponses": [
-        { "libelle": "L'accès se fait avec le compte nominatif de chaque agent, pas avec un mot de passe commun", "correcte": true },
-        { "libelle": "La liste des accès est revue quand un agent change de poste", "correcte": true },
-        { "libelle": "Il est utile de signer ses messages de son nom", "correcte": true },
-        { "libelle": "Le mot de passe peut être noté dans le tiroir de l'accueil, c'est plus pratique", "correcte": false },
-        { "libelle": "Une boîte partagée dispense de toute traçabilité", "correcte": false }
+        {
+          "libelle": "L'accès se fait avec le compte nominatif de chaque agent, pas avec un mot de passe commun",
+          "correcte": true
+        },
+        {
+          "libelle": "La liste des accès est revue quand un agent change de poste",
+          "correcte": true
+        },
+        {
+          "libelle": "Il est utile de signer ses messages de son nom",
+          "correcte": true
+        },
+        {
+          "libelle": "Le mot de passe peut être noté dans le tiroir de l'accueil, c'est plus pratique",
+          "correcte": false
+        },
+        {
+          "libelle": "Une boîte partagée dispense de toute traçabilité",
+          "correcte": false
+        }
       ]
     },
     {
@@ -57,11 +104,26 @@
       "points": 10,
       "explication": "Cette règle recopie en continu des dossiers d'administrés vers une messagerie que la Ville ne maîtrise pas, chez un fournisseur qui n'a signé aucun contrat avec elle : c'est une violation de données permanente, et elle survit au départ de l'agent si personne ne la remarque. C'est aussi, et c'est ce qui rend le sujet important, l'un des premiers gestes d'un attaquant qui vient de compromettre un compte : il crée une règle de transfert discrète et lit tout le courrier pendant des mois. Vérifier périodiquement les règles de sa propre boîte est un réflexe simple et rentable. Le besoin sous-jacent — travailler depuis chez soi — se traite avec la DSI, qui a des solutions prévues pour cela.",
       "reponses": [
-        { "libelle": "C'est une fuite continue de données vers un service non contractualisé", "correcte": true },
-        { "libelle": "C'est aussi le premier geste d'un attaquant sur une boîte compromise", "correcte": true },
-        { "libelle": "Il faut vérifier périodiquement les règles de transfert de sa propre boîte", "correcte": true },
-        { "libelle": "C'est acceptable si l'agent est le seul à lire son adresse personnelle", "correcte": false },
-        { "libelle": "C'est acceptable pendant les congés uniquement", "correcte": false }
+        {
+          "libelle": "C'est une fuite continue de données vers un service non contractualisé",
+          "correcte": true
+        },
+        {
+          "libelle": "C'est aussi le premier geste d'un attaquant sur une boîte compromise",
+          "correcte": true
+        },
+        {
+          "libelle": "Il faut vérifier périodiquement les règles de transfert de sa propre boîte",
+          "correcte": true
+        },
+        {
+          "libelle": "C'est acceptable si l'agent est le seul à lire son adresse personnelle",
+          "correcte": false
+        },
+        {
+          "libelle": "C'est acceptable pendant les congés uniquement",
+          "correcte": false
+        }
       ]
     },
     {
@@ -70,11 +132,26 @@
       "points": 10,
       "explication": "Le message d'absence part à tout le monde, y compris aux expéditeurs de messages frauduleux : c'est une source de renseignement gratuite pour qui prépare une usurpation. Les dates et le contact d'un collègue joignable sont utiles et suffisent. En revanche, préciser que vous êtes hospitalisé relève de votre vie privée, indiquer votre numéro de portable personnel vous expose, et annoncer que le service tourne à effectif réduit renseigne exactement ce qu'un escroc cherche à savoir avant d'appeler en se faisant passer pour un fournisseur pressé.",
       "reponses": [
-        { "libelle": "Les dates d'absence", "correcte": true },
-        { "libelle": "Le nom et le contact professionnel d'un collègue à joindre", "correcte": true },
-        { "libelle": "Le motif de l'absence, notamment médical", "correcte": false },
-        { "libelle": "Son numéro de téléphone personnel", "correcte": false },
-        { "libelle": "Le fait que le service fonctionne en effectif réduit tout l'été", "correcte": false }
+        {
+          "libelle": "Les dates d'absence",
+          "correcte": true
+        },
+        {
+          "libelle": "Le nom et le contact professionnel d'un collègue à joindre",
+          "correcte": true
+        },
+        {
+          "libelle": "Le motif de l'absence, notamment médical",
+          "correcte": false
+        },
+        {
+          "libelle": "Son numéro de téléphone personnel",
+          "correcte": false
+        },
+        {
+          "libelle": "Le fait que le service fonctionne en effectif réduit tout l'été",
+          "correcte": false
+        }
       ]
     },
     {
@@ -83,11 +160,26 @@
       "points": 10,
       "explication": "Un mail traverse plusieurs serveurs et reste stocké dans les boîtes des deux côtés, souvent pour des années. Un bulletin de paie, un compte rendu du CMS ou un scan de pièce d'identité n'ont rien à y faire sans protection : ils passent par l'espace partagé prévu, avec les droits qui vont bien, ou par un fichier protégé dont le mot de passe est transmis par un autre canal — jamais dans le même message, ce qui reviendrait à scotcher la clé sur la porte. Une convocation à une réunion ou un ordre du jour, en revanche, sont faits pour circuler.",
       "reponses": [
-        { "libelle": "Un bulletin de paie", "correcte": true },
-        { "libelle": "Un compte rendu d'entretien social du CMS", "correcte": true },
-        { "libelle": "Le scan d'une pièce d'identité", "correcte": true },
-        { "libelle": "L'ordre du jour d'une réunion de service", "correcte": false },
-        { "libelle": "Une convocation à une commission", "correcte": false }
+        {
+          "libelle": "Un bulletin de paie",
+          "correcte": true
+        },
+        {
+          "libelle": "Un compte rendu d'entretien social du CMS",
+          "correcte": true
+        },
+        {
+          "libelle": "Le scan d'une pièce d'identité",
+          "correcte": true
+        },
+        {
+          "libelle": "L'ordre du jour d'une réunion de service",
+          "correcte": false
+        },
+        {
+          "libelle": "Une convocation à une commission",
+          "correcte": false
+        }
       ]
     },
     {
@@ -96,11 +188,26 @@
       "points": 10,
       "explication": "Le signaler est toujours utile, même si vous vous trompez : la DSI préfère dix fausses alertes à un silence. Transmettez-le en pièce jointe plutôt qu'en simple transfert quand votre messagerie le permet, car cela conserve les en-têtes techniques, qui sont précisément ce qui permet d'identifier la campagne. Et surtout, ne cliquez pas « pour vérifier » : l'ouverture du lien signale à l'attaquant que l'adresse est vivante, et parfois suffit. Le supprimer sans rien dire prive les collègues d'une alerte — vous êtes rarement le seul destinataire.",
       "reponses": [
-        { "libelle": "Le signaler à la DSI même si je ne suis pas certain", "correcte": true },
-        { "libelle": "Le transmettre en pièce jointe pour conserver les en-têtes techniques", "correcte": true },
-        { "libelle": "Ne pas cliquer sur le lien, même « juste pour voir »", "correcte": true },
-        { "libelle": "Le supprimer discrètement pour ne pas encombrer la DSI", "correcte": false },
-        { "libelle": "Répondre à l'expéditeur pour lui demander de qui il s'agit", "correcte": false }
+        {
+          "libelle": "Le signaler à la DSI même si je ne suis pas certain",
+          "correcte": true
+        },
+        {
+          "libelle": "Le transmettre en pièce jointe pour conserver les en-têtes techniques",
+          "correcte": true
+        },
+        {
+          "libelle": "Ne pas cliquer sur le lien, même « juste pour voir »",
+          "correcte": true
+        },
+        {
+          "libelle": "Le supprimer discrètement pour ne pas encombrer la DSI",
+          "correcte": false
+        },
+        {
+          "libelle": "Répondre à l'expéditeur pour lui demander de qui il s'agit",
+          "correcte": false
+        }
       ]
     }
   ]

@@ -11,6 +11,11 @@
     "emoji": "🚨",
     "description": "Défi réaction à incident réussi à 80 % ou plus."
   },
+  "video": {
+    "url": "https://www.dailymotion.com/video/x8eqk61",
+    "titre": "Que faire en cas de cyberattaque ?  (2:02)",
+    "source": "Cybermalveillance.gouv.fr"
+  },
   "questions": [
     {
       "enonce": "Vous venez de saisir votre mot de passe sur une page qui imitait le portail de la Ville. Que faites-vous, et dans quel ordre ?",
@@ -18,11 +23,26 @@
       "points": 10,
       "explication": "L'ordre compte. Changer le mot de passe immédiatement ferme la porte avant que l'attaquant ne s'en serve — et il s'en sert vite, souvent dans l'heure. Prévenir la DSI dans la foulée permet de vérifier ce qui a été fait avec le compte, de regarder si des règles de transfert automatique ont été créées dans la boîte, et d'alerter les collègues visés par la même campagne. Si le mot de passe servait ailleurs — et cela arrive à tout le monde — il faut le changer partout où il a été réutilisé. La seule mauvaise réaction est le silence : un compte compromis dont personne n'est prévenu sert de porte d'entrée pendant des semaines.",
       "reponses": [
-        { "libelle": "Changer immédiatement le mot de passe concerné", "correcte": true },
-        { "libelle": "Prévenir la DSI sans attendre, même si rien ne semble s'être passé", "correcte": true },
-        { "libelle": "Le changer partout où le même mot de passe était réutilisé", "correcte": true },
-        { "libelle": "Ne rien dire et surveiller discrètement si quelque chose se produit", "correcte": false },
-        { "libelle": "Attendre le lendemain pour ne pas déranger pendant la réunion de direction", "correcte": false }
+        {
+          "libelle": "Changer immédiatement le mot de passe concerné",
+          "correcte": true
+        },
+        {
+          "libelle": "Prévenir la DSI sans attendre, même si rien ne semble s'être passé",
+          "correcte": true
+        },
+        {
+          "libelle": "Le changer partout où le même mot de passe était réutilisé",
+          "correcte": true
+        },
+        {
+          "libelle": "Ne rien dire et surveiller discrètement si quelque chose se produit",
+          "correcte": false
+        },
+        {
+          "libelle": "Attendre le lendemain pour ne pas déranger pendant la réunion de direction",
+          "correcte": false
+        }
       ]
     },
     {
@@ -31,11 +51,26 @@
       "points": 10,
       "explication": "Débrancher le câble réseau — ou couper le Wi-Fi — stoppe la propagation vers les serveurs et les autres postes : c'est le geste le plus utile des premières secondes. En revanche, il ne faut surtout pas éteindre l'ordinateur : une partie des traces, et parfois la clé de déchiffrement, ne vivent que dans la mémoire vive et disparaissent à l'extinction. On ne paye jamais : cela finance l'attaque suivante et ne garantit rien, les collectivités qui ont payé n'ont pas toujours récupéré leurs données. Enfin, on prévient la DSI par téléphone, pas par mail : la messagerie fait peut-être déjà partie du problème.",
       "reponses": [
-        { "libelle": "Débrancher le câble réseau ou couper le Wi-Fi du poste", "correcte": true },
-        { "libelle": "Laisser l'ordinateur allumé et ne plus y toucher", "correcte": true },
-        { "libelle": "Appeler la DSI par téléphone plutôt que par mail", "correcte": true },
-        { "libelle": "Éteindre l'ordinateur pour arrêter le chiffrement", "correcte": false },
-        { "libelle": "Payer la rançon si le montant demandé reste modeste", "correcte": false }
+        {
+          "libelle": "Débrancher le câble réseau ou couper le Wi-Fi du poste",
+          "correcte": true
+        },
+        {
+          "libelle": "Laisser l'ordinateur allumé et ne plus y toucher",
+          "correcte": true
+        },
+        {
+          "libelle": "Appeler la DSI par téléphone plutôt que par mail",
+          "correcte": true
+        },
+        {
+          "libelle": "Éteindre l'ordinateur pour arrêter le chiffrement",
+          "correcte": false
+        },
+        {
+          "libelle": "Payer la rançon si le montant demandé reste modeste",
+          "correcte": false
+        }
       ]
     },
     {
@@ -44,11 +79,26 @@
       "points": 10,
       "explication": "La DSI est le point d'entrée pour tout ce qui touche aux systèmes : elle est la seule à pouvoir couper un accès, isoler un poste et regarder les journaux. La DPO intervient dès que des données personnelles sont concernées, et son horloge est serrée : une violation de données doit être notifiée à la CNIL dans les 72 heures, ce qui laisse peu de place à l'hésitation. Prévenir sa hiérarchie relève du bon sens et permet d'organiser la continuité du service. Ce qui ne fonctionne pas, c'est d'attendre d'être sûr : c'est justement à la DSI d'établir s'il s'est passé quelque chose.",
       "reponses": [
-        { "libelle": "La DSI, immédiatement, même en cas de simple doute", "correcte": true },
-        { "libelle": "La DPO dès que des données personnelles peuvent être concernées", "correcte": true },
-        { "libelle": "Sa hiérarchie, pour organiser la continuité du service", "correcte": true },
-        { "libelle": "Personne tant qu'on n'est pas certain qu'il s'est vraiment passé quelque chose", "correcte": false },
-        { "libelle": "Le prestataire du logiciel, directement, avant d'en parler en interne", "correcte": false }
+        {
+          "libelle": "La DSI, immédiatement, même en cas de simple doute",
+          "correcte": true
+        },
+        {
+          "libelle": "La DPO dès que des données personnelles peuvent être concernées",
+          "correcte": true
+        },
+        {
+          "libelle": "Sa hiérarchie, pour organiser la continuité du service",
+          "correcte": true
+        },
+        {
+          "libelle": "Personne tant qu'on n'est pas certain qu'il s'est vraiment passé quelque chose",
+          "correcte": false
+        },
+        {
+          "libelle": "Le prestataire du logiciel, directement, avant d'en parler en interne",
+          "correcte": false
+        }
       ]
     },
     {
@@ -57,11 +107,26 @@
       "points": 10,
       "explication": "Une collectivité où l'on craint d'être sanctionné est une collectivité où les incidents se découvrent trois mois trop tard. Un signalement rapide vaut mieux qu'un dossier parfait : il doit être accueilli comme un service rendu, parce que c'en est un. Cela n'empêche ni d'analyser ce qui s'est passé, ni d'en tirer un rappel collectif — au contraire, un incident réel raconté sans nommer personne est le meilleur support de sensibilisation qui soit. Ce qui n'a pas sa place, c'est la sanction pour avoir cliqué, et l'affichage public de l'agent concerné.",
       "reponses": [
-        { "libelle": "Le signalement est accueilli comme utile, sans reproche", "correcte": true },
-        { "libelle": "L'incident est analysé pour comprendre ce qui a permis le clic", "correcte": true },
-        { "libelle": "Un rappel collectif peut être fait, sans nommer l'agent", "correcte": true },
-        { "libelle": "Une sanction disciplinaire est engagée pour l'exemple", "correcte": false },
-        { "libelle": "Son nom est cité en réunion de service pour que personne ne recommence", "correcte": false }
+        {
+          "libelle": "Le signalement est accueilli comme utile, sans reproche",
+          "correcte": true
+        },
+        {
+          "libelle": "L'incident est analysé pour comprendre ce qui a permis le clic",
+          "correcte": true
+        },
+        {
+          "libelle": "Un rappel collectif peut être fait, sans nommer l'agent",
+          "correcte": true
+        },
+        {
+          "libelle": "Une sanction disciplinaire est engagée pour l'exemple",
+          "correcte": false
+        },
+        {
+          "libelle": "Son nom est cité en réunion de service pour que personne ne recommence",
+          "correcte": false
+        }
       ]
     },
     {
@@ -70,11 +135,26 @@
       "points": 10,
       "explication": "C'est une violation de données personnelles au sens du RGPD, même si l'erreur est involontaire et le destinataire de bonne foi. La DPO doit être prévenue tout de suite : c'est elle qui apprécie le risque et qui décide de la notification à la CNIL, obligatoire dans les 72 heures lorsque le risque existe. Demander au destinataire de supprimer le message est utile mais ne suffit pas : cela ne prouve rien et n'efface pas l'obligation. Le rappel du message ne fonctionne qu'à l'intérieur de la collectivité, et encore, seulement si le message n'a pas été lu. Il faut aussi documenter l'incident, y compris quand la CNIL n'est finalement pas saisie : c'est une obligation propre.",
       "reponses": [
-        { "libelle": "La DPO doit être prévenue immédiatement : c'est une violation de données", "correcte": true },
-        { "libelle": "L'incident doit être documenté, même s'il n'est finalement pas notifié à la CNIL", "correcte": true },
-        { "libelle": "Il faut demander au destinataire de supprimer le message, sans considérer l'affaire close", "correcte": true },
-        { "libelle": "Rien à signaler : l'envoi était une erreur, pas une malveillance", "correcte": false },
-        { "libelle": "Le rappel de message dans Outlook règle définitivement le problème", "correcte": false }
+        {
+          "libelle": "La DPO doit être prévenue immédiatement : c'est une violation de données",
+          "correcte": true
+        },
+        {
+          "libelle": "L'incident doit être documenté, même s'il n'est finalement pas notifié à la CNIL",
+          "correcte": true
+        },
+        {
+          "libelle": "Il faut demander au destinataire de supprimer le message, sans considérer l'affaire close",
+          "correcte": true
+        },
+        {
+          "libelle": "Rien à signaler : l'envoi était une erreur, pas une malveillance",
+          "correcte": false
+        },
+        {
+          "libelle": "Le rappel de message dans Outlook règle définitivement le problème",
+          "correcte": false
+        }
       ]
     },
     {
@@ -83,11 +163,26 @@
       "points": 10,
       "explication": "Un compte qui écrit tout seul est un compte compromis, et il envoie ses messages depuis une adresse authentique de la Ville — ce qui les rend redoutablement crédibles auprès des collègues et des partenaires. Il faut prévenir la DSI tout de suite pour qu'elle coupe l'accès, sans attendre le retour de la collègue. Prévenir aussi les destinataires que vous connaissez évite quelques clics de plus. Ce qui ne sert à rien, c'est de répondre au message frauduleux pour demander des explications : personne ne lira, ou pire, quelqu'un lira. Et il n'y a aucune raison d'attendre : chaque heure ajoute des destinataires.",
       "reponses": [
-        { "libelle": "Prévenir la DSI immédiatement pour qu'elle coupe l'accès au compte", "correcte": true },
-        { "libelle": "Alerter les collègues destinataires que vous connaissez", "correcte": true },
-        { "libelle": "Ne pas ouvrir les pièces jointes ni les liens de ces messages", "correcte": true },
-        { "libelle": "Attendre son retour de congés pour lui en parler d'abord", "correcte": false },
-        { "libelle": "Répondre au message pour demander à quoi il correspond", "correcte": false }
+        {
+          "libelle": "Prévenir la DSI immédiatement pour qu'elle coupe l'accès au compte",
+          "correcte": true
+        },
+        {
+          "libelle": "Alerter les collègues destinataires que vous connaissez",
+          "correcte": true
+        },
+        {
+          "libelle": "Ne pas ouvrir les pièces jointes ni les liens de ces messages",
+          "correcte": true
+        },
+        {
+          "libelle": "Attendre son retour de congés pour lui en parler d'abord",
+          "correcte": false
+        },
+        {
+          "libelle": "Répondre au message pour demander à quoi il correspond",
+          "correcte": false
+        }
       ]
     },
     {
@@ -96,11 +191,26 @@
       "points": 10,
       "explication": "Des actes d'état civil sont des données personnelles, et leur perte est une violation à traiter comme telle : DPO prévenue, incident documenté, notification à la CNIL appréciée par elle. La question du chiffrement est décisive pour la suite : une clé chiffrée perdue reste illisible et le risque pour les personnes est faible, ce qui change l'analyse du bout au bout. C'est d'ailleurs la vraie leçon de l'histoire : le moment de chiffrer, c'était avant. Espérer que quelqu'un la rapporte à l'accueil n'est pas une réaction, et transporter ce type de documents sur une clé quand un espace partagé existe est ce qu'il faut cesser de faire.",
       "reponses": [
-        { "libelle": "Prévenir la DPO et la DSI le jour même", "correcte": true },
-        { "libelle": "Indiquer si la clé était chiffrée : cela change entièrement l'analyse du risque", "correcte": true },
-        { "libelle": "Documenter l'incident et ce qu'il contenait précisément", "correcte": true },
-        { "libelle": "Attendre quelques jours au cas où on la rapporterait à l'accueil", "correcte": false },
-        { "libelle": "Ne rien dire : la clé est probablement tombée dans un endroit sans risque", "correcte": false }
+        {
+          "libelle": "Prévenir la DPO et la DSI le jour même",
+          "correcte": true
+        },
+        {
+          "libelle": "Indiquer si la clé était chiffrée : cela change entièrement l'analyse du risque",
+          "correcte": true
+        },
+        {
+          "libelle": "Documenter l'incident et ce qu'il contenait précisément",
+          "correcte": true
+        },
+        {
+          "libelle": "Attendre quelques jours au cas où on la rapporterait à l'accueil",
+          "correcte": false
+        },
+        {
+          "libelle": "Ne rien dire : la clé est probablement tombée dans un endroit sans risque",
+          "correcte": false
+        }
       ]
     }
   ]

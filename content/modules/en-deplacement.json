@@ -11,6 +11,11 @@
     "emoji": "🧳",
     "description": "Défi déplacements réussi à 80 % ou plus."
   },
+  "video": {
+    "url": "https://www.dailymotion.com/video/x6ycby7",
+    "titre": "Les risques des réseaux Wi-Fi gratuits  (1:01)",
+    "source": "Cybermalveillance.gouv.fr"
+  },
   "questions": [
     {
       "enonce": "Dans le train, vous préparez une note pour la direction générale. Quels risques réels ?",
@@ -18,11 +23,26 @@
       "points": 10,
       "explication": "Le risque le plus banal est aussi le plus fréquent : la personne assise derrière vous lit tout. Un filtre de confidentialité règle la question pour quelques euros, et se choisir une place adossée aide autant. La conversation téléphonique est le second point : un dossier sensible discuté à voix haute dans un wagon est un dossier public, et l'anecdote circule ensuite. Le troisième est l'oubli, sur la tablette ou dans le porte-bagages, au moment de descendre. En revanche, le Wi-Fi du train n'est pas dangereux en soi tant que vous passez par le tunnel sécurisé, et une clé 4G personnelle est plutôt une bonne solution.",
       "reponses": [
-        { "libelle": "La lecture par-dessus l'épaule, qui ne demande aucun effort", "correcte": true },
-        { "libelle": "La conversation téléphonique entendue de tout le wagon", "correcte": true },
-        { "libelle": "L'oubli du matériel au moment de descendre", "correcte": true },
-        { "libelle": "Le partage de connexion depuis mon propre téléphone", "correcte": false },
-        { "libelle": "Le fait de travailler sur un document, en soi", "correcte": false }
+        {
+          "libelle": "La lecture par-dessus l'épaule, qui ne demande aucun effort",
+          "correcte": true
+        },
+        {
+          "libelle": "La conversation téléphonique entendue de tout le wagon",
+          "correcte": true
+        },
+        {
+          "libelle": "L'oubli du matériel au moment de descendre",
+          "correcte": true
+        },
+        {
+          "libelle": "Le partage de connexion depuis mon propre téléphone",
+          "correcte": false
+        },
+        {
+          "libelle": "Le fait de travailler sur un document, en soi",
+          "correcte": false
+        }
       ]
     },
     {
@@ -31,11 +51,26 @@
       "points": 10,
       "explication": "Un réseau ouvert n'est pas maudit, il est simplement partagé avec des inconnus. Deux précautions le rendent acceptable : passer par le tunnel sécurisé de la Ville, qui chiffre tout ce qui sort du poste, et se méfier des réseaux au nom crédible mais inconnu — un faux point d'accès nommé « Hotel_Wifi_Gratuit » se monte en dix minutes et capte tout ce qui passe. Demander le nom exact du réseau à l'accueil coûte une question. Ce qui doit alerter, c'est un avertissement de certificat au moment de se connecter : c'est le signe qu'on s'interpose. Et un portail qui demande un compte de messagerie pour « s'authentifier » n'a besoin de rien d'autre que de vos identifiants.",
       "reponses": [
-        { "libelle": "Passer par le tunnel sécurisé fourni par la DSI", "correcte": true },
-        { "libelle": "Demander à l'accueil le nom exact du réseau officiel", "correcte": true },
-        { "libelle": "Refuser de continuer si un avertissement de certificat s'affiche", "correcte": true },
-        { "libelle": "Saisir ses identifiants de messagerie sur le portail de connexion s'il le demande", "correcte": false },
-        { "libelle": "Se connecter au réseau ouvert dont le nom semble le plus officiel", "correcte": false }
+        {
+          "libelle": "Passer par le tunnel sécurisé fourni par la DSI",
+          "correcte": true
+        },
+        {
+          "libelle": "Demander à l'accueil le nom exact du réseau officiel",
+          "correcte": true
+        },
+        {
+          "libelle": "Refuser de continuer si un avertissement de certificat s'affiche",
+          "correcte": true
+        },
+        {
+          "libelle": "Saisir ses identifiants de messagerie sur le portail de connexion s'il le demande",
+          "correcte": false
+        },
+        {
+          "libelle": "Se connecter au réseau ouvert dont le nom semble le plus officiel",
+          "correcte": false
+        }
       ]
     },
     {
@@ -44,11 +79,26 @@
       "points": 10,
       "explication": "Un portable éteint et chiffré est illisible pour qui met la main dessus : c'est la protection principale, et elle ne fonctionne qu'à l'arrêt complet — un ordinateur en veille garde ses clés en mémoire. Le coffre de la chambre, s'il en existe un, vaut mieux que le lit. Ce qui compte au moins autant, c'est de ne pas laisser à côté ce qui annule la protection : les identifiants notés sur un carnet, ou la clé USB de sauvegarde. Le mot de passe de session, seul, ne protège pas un disque non chiffré : il suffit de retirer le disque pour tout lire.",
       "reponses": [
-        { "libelle": "L'éteindre complètement plutôt que de le mettre en veille", "correcte": true },
-        { "libelle": "Vérifier que le disque est chiffré", "correcte": true },
-        { "libelle": "Le ranger dans le coffre de la chambre s'il y en a un", "correcte": true },
-        { "libelle": "Ne pas laisser à côté les identifiants notés ou la clé de sauvegarde", "correcte": true },
-        { "libelle": "Me fier au mot de passe de session, qui suffit à protéger les fichiers", "correcte": false }
+        {
+          "libelle": "L'éteindre complètement plutôt que de le mettre en veille",
+          "correcte": true
+        },
+        {
+          "libelle": "Vérifier que le disque est chiffré",
+          "correcte": true
+        },
+        {
+          "libelle": "Le ranger dans le coffre de la chambre s'il y en a un",
+          "correcte": true
+        },
+        {
+          "libelle": "Ne pas laisser à côté les identifiants notés ou la clé de sauvegarde",
+          "correcte": true
+        },
+        {
+          "libelle": "Me fier au mot de passe de session, qui suffit à protéger les fichiers",
+          "correcte": false
+        }
       ]
     },
     {
@@ -57,10 +107,22 @@
       "points": 10,
       "explication": "Un port USB transporte de l'électricité et des données : brancher un téléphone sur une borne inconnue, c'est le brancher sur un appareil inconnu. La parade est simple et tient dans le sac : une batterie externe, ou un câble de charge seule dont les broches de données sont absentes, ou encore votre propre chargeur sur une prise électrique classique — une prise de courant ne transporte pas de données. Refuser la connexion sur l'écran du téléphone aide, mais dépend d'un choix fait dans la précipitation, avec 2 % de batterie et un train à prendre. Autant ne pas dépendre de sa vigilance à ce moment-là.",
       "reponses": [
-        { "libelle": "J'utilise ma batterie externe, ou mon chargeur sur une prise électrique", "correcte": true },
-        { "libelle": "Je branche sur la borne USB : c'est prévu pour ça", "correcte": false },
-        { "libelle": "Je branche et je refuse le transfert de données quand l'écran le demande", "correcte": false },
-        { "libelle": "Je branche en éteignant le téléphone, ce qui empêche tout échange", "correcte": false }
+        {
+          "libelle": "J'utilise ma batterie externe, ou mon chargeur sur une prise électrique",
+          "correcte": true
+        },
+        {
+          "libelle": "Je branche sur la borne USB : c'est prévu pour ça",
+          "correcte": false
+        },
+        {
+          "libelle": "Je branche et je refuse le transfert de données quand l'écran le demande",
+          "correcte": false
+        },
+        {
+          "libelle": "Je branche en éteignant le téléphone, ce qui empêche tout échange",
+          "correcte": false
+        }
       ]
     },
     {
@@ -69,11 +131,26 @@
       "points": 10,
       "explication": "La collecte d'informations en salon est un exercice discret et efficace : personne ne se méfie autour d'un café. Le nom du logiciel métier et de son éditeur permet de cibler les failles connues ; savoir qui décide des achats informatiques ouvre la voie à une fraude au virement bien construite ; connaître les périodes de congés du service indique quand attaquer. Ces trois questions n'ont rien d'illégal, et c'est bien le problème : la réponse utile est de renvoyer vers les canaux officiels. En revanche, le nombre d'habitants de Châtillon et le nom de la Maire figurent sur le site de la Ville : les taire n'apporterait rien.",
       "reponses": [
-        { "libelle": "Le nom du logiciel métier utilisé et de son éditeur", "correcte": true },
-        { "libelle": "Qui décide des achats informatiques dans la collectivité", "correcte": true },
-        { "libelle": "Les périodes où le service tourne en effectif réduit", "correcte": true },
-        { "libelle": "Le nombre d'habitants de la commune", "correcte": false },
-        { "libelle": "Le nom de la Maire", "correcte": false }
+        {
+          "libelle": "Le nom du logiciel métier utilisé et de son éditeur",
+          "correcte": true
+        },
+        {
+          "libelle": "Qui décide des achats informatiques dans la collectivité",
+          "correcte": true
+        },
+        {
+          "libelle": "Les périodes où le service tourne en effectif réduit",
+          "correcte": true
+        },
+        {
+          "libelle": "Le nombre d'habitants de la commune",
+          "correcte": false
+        },
+        {
+          "libelle": "Le nom de la Maire",
+          "correcte": false
+        }
       ]
     },
     {
@@ -82,11 +159,26 @@
       "points": 10,
       "explication": "Le principe est celui du strict nécessaire : ce qui n'est pas dans le sac ne peut pas être perdu dans un train. Un ordre du jour et une note de synthèse anonymisée suffisent presque toujours. Le dossier nominatif complet, lui, reste au bureau : s'il faut y accéder, ce sera par le poste, avec le tunnel sécurisé. Et si un document sensible doit absolument voyager, il reste dans le bagage à main — jamais dans une valise en soute ni dans un coffre de voiture, où les vols sont fréquents et les assurances peu compatissantes.",
       "reponses": [
-        { "libelle": "L'ordre du jour et les notes strictement nécessaires à la réunion", "correcte": true },
-        { "libelle": "Une note de synthèse anonymisée plutôt que les dossiers nominatifs", "correcte": true },
-        { "libelle": "Garder tout document sensible dans le bagage à main", "correcte": true },
-        { "libelle": "Le dossier nominatif complet, au cas où une question serait posée", "correcte": false },
-        { "libelle": "Les documents sensibles dans le coffre de la voiture, fermé à clé", "correcte": false }
+        {
+          "libelle": "L'ordre du jour et les notes strictement nécessaires à la réunion",
+          "correcte": true
+        },
+        {
+          "libelle": "Une note de synthèse anonymisée plutôt que les dossiers nominatifs",
+          "correcte": true
+        },
+        {
+          "libelle": "Garder tout document sensible dans le bagage à main",
+          "correcte": true
+        },
+        {
+          "libelle": "Le dossier nominatif complet, au cas où une question serait posée",
+          "correcte": false
+        },
+        {
+          "libelle": "Les documents sensibles dans le coffre de la voiture, fermé à clé",
+          "correcte": false
+        }
       ]
     },
     {
@@ -95,11 +187,26 @@
       "points": 10,
       "explication": "Une fouille sans vol est plus inquiétante qu'un vol : quelqu'un a cherché autre chose que de la valeur marchande, ou a copié quelque chose. Le matériel doit être remis à la DSI pour vérification avant d'être rebranché au réseau de la Ville — un appareil manipulé peut avoir reçu un accessoire ou une modification. Changer ses mots de passe depuis un autre poste est une précaution peu coûteuse. Et le signalement compte, y compris auprès de la hiérarchie, parce qu'un incident isolé n'a pas le même sens qu'une série. Se dire que rien ne manque et reprendre le travail est précisément la réaction sur laquelle compte celui qui a fouillé.",
       "reponses": [
-        { "libelle": "Remettre le matériel à la DSI avant de le rebrancher au réseau", "correcte": true },
-        { "libelle": "Changer mes mots de passe depuis un autre poste", "correcte": true },
-        { "libelle": "Signaler l'incident à ma hiérarchie", "correcte": true },
-        { "libelle": "Ne rien faire puisque rien ne manque", "correcte": false },
-        { "libelle": "Vérifier moi-même le contenu de l'ordinateur avant d'en parler", "correcte": false }
+        {
+          "libelle": "Remettre le matériel à la DSI avant de le rebrancher au réseau",
+          "correcte": true
+        },
+        {
+          "libelle": "Changer mes mots de passe depuis un autre poste",
+          "correcte": true
+        },
+        {
+          "libelle": "Signaler l'incident à ma hiérarchie",
+          "correcte": true
+        },
+        {
+          "libelle": "Ne rien faire puisque rien ne manque",
+          "correcte": false
+        },
+        {
+          "libelle": "Vérifier moi-même le contenu de l'ordinateur avant d'en parler",
+          "correcte": false
+        }
       ]
     }
   ]

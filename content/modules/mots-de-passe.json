@@ -11,6 +11,11 @@
     "emoji": "🔐",
     "description": "Défi mots de passe réussi à 80 % ou plus."
   },
+  "video": {
+    "url": "https://www.dailymotion.com/video/x8rkmth",
+    "titre": "Mots de passe — campagne « Voilà »  (0:56)",
+    "source": "Cybermalveillance.gouv.fr"
+  },
   "questions": [
     {
       "enonce": "Parmi ces mots de passe, lesquels sont réellement solides ?",
