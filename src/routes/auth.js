@@ -5,6 +5,7 @@ import { verifierAdminLocal, existeAdminLocal } from '../lib/admin-local.js';
 import { db, journaliser } from '../lib/db.js';
 import { config } from '../lib/config.js';
 import { creerSession, detruireSession, lireSession, COOKIE, optionsCookie } from '../lib/session.js';
+import { prenomUsuel } from '../lib/prenom.js';
 
 const MESSAGES = {
   identifiants_vides: 'Merci de saisir votre identifiant et votre mot de passe.',
@@ -99,17 +100,20 @@ export default async function routesAuth(app) {
     const serviceAffiche = resoudreService(a.service);
 
     db.prepare(`
-      INSERT INTO agents (login, nom_complet, email, service, service_ad, service_brut, est_admin, vu_le)
-      VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      INSERT INTO agents (login, nom_complet, prenom, email, service, service_ad, service_brut, est_admin, vu_le)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
       ON CONFLICT(login) DO UPDATE SET
         nom_complet = excluded.nom_complet,
+        -- COALESCE : un annuaire sans givenName ne doit pas effacer un
+        -- prenom deja connu par ailleurs.
+        prenom      = COALESCE(excluded.prenom, agents.prenom),
         email       = excluded.email,
         service     = excluded.service,
         service_ad  = excluded.service_ad,
         service_brut= excluded.service_brut,
         est_admin   = excluded.est_admin,
         vu_le       = datetime('now')
-    `).run(a.login, a.nomComplet, a.email, serviceAffiche, a.service, a.serviceBrut, estAdmin);
+    `).run(a.login, a.nomComplet, a.prenom || null, a.email, serviceAffiche, a.service, a.serviceBrut, estAdmin);
 
     const agent = db.prepare('SELECT * FROM agents WHERE login = ?').get(a.login);
     const token = creerSession(agent.id);
@@ -182,6 +186,7 @@ export default async function routesAuth(app) {
     if (!agent) return reponse.code(401).send({ erreur: 'Non connecté' });
     return {
       nomComplet: agent.nom_complet,
+      prenom: prenomUsuel(agent.nom_complet, agent.prenom),
       login: agent.login,
       service: agent.service,
       estAdmin: !!agent.est_admin,

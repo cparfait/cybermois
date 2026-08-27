@@ -170,6 +170,9 @@ export async function authentifier(login, motDePasse) {
     agent: {
       login: String(entree.sAMAccountName || login).toLowerCase(),
       nomComplet: String(entree.displayName || prenomNom || login),
+      // Renvoye a part du nom complet : l'accueil s'adresse a l'agent par
+      // son prenom, et displayName ne dit pas ou il commence.
+      prenom: entree.givenName ? String(entree.givenName) : null,
       email: entree.mail ? String(entree.mail) : null,
       service: normaliserService(brut),
       serviceBrut: String(entree.dn),
@@ -291,6 +294,7 @@ export async function listerAgentsAnnuaire({ limite = 20000 } = {}) {
       return {
         login: String(e.sAMAccountName || '').toLowerCase(),
         nomComplet: String(e.displayName || prenomNom || e.sAMAccountName || ''),
+        prenom: e.givenName ? String(e.givenName) : null,
         email: e.mail ? String(e.mail).toLowerCase() : null,
         serviceAd: normaliserService(brut),
         dn: String(e.dn),

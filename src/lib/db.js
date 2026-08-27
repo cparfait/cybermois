@@ -160,6 +160,10 @@ ajouterColonne('agents', 'service_force', 'INTEGER NOT NULL DEFAULT 0');
 // correspondance. Le conserver permet de rejouer un regroupement a tout moment.
 ajouterColonne('agents', 'service_ad', 'TEXT');
 
+// Le prenom de l'annuaire (givenName). Sans lui, il faut deviner ou couper
+// le nom complet, et « NOM Prenom » donne alors « Bonjour DUPONT ».
+ajouterColonne('agents', 'prenom', 'TEXT');
+
 // Chaque defi porte son badge : cable sur le numero de semaine, il devenait
 // faux des qu'on changeait de theme ou qu'on inserait une semaine.
 ajouterColonne('defis', 'badge_code', 'TEXT');

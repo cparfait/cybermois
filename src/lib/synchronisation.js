@@ -242,14 +242,18 @@ export async function appliquerSynchronisation({
   const enBase = new Map(db.prepare('SELECT id, login, exclu, origine FROM agents').all().map((a) => [a.login, a]));
 
   const inserer = db.prepare(`
-    INSERT INTO agents (login, nom_complet, email, service, service_ad, service_brut, origine, est_admin)
-    VALUES (?, ?, ?, ?, ?, ?, 'annuaire', ?)
+    INSERT INTO agents (login, nom_complet, prenom, email, service, service_ad, service_brut, origine, est_admin)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'annuaire', ?)
   `);
   // Une exclusion decidee par l'administration survit a la synchronisation :
   // sinon il faudrait refaire le tri a chaque fois. Seules les exclusions
   // prononcees par l'annuaire lui-meme sont levees quand le compte redevient actif.
   const majorer = db.prepare(`
-    UPDATE agents SET nom_complet = ?, email = COALESCE(?, email),
+    UPDATE agents SET nom_complet = ?,
+                      -- COALESCE : un annuaire muet sur givenName ne doit pas
+                      -- effacer un prenom deja connu.
+                      prenom = COALESCE(?, prenom),
+                      email = COALESCE(?, email),
                       -- Un rattachement decide a la main resiste a l'annuaire :
                       -- c'est tout l'interet de l'avoir saisi.
                       service    = CASE WHEN service_force = 1 THEN service    ELSE ? END,
@@ -297,7 +301,7 @@ export async function appliquerSynchronisation({
       if (!a || !a.actif || enBase.has(login)) continue;
       // Verification cote serveur : la regle ne doit pas dependre du formulaire
       if (config.sync.exigerEmail && !a.email) { refusesSansAdresse++; continue; }
-      inserer.run(a.login, a.nomComplet, a.email, resoudreService(a.serviceAd), a.serviceAd, a.dn,
+      inserer.run(a.login, a.nomComplet, a.prenom || null, a.email, resoudreService(a.serviceAd), a.serviceAd, a.dn,
         config.adminLogins.includes(a.login) ? 1 : 0);
       ajoutes++;
     }
@@ -307,7 +311,7 @@ export async function appliquerSynchronisation({
         const existant = enBase.get(a.login);
         // Les comptes locaux d'administration ne sont pas pilotes par l'annuaire
         if (!existant || !a.actif || existant.origine === 'local') continue;
-        majorer.run(a.nomComplet, a.email, resoudreService(a.serviceAd), a.serviceAd, a.dn, a.login);
+        majorer.run(a.nomComplet, a.prenom || null, a.email, resoudreService(a.serviceAd), a.serviceAd, a.dn, a.login);
         misAJour++;
       }
     }

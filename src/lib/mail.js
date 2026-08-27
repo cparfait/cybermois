@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { prenomUsuel } from './prenom.js';
 import { config } from './config.js';
 import { db } from './db.js';
 import { classementServices, classementAgents, statistiquesGlobales } from './scoring.js';
@@ -177,7 +178,7 @@ export function mailRelance(agent, semaine) {
   const stats = classementServices().find((s) => s.service === agent.service);
 
   const corps = `
-<p>Bonjour ${echapper((agent.nom_complet || '').split(' ')[0] || '')},</p>
+<p>Bonjour ${echapper(prenomUsuel(agent.nom_complet, agent.prenom))},</p>
 <p>Le défi de la semaine ${semaine}, <strong>${echapper(defi.titre)}</strong>, vous attend toujours.</p>
 <p style="background:#f4f8dd;border-left:4px solid #aec80c;padding:12px 16px;margin:20px 0;">
   ${stats
@@ -247,7 +248,7 @@ ${bouton(`${config.publicUrl}/classement`, 'Voir le classement complet')}
 
 export function mailDiplome(agent) {
   const corps = `
-<p>Bonjour ${echapper((agent.nom_complet || '').split(' ')[0] || '')},</p>
+<p>Bonjour ${echapper(prenomUsuel(agent.nom_complet, agent.prenom))},</p>
 <p>Vous avez terminé <strong>les quatre défis du Cybermois</strong>. Bravo !</p>
 <p>Votre attestation de participation est disponible sur le portail : vous pouvez la télécharger et l'imprimer.</p>
 ${bouton(`${config.publicUrl}/profil`, 'Récupérer mon attestation')}

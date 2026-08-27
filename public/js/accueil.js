@@ -51,7 +51,7 @@ try {
 
   document.getElementById('heros').innerHTML = `
     <section class="heros">
-      <p class="surtitre">Bonjour ${echapper((agent.nomComplet || '').split(' ')[0] || '')}</p>
+      <p class="surtitre">Bonjour ${echapper(agent.prenom || agent.nomComplet || '')}</p>
       <h1>${echapper(titre)}</h1>
       <p style="max-width:52ch;margin:0">
         Vous jouez pour <strong>${echapper(agent.service)}</strong>.
