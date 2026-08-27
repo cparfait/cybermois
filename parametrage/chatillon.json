@@ -1,0 +1,357 @@
+{
+  "version": 1,
+  "collectivite": "Ville de Châtillon",
+  "note": "Cybermois 2026 — référentiel, regroupements et exclusions établis en recette",
+  "referentiel": [
+    {
+      "nom": "Handicap",
+      "actif": true
+    },
+    {
+      "nom": "Achats et Commande Publique",
+      "actif": true
+    },
+    {
+      "nom": "Action culturelle",
+      "actif": true
+    },
+    {
+      "nom": "Administration Générale -Affaires juridiques-Assurances-Courrier",
+      "actif": true
+    },
+    {
+      "nom": "Services Techniques",
+      "actif": true
+    },
+    {
+      "nom": "Archives",
+      "actif": true
+    },
+    {
+      "nom": "CMS",
+      "actif": true
+    },
+    {
+      "nom": "Cabinet de la Maire",
+      "actif": true
+    },
+    {
+      "nom": "Cadre de vie et Transition écologique",
+      "actif": true
+    },
+    {
+      "nom": "Centre Technique municipal",
+      "actif": true
+    },
+    {
+      "nom": "Commerce et Attractivité",
+      "actif": true
+    },
+    {
+      "nom": "Communication et Evènementiel",
+      "actif": true
+    },
+    {
+      "nom": "Cuisine centrale et son évolution",
+      "actif": true
+    },
+    {
+      "nom": "DPO",
+      "actif": true
+    },
+    {
+      "nom": "DRH",
+      "actif": true
+    },
+    {
+      "nom": "Direction des Services Techniques et chargées d'opérations des Services Techniques",
+      "actif": true
+    },
+    {
+      "nom": "Direction et administation du CCAS et Maintien à domicile",
+      "actif": true
+    },
+    {
+      "nom": "Direction générale",
+      "actif": true
+    },
+    {
+      "nom": "Education",
+      "actif": true
+    },
+    {
+      "nom": "Entretien des écoles élémentaires et bâtiments communaux",
+      "actif": true
+    },
+    {
+      "nom": "Etat-Civil",
+      "actif": true
+    },
+    {
+      "nom": "Finances",
+      "actif": true
+    },
+    {
+      "nom": "Logement et aides légales",
+      "actif": true
+    },
+    {
+      "nom": "Ludo-Médiathèque",
+      "actif": true
+    },
+    {
+      "nom": "Maison des Arts et Maison du Patrimoine",
+      "actif": true
+    },
+    {
+      "nom": "Maison des Enfants",
+      "actif": true
+    },
+    {
+      "nom": "Maison des Seniors",
+      "actif": true
+    },
+    {
+      "nom": "Petite Enfance",
+      "actif": true
+    },
+    {
+      "nom": "Police Municipale",
+      "actif": true
+    },
+    {
+      "nom": "Procédures internes",
+      "actif": true
+    },
+    {
+      "nom": "Propreté Urbaine",
+      "actif": true
+    },
+    {
+      "nom": "Prévention et Citoyenneté",
+      "actif": true
+    },
+    {
+      "nom": "Relations avec les habitants et Démocratie locale et Vie associative",
+      "actif": true
+    },
+    {
+      "nom": "Résidence Monfort",
+      "actif": true
+    },
+    {
+      "nom": "Service Jeunesse",
+      "actif": true
+    },
+    {
+      "nom": "Sports",
+      "actif": true
+    },
+    {
+      "nom": "Direction des Systèmes d'information",
+      "actif": true
+    },
+    {
+      "nom": "Urbanisme et Aménagement et Foncier",
+      "actif": true
+    }
+  ],
+  "regroupements": [
+    {
+      "source": "Crêche Flûte Enchantée",
+      "cible": "Petite Enfance"
+    },
+    {
+      "source": "Crêche Ile aux Trésors",
+      "cible": "Petite Enfance"
+    },
+    {
+      "source": "Crêche Jardin d'Enfants",
+      "cible": "Petite Enfance"
+    },
+    {
+      "source": "Crêche La Cigogne",
+      "cible": "Petite Enfance"
+    },
+    {
+      "source": "Crêche Petit Poucet",
+      "cible": "Petite Enfance"
+    },
+    {
+      "source": "Crêche Petit Prince",
+      "cible": "Petite Enfance"
+    },
+    {
+      "source": "Crêche Pierrelais",
+      "cible": "Petite Enfance"
+    },
+    {
+      "source": "Crêche Sablons",
+      "cible": "Petite Enfance"
+    },
+    {
+      "source": "Relais Assistance Parentale",
+      "cible": "Petite Enfance"
+    },
+    {
+      "source": "Relais Petite Enfance",
+      "cible": "Petite Enfance"
+    }
+  ],
+  "exclusionsSync": [
+    {
+      "champ": "dn",
+      "motif": "OU=Comptes de service"
+    },
+    {
+      "champ": "service",
+      "motif": "Elus de"
+    }
+  ],
+  "agents": [
+    {
+      "login": "a.gazo",
+      "nom": "GAZO Alain",
+      "exclu": true,
+      "motif": null
+    },
+    {
+      "login": "accueil.mater.joliot",
+      "nom": "Accueil Maternelle Joliot Curie",
+      "service": "Accueil",
+      "serviceAnnuaire": "Accueil"
+    },
+    {
+      "login": "accueil.mater.langev",
+      "nom": "Accueil Maternelle Langevin Wallon",
+      "service": "Accueil",
+      "serviceAnnuaire": "Accueil"
+    },
+    {
+      "login": "accueil.mater.sablon",
+      "nom": "Accueil Maternelle des Sablons",
+      "service": "Accueil",
+      "serviceAnnuaire": "Accueil"
+    },
+    {
+      "login": "c.guillerm",
+      "nom": "GUILLERM Carole",
+      "exclu": true,
+      "motif": null
+    },
+    {
+      "login": "ciril",
+      "nom": "CIRIL",
+      "exclu": true,
+      "motif": "Écarté depuis l'écran de rattachement"
+    },
+    {
+      "login": "cnas",
+      "nom": "CNAS Châtillon",
+      "exclu": true,
+      "motif": "Écarté depuis l'écran de rattachement"
+    },
+    {
+      "login": "collecte.sapins",
+      "nom": "Collecte SAPINS",
+      "exclu": true,
+      "motif": "Écarté depuis l'écran de rattachement"
+    },
+    {
+      "login": "e.simi",
+      "nom": "SIMI Emmanuelle",
+      "exclu": true,
+      "motif": null
+    },
+    {
+      "login": "flip",
+      "nom": "Ecrans FLIP",
+      "exclu": true,
+      "motif": "Écarté depuis l'écran de rattachement"
+    },
+    {
+      "login": "formation",
+      "nom": "Formation",
+      "exclu": true,
+      "motif": "Écarté depuis l'écran de rattachement"
+    },
+    {
+      "login": "i.vazbranco",
+      "nom": "VAZ BRANCO Isabel",
+      "exclu": true,
+      "motif": null
+    },
+    {
+      "login": "j.boulay",
+      "nom": "BOULAY Jackie",
+      "exclu": true,
+      "motif": null
+    },
+    {
+      "login": "m.braun",
+      "nom": "BRAUN Marianne",
+      "service": "Petite Enfance",
+      "serviceAnnuaire": "Petite Enfance"
+    },
+    {
+      "login": "maxhub.formation",
+      "nom": "Maxhub FORMATION",
+      "exclu": true,
+      "motif": "Écarté depuis l'écran de rattachement"
+    },
+    {
+      "login": "ne_pas_repondre",
+      "nom": "VILLE DE CHATILLON",
+      "exclu": true,
+      "motif": "Écarté depuis l'écran de rattachement"
+    },
+    {
+      "login": "pelehas",
+      "nom": "PELEHAS",
+      "exclu": true,
+      "motif": "Écarté depuis l'écran de rattachement"
+    },
+    {
+      "login": "s.estevao",
+      "nom": "ESTEVAO Susana",
+      "exclu": true,
+      "motif": null
+    },
+    {
+      "login": "scan",
+      "nom": "SCAN",
+      "exclu": true,
+      "motif": "Écarté depuis l'écran de rattachement"
+    },
+    {
+      "login": "supervision",
+      "nom": "Supervision",
+      "exclu": true,
+      "motif": "Écarté depuis l'écran de rattachement"
+    },
+    {
+      "login": "support",
+      "nom": "Support Informatique",
+      "exclu": true,
+      "motif": "Écarté depuis l'écran de rattachement"
+    },
+    {
+      "login": "test.maarch",
+      "nom": "test maarch",
+      "exclu": true,
+      "motif": "Écarté depuis l'écran de rattachement"
+    },
+    {
+      "login": "varonis.mail",
+      "nom": "Varonis MAIL",
+      "exclu": true,
+      "motif": "Écarté depuis l'écran de rattachement"
+    },
+    {
+      "login": "w.thay",
+      "nom": "THAY William",
+      "exclu": true,
+      "motif": null
+    }
+  ]
+}

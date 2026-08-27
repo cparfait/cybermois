@@ -12,7 +12,8 @@
     "seed": "node src/lib/seed.js",
     "admin": "node src/lib/cli-admin.js",
     "diagnostic": "node tests/diagnostic-ad.mjs",
-    "nettoyer-demo": "node src/lib/nettoyer-demo.js"
+    "nettoyer-demo": "node src/lib/nettoyer-demo.js",
+    "parametrage": "node src/lib/cli-parametrage.js"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

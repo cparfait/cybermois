@@ -13,6 +13,9 @@ RUN npm install --omit=dev --no-audit --no-fund
 COPY src ./src
 COPY public ./public
 COPY content ./content
+# Le parametrage de classement voyage avec l'image : sans lui, l'import en
+# production n'aurait aucun fichier a lire.
+COPY parametrage ./parametrage
 
 # La base SQLite et les certificats sont montes en volume
 RUN mkdir -p /app/data /app/certs && \
