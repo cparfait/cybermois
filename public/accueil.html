@@ -50,10 +50,23 @@
      seule couche animee, et le contenu de la carte reste intact. */
   .carte-defi.a-jouer { border-top-color: var(--vert-clair); }
 
+  /* C'est l'angle du degrade qui tourne, pas le cadre.
+     Faire pivoter l'element lui-meme revenait a faire tourner un rectangle :
+     ses coins balayaient toute la page en diagonale. Ici rien ne bouge
+     geometriquement, le debordement est donc impossible par construction. */
+  @property --angle-halo {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+
   .halo {
     position: absolute; inset: -1px; border-radius: inherit; z-index: 0;
     padding: 1.5px; pointer-events: none; opacity: .75;
-    background: conic-gradient(from 0deg,
+    /* Repete ici pour les navigateurs sans @property : la variable resout
+       quand meme, le filet reste colore, il ne tourne simplement pas. */
+    --angle-halo: 0deg;
+    background: conic-gradient(from var(--angle-halo),
       transparent 0deg, transparent 250deg,
       var(--vert-clair) 300deg, var(--vert-fonce) 340deg, transparent 360deg);
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -66,7 +79,7 @@
   /* Le contenu passe devant le filet, sans quoi le degrade le traverserait. */
   .carte-defi > *:not(.halo) { position: relative; z-index: 1; }
 
-  @keyframes ronde { to { rotate: 360deg; } }
+  @keyframes ronde { to { --angle-halo: 360deg; } }
 
   /* Sans mouvement, le bord garde la couleur : la carte reste distinguee, ce
      qui est le seul role de cette animation. */
