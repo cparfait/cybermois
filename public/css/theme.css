@@ -141,20 +141,27 @@ a:hover { color: var(--vert-fonce-sombre); }
   position: sticky; top: 0; z-index: 50;
 }
 .entete-interne {
-  display: flex; align-items: center; gap: 1rem;
-  padding: .7rem 0; flex-wrap: wrap;
+  display: flex; align-items: center; gap: .8rem;
+  padding: .6rem 0; flex-wrap: wrap;
 }
-/* Logo horizontal : la hauteur seule le rendrait minuscule ou envahissant
-   selon la largeur disponible. On borne les deux. */
-.logo-ville { height: 38px; width: auto; max-width: 190px; display: block; }
+/* Le logo et la marque forment un seul bloc, cale sur la meme ligne que la
+   navigation. Le paragraphe .marque portait les marges par defaut du
+   navigateur - un em au-dessus et en dessous - ce qui le decalait du logo et
+   gonflait la barre sans raison. Un filet vertical les separe : sans lui,
+   « Cybermois 2026 » se lit comme la suite du nom de la ville. */
+.logo-ville { height: 34px; width: auto; max-width: 190px; display: block; flex: none; }
 .marque {
   font-family: var(--police-titre); font-weight: 900;
-  font-size: 1.05rem; letter-spacing: -.01em; color: var(--vert-fonce);
-  line-height: 1.15; margin-right: auto;
+  font-size: 1rem; letter-spacing: -.01em; color: var(--vert-fonce);
+  line-height: 1.15; margin: 0 auto 0 0;
+  padding-left: .8rem; border-left: 1px solid var(--bordure);
 }
-/* Le nom de la Ville figure desormais dans le logo : le repeter a cote
-   ferait doublon. Seul « Cybermois 2026 » subsiste. */
-
+@media (max-width: 560px) {
+  /* Sur un telephone la navigation passe a la ligne : le filet vertical n'a
+     alors plus rien a separer, et le bloc doit tenir sur toute la largeur. */
+  .marque { border-left: none; padding-left: 0; }
+  .nav-principale { width: 100%; }
+}
 .nav-principale { display: flex; gap: .25rem; flex-wrap: wrap; align-items: center; }
 .nav-principale a {
   font-family: var(--police-ui); font-size: .88rem; font-weight: 600;
