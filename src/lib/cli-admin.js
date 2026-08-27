@@ -9,10 +9,13 @@
  *   npm run admin -- definir admin            (mot de passe genere)
  *   npm run admin -- supprimer ancien-compte
  *
- * En conteneur :
- *   docker compose exec cybermois npm run admin -- definir admin "ma phrase"
+ * En conteneur, TOUJOURS depuis le conteneur - jamais depuis le clone git,
+ * ou la base se resoudrait dans app/data et n'aurait aucun effet :
+ *
+ *   docker exec -it cybermois npm run admin -- definir admin "ma phrase"
  */
 import crypto from 'node:crypto';
+import { config } from './config.js';
 import { pathToFileURL } from 'node:url';
 import {
   listerAdminsLocaux, definirAdminLocal, supprimerAdminLocal, existeAdminLocal,
@@ -42,6 +45,11 @@ export function executer(arguments_) {
     return 0;
   }
 
+  // La base se resout par rapport au dossier courant. Lancer cet outil depuis
+  // le clone git plutot que dans le conteneur ecrit alors dans une base que
+  // personne ne lit, sans que rien ne le signale : on l'annonce.
+  console.log(`Base : ${config.dbFile}`);
+
   if (commande === 'lister') {
     const comptes = listerAdminsLocaux();
     if (!comptes.length) {
@@ -70,7 +78,11 @@ export function executer(arguments_) {
     console.log('\n  Compte administrateur local enregistre.\n');
     console.log(`    Identifiant  : ${String(login).toLowerCase()}`);
     console.log(`    Mot de passe : ${mdp}`);
-    console.log('\n  Connexion : page d\'accueil du portail, lien « Connexion administrateur local ».\n');
+    // Le formulaire de connexion est unique : il essaie d'abord le compte
+    // local, puis l'annuaire. Il n'y a plus de lien separe a chercher.
+    console.log('');
+    console.log('  Connexion : formulaire habituel du portail, avec ces identifiants.');
+    console.log('');
     return 0;
   }
 
