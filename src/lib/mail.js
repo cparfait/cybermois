@@ -68,11 +68,22 @@ const versTexte = (html) => html
 
 /* ------------------------------------------------------------- Contenus */
 
-/** Mail de lancement : destine a etre copie-colle par la DPO depuis sa propre boite. */
+/**
+ * Mail de lancement : destine a etre copie-colle par la DPO depuis sa propre boite.
+ *
+ * La premiere semaine n'annonce pas un defi, elle ouvre une operation : il faut
+ * dire qui la porte, ce qui est mesure, et ce qui ne l'est pas. Un agent qui
+ * decouvre un classement nominatif sans avoir rien lu se demande d'abord si sa
+ * hierarchie va voir son score - et ne joue pas. Les semaines suivantes se
+ * contentent d'annoncer le defi, l'operation etant deja connue.
+ */
 export function mailLancement(semaine) {
   const defi = db.prepare('SELECT * FROM defis WHERE semaine = ?').get(semaine);
   if (!defi) return null;
   const lien = `${config.publicUrl}/defi/${semaine}`;
+  const nbDefis = db.prepare('SELECT COUNT(*) AS n FROM defis WHERE publie = 1').get().n;
+
+  if (Number(semaine) === 1) return mailOuverture(defi, lien, nbDefis);
 
   const corps = `
 <p>Bonjour à toutes et à tous,</p>
@@ -88,6 +99,73 @@ ${bouton(lien, 'Je relève le défi')}
   return {
     objet: `Cybermois — Semaine ${semaine} : ${defi.titre}`,
     html: gabarit({ titre: `Semaine ${semaine}`, preheader: defi.accroche, corps }),
+    texte: versTexte(corps),
+  };
+}
+
+/**
+ * Ouverture de la campagne, signee de la DPO.
+ *
+ * Trois choses doivent y figurer, et l'ordre compte. Ce qu'on demande - cinq
+ * minutes, pas un examen. Ce qui est mesure et vu par qui : un classement
+ * nominatif decouvert sans preavis fait fuir plus d'agents qu'il n'en motive.
+ * Et l'information RGPD, qui n'est pas une formalite mais precisement ce qui
+ * rend la premiere credible.
+ */
+function mailOuverture(defi, lien, nbDefis) {
+  const corps = `
+<p>Bonjour à toutes et à tous,</p>
+
+<p>Octobre est le <strong>mois européen de la cybersécurité</strong>. La Ville de Châtillon
+y participe cette année avec une opération courte, ouverte à tous les agents :
+<strong>le Cybermois</strong>.</p>
+
+<h2 style="font-family:'Montserrat',Arial,sans-serif;font-size:21px;color:#006e46;margin:22px 0 6px;">Semaine 1 — ${echapper(defi.titre)}</h2>
+<p style="font-style:italic;color:#4a5a53;margin-top:0;">${echapper(defi.accroche)}</p>
+
+<p><strong>${nbDefis} défis, un par semaine, ${defi.duree_minutes} minutes chacun.</strong>
+Des questions concrètes, tirées de situations qui se produisent vraiment dans une
+collectivité. Après chaque réponse, la correction vous dit ce que vous avez trouvé,
+ce qui vous a échappé, et pourquoi.</p>
+
+${bouton(lien, 'Je relève le premier défi')}
+
+<p>Connectez-vous avec <strong>vos identifiants de session Windows</strong> — votre
+identifiant ou votre adresse professionnelle, au choix. Il n'y a rien à installer,
+et vous pouvez jouer depuis un téléphone.</p>
+
+<h3 style="font-family:'Montserrat',Arial,sans-serif;font-size:17px;color:#006e46;margin:26px 0 6px;">Ce n'est pas un examen</h3>
+<p>Aucun résultat individuel n'est transmis à votre hiérarchie, et se tromper n'a
+aucune conséquence : c'est même l'intérêt de l'exercice. Les questions sont conçues
+pour piéger des gens attentifs, parce que les attaques réelles le sont aussi.</p>
+
+<p>Le classement se fait <strong>par service</strong> : chaque défi terminé rapporte des
+points au vôtre. Un classement individuel existe aussi ; si vous préférez ne pas y
+figurer nominativement, écrivez-moi — votre participation continuera de compter pour
+votre service, sans que votre nom apparaisse.</p>
+
+<h3 style="font-family:'Montserrat',Arial,sans-serif;font-size:17px;color:#006e46;margin:26px 0 6px;">Vos données</h3>
+<p>Le portail utilise votre identifiant, votre nom, votre adresse professionnelle et
+votre service, lus dans l'annuaire de la collectivité. Vos réponses et vos scores sont
+conservés jusqu'à la fin de l'année suivant la campagne ; un décompte du nombre de
+défis suivis est gardé trois ans comme preuve de l'action de sensibilisation.
+<strong>Votre mot de passe n'est jamais enregistré</strong> : il sert uniquement à vous
+authentifier auprès de l'annuaire.</p>
+
+<p>Vous disposez d'un droit d'accès, de rectification, d'effacement, de limitation et
+d'opposition sur ces données. Les mentions légales complètes sont accessibles depuis le
+portail, et je reste à votre disposition pour toute question.</p>
+
+<p>Bonne campagne à toutes et à tous,</p>
+<p>La déléguée à la protection des données<br>Ville de Châtillon</p>`;
+
+  return {
+    objet: `Cybermois : ${nbDefis} défis pour aiguiser vos réflexes — le premier est en ligne`,
+    html: gabarit({
+      titre: 'Ouverture du Cybermois',
+      preheader: `${nbDefis} défis, ${defi.duree_minutes} minutes chacun. Le classement se fait par service.`,
+      corps,
+    }),
     texte: versTexte(corps),
   };
 }

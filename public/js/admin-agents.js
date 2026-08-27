@@ -110,6 +110,27 @@ export async function chargerAgents() {
       ${tuile(r.anonymes, 'masqués du classement', 'anonymes')}
     </div>
 
+    ${d.horsReferentiel?.length ? `
+      <div class="message message-alerte" style="margin-bottom:1.1rem">
+        <strong>${d.horsReferentiel.reduce((n, s) => n + s.n, 0)} agent(s)
+        rattachés à ${d.horsReferentiel.length} service(s) absents du référentiel.</strong>
+        Ils apparaîtront au classement sous un nom que la collectivité ne reconnaît pas.
+        <details style="margin-top:.5rem">
+          <summary class="ui" style="cursor:pointer;font-size:.85rem">Voir lesquels</summary>
+          <ul class="ui" style="font-size:.84rem;columns:2;margin:.4rem 0 0">
+            ${d.horsReferentiel.slice(0, 60).map((s) => `
+              <li>${echapper(s.service)} — ${s.n}</li>`).join('')}
+          </ul>
+          ${d.horsReferentiel.length > 60
+            ? `<p class="discret" style="font-size:.82rem">… et ${d.horsReferentiel.length - 60} autre(s)</p>`
+            : ''}
+        </details>
+        <p style="margin:.6rem 0 0;font-size:.86rem">
+          Traitez-les depuis <strong>« Services non référencés »</strong> : rattachez-les à un
+          service reconnu, ou ajoutez-les au référentiel.
+        </p>
+      </div>` : ''}
+
     <div class="barre-outils" style="margin-bottom:1.2rem">
       <button class="btn btn-principal" id="btn-ouvrir-sync">Synchroniser depuis l'annuaire</button>
       <button class="btn btn-secondaire" id="btn-ouvrir-referentiel">Référentiel des services</button>
@@ -223,10 +244,17 @@ function ligneAgent(a) {
     ? `Annuaire : ${a.service_ad} — cliquer pour filtrer sur ce service`
     : `${a.service} — cliquer pour filtrer sur ce service`;
 
+  // Un service absent du referentiel paraitra au classement sous un nom que la
+  // collectivite ne reconnait pas. Le signaler ici evite de le decouvrir une
+  // fois la campagne ouverte.
   const service = `
     <button type="button" class="lien-service tronque" data-service="${echapper(a.service)}"
             title="${echapper(infobulle)}">${echapper(a.service)}${
-      a.service_ad && a.service_ad !== a.service ? ' <span class="discret">*</span>' : ''}</button>`;
+      a.service_ad && a.service_ad !== a.service ? ' <span class="discret">*</span>' : ''}</button>${
+    a.serviceReference === false
+      ? '<br><span class="pastille-etat" style="font-size:.66rem;background:var(--alerte-fond);color:var(--alerte)"'
+        + ' title="Ce service ne figure pas au référentiel">hors référentiel</span>'
+      : ''}`;
 
   return `
     <tr data-id="${a.id}">

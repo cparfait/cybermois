@@ -79,6 +79,23 @@ export default async function routesUtilisateurs(app) {
 
     const services = db.prepare('SELECT service, COUNT(*) AS n FROM agents WHERE exclu = 0 GROUP BY service ORDER BY service').all();
 
+    // Un agent rattache a un service absent du referentiel apparait au
+    // classement sous un nom que la collectivite ne reconnait pas. La liste
+    // doit le dire : sans cela, l'anomalie ne se voit qu'au classement, une
+    // fois la campagne ouverte.
+    const clesReferentiel = new Set(nomsReferentiel().map(cleComparaison));
+    // Referentiel vide : tout serait signale « hors referentiel », ce qui
+    // n'apprendrait rien. On se tait tant qu'il n'y a pas de liste de reference.
+    const referenceOuNon = (nom) => !clesReferentiel.size || clesReferentiel.has(cleComparaison(nom));
+
+    const horsReferentiel = clesReferentiel.size
+      ? db.prepare(`
+          SELECT service, COUNT(*) AS n FROM agents
+          WHERE exclu = 0 AND origine <> 'local'
+          GROUP BY service ORDER BY n DESC
+        `).all().filter((s) => !referenceOuNon(s.service))
+      : [];
+
     const resume = db.prepare(`
       SELECT
         COUNT(*)                                          AS total,
@@ -94,7 +111,12 @@ export default async function routesUtilisateurs(app) {
     `).get();
 
     return {
-      agents, services, resume,
+      // Chaque ligne dit si son service figure au referentiel : c'est ce qui
+      // se verra au classement, et l'ecart se corrige mieux avant l'ouverture.
+      agents: agents.map((a) => ({ ...a, serviceReference: referenceOuNon(a.service) })),
+      services,
+      resume,
+      horsReferentiel,
       pagination: { page: pageCourante, pages, parPage, total },
     };
   });
