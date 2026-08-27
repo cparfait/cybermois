@@ -22,7 +22,10 @@
 #    docker build -t cybermois:local .
 #
 #  puis coller ce fichier dans Portainer → Stacks → Web editor.
-#  Mise à jour : git pull + docker build, puis « Update the stack ».
+#
+#  Mise à jour : git pull + docker build sur le serveur, puis « Update the
+#  stack » dans Portainer — SANS cocher « Re-pull image and redeploy », qui
+#  chercherait l'image dans un registre où elle n'est pas.
 #
 #  ---------------------------------------------------------------------------
 #  UNE SEULE variable à renseigner dans Portainer : SESSION_SECRET.
@@ -41,6 +44,11 @@
 services:
   cybermois:
     image: cybermois:local
+    # L'image est construite sur ce serveur, elle n'existe dans aucun registre.
+    # Sans cette ligne, « Re-pull image and redeploy » dans Portainer tente
+    # d'aller la chercher sur Docker Hub et echoue sur un « pull access denied »
+    # deroutant.
+    pull_policy: never
     container_name: cybermois
     restart: unless-stopped
 

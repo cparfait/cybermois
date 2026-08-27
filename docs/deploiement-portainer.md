@@ -101,7 +101,10 @@ Puis **Stacks → Add stack → Web editor**, en collant le contenu de
 `docker-compose.portainer.yml`.
 
 Mise à jour ultérieure : `git pull` + `docker build` avec les commandes ci-dessus, puis
-**Update the stack** dans Portainer.
+**Update the stack** dans Portainer — **sans cocher « Re-pull image and redeploy »**.
+L'image est construite ici, elle n'existe dans aucun registre : Portainer irait la
+chercher sur Docker Hub et échouerait sur un `pull access denied` déroutant. La pile
+porte `pull_policy: never` pour l'en empêcher, mais l'option reste proposée.
 
 <details>
 <summary>Variante : déploiement par dépôt Git</summary>
