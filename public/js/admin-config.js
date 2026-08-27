@@ -4,6 +4,29 @@ let descripteur = [];
 let groupes = [];
 
 /** Valeurs saisies dans le formulaire, prêtes à être testées ou enregistrées. */
+/**
+ * Etat de l'autorite de certification.
+ *
+ * Un fichier monte dans le conteneur ne se voit nulle part dans le formulaire :
+ * le champ base64 reste vide, et rien ne distingue « certificat fourni par
+ * fichier » de « aucun certificat ».
+ */
+function certificat(etat) {
+  if (!etat) return '';
+  const titre = etat.source === 'fichier'
+    ? (etat.ok ? "Certificat de l'AC : fourni par fichier" : "Certificat de l'AC : fichier introuvable")
+    : etat.source === 'base64'
+      ? "Certificat de l'AC : saisi dans ce formulaire"
+      : "Certificat de l'AC : aucun";
+
+  return `
+    <div class="message ${etat.ok ? 'message-succes' : 'message-alerte'}" style="margin-bottom:1rem">
+      <strong>${echapper(titre)}</strong>
+      ${etat.chemin ? `<br><code>${echapper(etat.chemin)}</code>` : ''}
+      <br><span style="font-size:.88rem">${echapper(etat.detail)}</span>
+    </div>`;
+}
+
 function valeursSaisies() {
   const valeurs = {};
   for (const champ of document.querySelectorAll('[data-parametre]')) {
@@ -87,6 +110,8 @@ export async function chargerConfiguration() {
       <div class="message message-alerte" style="margin-bottom:1.5rem">
         <strong>Configuration incomplète.</strong> Il manque : ${echapper(d.etat.manquants.join(', '))}.
         Les agents ne peuvent pas encore se connecter.
+        <br><span style="font-size:.88rem">Le compte administrateur local, lui, reste
+        utilisable : c'est ce qui vous permet de compléter cette page.</span>
       </div>`}
 
     <details class="aide-admin">
@@ -107,6 +132,7 @@ export async function chargerConfiguration() {
         <section class="carte" style="margin-bottom:1.5rem">
           <h2>${echapper(g.libelle)}</h2>
           ${g.cle === 'ldap' ? `
+            ${certificat(d.environnement?.certificat)}
             <div class="rang" style="margin-bottom:1rem">
               <button type="button" class="btn btn-secondaire" id="btn-test-ldap">Tester la connexion</button>
               <button type="button" class="btn btn-secondaire" id="btn-test-agent">Tester un agent</button>

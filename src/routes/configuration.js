@@ -58,6 +58,38 @@ function clientLdap(p) {
   return new Client({ url: p.url, timeout: 10000, connectTimeout: 10000, tlsOptions });
 }
 
+/**
+ * Ce que l'application sait de l'autorite de certification.
+ *
+ * Elle peut venir d'un fichier monte - le cas d'un deploiement en conteneur -
+ * ou d'une chaine base64 saisie ici. Sans ce retour, un fichier correctement
+ * monte laissait le champ base64 vide, et rien ne distinguait cet etat d'une
+ * absence de certificat.
+ */
+function etatCertificat() {
+  if (config.ldap.caBase64) {
+    return { source: 'base64', ok: true, detail: 'Certificat saisi dans ce formulaire.' };
+  }
+  if (!config.ldap.caFile) {
+    return {
+      source: 'aucun', ok: false,
+      detail: 'Aucun certificat fourni. La validation utilisera les autorites publiques, '
+        + "ce qui echoue avec une autorite interne.",
+    };
+  }
+  if (!fs.existsSync(config.ldap.caFile)) {
+    return {
+      source: 'fichier', ok: false, chemin: config.ldap.caFile,
+      detail: 'Fichier introuvable dans le conteneur. Verifiez le montage de volume.',
+    };
+  }
+  const taille = fs.statSync(config.ldap.caFile).size;
+  return {
+    source: 'fichier', ok: true, chemin: config.ldap.caFile,
+    detail: `Certificat lu depuis le conteneur (${taille} octets). Rien a saisir ici.`,
+  };
+}
+
 export default async function routesConfiguration(app) {
   app.addHook('preHandler', exigerAdmin);
 
@@ -79,6 +111,9 @@ export default async function routesConfiguration(app) {
       sessionSecretDefini: config.sessionSecret !== 'secret-de-developpement-a-remplacer-absolument',
       dbFile: config.dbFile,
       env: config.env,
+      // Un certificat monte dans le conteneur ne se voit nulle part : le champ
+      // base64 reste vide, et rien ne dit qu'une autorite est bien fournie.
+      certificat: etatCertificat(),
     },
   }));
 

@@ -76,7 +76,10 @@ export const DESCRIPTEUR = [
   { cle: 'ldap.adminGroup', chemin: ['ldap', 'adminGroup'], type: 'texte', groupe: 'ldap',
     libelle: 'Groupe des administrateurs', aide: 'Nom court (GG-Cybermois-Admins) ou DN complet. Ses membres accedent au back-office.' },
   { cle: 'ldap.caBase64', chemin: ['ldap', 'caBase64'], type: 'secret', groupe: 'ldap',
-    libelle: 'Certificat de l\'AC interne (base64)', aide: '[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\\temp\\ca.cer"))' },
+    libelle: "Certificat de l'AC interne (base64)", aide: "A laisser vide si un fichier est monte dans le conteneur : "
+      + 'LDAP_CA_FILE le designe alors, et il suffit. Ce champ est la solution de repli '
+      + "quand on ne peut rien monter ; renseigne, il prend le dessus sur le fichier. "
+      + 'Sous Windows : [Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\\temp\\ca.cer"))' },
   { cle: 'ldap.rejectUnauthorized', chemin: ['ldap', 'rejectUnauthorized'], type: 'booleen', groupe: 'ldap',
     libelle: 'Valider le certificat du serveur', aide: 'A laisser actif. Le desactiver expose a une interception.' },
   { cle: 'ldap.autoriserNonChiffre', chemin: ['ldap', 'autoriserNonChiffre'], type: 'booleen', groupe: 'ldap',
@@ -267,6 +270,11 @@ export function configurationUtilisable() {
   if (!config.ldap.bindDn) manquants.push('DN du compte de service');
   if (!config.ldap.bindPassword) manquants.push('mot de passe du compte de service');
   if (!config.ldap.baseDn) manquants.push('base de recherche');
-  if (!config.adminLogins.length) manquants.push('au moins un administrateur');
+  // Le compte local ne compte pas ici : il sert a entrer avant que l'annuaire
+  // ne fonctionne, pas a administrer la campagne au quotidien. Sans identifiant
+  // d'annuaire ni groupe dedie, aucun agent ne pourrait acceder au back-office.
+  if (!config.adminLogins.length && !config.ldap.adminGroup) {
+    manquants.push("un administrateur issu de l'annuaire, par identifiant ou par groupe");
+  }
   return { ok: manquants.length === 0, mode: 'annuaire', manquants };
 }
