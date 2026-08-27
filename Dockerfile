@@ -17,9 +17,12 @@ COPY content ./content
 # production n'aurait aucun fichier a lire.
 COPY parametrage ./parametrage
 
-# La base SQLite et les certificats sont montes en volume
+# La base SQLite et le certificat de l'AC sont montes depuis l'hote.
+# UID fixe : le conteneur tourne en utilisateur non privilegie. Sans identifiant
+# connu d'avance, le dossier monte appartiendrait a root et l'ecriture echouerait
+# au premier defi joue. Cote hote : chown -R 10001:10001 <dossier monte>
 RUN mkdir -p /app/data /app/certs && \
-    addgroup -S cyber && adduser -S cyber -G cyber && \
+    addgroup -S -g 10001 cyber && adduser -S -u 10001 -G cyber cyber && \
     chown -R cyber:cyber /app
 USER cyber
 

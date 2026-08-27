@@ -1,25 +1,39 @@
-# =============================================================================
-#  Pile Portainer - Cybermois - Ville de Chatillon
+# ============================================================================
+#  Cybermois — stack Portainer (Web editor)
 #
-#  Portainer > Stacks > Add stack > Repository
-#    Repository URL     : https://github.com/cparfait/cybermois
-#    Repository reference : refs/heads/main
-#    Compose path       : docker-compose.portainer.yml
-#    Authentication     : activee (depot prive), jeton personnel GitHub
+#  Conventions reprises des piles bolt et oxidized :
+#    - réseau partagé « containers-lan », rejoint par Nginx Proxy Manager
+#    - données montées depuis /home/sysadmin/docker/<app>, sauvegardables
+#      avec le reste sans passer par docker volume
+#    - aucun port publié : NPM joint le conteneur par http://cybermois:3000
 #
-#  Les variables se saisissent dans « Environment variables » de Portainer.
-#  Aucun fichier a monter : le certificat de l'AC interne se fournit en base64.
+#  Avant le premier déploiement, sur l'hôte :
 #
-#  Le conteneur ne publie aucun port sur l'hote : il est joint uniquement par
-#  Nginx Proxy Manager, via le reseau Docker partage declare plus bas.
-# =============================================================================
+#    sudo mkdir -p /home/sysadmin/docker/cybermois/data
+#    sudo chown -R 10001:10001 /home/sysadmin/docker/cybermois/data
+#
+#  Le chown n'est pas une précaution de style : le conteneur tourne en
+#  utilisateur non privilégié (UID 10001), et un dossier appartenant à root
+#  ferait échouer l'écriture de la base au premier défi joué.
+#
+#  L'image se construit sur le serveur depuis le clone git, comme pour bolt :
+#
+#    cd /home/sysadmin/docker/cybermois/cybermois && git pull
+#    docker build -t cybermois:local .
+#
+#  puis coller ce fichier dans Portainer → Stacks → Web editor.
+#
+#  Mise à jour : git pull + docker build, puis « Update the stack ».
+#
+#  Variables à renseigner dans Portainer (Environment variables) :
+#    SESSION_SECRET       chaîne aléatoire de 32+ caractères (obligatoire)
+#    LDAP_BIND_PASSWORD   mot de passe du compte de service AD (obligatoire)
+#    LDAP_CA_FILE         chemin du certificat de l'AC dans /certs
+# ============================================================================
 
 services:
   cybermois:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: cybermois:latest
+    image: cybermois:local
     container_name: cybermois
     restart: unless-stopped
 
@@ -28,45 +42,47 @@ services:
       NODE_ENV: production
       PORT: 3000
       TZ: Europe/Paris
-      PUBLIC_URL: https://cybermois.chatillon92.fr
-      # 32 caracteres aleatoires minimum. A generer une fois, puis ne plus changer :
-      # le modifier deconnecte tous les agents en cours de session.
-      # ATTENTION : cette valeur chiffre les mots de passe stockes par la page
-      # de configuration. La changer les rendra illisibles.
-      SESSION_SECRET: ${SESSION_SECRET}
+      PUBLIC_URL: ${PUBLIC_URL:-https://cybermois.chatillon92.fr}
+      # Chiffre les mots de passe stockés par la page de configuration, et
+      # signe les cookies de session. La changer déconnecte tout le monde ET
+      # rend les mots de passe enregistrés illisibles : on la génère une fois.
+      SESSION_SECRET: ${SESSION_SECRET:?definir SESSION_SECRET (32 caracteres minimum)}
 
       # ---------- Compte administrateur local ----------
       # Permet d'entrer pour configurer l'annuaire avant qu'il ne fonctionne.
-      # Mot de passe vide : genere au premier demarrage et affiche UNE FOIS
-      # dans les journaux du conteneur, lisibles dans Portainer.
+      # Laissé vide, un mot de passe est généré au premier démarrage et affiché
+      # UNE SEULE FOIS dans les journaux du conteneur. Pour le redéfinir ensuite :
+      #   docker exec -it cybermois npm run admin -- definir admin "…"
       ADMIN_LOCAL_LOGIN: ${ADMIN_LOCAL_LOGIN:-admin}
       ADMIN_LOCAL_MOT_DE_PASSE: ${ADMIN_LOCAL_MOT_DE_PASSE:-}
 
       # ---------- Active Directory ----------
-      # Tous les reglages ci-dessous peuvent aussi se saisir dans
-      # Administration > Configuration, ou ils prendront le pas sur ces valeurs.
+      # Ces réglages se saisissent aussi dans Administration → Configuration,
+      # où ils prendront le pas sur ces valeurs.
       LDAP_URL: ${LDAP_URL:-ldaps://192.168.2.9:636}
       LDAP_BIND_DN: ${LDAP_BIND_DN:-ad.cybermois@chatillon.lan}
-      LDAP_BIND_PASSWORD: ${LDAP_BIND_PASSWORD}
+      LDAP_BIND_PASSWORD: ${LDAP_BIND_PASSWORD:?definir LDAP_BIND_PASSWORD}
       LDAP_BASE_DN: ${LDAP_BASE_DN:-OU=Utilisateurs,OU=CHATILLON,DC=chatillon,DC=lan}
       LDAP_USER_FILTER: ${LDAP_USER_FILTER:-(&(objectClass=user)(objectCategory=person)(sAMAccountName={{login}}))}
       LDAP_REQUIRED_GROUP: ${LDAP_REQUIRED_GROUP:-}
-      # Membres autorises au back-office : nom court ou DN complet
       LDAP_ADMIN_GROUP: ${LDAP_ADMIN_GROUP:-CN=GRP_APPLI_CYBERMOIS_ADMIN,OU=GRP_APPLICATIONS,OU=zzzGroupes,OU=Utilisateurs,OU=CHATILLON,DC=chatillon,DC=lan}
-      # Certificat de l'AC interne, en base64 sur une seule ligne.
-      # Windows : [Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\chemin\ca.crt"))
-      LDAP_CA_BASE64: ${LDAP_CA_BASE64:-}
+      # Certificat de l'AC interne, monté depuis l'hôte comme pour bolt.
+      # Adaptez le nom du fichier au contenu de /home/sysadmin/docker/ca_chatillon.
+      LDAP_CA_FILE: ${LDAP_CA_FILE:-/certs/ca_chatillon.crt}
       LDAP_TLS_REJECT_UNAUTHORIZED: ${LDAP_TLS_REJECT_UNAUTHORIZED:-true}
+      # Garde-fou : le démarrage refuse une liaison ldap:// non chiffrée en
+      # production. À ne lever que pour un diagnostic, jamais en service.
       LDAP_AUTORISER_NON_CHIFFRE: ${LDAP_AUTORISER_NON_CHIFFRE:-false}
 
       # ---------- Rattachement au service ----------
-      # Le service vient de l'attribut « department » : l'arborescence decrit
+      # Le service vient de l'attribut « department » : l'arborescence décrit
       # les sites (TECHNOSUD, MAIRIE, CTM) et non les services.
       SERVICE_SOURCE: ${SERVICE_SOURCE:-attr}
       SERVICE_ATTRIBUTE: ${SERVICE_ATTRIBUTE:-department}
       SERVICE_OU_DEPTH: ${SERVICE_OU_DEPTH:-3}
 
       # ---------- Administration ----------
+      # Dépannage : ces identifiants sont administrateurs même hors du groupe AD.
       ADMIN_LOGINS: ${ADMIN_LOGINS:-c.parfait}
 
       # ---------- Messagerie ----------
@@ -74,12 +90,11 @@ services:
       SMTP_HOST: ${SMTP_HOST:-chatillon92-fr.mail.protection.outlook.com}
       SMTP_PORT: ${SMTP_PORT:-25}
       SMTP_SECURE: ${SMTP_SECURE:-false}
-      SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-Cybermois <cybermois@chatillon92.fr>}
       MAIL_GROUPE_DIFFUSION: ${MAIL_GROUPE_DIFFUSION:-}
       MAIL_COPIE: ${MAIL_COPIE:-}
-      # Laisser a false tant que la recette n'est pas terminee
+      # À laisser à false tant que la recette n'est pas terminée : sinon le
+      # premier vendredi enverra des résultats à cinq cents agents.
       MAIL_ENVOI_ACTIF: ${MAIL_ENVOI_ACTIF:-false}
 
       # ---------- Planification ----------
@@ -92,12 +107,14 @@ services:
       CAMPAGNE_FIN: ${CAMPAGNE_FIN:-2026-10-31}
 
     volumes:
-      # Base SQLite : volume nomme, sauvegardable depuis Portainer.
-      # C'est la SEULE donnee a conserver.
-      - cybermois-data:/app/data
+      # Base SQLite. C'est la SEULE donnée à sauvegarder : le paramétrage du
+      # classement se rejoue depuis parametrage/, embarqué dans l'image.
+      - /home/sysadmin/docker/cybermois/data:/app/data
+      # AC interne, partagée avec bolt
+      - /home/sysadmin/docker/ca_chatillon:/certs:ro
 
     networks:
-      - proxy
+      - containers-lan
 
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/sante').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
@@ -116,15 +133,7 @@ services:
       org.opencontainers.image.title: "Cybermois"
       org.opencontainers.image.description: "Portail de sensibilisation cyber - Ville de Chatillon"
 
-volumes:
-  cybermois-data:
-    name: cybermois-data
-
 networks:
-  # Reseau partage avec Nginx Proxy Manager.
-  # Adaptez le nom a votre installation : dans Portainer, Networks, reperez le
-  # reseau auquel appartient le conteneur nginx-proxy-manager (souvent
-  # « npm_default » ou « nginxproxymanager_default »).
-  proxy:
+  # Le pont commun, déjà utilisé par nginx-proxy-manager, bolt et oxidized.
+  containers-lan:
     external: true
-    name: ${RESEAU_PROXY:-npm_default}

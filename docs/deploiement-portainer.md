@@ -34,50 +34,80 @@ Généré pour vous, à conserver tel quel (le changer déconnecte tous les agen
 SESSION_SECRET-REVOQUE-A-REGENERER
 ```
 
-### Le certificat de l'autorité interne, en base64
+### Le certificat de l'autorité interne
 
-Pour éviter d'avoir à monter un fichier dans le conteneur — pénible via Portainer — le
-certificat se fournit dans une variable. Sur un poste Windows, exportez d'abord l'AC qui
-signe le certificat de vos contrôleurs de domaine au format **Base-64 X.509 (.CER)**, puis :
+Il est déjà sur le serveur, dans `/home/sysadmin/docker/ca_chatillon` — le même dossier
+que bolt monte. La pile le monte en lecture seule sur `/certs`, et
+`LDAP_CA_FILE` indique le fichier à lire :
 
-```bash
-[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\temp\ca-interne.cer"))
+```
+LDAP_CA_FILE=/certs/ca_chatillon.crt
 ```
 
-Copiez la longue chaîne obtenue : c'est la valeur de `LDAP_CA_BASE64`.
+Adaptez le nom au contenu réel du dossier :
 
-Pour vérifier au préalable quelle autorité signe vos DC :
+```bash
+ls -l /home/sysadmin/docker/ca_chatillon
+```
+
+Pour vérifier quelle autorité signe vos contrôleurs de domaine :
 
 ```bash
 openssl s_client -connect 192.168.2.9:636 -showcerts
 ```
 
-### Le nom du réseau Docker de Nginx Proxy Manager
+### Le dossier de données
 
-Dans Portainer → **Networks**, repérez le réseau du conteneur `nginx-proxy-manager`.
-C'est en général `npm_default` ou `nginxproxymanager_default`. Notez-le : ce sera
-`RESEAU_PROXY`. Sans réseau commun, NPM ne pourra pas joindre le portail.
+Le conteneur tourne en utilisateur non privilégié, **UID 10001**. Le dossier monté doit
+lui appartenir, sinon l'écriture de la base échouera au premier défi joué :
+
+```bash
+sudo mkdir -p /home/sysadmin/docker/cybermois/data
+sudo chown -R 10001:10001 /home/sysadmin/docker/cybermois/data
+```
+
+C'est le seul dossier à sauvegarder. Le paramétrage du classement, lui, se rejoue
+depuis le fichier embarqué dans l'image (voir `parametrage-classement.md`).
+
+### Le réseau
+
+`containers-lan`, le pont commun déjà utilisé par `nginx-proxy-manager`, `bolt_web` et
+`oxidized`. Il est déclaré `external` dans la pile : aucun réglage à faire.
 
 ---
 
-## 2. Créer la pile dans Portainer
+## 2. Construire l'image et créer la pile
 
-**Stacks → Add stack → Repository**
+Comme pour bolt, l'image se construit sur le serveur depuis le clone git :
+
+```bash
+cd /home/sysadmin/docker/cybermois/cybermois && git pull
+docker build -t cybermois:local .
+```
+
+Puis **Stacks → Add stack → Web editor**, en collant le contenu de
+`docker-compose.portainer.yml`.
+
+Mise à jour ultérieure : `git pull` + `docker build` avec les commandes ci-dessus, puis
+**Update the stack** dans Portainer.
+
+<details>
+<summary>Variante : déploiement par dépôt Git</summary>
+
+Portainer sait aussi construire lui-même depuis le dépôt. Remplacez alors
+`image: cybermois:local` par un bloc `build: { context: ., dockerfile: Dockerfile }`,
+et renseignez :
 
 | Champ | Valeur |
 |---|---|
-| Name | `cybermois` |
-| Build method | Repository |
 | Repository URL | `https://github.com/cparfait/cybermois` |
 | Repository reference | `refs/heads/main` |
 | Compose path | `docker-compose.portainer.yml` |
-| Authentication | Activée — le dépôt est privé |
-| Username | `cparfait` |
-| Personal Access Token | un jeton GitHub avec la portée `repo` |
+| Authentication | activée — le dépôt est privé |
 
-Activez **Automatic updates** si vous souhaitez que Portainer reprenne les évolutions du
-dépôt : c'est justement ce qui vous permettra de faire les ajustements en direct pendant
-la recette. Un intervalle de 5 minutes convient.
+Avec *Automatic updates*, Portainer reprend les évolutions du dépôt tout seul.
+</details>
+
 
 ### Variables d'environnement
 
@@ -86,12 +116,11 @@ la recette. Un intervalle de 5 minutes convient.
 | Nom | Valeur | Remarque |
 |---|---|---|
 | `SESSION_SECRET` | *(la chaîne ci-dessus)* | |
-| `RESEAU_PROXY` | `npm_default` | Le nom relevé à l'étape 1 |
 | `LDAP_URL` | `ldaps://192.168.2.9:636` | Votre contrôleur de domaine |
 | `LDAP_BIND_DN` | `ad.cybermois@chatillon.lan` | Le compte de service |
 | `LDAP_BIND_PASSWORD` | *(mot de passe du compte de service)* | |
 | `LDAP_BASE_DN` | `OU=Utilisateurs,OU=CHATILLON,DC=chatillon,DC=lan` | Racine de recherche. Trop large, la synchronisation ramène les comptes de service ; trop étroite, elle déclare des agents « absents de l'annuaire ». |
-| `LDAP_CA_BASE64` | *(la chaîne base64)* | |
+| `LDAP_CA_FILE` | `/certs/<nom du fichier>` | L'AC est montée depuis `/home/sysadmin/docker/ca_chatillon`, comme pour bolt |
 | `LDAP_ADMIN_GROUP` | `CN=GRP_APPLI_CYBERMOIS_ADMIN,OU=GRP_APPLICATIONS,OU=zzzGroupes,OU=Utilisateurs,OU=CHATILLON,DC=chatillon,DC=lan` | Accès au back-office |
 | `SERVICE_SOURCE` | `attr` | Le service se lit dans un attribut, pas dans l'arborescence |
 | `SERVICE_ATTRIBUTE` | `department` | Les OU décrivent les sites (TECHNOSUD, MAIRIE, CTM), pas les services |
@@ -205,7 +234,7 @@ Avec **Automatic updates** activé, il suffit que je pousse sur `main` : Portain
 reconstruit et redéploie tout seul. Sinon, Portainer → Stacks → `cybermois` →
 **Pull and redeploy**.
 
-Le volume `cybermois-data` n'est jamais touché par un redéploiement : les résultats,
+Le dossier `/home/sysadmin/docker/cybermois/data` n'est jamais touché par un redéploiement : les résultats,
 les comptes et les contenus modifiés depuis le back-office survivent aux mises à jour.
 
 **Attention à une exception.** Les contenus des défis modifiés via le back-office vivent en
@@ -217,15 +246,27 @@ pour que je reporte la correction dans les fichiers — sinon un rechargement l'
 
 ## Sauvegarde
 
-La base est un fichier unique dans le volume `cybermois-data`. Pendant la campagne,
-une sauvegarde quotidienne suffit :
+La base est un fichier unique, dans `/home/sysadmin/docker/cybermois/data`. Elle suit
+donc la sauvegarde du reste de `/home/sysadmin/docker`, sans traitement particulier.
+
+Pour une copie ponctuelle avant une opération sensible :
 
 ```bash
-docker run --rm -v cybermois-data:/data -v /opt/sauvegardes:/sauvegarde alpine tar czf /sauvegarde/cybermois-$(date +%F).tar.gz -C /data .
+sudo tar czf /home/sysadmin/sauvegardes/cybermois-$(date +%F).tar.gz   -C /home/sysadmin/docker/cybermois/data .
 ```
 
-Restauration :
+Restauration, conteneur arrêté :
 
 ```bash
-docker run --rm -v cybermois-data:/data -v /opt/sauvegardes:/sauvegarde alpine tar xzf /sauvegarde/cybermois-2026-10-15.tar.gz -C /data
+docker stop cybermois
+sudo tar xzf /home/sysadmin/sauvegardes/cybermois-2026-10-15.tar.gz   -C /home/sysadmin/docker/cybermois/data
+sudo chown -R 10001:10001 /home/sysadmin/docker/cybermois/data
+docker start cybermois
 ```
+
+Le `chown` après restauration n'est pas facultatif : `tar` restitue les propriétaires
+de l'archive, et le conteneur écrit en UID 10001.
+
+C'est la seule donnée à sauvegarder. Le paramétrage du classement — référentiel,
+regroupements, exclusions — se rejoue depuis `parametrage/chatillon.json`, embarqué
+dans l'image (voir `parametrage-classement.md`).
