@@ -15,6 +15,7 @@ import {
   listerAdminsLocaux, definirAdminLocal, supprimerAdminLocal,
 } from '../lib/admin-local.js';
 import { chaineOu } from '../lib/services.js';
+import { normaliserUrlLdap } from '../lib/url-ldap.js';
 
 /**
  * Les tests utilisent les valeurs SOUMISES, pas celles enregistrees :
@@ -34,8 +35,17 @@ function fusionner(propositions) {
     return p;
   };
 
+  // L'ecran fournit un hote nu et une case de chiffrement : le test doit voir
+  // la meme URL que celle qui sera enregistree, sans quoi il reproche une
+  // adresse invalide a une saisie parfaitement correcte.
+  const chiffre = propositions?.['ldap.chiffre'];
+  const url = normaliserUrlLdap(
+    v('ldap.url', config.ldap.url),
+    chiffre === undefined ? null : chiffre === true || chiffre === 'true'
+  );
+
   return {
-    url: v('ldap.url', config.ldap.url),
+    url,
     bindDn: v('ldap.bindDn', config.ldap.bindDn),
     bindPassword: v('ldap.bindPassword', config.ldap.bindPassword),
     baseDn: v('ldap.baseDn', config.ldap.baseDn),
@@ -195,7 +205,14 @@ export default async function routesConfiguration(app) {
       hote = u.hostname;
       port = Number(u.port) || (chiffre ? 636 : 389);
     } catch {
-      return { ok: false, etapes: [{ libelle: 'Adresse du serveur', ok: false, detail: `« ${p.url} » n'est pas une URL valide. Attendu : ldaps://serveur:636` }] };
+      return {
+        ok: false,
+        etapes: [{
+          libelle: 'Adresse du serveur', ok: false,
+          detail: `« ${p.url} » n'est pas exploitable. Indiquez une IP ou un nom `
+            + '(192.168.2.9, dc01.chatillon.lan), sans schéma ni port.',
+        }],
+      };
     }
 
     const joignable = await new Promise((resoudre) => {
@@ -237,6 +254,17 @@ export default async function routesConfiguration(app) {
       else if (/data 532|data 701/i.test(detail)) detail = 'Le mot de passe du compte de service a expiré.';
       else if (/data 773/i.test(detail)) detail = 'Le mot de passe doit être changé à la prochaine connexion.';
       else if (/self.signed|unable to verify/i.test(detail)) detail = "Certificat non validable : fournissez l'AC interne, ou désactivez la validation le temps de la mise au point.";
+      // Cas frequent : on se connecte par IP, le certificat porte un nom. Le
+      // reflexe est alors de desactiver la validation, c'est-a-dire d'abandonner
+      // la protection au lieu de corriger l'adresse.
+      else if (/altnames|does not match certificate/i.test(detail)) {
+        const nom = detail.match(/DNS:([^,\s]+)/)?.[1];
+        detail = "Le certificat ne couvre pas cette adresse. Un certificat garantit un NOM, "
+          + "pas une IP : remplacez l'adresse par le nom du contrôleur"
+          + (nom ? ` (${nom})` : ' figurant dans le certificat')
+          + ", à condition qu'il soit résolvable depuis le conteneur. "
+          + 'Désactiver la validation ferait disparaître le message en supprimant la protection.';
+      }
       ajouter('Compte de service', false, detail);
       await client.unbind().catch(() => {});
       return { ok: false, etapes };
