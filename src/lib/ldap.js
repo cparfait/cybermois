@@ -92,6 +92,14 @@ export async function authentifier(login, motDePasse) {
   // Un mot de passe vide provoque un "unauthenticated bind" accepte par l'AD : on refuse en amont.
   if (!login || !motDePasse) return { ok: false, motif: 'identifiants_vides' };
 
+  // Le controle du chiffrement vaut au moment de l'usage, et pas seulement au
+  // demarrage : l'URL de l'annuaire se saisit depuis la page de configuration,
+  // et une liaison en clair y prendrait effet immediatement.
+  if (config.env === 'production' && config.ldap.url.startsWith('ldap://')
+      && !config.ldap.autoriserNonChiffre) {
+    return { ok: false, motif: 'liaison_non_chiffree' };
+  }
+
   const clientService = nouveauClient();
   let entree;
   try {
@@ -165,8 +173,20 @@ export async function authentifier(login, motDePasse) {
  * on exige alors une autorisation explicite pour eviter la mise en service
  * par inadvertance d'une configuration de test.
  */
+export function annuaireConfigure() {
+  return !!(config.ldap.bindDn && config.ldap.baseDn);
+}
+
 export function verifierChiffrement() {
   if (config.ldap.url === 'demo' || config.ldap.url.startsWith('ldaps://')) return null;
+
+  // Une instance qui vient d'etre deployee n'a pas encore d'annuaire : refuser
+  // de demarrer interdirait d'atteindre la page ou on le renseigne. Personne
+  // ne peut s'authentifier dans cet etat, seul le compte local ouvre la porte.
+  if (!annuaireConfigure()) {
+    return 'Annuaire non configure : connectez-vous avec le compte local, '
+      + 'puis Administration > Configuration.';
+  }
 
   if (config.env === 'production' && !config.ldap.autoriserNonChiffre) {
     throw new Error(

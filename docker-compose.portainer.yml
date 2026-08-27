@@ -3,14 +3,14 @@
 #
 #  Conventions reprises des piles bolt et oxidized :
 #    - réseau partagé « containers-lan », rejoint par Nginx Proxy Manager
-#    - données montées depuis /home/sysadmin/docker/<app>, sauvegardables
-#      avec le reste sans passer par docker volume
+#    - données montées depuis /home/sysadmin/docker/<app>, sauvegardées avec
+#      le reste sans passer par docker volume
 #    - aucun port publié : NPM joint le conteneur par http://cybermois:3000
 #
 #  Avant le premier déploiement, sur l'hôte :
 #
-#    sudo mkdir -p /home/sysadmin/docker/cybermois/data
-#    sudo chown -R 10001:10001 /home/sysadmin/docker/cybermois/data
+#    mkdir -p /home/sysadmin/docker/cybermois/data
+#    chown -R 10001:10001 /home/sysadmin/docker/cybermois/data
 #
 #  Le chown n'est pas une précaution de style : le conteneur tourne en
 #  utilisateur non privilégié (UID 10001), et un dossier appartenant à root
@@ -22,13 +22,20 @@
 #    docker build -t cybermois:local .
 #
 #  puis coller ce fichier dans Portainer → Stacks → Web editor.
-#
 #  Mise à jour : git pull + docker build, puis « Update the stack ».
 #
-#  Variables à renseigner dans Portainer (Environment variables) :
-#    SESSION_SECRET       chaîne aléatoire de 32+ caractères (obligatoire)
-#    LDAP_BIND_PASSWORD   mot de passe du compte de service AD (obligatoire)
-#    LDAP_CA_FILE         chemin du certificat de l'AC dans /certs
+#  ---------------------------------------------------------------------------
+#  UNE SEULE variable à renseigner dans Portainer : SESSION_SECRET.
+#
+#  Tout le reste — annuaire, mot de passe du compte de service, messagerie,
+#  dates de campagne, administrateurs — se règle dans l'application, à
+#  Administration → Configuration, et vit en base. Les mots de passe y sont
+#  chiffrés en AES-256-GCM et ne sont jamais renvoyés au navigateur : ils
+#  n'ont donc rien à faire en clair dans une pile Portainer.
+#
+#  C'est aussi ce qui permet de rejouer la campagne l'année suivante sans
+#  toucher au déploiement : les dates se changent dans l'application.
+#  ---------------------------------------------------------------------------
 # ============================================================================
 
 services:
@@ -38,79 +45,38 @@ services:
     restart: unless-stopped
 
     environment:
-      # ---------- Serveur ----------
       NODE_ENV: production
       PORT: 3000
       TZ: Europe/Paris
-      PUBLIC_URL: ${PUBLIC_URL:-https://cybermois.chatillon92.fr}
-      # Chiffre les mots de passe stockés par la page de configuration, et
-      # signe les cookies de session. La changer déconnecte tout le monde ET
-      # rend les mots de passe enregistrés illisibles : on la génère une fois.
+
+      # Chiffre les secrets enregistrés depuis la page de configuration, et
+      # signe les cookies de session. À générer UNE FOIS (openssl rand -base64 48)
+      # puis à ne plus changer : la modifier déconnecte tout le monde et rend
+      # les mots de passe enregistrés illisibles.
       SESSION_SECRET: ${SESSION_SECRET:?definir SESSION_SECRET (32 caracteres minimum)}
 
-      # ---------- Compte administrateur local ----------
-      # Permet d'entrer pour configurer l'annuaire avant qu'il ne fonctionne.
-      # Laissé vide, un mot de passe est généré au premier démarrage et affiché
-      # UNE SEULE FOIS dans les journaux du conteneur. Pour le redéfinir ensuite :
+      # Adresse publique du portail. Elle alimente les liens des mails et
+      # conditionne le drapeau « secure » du cookie de session. Elle se corrige
+      # aussi depuis l'application.
+      PUBLIC_URL: ${PUBLIC_URL:-https://cybermois.chatillon92.fr}
+
+      # Compte administrateur local, seule porte d'entrée tant que l'annuaire
+      # n'est pas réglé. Laissé vide, le mot de passe est généré au premier
+      # démarrage et affiché UNE SEULE FOIS dans les journaux du conteneur.
+      # Pour le redéfinir ensuite :
       #   docker exec -it cybermois npm run admin -- definir admin "…"
       ADMIN_LOCAL_LOGIN: ${ADMIN_LOCAL_LOGIN:-admin}
       ADMIN_LOCAL_MOT_DE_PASSE: ${ADMIN_LOCAL_MOT_DE_PASSE:-}
 
-      # ---------- Active Directory ----------
-      # Ces réglages se saisissent aussi dans Administration → Configuration,
-      # où ils prendront le pas sur ces valeurs.
-      LDAP_URL: ${LDAP_URL:-ldaps://192.168.2.9:636}
-      LDAP_BIND_DN: ${LDAP_BIND_DN:-ad.cybermois@chatillon.lan}
-      LDAP_BIND_PASSWORD: ${LDAP_BIND_PASSWORD:?definir LDAP_BIND_PASSWORD}
-      LDAP_BASE_DN: ${LDAP_BASE_DN:-OU=Utilisateurs,OU=CHATILLON,DC=chatillon,DC=lan}
-      LDAP_USER_FILTER: ${LDAP_USER_FILTER:-(&(objectClass=user)(objectCategory=person)(sAMAccountName={{login}}))}
-      LDAP_REQUIRED_GROUP: ${LDAP_REQUIRED_GROUP:-}
-      LDAP_ADMIN_GROUP: ${LDAP_ADMIN_GROUP:-CN=GRP_APPLI_CYBERMOIS_ADMIN,OU=GRP_APPLICATIONS,OU=zzzGroupes,OU=Utilisateurs,OU=CHATILLON,DC=chatillon,DC=lan}
-      # Certificat de l'AC interne, monté depuis l'hôte comme pour bolt.
-      # Adaptez le nom du fichier au contenu de /home/sysadmin/docker/ca_chatillon.
+      # Certificat de l'autorité interne. Ce chemin dépend du montage ci-dessous,
+      # pas de la campagne : il reste ici plutôt qu'en base.
       LDAP_CA_FILE: ${LDAP_CA_FILE:-/certs/ca.pem}
-      LDAP_TLS_REJECT_UNAUTHORIZED: ${LDAP_TLS_REJECT_UNAUTHORIZED:-true}
-      # Garde-fou : le démarrage refuse une liaison ldap:// non chiffrée en
-      # production. À ne lever que pour un diagnostic, jamais en service.
-      LDAP_AUTORISER_NON_CHIFFRE: ${LDAP_AUTORISER_NON_CHIFFRE:-false}
-
-      # ---------- Rattachement au service ----------
-      # Le service vient de l'attribut « department » : l'arborescence décrit
-      # les sites (TECHNOSUD, MAIRIE, CTM) et non les services.
-      SERVICE_SOURCE: ${SERVICE_SOURCE:-attr}
-      SERVICE_ATTRIBUTE: ${SERVICE_ATTRIBUTE:-department}
-      SERVICE_OU_DEPTH: ${SERVICE_OU_DEPTH:-3}
-
-      # ---------- Administration ----------
-      # Dépannage : ces identifiants sont administrateurs même hors du groupe AD.
-      ADMIN_LOGINS: ${ADMIN_LOGINS:-c.parfait}
-
-      # ---------- Messagerie ----------
-      # Direct Send Microsoft 365 : sans authentification, STARTTLS sur le port 25
-      SMTP_HOST: ${SMTP_HOST:-chatillon92-fr.mail.protection.outlook.com}
-      SMTP_PORT: ${SMTP_PORT:-25}
-      SMTP_SECURE: ${SMTP_SECURE:-false}
-      SMTP_FROM: ${SMTP_FROM:-Cybermois <cybermois@chatillon92.fr>}
-      MAIL_GROUPE_DIFFUSION: ${MAIL_GROUPE_DIFFUSION:-}
-      MAIL_COPIE: ${MAIL_COPIE:-}
-      # À laisser à false tant que la recette n'est pas terminée : sinon le
-      # premier vendredi enverra des résultats à cinq cents agents.
-      MAIL_ENVOI_ACTIF: ${MAIL_ENVOI_ACTIF:-false}
-
-      # ---------- Planification ----------
-      TIMEZONE: Europe/Paris
-      CRON_RELANCE: ${CRON_RELANCE:-0 9 * * 3}
-      CRON_RESULTATS: ${CRON_RESULTATS:-0 16 * * 5}
-
-      # ---------- Campagne ----------
-      CAMPAGNE_DEBUT: ${CAMPAGNE_DEBUT:-2026-10-05}
-      CAMPAGNE_FIN: ${CAMPAGNE_FIN:-2026-10-31}
 
     volumes:
       # Base SQLite. C'est la SEULE donnée à sauvegarder : le paramétrage du
       # classement se rejoue depuis parametrage/, embarqué dans l'image.
       - /home/sysadmin/docker/cybermois/data:/app/data
-      # AC interne, partagée avec bolt
+      # Autorité de certification interne, partagée avec bolt
       - /home/sysadmin/docker/ca_chatillon:/certs:ro
 
     networks:

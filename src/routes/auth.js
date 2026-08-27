@@ -15,6 +15,8 @@ const MESSAGES = {
   hors_perimetre: "Votre compte n'est pas inclus dans le périmètre du Cybermois.",
   exclu: "Votre compte n'est pas inclus dans la campagne. Contactez la DSI si c'est une erreur.",
   annuaire_indisponible: "L'annuaire est momentanément injoignable. Réessayez dans quelques instants.",
+  liaison_non_chiffree: "La liaison avec l'annuaire n'est pas chiffrée : la connexion "
+    + 'est refusée par sécurité. Prévenez la DSI.',
 };
 
 export default async function routesAuth(app) {

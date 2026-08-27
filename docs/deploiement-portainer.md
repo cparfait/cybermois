@@ -123,44 +123,60 @@ Avec *Automatic updates*, Portainer reprend les évolutions du dépôt tout seul
 
 ### Variables d'environnement
 
-À saisir dans la section **Environment variables** de la pile :
+**Une seule est obligatoire.**
 
 | Nom | Valeur | Remarque |
 |---|---|---|
-| `SESSION_SECRET` | *(la chaîne ci-dessus)* | |
-| `LDAP_URL` | `ldaps://192.168.2.9:636` | Votre contrôleur de domaine |
-| `LDAP_BIND_DN` | `ad.cybermois@chatillon.lan` | Le compte de service |
-| `LDAP_BIND_PASSWORD` | *(mot de passe du compte de service)* | |
-| `LDAP_BASE_DN` | `OU=Utilisateurs,OU=CHATILLON,DC=chatillon,DC=lan` | Racine de recherche. Trop large, la synchronisation ramène les comptes de service ; trop étroite, elle déclare des agents « absents de l'annuaire ». |
-| `LDAP_CA_FILE` | `/certs/<nom du fichier>` | L'AC est montée depuis `/home/sysadmin/docker/ca_chatillon`, comme pour bolt |
-| `LDAP_ADMIN_GROUP` | `CN=GRP_APPLI_CYBERMOIS_ADMIN,OU=GRP_APPLICATIONS,OU=zzzGroupes,OU=Utilisateurs,OU=CHATILLON,DC=chatillon,DC=lan` | Accès au back-office |
-| `SERVICE_SOURCE` | `attr` | Le service se lit dans un attribut, pas dans l'arborescence |
-| `SERVICE_ATTRIBUTE` | `department` | Les OU décrivent les sites (TECHNOSUD, MAIRIE, CTM), pas les services |
-| `ADMIN_LOGINS` | `c.parfait` | Séparés par des virgules |
-| `SMTP_HOST` | `chatillon92-fr.mail.protection.outlook.com` | Direct Send, sans authentification |
-| `MAIL_GROUPE_DIFFUSION` | *(groupe de distribution)* | |
-| `MAIL_ENVOI_ACTIF` | `false` | **À laisser à false jusqu'à la fin de la recette** |
-| `CAMPAGNE_DEBUT` | `2026-10-05` | |
+| `SESSION_SECRET` | la sortie de `openssl rand -base64 48` | À générer une fois et à ne plus changer |
 
-`PUBLIC_URL` est déjà fixé à `https://cybermois.chatillon92.fr` dans la pile : il alimente
-les liens des mails et conditionne le drapeau `secure` du cookie de session.
+Tout le reste se règle dans l'application, à **Administration → Configuration**, et vit
+en base : adresse de l'annuaire, compte de service et son mot de passe, base de
+recherche, groupe d'administration, messagerie, dates de campagne, planification des
+relances.
 
-Puis **Deploy the stack**. La première construction prend une à deux minutes.
+Deux raisons à ce choix, et aucune n'est cosmétique.
 
-### Ce que fait le conteneur au premier démarrage
+**Les secrets.** Le mot de passe du compte de service et celui du relais SMTP sont
+chiffrés en AES-256-GCM avec une clé dérivée de `SESSION_SECRET`, et ne sont jamais
+renvoyés au navigateur. Dans une pile Portainer, ils seraient en clair, visibles de
+quiconque a accès à l'interface.
 
-1. Il crée le compte administrateur local et **affiche son mot de passe une seule
-   fois** dans les journaux — lisibles dans Portainer, *Containers > cybermois > Logs*.
-   Notez-le immédiatement : il est haché ensuite, et plus personne ne peut le relire.
-   Pour le redéfinir : `npm run admin -- definir admin "…"` dans une console du conteneur.
-2. Il charge les modules programmés dans les défis.
-3. Il refuse de démarrer si `LDAP_URL=demo` avec `NODE_ENV=production` : l'annuaire
-   simulé n'a rien à faire en service.
+**La réutilisation.** Les dates de campagne changent chaque année. Les avoir dans la
+pile obligerait à redéployer pour rejouer l'opération en 2027.
 
-Le point de contrôle `/sante` répond `{"ok":true,…}` et sert au *healthcheck* Docker :
-la pile passe en **healthy** au bout d'une vingtaine de secondes.
+Trois variables restent malgré tout dans la pile, parce qu'elles décrivent le
+déploiement et non la campagne :
+
+| Nom | Défaut | Pourquoi ici |
+|---|---|---|
+| `PUBLIC_URL` | `https://cybermois.chatillon92.fr` | Conditionne le drapeau `secure` du cookie dès le premier démarrage. Modifiable aussi dans l'application. |
+| `ADMIN_LOCAL_LOGIN` | `admin` | Seule porte d'entrée avant que l'annuaire ne soit réglé |
+| `LDAP_CA_FILE` | `/certs/ca.pem` | Dépend du montage de volume, pas de la configuration |
+
+### Au premier démarrage
+
+L'application démarre **sans annuaire configuré** — c'est le cas prévu. Les journaux
+indiquent :
+
+```
+Annuaire non configure : connectez-vous avec le compte local, puis Administration > Configuration.
+Configuration incomplete (DN du compte de service, mot de passe du compte de service,
+base de recherche, au moins un administrateur).
+```
+
+Ce n'est pas une erreur : le conteneur passe *healthy*, `/sante` répond. Le mot de passe
+du compte local est affiché **une seule fois** juste au-dessus dans les journaux —
+notez-le, il est haché ensuite.
+
+Connectez-vous avec ce compte, puis renseignez l'annuaire depuis la page de
+configuration. Un bouton y teste la connexion avant d'enregistrer.
+
+Tant que l'URL de l'annuaire n'est pas en `ldaps://`, l'authentification des agents est
+**refusée** en production : les mots de passe circuleraient en clair. Le compte local,
+lui, continue de fonctionner — c'est ce qui vous permet de corriger.
 
 ---
+
 
 ## 3. Configurer Nginx Proxy Manager
 
