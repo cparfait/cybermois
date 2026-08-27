@@ -173,26 +173,25 @@ function reconnaitreVideo(url) {
  * consentement - il est annonce comme tel.
  */
 function blocVideo(video) {
+  // Le titre de la video ne s'affiche pas : deux titres l'un sous l'autre -
+  // celui du defi, puis celui de la video - se confondaient, et l'agent ne
+  // savait plus lequel designait quoi. Le titre saisi sert a l'administration,
+  // pour reconnaitre le fichier ; ici, la place de la video suffit a dire ce
+  // qu'elle est.
   const v = reconnaitreVideo(video.url);
   if (!v) {
     return `
       <div class="carte" style="margin:1.5rem 0">
         <a href="${echapper(video.url)}" target="_blank" rel="noopener noreferrer">
-          ${echapper(video.titre || 'Voir la vidéo d’introduction')}
+          Voir la vidéo d’introduction
         </a>
       </div>`;
   }
-
-  const entete = `
-    <h2 style="margin:0 0 .2em;font-size:1.1rem">
-      ${echapper(video.titre || 'À regarder avant de commencer')}
-    </h2>`;
 
   // Fichier local : rien a consentir, donc rien a cliquer avant de voir.
   if (v.local) {
     return `
       <section class="carte bloc-video" style="margin:1.5rem 0">
-        ${entete}
         <div class="cadre-video">
           <video src="${echapper(v.source)}" controls preload="metadata"
                  style="width:100%;height:100%"></video>
@@ -202,7 +201,6 @@ function blocVideo(video) {
 
   return `
     <section class="carte bloc-video" style="margin:1.5rem 0">
-      ${entete}
       <div id="lecteur-video" class="vignette-video"
            data-embed="${echapper(v.embed)}">
         <button type="button" class="btn btn-principal" id="btn-lire-video">

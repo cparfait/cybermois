@@ -406,9 +406,15 @@ async function ouvrirEditeur(semaine) {
         <div class="champ-admin" style="grid-column:1/-1"><label for="ed-video-url">Adresse de la vidéo</label>
           <input type="url" id="ed-video-url" value="${echapper(defi.video?.url || '')}"
                  placeholder="https://www.dailymotion.com/video/x8rkmth"></div>
-        <div class="champ-admin" style="grid-column:1/-1"><label for="ed-video-titre">Titre affiché</label>
+        <div class="champ-admin" style="grid-column:1/-1">
+          <label for="ed-video-titre">Repère interne</label>
           <input type="text" id="ed-video-titre" value="${echapper(defi.video?.titre || '')}"
-                 placeholder="Mots de passe — campagne « Voilà » (0:56)"></div>
+                 placeholder="Mots de passe — campagne « Voilà » (0:56)">
+          <p class="discret" style="margin:.3rem 0 0;font-size:.78rem">
+            Sert à reconnaître la vidéo depuis cet écran. <strong>Il n'est pas montré aux
+            agents</strong> : un second titre sous celui du défi prêtait à confusion.
+          </p>
+        </div>
       </div>
       <div class="rang" style="margin-top:.6rem;align-items:center;flex-wrap:wrap">
         <label for="ed-video-fichier" class="btn btn-secondaire"
