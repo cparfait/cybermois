@@ -9,6 +9,13 @@ export const db = new DatabaseSync(config.dbFile);
 db.exec('PRAGMA journal_mode = WAL');
 db.exec('PRAGMA foreign_keys = ON');
 
+// Deux processus touchent la meme base : le serveur, et les outils en ligne de
+// commande - import du parametrage, compte administrateur - qu'on lance
+// pendant qu'il tourne. Sans delai d'attente, SQLite rend « database is locked »
+// des la premiere collision, au lieu de patienter le temps d'une ecriture qui
+// dure quelques millisecondes.
+db.exec('PRAGMA busy_timeout = 5000');
+
 db.exec(`
 CREATE TABLE IF NOT EXISTS agents (
   id             INTEGER PRIMARY KEY AUTOINCREMENT,
