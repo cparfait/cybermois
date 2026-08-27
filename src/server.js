@@ -64,7 +64,13 @@ function domainesVideo() {
 app.addHook('onSend', async (requete, reponse) => {
   reponse.header('X-Content-Type-Options', 'nosniff');
   reponse.header('X-Frame-Options', 'DENY');
-  reponse.header('Referrer-Policy', 'same-origin');
+  // « same-origin » n'envoyait aucun referent a un tiers : les lecteurs video
+  // ne pouvaient donc pas verifier d'ou venait l'insertion, et YouTube la
+  // refusait - erreur 153. « strict-origin-when-cross-origin » ne transmet que
+  // l'origine, jamais le chemin : le lecteur sait qu'il est appele par
+  // cybermois.chatillon92.fr, sans apprendre quel defi un agent est en train
+  // de jouer. C'est aussi le defaut des navigateurs modernes.
+  reponse.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   reponse.header('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
   reponse.header(
     'Content-Security-Policy',

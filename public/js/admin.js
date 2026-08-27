@@ -986,7 +986,7 @@ function brancherApercuVideo() {
         <div style="position:relative;aspect-ratio:16/9;max-width:520px;border-radius:var(--rayon);overflow:hidden">
           <iframe src="${echapper(v.embed)}" title="Prévisualisation de la vidéo"
                   style="position:absolute;inset:0;width:100%;height:100%;border:0"
-                  referrerpolicy="no-referrer" allowfullscreen loading="lazy"></iframe>
+                  referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe>
         </div>`;
     });
   };

@@ -226,7 +226,7 @@ function brancherVideo() {
       <div class="cadre-video">
         <iframe src="${echapper(zoneVideo.dataset.embed)}"
                 title="Vidéo d'introduction du défi" allow="autoplay; encrypted-media; fullscreen"
-                referrerpolicy="no-referrer" allowfullscreen loading="lazy"></iframe>
+                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe>
       </div>`;
   });
 }
