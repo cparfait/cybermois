@@ -941,7 +941,10 @@ function brancherApercuVideo() {
       const id = dm[1] || dm[2];
       return {
         hebergeur: 'Dailymotion', id,
-        embed: `https://www.dailymotion.com/embed/video/${encodeURIComponent(id)}`,
+        // Adresse du lecteur, sans passer par la redirection depuis
+        // www.dailymotion.com : elle mene a geo.dailymotion.com, et une
+        // redirection vers un autre domaine bute sur la politique de securite.
+        embed: `https://geo.dailymotion.com/player.html?video=${encodeURIComponent(id)}`,
       };
     }
     return null;

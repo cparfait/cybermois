@@ -45,6 +45,21 @@ await app.register(rateLimit, { global: false, hook: 'preHandler' });
 // requetes reste borne par bodyLimit, bien plus bas.
 await app.register(multipart, { limits: { fileSize: TAILLE_MAX, files: 1 } });
 
+/**
+ * Hebergeurs video autorises, pour la politique de securite de contenu.
+ *
+ * Un nom qui n'est pas un domaine plausible est ecarte : la liste se saisit
+ * dans l'administration, et une valeur fantaisiste - un joker, un chemin, un
+ * schema autre que https - elargirait la politique bien au-dela de l'intention.
+ */
+function domainesVideo() {
+  const propres = (config.videoDomaines || [])
+    .map((d) => String(d).trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, ''))
+    .filter((d) => /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i.test(d));
+
+  return propres.length ? propres.map((d) => `https://${d}`).join(' ') : "'none'";
+}
+
 // En-tetes de securite
 app.addHook('onSend', async (requete, reponse) => {
   reponse.header('X-Content-Type-Options', 'nosniff');
@@ -63,9 +78,10 @@ app.addHook('onSend', async (requete, reponse) => {
       "form-action 'self'",
       // Le lecteur video n'est insere qu'apres un clic explicite : la page
       // elle-meme n'appelle jamais Google.
-      // Dailymotion parce que Cybermalveillance.gouv.fr y publie son kit de
-      // sensibilisation : la source la plus legitime pour une collectivite.
-      "frame-src https://www.youtube-nocookie.com https://www.dailymotion.com",
+      // Hebergeurs video, regles dans l'administration : ajouter une plateforme
+      // - l'ANSSI, une autre collectivite - ne doit pas demander un
+      // redeploiement. Chaque nom est filtre a l'enregistrement.
+      `frame-src ${domainesVideo()}`,
       "frame-ancestors 'none'",
       "base-uri 'self'",
     ].join('; ')

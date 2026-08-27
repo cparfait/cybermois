@@ -106,6 +106,17 @@ try {
            style="display:block;text-align:center;margin-top:.5rem;font-size:.84rem">
           Refaire pour m'entraîner
         </a>`;
+    } else if (defi.repondues > 0) {
+      // Reprendre plutot que recommencer : la page du defi rouvre d'elle-meme
+      // a la premiere question sans reponse, encore faut-il que l'accueil le
+      // dise - sinon on croit devoir tout refaire, et on remet a plus tard.
+      const reste = (defi.nbQuestions || 0) - defi.repondues;
+      action = `
+        <a class="btn btn-principal btn-bloc" href="/defi/${defi.semaine}">Continuer mon défi</a>
+        <p class="discret" style="text-align:center;margin:.5rem 0 0;font-size:.84rem">
+          ${defi.repondues} question${defi.repondues > 1 ? 's' : ''} déjà validée${defi.repondues > 1 ? 's' : ''}${
+        reste > 0 ? ` · il en reste ${reste}` : ''}
+        </p>`;
     } else {
       action = `<a class="btn btn-principal btn-bloc" href="/defi/${defi.semaine}">Je relève le défi</a>`;
     }

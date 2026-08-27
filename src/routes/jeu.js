@@ -69,6 +69,12 @@ export default async function routesJeu(app) {
       nbQuestions: ouvert
         ? db.prepare('SELECT COUNT(*) AS n FROM questions WHERE defi_id = ?').get(d.id).n
         : null,
+      // Questions deja validees sur un defi non termine : c'est ce qui permet
+      // a l'accueil de proposer de reprendre plutot que de recommencer. Un
+      // agent interrompu au telephone ne doit pas croire qu'il repart de zero.
+      repondues: ouvert && !parDefi[d.id]
+        ? progression(requete.agent.id, d.id).length
+        : 0,
       participation: parDefi[d.id]
         ? {
             score: parDefi[d.id].score,
@@ -114,6 +120,11 @@ export default async function routesJeu(app) {
       // Video d'introduction, facultative. L'URL seule est transmise : c'est le
       // navigateur qui decide d'appeler YouTube, et seulement si l'agent clique.
       video: defi.video_url ? { url: defi.video_url, titre: defi.video_titre || null } : null,
+      // Hebergeurs autorises : l'ecran ne connait le format d'insertion que de
+      // YouTube et Dailymotion. Pour une autre plateforme, il insere l'adresse
+      // telle quelle - a condition qu'elle figure ici, sinon le navigateur la
+      // bloquerait de toute facon.
+      videoDomaines: config.videoDomaines || [],
       // Rejouer est possible mais ne rapporte plus de points : mode entrainement.
       // Un apercu l'est toujours, par construction.
       entrainement: apercu || !!dejaFait,

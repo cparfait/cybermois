@@ -29,7 +29,11 @@ try {
   if (index === -1) index = defi.questions.length - 1;
 
   if (defi.close) afficherCloture();
-  else afficherIntro(repondues.size);
+  // Une reprise va droit a la question suivante : reafficher l'introduction et
+  // la video a quelqu'un qui a deja repondu a six questions lui redemande de
+  // cliquer pour retrouver ou il en etait.
+  else if (repondues.size > 0) afficherQuestion();
+  else afficherIntro(0);
 } catch (erreur) {
   alerte('alerte', erreur.message);
   zone.innerHTML = '<p><a class="btn btn-secondaire" href="/accueil">Retour aux défis</a></p>';
@@ -137,9 +141,24 @@ function reconnaitreVideo(url) {
   if (dm) {
     return {
       hebergeur: 'Dailymotion',
-      embed: `https://www.dailymotion.com/embed/video/${encodeURIComponent(dm[1] || dm[2])}?autoplay=1`,
+      // Adresse du lecteur, sans passer par la redirection depuis
+      // www.dailymotion.com : une redirection vers un autre domaine se heurte
+      // a la politique de securite, et le lecteur reste vide sans rien dire.
+      embed: `https://geo.dailymotion.com/player.html?video=${encodeURIComponent(dm[1] || dm[2])}&autoplay=1`,
     };
   }
+
+  // Plateforme dont on ne connait pas le format d'insertion - l'ANSSI, une
+  // autre collectivite. On insere l'adresse telle quelle, a condition que son
+  // domaine soit autorise : sinon le navigateur la bloquerait sans rien dire,
+  // et mieux vaut un lien qui fonctionne qu'un cadre vide.
+  try {
+    const u = new URL(brut);
+    const autorises = defi?.videoDomaines || [];
+    if (u.protocol === 'https:' && autorises.includes(u.hostname)) {
+      return { hebergeur: u.hostname, embed: u.href };
+    }
+  } catch { /* adresse illisible : traitee comme un simple lien */ }
 
   return null;
 }

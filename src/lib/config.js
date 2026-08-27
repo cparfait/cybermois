@@ -50,6 +50,18 @@ export const config = {
   // mentions legales. Elle change de personne plus souvent que le code.
   contactDpo: process.env.CONTACT_DPO || 'dpo@chatillon92.fr',
 
+  // Hebergeurs autorises a fournir une video d'introduction. La liste alimente
+  // la politique de securite de contenu : un domaine absent d'ici verra son
+  // lecteur bloque par le navigateur. Elle se modifie dans l'administration -
+  // ajouter une plateforme ne doit pas demander un redeploiement.
+  videoDomaines: liste(process.env.VIDEO_DOMAINES)
+    .filter(Boolean)
+    .concat(process.env.VIDEO_DOMAINES ? [] : [
+      'www.youtube-nocookie.com',
+      'www.dailymotion.com',
+      'geo.dailymotion.com',
+    ]),
+
   adminLogins: liste(process.env.ADMIN_LOGINS),
 
   sync: {

@@ -61,6 +61,11 @@ const bool = (v) => /^(true|1|oui|yes)$/i.test(String(v));
 export const DESCRIPTEUR = [
   { cle: 'publicUrl', chemin: ['publicUrl'], type: 'texte', groupe: 'general',
     libelle: 'Adresse du portail', aide: "Telle que les agents la voient. Alimente les liens des mails et le drapeau securise du cookie de session." },
+  { cle: 'videoDomaines', chemin: ['videoDomaines'], type: 'liste', groupe: 'general',
+    libelle: 'Hébergeurs vidéo autorisés',
+    aide: "Séparés par des virgules. Un hébergeur absent d'ici verra son lecteur bloqué "
+      + 'par le navigateur. Nom de domaine seul, sans https:// ni chemin. '
+      + 'Exemple : www.youtube-nocookie.com, geo.dailymotion.com, medias.ssi.gouv.fr' },
   { cle: 'contactDpo', chemin: ['contactDpo'], type: 'texte', groupe: 'general',
     libelle: 'Adresse de la DPO',
     aide: 'Figure dans les mentions légales, pour l’exercice des droits. '
