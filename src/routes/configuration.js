@@ -135,8 +135,14 @@ export default async function routesConfiguration(app) {
       return reponse.code(400).send({ erreur: 'Aucune valeur transmise.' });
     }
 
+    // Certaines cles accompagnent un parametre sans etre stockees : la case
+    // « liaison chiffree » sert a composer ldap.url, elle ne vit pas en base.
+    // Sans cette tolerance, l'enregistrement echouait en entier sur un
+    // « parametre inconnu » qui ne designait rien d'anormal.
+    const ACCOMPAGNANTES = new Set(['ldap.chiffre']);
     const cles = new Set(DESCRIPTEUR.map((d) => d.cle));
-    const inconnues = Object.keys(valeurs).filter((c) => !cles.has(c));
+    const inconnues = Object.keys(valeurs)
+      .filter((c) => !cles.has(c) && !ACCOMPAGNANTES.has(c));
     if (inconnues.length) {
       return reponse.code(400).send({ erreur: `Paramètre inconnu : ${inconnues.join(', ')}` });
     }
