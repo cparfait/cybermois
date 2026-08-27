@@ -180,22 +180,29 @@ export function annuaireConfigure() {
 export function verifierChiffrement() {
   if (config.ldap.url === 'demo' || config.ldap.url.startsWith('ldaps://')) return null;
 
-  // Une instance qui vient d'etre deployee n'a pas encore d'annuaire : refuser
-  // de demarrer interdirait d'atteindre la page ou on le renseigne. Personne
+  // Une instance qui vient d'etre deployee n'a pas encore d'annuaire : personne
   // ne peut s'authentifier dans cet etat, seul le compte local ouvre la porte.
   if (!annuaireConfigure()) {
     return 'Annuaire non configure : connectez-vous avec le compte local, '
       + 'puis Administration > Configuration.';
   }
 
+  // On avertit, on ne fait plus echouer le demarrage. L'URL se saisit depuis la
+  // page de configuration : une faute de frappe y rendait l'application
+  // inaccessible, donc impossible a corriger - il fallait passer par une
+  // variable d'environnement pour rouvrir la porte.
+  //
+  // La protection n'est pas perdue pour autant : authentifier() refuse toute
+  // connexion d'agent tant que la liaison n'est pas chiffree. Le controle est
+  // au bon endroit, celui ou le mot de passe circulerait.
   if (config.env === 'production' && !config.ldap.autoriserNonChiffre) {
-    throw new Error(
-      `LDAP_URL=${config.ldap.url} n'est pas chiffre : les mots de passe des agents circuleraient `
-      + 'en clair sur le reseau. Passez en ldaps:// (port 636) avant la mise en service. '
-      + "Pour une recette en production a vos risques, ajoutez LDAP_AUTORISER_NON_CHIFFRE=true."
-    );
+    return `LDAP_URL=${config.ldap.url} n'est pas chiffre : les connexions des agents sont `
+      + 'REFUSEES tant que la liaison reste en clair. Passez en ldaps:// (port 636) dans '
+      + 'Administration > Configuration. Le compte local reste utilisable pour le faire.';
   }
-  return 'Liaison LDAP NON CHIFFREE : les mots de passe transitent en clair. Acceptable en recette, a corriger avant ouverture.';
+
+  return 'Liaison LDAP NON CHIFFREE : les mots de passe transitent en clair. '
+    + 'Acceptable en recette, a corriger avant ouverture.';
 }
 
 /** Test de connectivite pour le back-office */

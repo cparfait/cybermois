@@ -267,6 +267,13 @@ export function configurationUtilisable() {
   if (config.ldap.url === 'demo') return { ok: true, mode: 'demonstration' };
   const manquants = [];
   if (!config.ldap.url || config.ldap.url.startsWith('ldap') === false) manquants.push('serveur LDAP');
+  // Une liaison en clair n'est pas une configuration incomplete mais inutilisable :
+  // les connexions d'agents sont refusees. La page doit le dire, sans quoi le
+  // symptome n'apparaitrait qu'au premier agent qui essaie.
+  else if (config.env === 'production' && config.ldap.url.startsWith('ldap://')
+    && !config.ldap.autoriserNonChiffre) {
+    manquants.push('une liaison chiffree : ldaps:// (port 636) et non ldap://');
+  }
   if (!config.ldap.bindDn) manquants.push('DN du compte de service');
   if (!config.ldap.bindPassword) manquants.push('mot de passe du compte de service');
   if (!config.ldap.baseDn) manquants.push('base de recherche');
