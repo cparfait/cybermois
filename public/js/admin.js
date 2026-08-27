@@ -381,6 +381,22 @@ async function ouvrirEditeur(semaine) {
                  placeholder="Défi mots de passe réussi à 80 % ou plus."></div>
       </div>
 
+      <h3 style="margin-top:1.5rem">Vidéo d'introduction</h3>
+      <p class="discret" style="margin-top:-.3em">
+        Facultative, présentée avant les questions. YouTube ou Dailymotion, sous n'importe
+        quelle forme d'adresse. <strong>Videz le champ pour la retirer.</strong>
+        Rien n'est chargé chez l'hébergeur tant que l'agent ne clique pas.
+      </p>
+      <div class="grille grille-2">
+        <div class="champ-admin" style="grid-column:1/-1"><label for="ed-video-url">Adresse de la vidéo</label>
+          <input type="url" id="ed-video-url" value="${echapper(defi.video?.url || '')}"
+                 placeholder="https://www.dailymotion.com/video/x8rkmth"></div>
+        <div class="champ-admin" style="grid-column:1/-1"><label for="ed-video-titre">Titre affiché</label>
+          <input type="text" id="ed-video-titre" value="${echapper(defi.video?.titre || '')}"
+                 placeholder="Mots de passe — campagne « Voilà » (0:56)"></div>
+      </div>
+      <div id="apercu-video-editeur" style="margin-top:.6rem"></div>
+
       <h3 style="margin-top:1.5rem">Questions</h3>
       <div id="liste-questions">${defi.questions.map(rendreQuestion).join('')}</div>
       <button type="button" class="btn btn-secondaire" id="btn-ajouter-question">+ Ajouter une question</button>
@@ -431,6 +447,8 @@ async function ouvrirEditeur(semaine) {
 
   document.getElementById('btn-fermer').addEventListener('click', () => { zone.innerHTML = ''; });
 
+  brancherApercuVideo();
+
   document.getElementById('btn-enregistrer').addEventListener('click', async () => {
     const questions = [...liste.querySelectorAll('.editeur-question')].map((bloc) => ({
       enonce: bloc.querySelector('[data-champ="enonce"]').value.trim(),
@@ -459,6 +477,12 @@ async function ouvrirEditeur(semaine) {
             libelle: document.getElementById('ed-badge-libelle').value.trim(),
             emoji: document.getElementById('ed-badge-emoji').value.trim(),
             description: document.getElementById('ed-badge-description').value.trim(),
+          },
+          // Toujours transmis, meme vide : c'est ce qui permet de retirer une
+          // video. Un champ absent signifierait « ne pas changer ».
+          video: {
+            url: document.getElementById('ed-video-url').value.trim(),
+            titre: document.getElementById('ed-video-titre').value.trim(),
           },
           questions,
         },
@@ -851,4 +875,50 @@ async function testerDefi(semaine, bouton) {
     bouton.disabled = false;
     bouton.textContent = libelle;
   }
+}
+
+/**
+ * Aperçu de l'adresse vidéo saisie, dans l'éditeur de défi.
+ *
+ * Une adresse mal collée ne se verrait autrement qu'au moment où un agent
+ * ouvre le défi — c'est-à-dire trop tard. On dit tout de suite si elle est
+ * reconnue, et par quel hébergeur.
+ */
+function brancherApercuVideo() {
+  const champ = document.getElementById('ed-video-url');
+  const zone = document.getElementById('apercu-video-editeur');
+  if (!champ || !zone) return;
+
+  const reconnaitre = (url) => {
+    const brut = String(url || '');
+    const yt = brut.match(
+      /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
+    );
+    if (yt) return { hebergeur: 'YouTube', id: yt[1] };
+    const dm = brut.match(/dailymotion\.com\/(?:embed\/)?video\/([A-Za-z0-9]+)|dai\.ly\/([A-Za-z0-9]+)/);
+    if (dm) return { hebergeur: 'Dailymotion', id: dm[1] || dm[2] };
+    return null;
+  };
+
+  const majApercu = () => {
+    const valeur = champ.value.trim();
+    if (!valeur) {
+      zone.innerHTML = '<p class="discret" style="margin:0;font-size:.84rem">'
+        + 'Aucune vidéo : le défi commence directement par les questions.</p>';
+      return;
+    }
+    const v = reconnaitre(valeur);
+    zone.innerHTML = v
+      ? `<div class="message message-succes" style="margin:0">
+           Reconnu : <strong>${echapper(v.hebergeur)}</strong> —
+           <code>${echapper(v.id)}</code>
+         </div>`
+      : `<div class="message message-alerte" style="margin:0">
+           Adresse non reconnue. Attendu : une adresse YouTube ou Dailymotion.
+           Elle sera présentée comme un simple lien.
+         </div>`;
+  };
+
+  champ.addEventListener('input', majApercu);
+  majApercu();
 }

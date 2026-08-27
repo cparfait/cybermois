@@ -226,8 +226,17 @@ export default async function routesAdmin(app) {
             .toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 40)
         : defi.badge_code);
 
+    // Une video se retire en vidant le champ : sans distinguer « absent du
+    // corps » de « vidé », on ne pourrait plus jamais l'enlever.
+    const videoFournie = corps.video !== undefined;
+    const videoUrl = videoFournie ? (String(corps.video?.url || '').trim() || null) : defi.video_url;
+    const videoTitre = videoFournie
+      ? (videoUrl ? (String(corps.video?.titre || '').trim() || null) : null)
+      : defi.video_titre;
+
     db.prepare(`UPDATE defis SET titre = ?, accroche = ?, intro = ?, duree_minutes = ?, ouvre_le = ?, publie = ?,
                   badge_code = ?, badge_libelle = ?, badge_emoji = ?, badge_description = ?,
+                  video_url = ?, video_titre = ?,
                   maj_le = datetime('now') WHERE id = ?`)
       .run(
         corps.titre ?? defi.titre, corps.accroche ?? defi.accroche, corps.intro ?? defi.intro,
@@ -238,6 +247,7 @@ export default async function routesAdmin(app) {
         corps.badge?.libelle ?? defi.badge_libelle,
         corps.badge?.emoji ?? defi.badge_emoji,
         corps.badge?.description ?? defi.badge_description,
+        videoUrl, videoTitre,
         defi.id
       );
 

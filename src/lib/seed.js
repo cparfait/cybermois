@@ -119,6 +119,9 @@ export function exporterDefi(semaine) {
       code: defi.badge_code, libelle: defi.badge_libelle,
       emoji: defi.badge_emoji, description: defi.badge_description,
     } : null,
+    // La video se modifie defi par defi : celle du module n'est qu'une valeur
+    // de depart, et une campagne peut vouloir la sienne.
+    video: defi.video_url ? { url: defi.video_url, titre: defi.video_titre } : null,
     questions: questions.map((q) => ({
       enonce: q.enonce, contexte: q.contexte, multiple: !!q.multiple, points: q.points, explication: q.explication,
       reponses: db.prepare('SELECT libelle, correcte FROM reponses WHERE question_id = ? ORDER BY ordre').all(q.id)
