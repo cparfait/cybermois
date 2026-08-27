@@ -50,6 +50,11 @@ export const config = {
   // mentions legales. Elle change de personne plus souvent que le code.
   contactDpo: process.env.CONTACT_DPO || 'dpo@chatillon92.fr',
 
+  // Colonnes sur la page des defis. Quatre cartes sur une ligne se lisent mal ;
+  // deux les presentent par paires, ce qui epouse le rythme d'une campagne de
+  // quatre semaines.
+  defisParLigne: num(process.env.DEFIS_PAR_LIGNE, 2),
+
   // Hebergeurs autorises a fournir une video d'introduction. La liste alimente
   // la politique de securite de contenu : un domaine absent d'ici verra son
   // lecteur bloque par le navigateur. Elle se modifie dans l'administration -

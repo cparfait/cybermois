@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Les défis — Cybermois — Ville de Châtillon</title>
 <link rel="stylesheet" href="/css/theme.css">
-<link rel="icon" href="/img/logo-chatillon.jpg">
+<link rel="icon" href="/img/logo.png">
 <style>
   .heros { background: var(--vert-fonce); color: #fff; border-radius: var(--rayon); padding: 2rem; margin-bottom: 2rem; position: relative; overflow: hidden; }
   .heros::after { content: ''; position: absolute; right: -60px; top: -60px; width: 240px; height: 240px; border-radius: 50%; background: var(--vert-clair); opacity: .18; }
@@ -42,22 +42,25 @@
   }
   .carte-defi.termine { border-top-color: var(--succes); }
 
-  /* Le defi de la semaine : un filet lumineux tourne autour de la carte.
-     Le trace vient d'un degrade conique qui pivote, decoupe en anneau par un
-     masque - donc une seule couche animee, et la carte reste lisible. */
-  .carte-defi.a-jouer { border-top-color: transparent; }
+  /* Le defi de la semaine : un reflet aux couleurs de la Ville glisse le long
+     du bord. Le filet precedent tournait franchement et tirait l'oeil hors de
+     la carte ; celui-ci se contente de la signaler.
+
+     Le trace vient d'un degrade conique decoupe en anneau par un masque : une
+     seule couche animee, et le contenu de la carte reste intact. */
+  .carte-defi.a-jouer { border-top-color: var(--vert-clair); }
 
   .halo {
-    position: absolute; inset: -2px; border-radius: inherit; z-index: 0;
-    padding: 2px; pointer-events: none;
+    position: absolute; inset: -1px; border-radius: inherit; z-index: 0;
+    padding: 1.5px; pointer-events: none; opacity: .75;
     background: conic-gradient(from 0deg,
-      transparent 0deg, transparent 200deg,
-      var(--vert-clair) 280deg, var(--vert-fonce) 330deg, transparent 360deg);
+      transparent 0deg, transparent 250deg,
+      var(--vert-clair) 300deg, var(--vert-fonce) 340deg, transparent 360deg);
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     mask-composite: exclude;
-    animation: ronde 4s linear infinite;
+    animation: ronde 9s linear infinite;
   }
 
   /* Le contenu passe devant le filet, sans quoi le degrade le traverserait. */
@@ -65,10 +68,10 @@
 
   @keyframes ronde { to { rotate: 360deg; } }
 
-  /* Un mouvement perpetuel derange a la longue : il se pose apres trois tours,
-     le temps d'attirer l'oeil sans s'imposer. */
+  /* Sans mouvement, le bord garde la couleur : la carte reste distinguee, ce
+     qui est le seul role de cette animation. */
   @media (prefers-reduced-motion: reduce) {
-    .halo { animation: none; background: var(--vert-clair); }
+    .halo { animation: none; background: var(--vert-clair); opacity: .5; }
   }
   .numero-semaine { font-family: var(--police-ui); font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--vert-clair-texte); }
   .accroche { font-style: italic; color: var(--encre-douce); }

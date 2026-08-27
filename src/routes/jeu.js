@@ -44,6 +44,11 @@ export default async function routesJeu(app) {
   app.addHook('preHandler', exigerAuth);
 
   /* ------------------------------------------------------- Liste des defis */
+  /** Reglages d'affichage de la page des defis, modifiables sans redemarrage. */
+  app.get('/api/defis/affichage', async () => ({
+    defisParLigne: Math.min(4, Math.max(1, Number(config.defisParLigne) || 2)),
+  }));
+
   app.get('/api/defis', async (requete) => {
     const defis = db.prepare('SELECT * FROM defis ORDER BY semaine').all();
     const faits = db.prepare(

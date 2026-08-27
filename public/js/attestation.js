@@ -22,7 +22,7 @@ try {
 
     zone.innerHTML = `
       <div class="attestation">
-        <img src="/img/logo-chatillon.jpg" alt="Ville de Châtillon" class="logo">
+        <img src="/img/email-logo.png" alt="Ville de Châtillon" class="logo">
         <p class="surtitre">Cybermois ${annee}</p>
         <h1>Attestation de participation</h1>
 

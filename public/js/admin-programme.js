@@ -39,10 +39,29 @@ const parTheme = () => {
   return [...g];
 };
 
+/**
+ * Numero d'ordre du module dans le catalogue.
+ *
+ * Vingt titres qui se ressemblent (« Mots de passe », « Mots de passe et
+ * comptes ») se confondent d'une liste a l'autre. Un numero stable donne un
+ * point de repere commun a la liste deroulante et au catalogue : on se dit
+ * « le 14 » plutot que de relire quatre titres.
+ */
+const numero = (code) => donnees.modules.findIndex((m) => m.code === code) + 1;
+
+const deuxChiffres = (n) => String(n).padStart(2, '0');
+
 const options = (choisi) => parTheme().map(([theme, liste]) => `
   <optgroup label="${echapper(theme)}">
-    ${liste.map((m) => `<option value="${echapper(m.code)}"${m.code === choisi ? ' selected' : ''}>${echapper(m.titre)} — ${m.questions} questions</option>`).join('')}
+    ${liste.map((m) => `<option value="${echapper(m.code)}"${m.code === choisi ? ' selected' : ''}>${deuxChiffres(numero(m.code))} · ${echapper(m.titre)} — ${m.questions} questions</option>`).join('')}
   </optgroup>`).join('');
+
+/** Date du jour au format ISO, pour ouvrir un defi sur-le-champ. */
+function aujourdhui() {
+  const p = (n) => String(n).padStart(2, '0');
+  const d = new Date();
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
 
 /**
  * Date d'ouverture calculee comme le serveur : debut de campagne + 7 jours par
@@ -93,6 +112,19 @@ function rendre(cible) {
         <span class="discret ui" id="resume-programme"></span>
       </div>
 
+      <div style="margin-top:1rem;padding:.9rem 1rem;border:1px dashed var(--bordure);border-radius:var(--rayon)">
+        <p class="ui" style="margin:0 0 .5rem;font-size:.86rem"><strong>Recette</strong> —
+          relire les vingt questionnaires un par un depuis l'aperçu est long, et l'aperçu ne
+          dit rien du rendu réel. Ce bouton programme <strong>tous</strong> les modules, un par
+          semaine, et les ouvre aujourd'hui : ils deviennent jouables pour de vrai.
+          Les semaines déjà jouées ne bougent pas.
+          <br>Pensez à effacer les données de test et à reprogrammer la vraie campagne ensuite.
+        </p>
+        <button class="btn btn-secondaire" id="btn-tout-ouvrir" style="padding:.4rem .8rem;font-size:.84rem">
+          Programmer et ouvrir les ${donnees.modules.length} défis
+        </button>
+      </div>
+
       <div class="rang" style="margin-top:1.2rem;border-top:1px solid var(--bordure);padding-top:1.2rem">
         <button class="btn btn-principal" id="btn-enregistrer-programme">Enregistrer le programme</button>
       </div>
@@ -106,6 +138,7 @@ function rendre(cible) {
           <div class="tableau-defilant"><table class="admin">
             <tbody>${liste.map((m) => `
               <tr>
+                <td class="ui discret" style="width:34px;text-align:right;font-variant-numeric:tabular-nums">${deuxChiffres(numero(m.code))}</td>
                 <td style="width:34px;font-size:1.3rem">${echapper(m.badge?.emoji || '•')}</td>
                 <td>
                   <strong>${echapper(m.titre)}</strong>
@@ -129,8 +162,11 @@ function rendre(cible) {
 const ligne = (b, i) => {
   const doublon = b.module_code && brouillon.filter((x) => x.module_code === b.module_code).length > 1;
   return `
-  <tr data-index="${i}"${b.verrouille ? ' style="background:var(--fond-doux)"' : ''}>
-    <td><strong>S${b.semaine}</strong></td>
+  <tr data-index="${i}"${b.verrouille ? ' style="background:var(--vert-fonce-clair)"' : ''}>
+    <td>
+      <strong>S${b.semaine}</strong>
+      ${b.module_code ? `<div class="discret ui" style="font-size:.78rem">module ${deuxChiffres(numero(b.module_code))}</div>` : ''}
+    </td>
     <td>
       <input type="date" class="date-semaine" value="${echapper(b.ouvre_le || calculee(b.semaine))}"
              aria-label="Ouverture de la semaine ${b.semaine}"${b.verrouille ? ' disabled' : ''}
@@ -215,52 +251,87 @@ function brancher(cible) {
   cible.querySelectorAll('[data-apercu]').forEach((b) =>
     b.addEventListener('click', () => apercu(b.dataset.apercu)));
 
-  document.getElementById('btn-enregistrer-programme').addEventListener('click', async () => {
-    const programme = brouillon.filter((b) => b.module_code)
-      .map((b) => ({
-        semaine: b.semaine,
-        module_code: b.module_code,
-        // Seule une date differente du calcul est transmise : conserver la
-        // date calculee la figerait, et « Replanifier » n'aurait plus d'effet.
-        ouvre_le: b.ouvre_le && b.ouvre_le !== calculee(b.semaine) ? b.ouvre_le : null,
-      }));
-    if (!programme.length) return alerte('alerte', 'Choisissez au moins un module.');
+  // Tout ouvrir d'un coup : la recette a besoin des vingt defis jouables en
+  // meme temps, ce que la programmation semaine par semaine rend fastidieux.
+  document.getElementById('btn-tout-ouvrir').addEventListener('click', async () => {
+    const verrouillees = brouillon.filter((b) => b.verrouille);
+    const deja = new Set(verrouillees.map((b) => b.module_code));
+    const restants = donnees.modules.filter((m) => !deja.has(m.code));
 
-    const codes = programme.map((p) => p.module_code);
-    if (new Set(codes).size !== codes.length) {
-      return alerte('alerte', 'Un même module est programmé deux fois.');
+    const saut = String.fromCharCode(10);
+    if (!confirm([
+      `${restants.length} module(s) vont être programmés et ouverts aujourd'hui.`,
+      'Tous les agents pourront les jouer, et leurs résultats compteront.',
+      'À ne faire que sur un environnement de test. Continuer ?',
+    ].join(saut + saut))) return;
+
+    // Les semaines deja jouees gardent leur rang : renumeroter derriere elles
+    // ferait porter les participations enregistrees sur un autre defi.
+    brouillon = verrouillees.map((b) => ({ ...b }));
+    for (const m of restants) {
+      brouillon.push({
+        semaine: brouillon.length + 1,
+        module_code: m.code,
+        ouvre_le: aujourdhui(),
+        verrouille: false,
+        participations: 0,
+      });
     }
+    brouillon.forEach((b, i) => { b.semaine = i + 1; });
 
-    // Un defi s'ouvre a sa date. Programme sur une date passee, il s'ouvre
-    // donc immediatement - ce qui est parfois voulu, jamais evident.
-    const p = (n) => String(n).padStart(2, '0');
-    const d = new Date();
-    const aujourdhui = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-
-    const immediats = brouillon.filter((b) => b.module_code && !b.verrouille
-      && (b.ouvre_le || calculee(b.semaine)) <= aujourdhui);
-
-    if (immediats.length) {
-      const saut = String.fromCharCode(10);
-      const liste = immediats
-        .map((b) => `  Semaine ${b.semaine} — ${b.ouvre_le || calculee(b.semaine)}`)
-        .join(saut);
-      const message = [
-        `${immediats.length} défi(s) ont une date déjà passée et s'ouvriront immédiatement aux agents :`,
-        liste,
-        'Continuer ?',
-      ].join(saut + saut);
-      if (!confirm(message)) return;
-    }
-
-    try {
-      const r = await api('/api/admin/programme', { method: 'PUT', body: { programme } });
-      alerte('alerte', r.message, 'succes');
-      auTermine();
-    } catch (e) { alerte('alerte', e.message); }
+    rendre(cible);
+    await enregistrer(false);
   });
+
+  document.getElementById('btn-enregistrer-programme')
+    .addEventListener('click', () => enregistrer(true));
 }
 
+/**
+ * Ecrit la programmation. `prevenirImmediats` demande confirmation quand une
+ * date deja passee rend un defi visible sur-le-champ : c'est parfois voulu,
+ * jamais evident. La recette, elle, vient de le confirmer.
+ */
+async function enregistrer(prevenirImmediats) {
+  const programme = brouillon.filter((b) => b.module_code)
+    .map((b) => ({
+      semaine: b.semaine,
+      module_code: b.module_code,
+      // Seule une date differente du calcul est transmise : conserver la
+      // date calculee la figerait, et « Replanifier » n'aurait plus d'effet.
+      ouvre_le: b.ouvre_le && b.ouvre_le !== calculee(b.semaine) ? b.ouvre_le : null,
+    }));
+  if (!programme.length) return alerte('alerte', 'Choisissez au moins un module.');
+
+  const codes = programme.map((p) => p.module_code);
+  if (new Set(codes).size !== codes.length) {
+    return alerte('alerte', 'Un meme module est programme deux fois.');
+  }
+
+  // Un defi s'ouvre a sa date. Programme sur une date passee, il s'ouvre
+  // donc immediatement - ce qui est parfois voulu, jamais evident.
+  const immediats = brouillon.filter((b) => b.module_code && !b.verrouille
+    && (b.ouvre_le || calculee(b.semaine)) <= aujourdhui());
+
+  if (prevenirImmediats && immediats.length) {
+    const saut = String.fromCharCode(10);
+    const liste = immediats
+      .map((b) => `  Semaine ${b.semaine} — ${b.ouvre_le || calculee(b.semaine)}`)
+      .join(saut);
+    const message = [
+      `${immediats.length} defi(s) ont une date deja passee et s'ouvriront immediatement aux agents :`,
+      liste,
+      'Continuer ?',
+    ].join(saut + saut);
+    if (!confirm(message)) return;
+  }
+
+  try {
+    const r = await api('/api/admin/programme', { method: 'PUT', body: { programme } });
+    alerte('alerte', r.message, 'succes');
+    auTermine();
+  } catch (e) { alerte('alerte', e.message); }
+}
 /** Relecture complete d'un module, bonnes reponses comprises. */
 async function apercu(code) {
   const zone = document.getElementById('apercu-module');

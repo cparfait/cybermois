@@ -5,16 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Classement — Cybermois — Ville de Châtillon</title>
 <link rel="stylesheet" href="/css/theme.css">
-<link rel="icon" href="/img/logo-chatillon.jpg">
+<link rel="icon" href="/img/logo.png">
 <style>
-  .onglets { display: flex; gap: .3rem; border-bottom: 2px solid var(--bordure); margin: 1.5rem 0 0; }
-  .onglets button {
-    font-family: var(--police-ui); font-weight: 700; font-size: .95rem;
-    background: none; border: none; border-bottom: 3px solid transparent;
-    padding: .8rem 1.2rem; cursor: pointer; color: var(--encre-douce); margin-bottom: -2px;
+  /* Deux classements coexistent, et l'un cache l'autre. Un simple soulignement
+     ne disait pas assez qu'il y avait une seconde vue a ouvrir : le selecteur
+     occupe donc toute la largeur, et l'onglet actif est plein. */
+  .onglets {
+    display: grid; grid-template-columns: 1fr 1fr; gap: .4rem;
+    background: var(--fond); border: 1px solid var(--bordure);
+    border-radius: var(--rayon); padding: .35rem; margin: 2rem 0 0;
   }
-  .onglets button[aria-selected="true"] { color: var(--vert-fonce); border-bottom-color: var(--vert-fonce); }
-  .onglets button:hover { color: var(--vert-fonce); }
+  .onglets button {
+    font-family: var(--police-ui); font-weight: 700; font-size: 1rem;
+    background: none; border: 1px solid transparent; border-radius: calc(var(--rayon) - 5px);
+    padding: .8rem 1rem; cursor: pointer; color: var(--encre-douce);
+    display: flex; flex-direction: column; align-items: center; gap: .2rem; line-height: 1.25;
+  }
+  .onglets button .sous-onglet { font-weight: 500; font-size: .78rem; opacity: .85; }
+  .onglets button[aria-selected="true"] { background: var(--vert-fonce); color: #fff; box-shadow: var(--ombre); }
+  .onglets button:hover:not([aria-selected="true"]) { background: var(--surface); color: var(--vert-fonce); }
+  @media (max-width: 480px) { .onglets { grid-template-columns: 1fr; } }
 
   .podium { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; align-items: end; margin: 2rem 0; }
   .marche { background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: 1.2rem .8rem; text-align: center; box-shadow: var(--ombre); }
@@ -59,8 +69,14 @@
     <div id="stats" class="stats-globales"></div>
 
     <div class="onglets" role="tablist">
-      <button role="tab" id="onglet-services" aria-selected="true" aria-controls="panneau-services">Par service</button>
-      <button role="tab" id="onglet-agents" aria-selected="false" aria-controls="panneau-agents">Individuel</button>
+      <button role="tab" id="onglet-services" aria-selected="true" aria-controls="panneau-services">
+        <span>🏛️ Classement par service</span>
+        <span class="sous-onglet" id="compte-services">&nbsp;</span>
+      </button>
+      <button role="tab" id="onglet-agents" aria-selected="false" aria-controls="panneau-agents">
+        <span>👤 Classement individuel</span>
+        <span class="sous-onglet" id="compte-agents">&nbsp;</span>
+      </button>
     </div>
 
     <div role="tabpanel" id="panneau-services" aria-labelledby="onglet-services">

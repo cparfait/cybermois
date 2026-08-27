@@ -23,7 +23,17 @@ const TEASERS = [
 const agent = await initialiserPage('/accueil');
 
 try {
-  const [defis, profil] = await Promise.all([api('/api/defis'), api('/api/profil')]);
+  const [defis, profil, affichage] = await Promise.all([
+    api('/api/defis'), api('/api/profil'), api('/api/defis/affichage'),
+  ]);
+
+  // Quatre cartes sur une ligne se lisent mal ; le nombre de colonnes se regle
+  // dans l'administration. La largeur minimale se deduit du reglage : elle
+  // borne le nombre de colonnes sans le forcer, si bien qu'un ecran etroit
+  // repasse de lui-meme sur une seule colonne.
+  const largeurMini = Math.round(1040 / (affichage.defisParLigne || 2));
+  document.getElementById('defis').style.gridTemplateColumns =
+    `repeat(auto-fit, minmax(min(100%, ${largeurMini}px), 1fr))`;
 
   const faits = defis.filter((d) => d.participation).length;
   const ouverts = defis.filter((d) => d.ouvert).length;

@@ -61,6 +61,11 @@ const bool = (v) => /^(true|1|oui|yes)$/i.test(String(v));
 export const DESCRIPTEUR = [
   { cle: 'publicUrl', chemin: ['publicUrl'], type: 'texte', groupe: 'general',
     libelle: 'Adresse du portail', aide: "Telle que les agents la voient. Alimente les liens des mails et le drapeau securise du cookie de session." },
+  { cle: 'defisParLigne', chemin: ['defisParLigne'], type: 'entier', groupe: 'general',
+    libelle: 'Défis par ligne',
+    aide: "Sur la page des défis. Quatre defis sur une seule ligne se lisent mal ; "
+      + 'deux colonnes les presentent par paires. Valeur ignoree sur un ecran '
+      + "etroit, ou l'affichage repasse sur une colonne quoi qu'il arrive." },
   { cle: 'videoDomaines', chemin: ['videoDomaines'], type: 'liste', groupe: 'general',
     libelle: 'Hébergeurs vidéo autorisés',
     aide: "Séparés par des virgules. Un hébergeur absent d'ici verra son lecteur bloqué "

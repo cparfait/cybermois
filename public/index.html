@@ -6,7 +6,7 @@
 <title>Connexion — Cybermois — Ville de Châtillon</title>
 <meta name="description" content="Portail de sensibilisation à la cybersécurité de la Ville de Châtillon.">
 <link rel="stylesheet" href="/css/theme.css">
-<link rel="icon" href="/img/logo-chatillon.jpg">
+<link rel="icon" href="/img/logo.png">
 <style>
   .page-connexion { display: grid; place-items: center; min-height: 100vh; padding: 2rem 1rem; }
   .bloc-connexion { width: min(100%, 460px); }
@@ -14,7 +14,10 @@
   /* Le fichier source fait 826 x 1169 px : l'agrandissement ne coute aucune
      nettete. La borne haute evite qu'il ne repousse le formulaire sous la
      ligne de flottaison sur un portable. */
-  .entete-connexion img { height: clamp(96px, 15vh, 132px); width: auto; margin-bottom: 1.1rem; }
+  /* Logo carre, texte compris : on borne la largeur plutot que la hauteur,
+     et la borne haute evite qu'il ne repousse le formulaire sous la ligne
+     de flottaison sur un telephone. */
+  .entete-connexion img { width: clamp(140px, 34vw, 190px); height: auto; margin-bottom: 1.1rem; }
   .surtitre {
     font-family: var(--police-ui); font-size: .72rem; font-weight: 700;
     letter-spacing: .16em; text-transform: uppercase; color: var(--vert-clair-texte);
@@ -32,7 +35,7 @@
   <div class="bloc-connexion">
 
     <div class="entete-connexion">
-      <img src="/img/logo-chatillon.jpg" alt="Ville de Châtillon">
+      <img src="/img/email-logo.png" alt="Ville de Châtillon">
       <p class="surtitre">Octobre 2026</p>
       <h1 class="titre-cybermois">Cybermois</h1>
       <p class="discret">4 semaines, 4 défis, un classement entre services.<br>À vous de faire gagner le vôtre.</p>

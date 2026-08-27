@@ -144,13 +144,16 @@ a:hover { color: var(--vert-fonce-sombre); }
   display: flex; align-items: center; gap: 1rem;
   padding: .7rem 0; flex-wrap: wrap;
 }
-.logo-ville { height: 46px; width: auto; display: block; }
+/* Logo horizontal : la hauteur seule le rendrait minuscule ou envahissant
+   selon la largeur disponible. On borne les deux. */
+.logo-ville { height: 38px; width: auto; max-width: 190px; display: block; }
 .marque {
   font-family: var(--police-titre); font-weight: 900;
   font-size: 1.05rem; letter-spacing: -.01em; color: var(--vert-fonce);
   line-height: 1.15; margin-right: auto;
 }
-.marque span { display: block; font-weight: 600; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--encre-douce); }
+/* Le nom de la Ville figure desormais dans le logo : le repeter a cote
+   ferait doublon. Seul « Cybermois 2026 » subsiste. */
 
 .nav-principale { display: flex; gap: .25rem; flex-wrap: wrap; align-items: center; }
 .nav-principale a {

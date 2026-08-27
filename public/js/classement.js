@@ -162,6 +162,16 @@ try {
     <div class="stat"><div class="v">${s.participations}</div><div class="l">défis terminés</div></div>
     <div class="stat"><div class="v">${s.points_cumules}</div><div class="l">points cumulés</div></div>`;
 
+  // Chaque onglet annonce ce qu'il contient : sans cela, on ne sait pas si
+  // la seconde vue vaut le clic, et on repart avec un seul des deux
+  // classements en tete.
+  const nS = donnees.services.length;
+  const nA = donnees.agents.length;
+  document.getElementById('compte-services').textContent =
+    nS ? `${nS} service${nS > 1 ? 's' : ''} classé${nS > 1 ? 's' : ''}` : 'aucun service classé';
+  document.getElementById('compte-agents').textContent =
+    nA ? `${nA} agent${nA > 1 ? 's' : ''} classé${nA > 1 ? 's' : ''}` : 'aucun agent classé';
+
   rendreServices(donnees);
   rendreAgents(donnees);
 } catch (erreur) {

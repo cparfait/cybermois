@@ -43,8 +43,8 @@ export function construireEntete(agent, pageActive) {
   return `
   <header class="entete-site">
     <div class="conteneur entete-interne">
-      <img src="/img/logo-chatillon.jpg" alt="" class="logo-ville">
-      <p class="marque"><span>Ville de Châtillon</span>Cybermois 2026</p>
+      <img src="/img/Logo_Chatillon.png" alt="Ville de Châtillon" class="logo-ville">
+      <p class="marque">Cybermois 2026</p>
       <nav class="nav-principale" aria-label="Navigation principale">
         ${liens.map((l) => `<a href="${l.href}"${l.href === pageActive ? ' aria-current="page"' : ''}>${l.libelle}</a>`).join('')}
         <button type="button" class="btn btn-secondaire" id="btn-deconnexion"
