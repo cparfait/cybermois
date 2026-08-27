@@ -7,13 +7,17 @@
 <link rel="stylesheet" href="/css/theme.css">
 <link rel="icon" href="/img/logo.png">
 <style>
-  .heros { background: var(--vert-fonce); color: #fff; border-radius: var(--rayon); padding: 2rem; margin-bottom: 2rem; position: relative; overflow: hidden; }
-  .heros::after { content: ''; position: absolute; right: -60px; top: -60px; width: 240px; height: 240px; border-radius: 50%; background: var(--vert-clair); opacity: .18; }
+  /* Bandeau d'accueil compact : il occupait la moitie de l'ecran, si bien
+     qu'il fallait faire defiler pour voir les defis - qui sont pourtant
+     l'objet de la page. Il annonce, il ne s'installe pas. */
+  .heros { background: var(--vert-fonce); color: #fff; border-radius: var(--rayon); padding: 1.3rem 1.5rem; margin-bottom: 1.4rem; position: relative; overflow: hidden; }
+  .heros::after { content: ''; position: absolute; right: -50px; top: -50px; width: 170px; height: 170px; border-radius: 50%; background: var(--vert-clair); opacity: .18; }
   .heros h1, .heros p { color: #fff; position: relative; }
-  .heros .surtitre { font-family: var(--police-ui); font-size: .72rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; opacity: .85; margin: 0; }
-  .compteurs { display: flex; gap: 2rem; flex-wrap: wrap; margin-top: 1.5rem; position: relative; }
-  .compteur-valeur { font-family: var(--police-titre); font-size: 2rem; font-weight: 900; line-height: 1; }
-  .compteur-libelle { font-family: var(--police-ui); font-size: .8rem; opacity: .85; }
+  .heros h1 { font-size: clamp(1.4rem, 3vw, 1.85rem); margin: 0 0 .25em; }
+  .heros .surtitre { font-family: var(--police-ui); font-size: .72rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; opacity: .85; margin: 0 0 .15em; }
+  .compteurs { display: flex; gap: 1.4rem 1.8rem; flex-wrap: wrap; margin-top: .9rem; position: relative; }
+  .compteur-valeur { font-family: var(--police-titre); font-size: 1.5rem; font-weight: 900; line-height: 1; }
+  .compteur-libelle { font-family: var(--police-ui); font-size: .76rem; opacity: .85; }
 
   .carte-defi { display: flex; flex-direction: column; position: relative; border-top: 5px solid var(--vert-clair); }
   .carte-defi.verrouille { opacity: .62; }
@@ -92,7 +96,13 @@
   .resultat-defi { background: var(--succes-fond); color: var(--succes); border-radius: var(--rayon-sm); padding: .7rem .9rem; font-family: var(--police-ui); font-size: .9rem; font-weight: 600; margin-bottom: 1rem; }
   .pied-carte { margin-top: auto; }
 
-  .jauge { height: 10px; background: var(--bordure); border-radius: 5px; overflow: hidden; margin: .5rem 0 .3rem; }
+  /* Le contenu demarre plus haut sur cette page : les deux rem de blanc
+     au-dessus du bandeau repoussaient d'autant les cartes, alors que ce
+     sont elles qu'on vient voir. */
+  main { padding-top: 1.2rem; }
+  main > .conteneur > h2 { margin: 0 0 .8rem; }
+
+  .jauge { height: 8px; background: var(--bordure); border-radius: 5px; overflow: hidden; margin: .5rem 0 .3rem; }
   .jauge span { display: block; height: 100%; background: var(--vert-clair); border-radius: 5px; transition: width .6s ease; }
 </style>
 </head>

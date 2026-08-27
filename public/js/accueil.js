@@ -53,10 +53,8 @@ try {
     <section class="heros">
       <p class="surtitre">Bonjour ${echapper(agent.prenom || agent.nomComplet || '')}</p>
       <h1>${echapper(titre)}</h1>
-      <p style="max-width:52ch;margin:0">
-        Vous jouez pour <strong>${echapper(agent.service)}</strong>.
-        Chaque défi terminé lui rapporte des points. Comptez 5 à 8 minutes,
-        et il n'y a rien à installer.
+      <p style="max-width:52ch;margin:0;font-size:.95rem">
+        Vous jouez pour <strong>${echapper(agent.service)}</strong> : chaque défi terminé lui rapporte des points.
       </p>
       <div class="compteurs">
         <div>
