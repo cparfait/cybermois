@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { db, journaliser } from './db.js';
 import { config } from './config.js';
+import { normaliserUrlLdap } from './url-ldap.js';
 
 /**
  * Parametres modifiables depuis le back-office.
@@ -61,8 +62,9 @@ export const DESCRIPTEUR = [
   { cle: 'publicUrl', chemin: ['publicUrl'], type: 'texte', groupe: 'general',
     libelle: 'Adresse du portail', aide: "Telle que les agents la voient. Alimente les liens des mails et le drapeau securise du cookie de session." },
 
-  { cle: 'ldap.url', chemin: ['ldap', 'url'], type: 'texte', groupe: 'ldap',
-    libelle: 'Serveur', aide: 'ldaps://192.168.2.9:636 en production. ldap://192.168.2.9:389 fonctionne pour une mise au point, mais fait circuler les mots de passe en clair.' },
+  { cle: 'ldap.url', chemin: ['ldap', 'url'], type: 'ldap-hote', groupe: 'ldap',
+    libelle: "Adresse du controleur de domaine", aide: "L'IP ou le nom : 192.168.2.9, ou dc01.chatillon.lan. "
+      + 'Ni schema ni port : la case ci-contre les determine.' },
   { cle: 'ldap.bindDn', chemin: ['ldap', 'bindDn'], type: 'texte', groupe: 'ldap',
     libelle: 'DN du compte de service', aide: 'ad.cybermois@chatillon.lan (ou le DN complet)' },
   { cle: 'ldap.bindPassword', chemin: ['ldap', 'bindPassword'], type: 'secret', groupe: 'ldap',
@@ -236,7 +238,15 @@ export function enregistrerParametres(valeurs, login) {
         continue;
       }
 
-      const texte = Array.isArray(valeur) ? valeur.join(',') : String(valeur ?? '');
+      let texte = Array.isArray(valeur) ? valeur.join(',') : String(valeur ?? '');
+
+      // L'adresse de l'annuaire se saisit sans schema ni port : l'ecran fournit
+      // l'hote et une case « liaison chiffree », on en compose l'URL. Une URL
+      // complete reste acceptee et se trouve simplement normalisee.
+      if (cle === 'ldap.url') {
+        const chiffre = valeurs['ldap.chiffre'];
+        texte = normaliserUrlLdap(texte, chiffre === undefined ? null : chiffre === true || chiffre === 'true');
+      }
       inserer.run(cle, texte, 0, login || null);
       modifiees.push(cle);
     }

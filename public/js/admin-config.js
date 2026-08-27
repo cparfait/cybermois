@@ -1,4 +1,5 @@
 import { api, echapper, alerte } from '/js/commun.js';
+import { decomposerUrlLdap } from '/js/url-ldap.js';
 
 let descripteur = [];
 let groupes = [];
@@ -60,6 +61,30 @@ function champ(d) {
                  style="width:20px;height:20px;flex:0 0 auto;accent-color:var(--vert-fonce)">
           <span><strong>${echapper(d.libelle)}</strong> ${origine}
             ${d.aide ? `<br><span class="discret">${echapper(d.aide)}</span>` : ''}</span>
+        </label>
+      </div>`;
+  }
+
+  // L'adresse de l'annuaire : un hote, et une case pour le chiffrement.
+  // Le schema et le port sont de la plomberie, et « ldap:// sur le port 636 »
+  // a deja fait circuler des mots de passe en clair sur le port cense les
+  // proteger. La case decide, l'administrateur n'a plus a y penser.
+  if (d.type === 'ldap-hote') {
+    const u = decomposerUrlLdap(d.valeur);
+    const standard = u.chiffre ? 636 : 389;
+    return `
+      <div class="champ-admin">
+        <label for="${id}">${echapper(d.libelle)} ${origine}</label>
+        <input type="text" id="${id}" data-parametre="${d.cle}" value="${echapper(u.hote || '')}"
+               placeholder="192.168.2.9 ou dc01.chatillon.lan">
+        ${d.aide ? `<p class="discret" style="margin:.3rem 0 0;font-size:.78rem">${echapper(d.aide)}</p>` : ''}
+      </div>
+      <div class="champ-admin">
+        <label style="display:flex;gap:.6rem;align-items:flex-start;font-weight:400;margin-top:1.6rem">
+          <input type="checkbox" id="${id}-chiffre" data-parametre="ldap.chiffre" ${u.chiffre ? 'checked' : ''}
+                 style="width:20px;height:20px;flex:0 0 auto;accent-color:var(--vert-fonce)">
+          <span><strong>Liaison chiffrée (LDAPS)</strong>
+            <br><span class="discret" id="apercu-url-ldap">port ${u.port || standard}</span></span>
         </label>
       </div>`;
   }
@@ -218,6 +243,16 @@ export async function chargerConfiguration() {
 }
 
 function brancher() {
+  // Le port suit la case a cocher : le voir changer evite de se demander
+  // lequel s'appliquera.
+  const caseChiffre = document.querySelector('[data-parametre="ldap.chiffre"]');
+  const apercu = document.getElementById('apercu-url-ldap');
+  if (caseChiffre && apercu) {
+    caseChiffre.addEventListener('change', () => {
+      apercu.textContent = `port ${caseChiffre.checked ? 636 : 389}`;
+    });
+  }
+
   const cible = document.getElementById('panneau-configuration');
 
   document.getElementById('btn-recharger-config').addEventListener('click', () => chargerConfiguration());
