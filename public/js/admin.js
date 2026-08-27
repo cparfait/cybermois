@@ -383,10 +383,25 @@ async function ouvrirEditeur(semaine) {
 
       <h3 style="margin-top:1.5rem">Vidéo d'introduction</h3>
       <p class="discret" style="margin-top:-.3em">
-        Facultative, présentée avant les questions. YouTube ou Dailymotion, sous n'importe
-        quelle forme d'adresse. <strong>Videz le champ pour la retirer.</strong>
+        Facultative, présentée avant les questions. <strong>Videz le champ pour la retirer.</strong>
         Rien n'est chargé chez l'hébergeur tant que l'agent ne clique pas.
       </p>
+      <details class="aide-admin" style="margin-bottom:.8rem">
+        <summary>Quelles adresses sont acceptées</summary>
+        <p style="margin:.5rem 0">Deux hébergeurs, sous n'importe quelle forme d'adresse :</p>
+        <ul class="ui" style="font-size:.86rem;margin:0">
+          <li><strong>YouTube</strong> — <code>youtube.com/watch?v=…</code>,
+            <code>youtu.be/…</code>, <code>youtube.com/embed/…</code>,
+            <code>youtube.com/shorts/…</code></li>
+          <li><strong>Dailymotion</strong> — <code>dailymotion.com/video/…</code>,
+            <code>dai.ly/…</code></li>
+        </ul>
+        <p class="discret" style="margin:.6rem 0 0;font-size:.82rem">
+          Les paramètres qui suivent l'adresse — playlist, horodatage, suivi de campagne —
+          sont ignorés. Cybermalveillance.gouv.fr publie sur Dailymotion : c'est de là que
+          viennent les vidéos fournies avec les modules.
+        </p>
+      </details>
       <div class="grille grille-2">
         <div class="champ-admin" style="grid-column:1/-1"><label for="ed-video-url">Adresse de la vidéo</label>
           <input type="url" id="ed-video-url" value="${echapper(defi.video?.url || '')}"
@@ -894,9 +909,20 @@ function brancherApercuVideo() {
     const yt = brut.match(
       /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
     );
-    if (yt) return { hebergeur: 'YouTube', id: yt[1] };
+    if (yt) {
+      return {
+        hebergeur: 'YouTube', id: yt[1],
+        embed: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(yt[1])}?rel=0`,
+      };
+    }
     const dm = brut.match(/dailymotion\.com\/(?:embed\/)?video\/([A-Za-z0-9]+)|dai\.ly\/([A-Za-z0-9]+)/);
-    if (dm) return { hebergeur: 'Dailymotion', id: dm[1] || dm[2] };
+    if (dm) {
+      const id = dm[1] || dm[2];
+      return {
+        hebergeur: 'Dailymotion', id,
+        embed: `https://www.dailymotion.com/embed/video/${encodeURIComponent(id)}`,
+      };
+    }
     return null;
   };
 
@@ -907,16 +933,38 @@ function brancherApercuVideo() {
         + 'Aucune vidéo : le défi commence directement par les questions.</p>';
       return;
     }
+
     const v = reconnaitre(valeur);
-    zone.innerHTML = v
-      ? `<div class="message message-succes" style="margin:0">
-           Reconnu : <strong>${echapper(v.hebergeur)}</strong> —
-           <code>${echapper(v.id)}</code>
-         </div>`
-      : `<div class="message message-alerte" style="margin:0">
-           Adresse non reconnue. Attendu : une adresse YouTube ou Dailymotion.
-           Elle sera présentée comme un simple lien.
-         </div>`;
+    if (!v) {
+      zone.innerHTML = `
+        <div class="message message-alerte" style="margin:0">
+          Adresse non reconnue. Attendu : une adresse YouTube ou Dailymotion —
+          <code>watch?v=</code>, <code>youtu.be/</code>, <code>/embed/</code>,
+          <code>/shorts/</code>, <code>dailymotion.com/video/</code> ou <code>dai.ly/</code>.
+          Telle quelle, elle sera présentée comme un simple lien.
+        </div>`;
+      return;
+    }
+
+    // La prévisualisation se demande : la charger d'office ferait appeler
+    // l'hébergeur à chaque frappe dans le champ.
+    zone.innerHTML = `
+      <div class="message message-succes" style="margin:0">
+        Reconnu : <strong>${echapper(v.hebergeur)}</strong> — <code>${echapper(v.id)}</code>
+        <button type="button" class="btn btn-secondaire" id="btn-previsualiser-video"
+                style="padding:.25rem .7rem;font-size:.8rem;margin-left:.6rem">Prévisualiser</button>
+      </div>
+      <div id="cadre-apercu-video" style="margin-top:.6rem"></div>`;
+
+    document.getElementById('btn-previsualiser-video').addEventListener('click', (e) => {
+      e.target.disabled = true;
+      document.getElementById('cadre-apercu-video').innerHTML = `
+        <div style="position:relative;aspect-ratio:16/9;max-width:520px;border-radius:var(--rayon);overflow:hidden">
+          <iframe src="${echapper(v.embed)}" title="Prévisualisation de la vidéo"
+                  style="position:absolute;inset:0;width:100%;height:100%;border:0"
+                  referrerpolicy="no-referrer" allowfullscreen loading="lazy"></iframe>
+        </div>`;
+    });
   };
 
   champ.addEventListener('input', majApercu);

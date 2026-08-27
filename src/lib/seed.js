@@ -115,6 +115,11 @@ export function exporterDefi(semaine) {
   return {
     semaine: defi.semaine, titre: defi.titre, accroche: defi.accroche, intro: defi.intro,
     duree_minutes: defi.duree_minutes,
+    // Date et publication manquaient : l'editeur les affichait vides, et son
+    // enregistrement renvoyait « non publie » - il depubliait donc le defi
+    // qu'on venait simplement corriger.
+    ouvre_le: defi.ouvre_le,
+    publie: !!defi.publie,
     badge: defi.badge_code ? {
       code: defi.badge_code, libelle: defi.badge_libelle,
       emoji: defi.badge_emoji, description: defi.badge_description,
