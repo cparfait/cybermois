@@ -158,6 +158,16 @@
     font-size: .88rem; font-weight: 600; color: var(--encre);
   }
   .encart-rang { background: var(--vert-fonce-clair); border-radius: var(--rayon); padding: 1.2rem; margin: 1.5rem 0; font-family: var(--police-ui); }
+
+  /* Vidéo d'introduction. La vignette reste locale : aucune requête vers
+     Google avant que l'agent ne clique. */
+  .vignette-video {
+    display: grid; place-items: center; gap: .3rem; text-align: center;
+    padding: 2.5rem 1.2rem; border-radius: var(--rayon);
+    background: var(--fond-doux); border: 2px dashed var(--bordure);
+  }
+  .cadre-video { position: relative; aspect-ratio: 16 / 9; border-radius: var(--rayon); overflow: hidden; }
+  .cadre-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 </style>
 </head>
 <body>

@@ -56,6 +56,9 @@ app.addHook('onSend', async (requete, reponse) => {
       "img-src 'self' data:",
       "connect-src 'self'",
       "form-action 'self'",
+      // Le lecteur video n'est insere qu'apres un clic explicite : la page
+      // elle-meme n'appelle jamais Google.
+      "frame-src https://www.youtube-nocookie.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
     ].join('; ')
@@ -88,6 +91,9 @@ enregistrerStatiques(app, {
   '/': 'index.html',
   '/accueil': 'accueil.html',
   '/defi/:semaine': 'defi.html',
+  // Relire ses reponses sans rejouer : « revoir les corrections » renvoyait
+  // au questionnaire, qui repartait en entrainement.
+  '/revoir/:semaine': 'revoir.html',
   '/classement': 'classement.html',
   '/profil': 'profil.html',
   '/attestation': 'attestation.html',

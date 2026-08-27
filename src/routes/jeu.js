@@ -111,6 +111,9 @@ export default async function routesJeu(app) {
       accroche: defi.accroche,
       intro: defi.intro,
       dureeMinutes: defi.duree_minutes,
+      // Video d'introduction, facultative. L'URL seule est transmise : c'est le
+      // navigateur qui decide d'appeler YouTube, et seulement si l'agent clique.
+      video: defi.video_url ? { url: defi.video_url, titre: defi.video_titre || null } : null,
       // Rejouer est possible mais ne rapporte plus de points : mode entrainement.
       // Un apercu l'est toujours, par construction.
       entrainement: apercu || !!dejaFait,
@@ -267,6 +270,73 @@ export default async function routesJeu(app) {
   }));
 
   /* ------------------------------------------------------------- Profil */
+  /**
+   * Relecture d'un defi termine : ce que l'agent a repondu, et pourquoi.
+   *
+   * « Revoir les corrections » renvoyait au questionnaire, qui repartait en
+   * mode entrainement : on rejouait au lieu de relire, et la premiere reponse
+   * disparaissait de l'ecran. Cette route rend l'etat enregistre, sans rien
+   * offrir a modifier.
+   */
+  app.get('/api/defis/:semaine/relecture', async (requete, reponse) => {
+    const defi = db.prepare('SELECT * FROM defis WHERE semaine = ?').get(Number(requete.params.semaine));
+    if (!defi) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
+
+    const participation = db.prepare(`
+      SELECT id, score, score_max, bonnes, total_questions, termine_le
+      FROM participations
+      WHERE agent_id = ? AND defi_id = ? AND entrainement = 0
+    `).get(requete.agent.id, defi.id);
+
+    if (!participation) {
+      return reponse.code(404).send({
+        erreur: "Vous n'avez pas encore terminé ce défi : il n'y a rien à relire.",
+      });
+    }
+
+    const donnees = db.prepare(`
+      SELECT r.question_id, r.choix, r.correcte, r.points_obtenus,
+             q.enonce, q.contexte, q.multiple, q.points, q.explication, q.ordre
+      FROM reponses_agent r
+      JOIN questions q ON q.id = r.question_id
+      WHERE r.participation_id = ?
+      ORDER BY q.ordre
+    `).all(participation.id);
+
+    return {
+      semaine: defi.semaine,
+      titre: defi.titre,
+      accroche: defi.accroche,
+      score: participation.score,
+      scoreMax: participation.score_max,
+      bonnes: participation.bonnes,
+      total: participation.total_questions,
+      termineLe: participation.termine_le,
+      questions: donnees.map((d) => {
+        let choisis = [];
+        try { choisis = JSON.parse(d.choix) || []; } catch { choisis = []; }
+        return {
+          enonce: d.enonce,
+          contexte: d.contexte,
+          multiple: !!d.multiple,
+          points: d.points,
+          pointsObtenus: d.points_obtenus,
+          parfaite: !!d.correcte,
+          explication: d.explication,
+          // Les bonnes reponses sont ici legitimes : le defi est termine, et
+          // le score enregistre ne bougera plus.
+          reponses: db.prepare(
+            'SELECT id, libelle, correcte FROM reponses WHERE question_id = ? ORDER BY ordre'
+          ).all(d.question_id).map((r) => ({
+            libelle: r.libelle,
+            correcte: !!r.correcte,
+            choisie: choisis.includes(r.id),
+          })),
+        };
+      }),
+    };
+  });
+
   app.get('/api/profil', async (requete) => {
     const participations = db.prepare(`
       SELECT p.*, d.semaine, d.titre FROM participations p

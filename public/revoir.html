@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mes réponses — Cybermois — Ville de Châtillon</title>
+<link rel="stylesheet" href="/css/theme.css">
+<link rel="icon" href="/img/logo-chatillon.jpg">
+<style>
+  /* Relecture : on montre ce qui a été répondu, rien n'est actionnable.
+     D'où l'absence de champs de saisie — un bouton désactivé inviterait
+     encore à essayer. */
+  .bloc-relecture {
+    border: 1px solid var(--bordure); border-radius: var(--rayon);
+    padding: 1.2rem 1.4rem; margin-bottom: 1.2rem; background: var(--surface);
+    border-left: 4px solid var(--bordure);
+  }
+  .bloc-relecture.juste { border-left-color: var(--succes); }
+  .bloc-relecture.ratee { border-left-color: var(--alerte); }
+
+  .liste-relecture { list-style: none; padding: 0; margin: .8rem 0; }
+  .liste-relecture li {
+    display: flex; gap: .6rem; align-items: baseline;
+    padding: .4rem .6rem; border-radius: var(--rayon-sm); margin-bottom: .25rem;
+  }
+  .liste-relecture li.bonne { background: var(--vert-clair-fond); }
+  .liste-relecture li.tort { background: var(--alerte-fond); }
+  .liste-relecture .marqueur { flex: 0 0 auto; font-weight: 700; }
+
+  .note-question {
+    font-family: var(--police-ui); font-weight: 700; font-size: .82rem;
+    white-space: nowrap; margin-left: auto; color: var(--encre-douce);
+  }
+</style>
+</head>
+<body>
+<a class="evitement" href="#contenu">Aller au contenu principal</a>
+<div id="entete"></div>
+
+<main id="contenu">
+  <div class="conteneur">
+    <div id="alerte"></div>
+    <div id="zone"><p class="discret">Chargement…</p></div>
+  </div>
+</main>
+
+<div id="pied"></div>
+<script type="module" src="/js/revoir.js"></script>
+</body>
+</html>

@@ -98,7 +98,14 @@ try {
 
     let action;
     if (p) {
-      action = `<a class="btn btn-secondaire btn-bloc" href="/defi/${defi.semaine}">Revoir les corrections</a>`;
+      // Relire, pas rejouer : le lien menait au questionnaire, qui repartait
+      // en entrainement et effacait de l'ecran ce qu'on venait chercher.
+      action = `
+        <a class="btn btn-secondaire btn-bloc" href="/revoir/${defi.semaine}">Revoir mes réponses</a>
+        <a class="lien-discret" href="/defi/${defi.semaine}"
+           style="display:block;text-align:center;margin-top:.5rem;font-size:.84rem">
+          Refaire pour m'entraîner
+        </a>`;
     } else {
       action = `<a class="btn btn-principal btn-bloc" href="/defi/${defi.semaine}">Je relève le défi</a>`;
     }

@@ -39,6 +39,10 @@ ajouterColonne('programme', 'ouvre_le', 'TEXT');
 // une porte ouverte par accident.
 ajouterColonne('defis', 'jeton_apercu', 'TEXT');
 
+// Video d'introduction, presentee avant les questions. Facultative.
+ajouterColonne('defis', 'video_url', 'TEXT');
+ajouterColonne('defis', 'video_titre', 'TEXT');
+
 /** Lit un module du catalogue. Renvoie null s'il n'existe pas. */
 export function lireModule(code) {
   const fichier = path.join(DOSSIER, `${path.basename(code)}.json`);
@@ -66,6 +70,7 @@ export function listerModules() {
       intro: m.intro,
       duree_minutes: m.duree_minutes || 7,
       badge: m.badge || null,
+      video: m.video || null,
       questions: m.questions.length,
       points: m.questions.reduce((n, q) => n + (q.points || 10), 0),
     }))

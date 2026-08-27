@@ -47,6 +47,7 @@ export function importerContenus({ force = false } = {}) {
 
     const existant = db.prepare('SELECT id FROM defis WHERE semaine = ?').get(semaine);
     const badge = module.badge || {};
+    const video = module.video || {};
 
     if (existant) {
       const joue = db.prepare('SELECT COUNT(*) AS n FROM participations WHERE defi_id = ?').get(existant.id).n;
@@ -56,21 +57,24 @@ export function importerContenus({ force = false } = {}) {
       }
       db.prepare(`UPDATE defis SET titre = ?, accroche = ?, intro = ?, duree_minutes = ?, ouvre_le = ?,
                     module_code = ?, badge_code = ?, badge_libelle = ?, badge_emoji = ?, badge_description = ?,
+                    video_url = ?, video_titre = ?,
                     maj_le = datetime('now') WHERE id = ?`)
         .run(module.titre, module.accroche, module.intro, module.duree_minutes || 7, ouverture,
              module.code, badge.code || null, badge.libelle || null,
-             badge.emoji || null, badge.description || null, existant.id);
+             badge.emoji || null, badge.description || null,
+             video.url || null, video.titre || null, existant.id);
       db.prepare('DELETE FROM questions WHERE defi_id = ?').run(existant.id);
       insererQuestions(existant.id, module.questions);
       rapport.push({ semaine, module: module.code, statut: 'mis a jour', questions: module.questions.length });
     } else {
       const res = db.prepare(`
         INSERT INTO defis (semaine, titre, accroche, intro, duree_minutes, ouvre_le, publie, module_code,
-                           badge_code, badge_libelle, badge_emoji, badge_description)
-        VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)
+                           badge_code, badge_libelle, badge_emoji, badge_description, video_url, video_titre)
+        VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?)
       `).run(semaine, module.titre, module.accroche, module.intro, module.duree_minutes || 7,
              ouverture, module.code, badge.code || null, badge.libelle || null,
-             badge.emoji || null, badge.description || null);
+             badge.emoji || null, badge.description || null,
+             video.url || null, video.titre || null);
       insererQuestions(res.lastInsertRowid, module.questions);
       rapport.push({ semaine, module: module.code, statut: 'cree', questions: module.questions.length });
     }

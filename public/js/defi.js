@@ -61,6 +61,8 @@ function afficherIntro(dejaFaites) {
     <p style="font-style:italic;color:var(--encre-douce);margin-top:0">${echapper(defi.accroche)}</p>
     <div class="carte" style="margin:1.5rem 0">${echapper(defi.intro)}</div>
 
+    ${defi.video ? blocVideo(defi.video) : ''}
+
     ${defi.apercu ? `
       <div class="message message-alerte" style="margin-bottom:1.5rem">
         <strong>Aperçu — rien n'est enregistré.</strong> Vous jouez ce défi avant son
@@ -97,6 +99,73 @@ function afficherIntro(dejaFaites) {
     </button>`;
 
   document.getElementById('btn-commencer').addEventListener('click', afficherQuestion);
+  brancherVideo();
+}
+
+/**
+ * Identifiant d'une video YouTube, quelle que soit la forme de l'URL collee.
+ * On accepte watch?v=, youtu.be/, /embed/ et /shorts/ : personne ne retient
+ * laquelle de ces adresses est la bonne.
+ */
+function identifiantYoutube(url) {
+  const m = String(url || '').match(
+    /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
+  );
+  return m ? m[1] : null;
+}
+
+/**
+ * Vignette locale plutot qu'insertion directe.
+ *
+ * Un lecteur YouTube insere dans la page appelle Google des l'affichage, et
+ * depose ses traceurs avant meme que l'agent n'ait rien demande. Sur un portail
+ * de sensibilisation cyber porte par une commune, ce serait difficile a
+ * defendre. Rien n'est donc charge tant qu'on ne clique pas, et le clic vaut
+ * consentement - il est annonce comme tel.
+ */
+function blocVideo(video) {
+  const id = identifiantYoutube(video.url);
+  if (!id) {
+    return `
+      <div class="carte" style="margin:1.5rem 0">
+        <a href="${echapper(video.url)}" target="_blank" rel="noopener noreferrer">
+          ${echapper(video.titre || 'Voir la vidéo d’introduction')}
+        </a>
+      </div>`;
+  }
+
+  return `
+    <section class="carte bloc-video" style="margin:1.5rem 0">
+      <h2 style="margin:0 0 .2em;font-size:1.1rem">
+        ${echapper(video.titre || 'À regarder avant de commencer')}
+      </h2>
+      <div id="lecteur-video" class="vignette-video" data-video="${echapper(id)}">
+        <button type="button" class="btn btn-principal" id="btn-lire-video">
+          ▶ Regarder la vidéo
+        </button>
+        <p class="discret" style="margin:.7rem 0 0;font-size:.82rem;max-width:46ch">
+          La vidéo est hébergée par YouTube. Rien n'est chargé tant que vous ne cliquez
+          pas : en lançant la lecture, vous acceptez le dépôt de cookies par Google.
+        </p>
+      </div>
+    </section>`;
+}
+
+function brancherVideo() {
+  const bouton = document.getElementById('btn-lire-video');
+  if (!bouton) return;
+
+  bouton.addEventListener('click', () => {
+    const zoneVideo = document.getElementById('lecteur-video');
+    const id = zoneVideo.dataset.video;
+    // Domaine « nocookie » : le strict minimum une fois le consentement donne.
+    zoneVideo.outerHTML = `
+      <div class="cadre-video">
+        <iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?rel=0&autoplay=1"
+                title="Vidéo d'introduction du défi" allow="autoplay; encrypted-media; fullscreen"
+                referrerpolicy="no-referrer" allowfullscreen loading="lazy"></iframe>
+      </div>`;
+  });
 }
 
 function afficherQuestion() {

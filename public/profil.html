@@ -23,6 +23,10 @@
     border-bottom: 1px solid var(--bordure); flex-wrap: wrap;
   }
   .ligne-defi:last-child { border-bottom: none; }
+  /* La ligne devient un lien vers la relecture : elle doit se comporter comme
+     tel sous la souris comme au clavier. */
+  a.ligne-defi { transition: background-color .12s; border-radius: var(--rayon-sm); }
+  a.ligne-defi:hover, a.ligne-defi:focus-visible { background: var(--fond-doux); }
   .pastille {
     width: 44px; height: 44px; border-radius: 50%; flex: 0 0 auto;
     display: grid; place-items: center; font-family: var(--police-titre);

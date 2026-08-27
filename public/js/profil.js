@@ -46,14 +46,17 @@ try {
     <section class="carte" style="margin-bottom:2rem">
       <h2>Mes défis</h2>
       ${p.participations.length ? p.participations.map((x) => `
-        <div class="ligne-defi">
+        <a class="ligne-defi" href="/revoir/${x.semaine}"
+           style="text-decoration:none;color:inherit"
+           title="Revoir mes réponses à ce défi">
           <div class="pastille">S${x.semaine}</div>
           <div>
             <div style="font-family:var(--police-ui);font-weight:700">${echapper(x.titre)}</div>
             <div class="discret ui">${x.bonnes} / ${x.total} réponses parfaites · terminé le ${formaterDate(x.termineLe)}</div>
+            <div class="discret ui" style="font-size:.78rem">Voir mes réponses →</div>
           </div>
           <div class="score-ligne">${x.score} / ${x.scoreMax}</div>
-        </div>`).join('')
+        </a>`).join('')
         : '<p class="discret">Aucun défi terminé pour le moment. <a href="/accueil">Commencer</a></p>'}
     </section>
 
