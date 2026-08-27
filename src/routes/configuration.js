@@ -338,7 +338,10 @@ export default async function routesConfiguration(app) {
     const client = clientLdap(p);
     try {
       await client.bind(p.bindDn, p.bindPassword);
-      const filtre = (p.userFilter || '').replace('{{login}}', login.replace(/[\\*()\0]/g, ''));
+      // Meme substitution qu'a l'authentification : le test doit echouer et
+      // reussir aux memes endroits, sans quoi il rassure a tort.
+      const saisie = login.replace(/[\\*()\0]/g, '');
+      const filtre = (p.userFilter || '').replaceAll('{{login}}', () => saisie);
       const { searchEntries } = await client.search(p.baseDn, {
         scope: 'sub', filter: filtre,
         attributes: ['dn', 'sAMAccountName', 'displayName', 'mail', 'department', 'memberOf'],

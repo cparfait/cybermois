@@ -8,6 +8,23 @@ function echapperFiltre(valeur) {
   return String(valeur).replace(/[\\*()\0]/g, (c) => CARACTERES_FILTRE[c]);
 }
 
+/**
+ * Filtre de recherche d'un compte a partir de la saisie de l'agent.
+ *
+ * replaceAll, et pas replace : le filtre porte le marqueur une fois par
+ * attribut accepte - sAMAccountName, userPrincipalName, mail - et n'en
+ * substituer qu'un laissait les autres a l'etat de texte litteral. Se
+ * connecter avec son adresse echouait alors sans autre explication qu'un
+ * compte introuvable.
+ *
+ * La forme fonction en second argument evite en prime qu'un $ dans la
+ * saisie soit interprete comme un motif de remplacement.
+ */
+export function construireFiltre(modele, login) {
+  const saisie = echapperFiltre(String(login ?? '').trim());
+  return String(modele ?? '').replaceAll('{{login}}', () => saisie);
+}
+
 function optionsTls() {
   if (!config.ldap.url.startsWith('ldaps://')) return undefined;
   const tls = { rejectUnauthorized: config.ldap.rejectUnauthorized };
@@ -104,7 +121,7 @@ export async function authentifier(login, motDePasse) {
   let entree;
   try {
     await clientService.bind(config.ldap.bindDn, config.ldap.bindPassword);
-    const filtre = config.ldap.userFilter.replace('{{login}}', echapperFiltre(login.trim()));
+    const filtre = construireFiltre(config.ldap.userFilter, login);
     const { searchEntries } = await clientService.search(config.ldap.baseDn, {
       scope: 'sub',
       filter: filtre,
