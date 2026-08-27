@@ -18,7 +18,7 @@
 #
 #  L'image se construit sur le serveur depuis le clone git, comme pour bolt :
 #
-#    cd /home/sysadmin/docker/cybermois/cybermois && git pull
+#    cd /home/sysadmin/docker/cybermois/app && git pull
 #    docker build -t cybermois:local .
 #
 #  puis coller ce fichier dans Portainer → Stacks → Web editor.

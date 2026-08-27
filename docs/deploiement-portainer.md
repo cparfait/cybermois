@@ -78,10 +78,22 @@ depuis le fichier embarqué dans l'image (voir `parametrage-classement.md`).
 
 ## 2. Construire l'image et créer la pile
 
-Comme pour bolt, l'image se construit sur le serveur depuis le clone git :
+Comme pour bolt, l'image se construit sur le serveur depuis un clone git.
+
+**La première fois**, il faut créer ce clone. Le dépôt est privé : git demandera
+l'identifiant GitHub et, comme mot de passe, un jeton personnel avec la portée `repo`.
 
 ```bash
-cd /home/sysadmin/docker/cybermois/cybermois && git pull
+mkdir -p /home/sysadmin/docker/cybermois
+cd /home/sysadmin/docker/cybermois
+git clone https://github.com/cparfait/cybermois.git app
+chown -R sysadmin:sysadmin /home/sysadmin/docker/cybermois/app
+```
+
+Puis, à chaque fois :
+
+```bash
+cd /home/sysadmin/docker/cybermois/app && git pull
 docker build -t cybermois:local .
 ```
 
