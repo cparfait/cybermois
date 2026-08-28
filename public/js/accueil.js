@@ -36,6 +36,11 @@ try {
     `repeat(auto-fit, minmax(min(100%, ${largeurMini}px), 1fr))`;
 
   const faits = defis.filter((d) => d.participation).length;
+  // Points rapportes au total atteignable a ce jour - la meme lecture que
+  // sur la page de classement, pour ne pas donner deux chiffres du meme
+  // resultat.
+  const reussite = profil.pointsPossibles
+    ? Math.round((profil.scoreTotal * 100) / profil.pointsPossibles) : 0;
   const ouverts = defis.filter((d) => d.ouvert).length;
   const progression = ouverts ? Math.round((faits / defis.length) * 100) : 0;
 
@@ -58,8 +63,9 @@ try {
       </p>
       <div class="compteurs">
         <div>
-          <div class="compteur-valeur">${profil.scoreTotal}</div>
-          <div class="compteur-libelle">points gagnés</div>
+          <div class="compteur-valeur">${reussite} <span style="font-size:1.1rem;opacity:.75">%</span></div>
+          <div class="compteur-libelle">de réussite${profil.pointsPossibles
+            ? ` · ${profil.scoreTotal}/${profil.pointsPossibles} pts` : ''}</div>
         </div>
         <div>
           <div class="compteur-valeur">${faits}<span style="font-size:1.1rem;opacity:.75">/${defis.length}</span></div>

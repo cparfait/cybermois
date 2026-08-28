@@ -4,6 +4,7 @@ import { exigerAuth } from '../lib/session.js';
 import {
   attribuerBadges, tousLesBadges,
   classementServices, classementAgents, rangAgent, rangService, statistiquesGlobales,
+  pointsPossibles,
 } from '../lib/scoring.js';
 import {
   progression, repondre, totaux, effacerTentative, detailTentative, effacerTentatives,
@@ -372,6 +373,9 @@ export default async function routesJeu(app) {
         bonnes: p.bonnes, total: p.total_questions, termineLe: p.termine_le,
       })),
       scoreTotal: participations.reduce((s, p) => s + p.score, 0),
+      // Le total atteignable a ce jour, pour dire « 62 % » plutot que « 430
+      // points » - un nombre de points ne se situe pas tout seul.
+      pointsPossibles: pointsPossibles(),
       badges: tousLesBadges().map((b) => ({
         ...b, obtenu: !!codesObtenus[b.code], obtenuLe: codesObtenus[b.code] || null,
       })),
