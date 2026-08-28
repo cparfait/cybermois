@@ -58,7 +58,7 @@ try {
     <section class="heros">
       <p class="surtitre">Bonjour ${echapper(agent.prenom || agent.nomComplet || '')}</p>
       <h1>${echapper(titre)}</h1>
-      <p style="max-width:52ch;margin:0;font-size:.95rem">
+      <p style="max-width:calc(100% - 100px);margin:0;font-size:.95rem;text-wrap:pretty">
         Vous jouez pour <strong>${echapper(agent.service)}</strong> : chaque défi terminé lui rapporte des points.
       </p>
       <div class="compteurs">
