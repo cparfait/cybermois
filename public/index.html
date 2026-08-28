@@ -10,19 +10,23 @@
 <style>
   .page-connexion { display: grid; place-items: center; min-height: 100vh; padding: 2rem 1rem; }
   .bloc-connexion { width: min(100%, 460px); }
-  .entete-connexion { text-align: center; margin-bottom: 1.75rem; }
-  /* Le fichier source fait 826 x 1169 px : l'agrandissement ne coute aucune
-     nettete. La borne haute evite qu'il ne repousse le formulaire sous la
-     ligne de flottaison sur un portable. */
-  /* Logo carre, texte compris : on borne la largeur plutot que la hauteur,
-     et la borne haute evite qu'il ne repousse le formulaire sous la ligne
-     de flottaison sur un telephone. */
-  .entete-connexion img { width: auto; height: 42px; max-width: 60%; margin-bottom: 1.1rem; }
+  /* Bandeau d'identite sur une seule ligne : logo a gauche, titre a droite.
+     Empiles et centres, ils occupaient un tiers de l'ecran et repoussaient le
+     formulaire sous la ligne de flottaison - or c'est lui qu'on vient
+     chercher. Le blason sans texte suffit : l'agent qui arrive ici connait
+     son employeur, et le nom reste porte par le texte alternatif de
+     l'image pour qui n'y voit pas. */
+  .entete-connexion {
+    display: flex; align-items: center; justify-content: center;
+    gap: .9rem; margin-bottom: 1.5rem;
+  }
+  .entete-connexion img { width: auto; height: 54px; flex: none; }
   .surtitre {
     font-family: var(--police-ui); font-size: .72rem; font-weight: 700;
     letter-spacing: .16em; text-transform: uppercase; color: var(--vert-clair-texte);
+    margin: 0;
   }
-  .titre-cybermois { font-family: var(--police-titre); font-weight: 900; font-size: 2.5rem; color: var(--vert-fonce); line-height: 1; margin: .15em 0 .3em; }
+  .titre-cybermois { font-family: var(--police-titre); font-weight: 900; font-size: 2rem; color: var(--vert-fonce); line-height: 1; margin: 0 0 .1em; }
   .champ { margin-bottom: 1.1rem; }
   .aide { font-size: .82rem; color: var(--encre-douce); margin-top: .3rem; font-family: var(--police-ui); }
   .bandeau-vert { height: 6px; background: linear-gradient(90deg, var(--vert-fonce) 0 55%, var(--vert-clair) 55% 100%); border-radius: 3px; margin-bottom: 1.5rem; }
@@ -35,9 +39,11 @@
   <div class="bloc-connexion">
 
     <div class="entete-connexion">
-      <img src="/img/Logo_Chatillon.png" alt="Ville de Châtillon">
-      <p class="surtitre">Octobre 2026</p>
-      <h1 class="titre-cybermois">Cybermois</h1>
+      <img src="/img/logo.png" alt="Ville de Châtillon">
+      <div>
+        <h1 class="titre-cybermois">Cybermois</h1>
+        <p class="surtitre">Octobre 2026</p>
+      </div>
     </div>
 
     <main id="contenu" class="carte">
