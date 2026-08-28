@@ -88,10 +88,11 @@ chargeurs.suivi = async () => {
 
       <h2 style="margin-top:2rem">Classement des services</h2>
       <div class="tableau-defilant"><table class="admin">
-        <thead><tr><th>Rang</th><th>Service</th><th class="num">Score moyen</th><th class="num">Participation</th><th class="num">Joueurs / inscrits</th></tr></thead>
+        <thead><tr><th>Rang</th><th>Service</th><th class="num">Réussite</th><th class="num">Points</th><th class="num">Participation</th><th class="num">Joueurs / inscrits</th></tr></thead>
         <tbody>${d.services.map((x, i) => `
           <tr><td>${i + 1}</td><td>${echapper(x.service)}</td>
-          <td class="num">${x.score_moyen}</td>
+          <td class="num">${x.pourcentage_moyen} %</td>
+          <td class="num discret">${x.score_total} / ${x.points_possibles}</td>
           <td class="num">${x.taux_participation} %</td>
           <td class="num">${x.joueurs} / ${x.inscrits}</td></tr>`).join('')}
         </tbody></table></div>

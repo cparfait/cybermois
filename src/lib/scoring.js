@@ -139,13 +139,35 @@ export function attribuerBadges(agentId, { semaine, score, scoreMax, erreurs = n
 /* ----------------------------------------------------------- Classements */
 
 /**
+ * Points qu'un agent peut avoir gagnes a ce jour.
+ *
+ * Seuls les defis deja ouverts comptent : inclure une semaine a venir
+ * ferait chuter tout le monde a chaque ouverture, et donnerait un
+ * pourcentage qui baisse alors que personne n'a demerite.
+ *
+ * Le total est le meme pour tous, ce qui laisse le classement dans l'ordre
+ * qu'il avait quand il s'exprimait en points - seule l'unite change.
+ */
+export function pointsPossibles() {
+  const r = db.prepare(`
+    SELECT COALESCE(SUM(q.points), 0) AS total
+    FROM questions q
+    JOIN defis d ON d.id = q.defi_id
+    WHERE d.publie = 1 AND d.ouvre_le <= date('now')
+  `).get();
+  return r?.total || 0;
+}
+
+/**
  * Classement par service.
  * Le score retenu est la MOYENNE par agent inscrit du service, pas le total :
  * sinon un service de 40 agents ecraserait mecaniquement un service de 4.
  * Le taux de participation est affiche a cote, c'est le vrai levier de mobilisation.
  */
 export function classementServices() {
-  return db.prepare(`
+  const possible = pointsPossibles();
+
+  const lignes = db.prepare(`
     SELECT
       a.service                                     AS service,
       COUNT(DISTINCT a.id)                          AS inscrits,
@@ -160,11 +182,24 @@ export function classementServices() {
     GROUP BY a.service
     ORDER BY score_moyen DESC, taux_participation DESC, service ASC
   `).all();
+
+  // « 27 pts » ne dit rien sans son maximum : le meme chiffre vaut un sans-faute
+  // sur une semaine et un resultat mediocre sur quatre. Le pourcentage se lit
+  // seul, et le total possible est rappele a cote.
+  return lignes.map((l) => ({
+    ...l,
+    points_possibles: possible * l.inscrits,
+    pourcentage_moyen: possible && l.inscrits
+      ? Math.round((l.score_total * 100) / (possible * l.inscrits))
+      : 0,
+  }));
 }
 
 /** Classement individuel nominatif. */
 export function classementAgents(limite = 100) {
-  return db.prepare(`
+  const possible = pointsPossibles();
+
+  const lignes = db.prepare(`
     SELECT
       a.id,
       -- Droit d'opposition : l'agent compte pour son service mais n'est plus nomme
@@ -182,6 +217,14 @@ export function classementAgents(limite = 100) {
     ORDER BY score_total DESC, defis_joues DESC, premiere_participation ASC
     LIMIT ?
   `).all(limite);
+
+  // Meme lecture que pour les services : un pourcentage, et les points
+  // rapportes au total atteignable a ce jour.
+  return lignes.map((l) => ({
+    ...l,
+    points_possibles: possible,
+    pourcentage: possible ? Math.round((l.score_total * 100) / possible) : 0,
+  }));
 }
 
 /** Position d'un agent dans le classement individuel. */

@@ -468,7 +468,8 @@ export default async function routesAdmin(app) {
     const lignes = classementServices();
     return reponse.type('text/csv; charset=utf-8')
       .header('Content-Disposition', 'attachment; filename="cybermois-services.csv"')
-      .send(csv(lignes, ['service', 'inscrits', 'joueurs', 'taux_participation', 'score_moyen', 'score_total', 'defis_joues']));
+      .send(csv(lignes, ['service', 'inscrits', 'joueurs', 'taux_participation', 'pourcentage_moyen',
+        'score_total', 'points_possibles', 'score_moyen', 'defis_joues']));
   });
 
   app.get('/api/admin/export/agents.csv', async (requete, reponse) => {

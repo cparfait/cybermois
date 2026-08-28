@@ -8,3 +8,7 @@ Thumbs.db
 public/img/logo-chatillon-source.png
 .recette-tmp/
 cybermois-a-corriger-dans-ad.csv
+
+# Bases jetables laissees par les tests isoles
+tests/.*.db
+tests/.*.db-*

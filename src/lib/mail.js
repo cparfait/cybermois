@@ -207,7 +207,7 @@ export function mailResultats(semaine) {
     <tr style="border-bottom:1px solid #d9e4de;">
       <td style="padding:9px 6px;font-family:'Montserrat',Arial,sans-serif;font-weight:700;width:38px;">${medaille[i] || `${i + 1}.`}</td>
       <td style="padding:9px 6px;">${echapper(s.service)}</td>
-      <td style="padding:9px 6px;text-align:right;font-family:'Montserrat',Arial,sans-serif;font-weight:700;color:#006e46;white-space:nowrap;">${s.score_moyen} pts</td>
+      <td style="padding:9px 6px;text-align:right;font-family:'Montserrat',Arial,sans-serif;font-weight:700;color:#006e46;white-space:nowrap;">${s.pourcentage_moyen} %</td>
       <td style="padding:9px 6px;text-align:right;font-family:'Montserrat',Arial,sans-serif;font-size:13px;color:#4a5a53;white-space:nowrap;">${s.taux_participation} %</td>
     </tr>`;
 

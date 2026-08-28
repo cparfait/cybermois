@@ -74,14 +74,15 @@ function rendreServices(donnees) {
   document.getElementById('podium-services').innerHTML = podium(services, (s, i) => `
     <div class="medaille" aria-hidden="true">${medaille(i + 1)}</div>
     <div class="nom">${echapper(s.service)}</div>
-    <div class="points">${s.score_moyen}</div>
-    <div class="sous">pts / agent · ${s.taux_participation} % de participation</div>`);
+    <div class="points">${s.pourcentage_moyen} %</div>
+    <div class="sous">${s.score_total} / ${s.points_possibles} pts · ${s.taux_participation} % de participation</div>`);
 
   document.getElementById('table-services').innerHTML = `
-    <caption class="sr-only">Classement des services par score moyen par agent</caption>
+    <caption class="sr-only">Classement des services par taux de réussite</caption>
     <thead><tr>
       <th scope="col">Rang</th><th scope="col">Service</th>
-      <th scope="col" class="num">Score moyen</th>
+      <th scope="col" class="num">Réussite</th>
+      <th scope="col" class="num">Points</th>
       <th scope="col" class="num">Participation</th>
       <th scope="col" class="num">Agents</th>
     </tr></thead>
@@ -89,7 +90,8 @@ function rendreServices(donnees) {
       <tr class="${s.service === agent.service ? 'moi' : ''}"${i >= PREMIERS ? ' data-au-dela hidden' : ''}>
         <td class="rang-cell">${medaille(i + 1) || i + 1}</td>
         <td>${echapper(s.service)}${s.service === agent.service ? ' <span class="discret">(mon service)</span>' : ''}</td>
-        <td class="num">${s.score_moyen} pts</td>
+        <td class="num"><strong>${s.pourcentage_moyen} %</strong></td>
+        <td class="num discret" style="white-space:nowrap">${s.score_total} / ${s.points_possibles}</td>
         <td class="num">
           <div class="rang" style="justify-content:flex-end;gap:.5rem;flex-wrap:nowrap">
             <span>${s.taux_participation} %</span>
@@ -112,13 +114,14 @@ function rendreAgents(donnees) {
   document.getElementById('podium-agents').innerHTML = podium(agents, (a, i) => `
     <div class="medaille" aria-hidden="true">${medaille(i + 1)}</div>
     <div class="nom">${echapper(a.nom_complet)}</div>
-    <div class="points">${a.score_total}</div>
-    <div class="sous">points · ${echapper(a.service)}</div>`);
+    <div class="points">${a.pourcentage} %</div>
+    <div class="sous">${a.score_total} / ${a.points_possibles} pts · ${echapper(a.service)}</div>`);
 
   document.getElementById('table-agents').innerHTML = `
     <caption class="sr-only">Classement individuel des agents</caption>
     <thead><tr>
       <th scope="col">Rang</th><th scope="col">Agent</th><th scope="col">Service</th>
+      <th scope="col" class="num">Réussite</th>
       <th scope="col" class="num">Points</th><th scope="col" class="num">Défis</th>
     </tr></thead>
     <tbody>${agents.map((a, i) => `
@@ -126,7 +129,8 @@ function rendreAgents(donnees) {
         <td class="rang-cell">${medaille(i + 1) || i + 1}</td>
         <td>${echapper(a.nom_complet)}</td>
         <td>${echapper(a.service)}</td>
-        <td class="num">${a.score_total}</td>
+        <td class="num"><strong>${a.pourcentage} %</strong></td>
+        <td class="num discret" style="white-space:nowrap">${a.score_total} / ${a.points_possibles}</td>
         <td class="num">${a.defis_joues}</td>
       </tr>`).join('')}</tbody>`;
 
@@ -149,7 +153,7 @@ try {
       <strong>${echapper(agent.service)}</strong>
       ${rs.rang
         ? ` — ${rs.rang}<sup>${rs.rang === 1 ? 're' : 'e'}</sup> place sur ${rs.total} services,
-            ${rs.detail?.score_moyen ?? 0} points par agent et ${rs.detail?.taux_participation ?? 0} % de participation.`
+            ${rs.detail?.pourcentage_moyen ?? 0} % de réussite et ${rs.detail?.taux_participation ?? 0} % de participation.`
         : ' — pas encore classé, à vous de lancer la machine.'}
       ${ra.rang ? `<br>Vous êtes ${ra.rang}<sup>${ra.rang === 1 ? 'er' : 'e'}</sup> sur ${ra.total} agents ayant participé.` : ''}
     </div>`;
