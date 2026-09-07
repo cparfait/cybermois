@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS corrections (
   type           TEXT NOT NULL,
   agent_login    TEXT,
   agent_nom      TEXT,
-  defi_semaine   INTEGER,
+  defi_id        INTEGER,
   question_id    INTEGER,
   question       TEXT,
   avant          TEXT,
@@ -41,12 +41,12 @@ CREATE INDEX IF NOT EXISTS idx_corrections_horodatage ON corrections(horodatage)
 
 function tracer(entree) {
   db.prepare(`
-    INSERT INTO corrections (par_qui, type, agent_login, agent_nom, defi_semaine,
+    INSERT INTO corrections (par_qui, type, agent_login, agent_nom, defi_id,
                              question_id, question, avant, apres, motif, ip)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     entree.parQui, entree.type, entree.agentLogin || null, entree.agentNom || null,
-    entree.semaine || null, entree.questionId || null,
+    entree.defiId || null, entree.questionId || null,
     entree.question ? String(entree.question).slice(0, 300) : null,
     entree.avant || null, entree.apres || null,
     entree.motif ? String(entree.motif).slice(0, 500) : null, entree.ip || null
@@ -99,8 +99,8 @@ function recalculerParticipation(participationId) {
  * Rejoue toutes les participations d'un defi contre le bareme courant.
  * En simulation, rien n'est ecrit : on annonce d'abord qui bouge et de combien.
  */
-export function recalculerDefi(semaine, { simulation = true, parQui, ip, motif } = {}) {
-  const defi = db.prepare('SELECT * FROM defis WHERE semaine = ?').get(Number(semaine));
+export function recalculerDefi(defiId, { simulation = true, parQui, ip, motif } = {}) {
+  const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(Number(defiId));
   if (!defi) return { ok: false, message: 'Défi introuvable.' };
 
   const participations = db.prepare(`
@@ -111,7 +111,7 @@ export function recalculerDefi(semaine, { simulation = true, parQui, ip, motif }
   `).all(defi.id);
 
   if (!participations.length) {
-    return { ok: true, semaine, titre: defi.titre, concernes: 0, changements: [], message: 'Aucune participation à recalculer.' };
+    return { ok: true, id: defi.id, titre: defi.titre, concernes: 0, changements: [], message: 'Aucune participation à recalculer.' };
   }
 
   // La simulation se fait dans une transaction annulee : on obtient le vrai
@@ -138,20 +138,20 @@ export function recalculerDefi(semaine, { simulation = true, parQui, ip, motif }
 
   if (!simulation) {
     tracer({
-      parQui, type: 'recalcul_defi', semaine: defi.semaine,
+      parQui, type: 'recalcul_defi', defiId: defi.id,
       question: defi.titre,
       avant: `${participations.length} participation(s)`,
       apres: `${changements.length} score(s) modifie(s)`,
       motif, ip,
     });
     journaliser(parQui, 'recalcul_defi',
-      `semaine=${defi.semaine} ${changements.length}/${participations.length} scores modifies`, ip);
+      `defi=${defi.id} ${changements.length}/${participations.length} scores modifies`, ip);
   }
 
   return {
     ok: true,
     simulation,
-    semaine: defi.semaine,
+    id: defi.id,
     titre: defi.titre,
     concernes: participations.length,
     modifies: changements.length,
@@ -169,10 +169,10 @@ export function participationsAgent(agentId) {
 
   const participations = db.prepare(`
     SELECT p.id, p.score, p.score_max, p.bonnes, p.total_questions, p.termine_le, p.entrainement,
-           d.semaine, d.titre
+           d.id AS defi_id, d.titre, d.ouvre_le
     FROM participations p JOIN defis d ON d.id = p.defi_id
     WHERE p.agent_id = ? AND p.entrainement = 0
-    ORDER BY d.semaine
+    ORDER BY d.ouvre_le, d.id
   `).all(agentId);
 
   return {
@@ -209,7 +209,7 @@ export function participationsAgent(agentId) {
 export function corrigerReponse(reponseAgentId, nouveauChoix, { parQui, ip, motif } = {}) {
   const ligne = db.prepare(`
     SELECT r.id, r.participation_id, r.question_id, r.choix, r.points_obtenus,
-           q.enonce, q.points, p.agent_id, d.semaine, a.login, a.nom_complet
+           q.enonce, q.points, p.agent_id, d.id AS defi_id, d.titre AS defi_titre, a.login, a.nom_complet
     FROM reponses_agent r
     JOIN questions q      ON q.id = r.question_id
     JOIN participations p ON p.id = r.participation_id
@@ -253,24 +253,24 @@ export function corrigerReponse(reponseAgentId, nouveauChoix, { parQui, ip, moti
 
   // Les badges peuvent avoir ete gagnes grace a cette correction
   attribuerBadges(ligne.agent_id, {
-    semaine: ligne.semaine, score: totaux.score, scoreMax: totaux.scoreMax, bonusMax: false,
+    defiId: ligne.defi_id, score: totaux.score, scoreMax: totaux.scoreMax, bonusMax: false,
   });
 
   tracer({
     parQui, type: 'correction_reponse',
     agentLogin: ligne.login, agentNom: ligne.nom_complet,
-    semaine: ligne.semaine, questionId: ligne.question_id, question: ligne.enonce,
+    defiId: ligne.defi_id, questionId: ligne.question_id, question: ligne.enonce,
     avant: `${libelle(ancienChoix)} (${ligne.points_obtenus} pts)`,
     apres: `${libelle(choix)} (${totaux.score} pts au total)`,
     motif, ip,
   });
   journaliser(parQui, 'correction_reponse',
-    `${ligne.login} semaine=${ligne.semaine} question=${ligne.question_id}`, ip);
+    `${ligne.login} defi=${ligne.defi_id} question=${ligne.question_id}`, ip);
 
   return {
     ok: true,
     totaux,
     message: `Réponse corrigée pour ${ligne.nom_complet}. `
-      + `Nouveau score sur la semaine ${ligne.semaine} : ${totaux.score} / ${totaux.scoreMax}.`,
+      + `Nouveau score sur « ${ligne.defi_titre} » : ${totaux.score} / ${totaux.scoreMax}.`,
   };
 }

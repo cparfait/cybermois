@@ -48,20 +48,20 @@ let echecs = 0;
 console.log(`Agent ${AGENT} joue un sans-faute sur ${defis.filter((d) => d.ouvert).length} defi(s) :\n`);
 
 for (const d of defis.filter((x) => x.ouvert)) {
-  const defi = await (await fetch(`${BASE}/api/defis/${d.semaine}`, { headers: { cookie } })).json();
+  const defi = await (await fetch(`${BASE}/api/defis/${d.id}`, { headers: { cookie } })).json();
 
   for (const q of defi.questions) {
     const bonnes = db.prepare('SELECT id FROM reponses WHERE question_id = ? AND correcte = 1').all(q.id).map((r) => r.id);
-    const rep = await fetch(`${BASE}/api/defis/${d.semaine}/questions/${q.id}`, {
+    const rep = await fetch(`${BASE}/api/defis/${d.id}/questions/${q.id}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', cookie },
       body: JSON.stringify({ choix: bonnes }),
     });
     if (!rep.ok) throw new Error((await rep.json()).erreur);
   }
 
-  const fin = await (await fetch(`${BASE}/api/defis/${d.semaine}/terminer`, { method: 'POST', headers: { cookie } })).json();
+  const fin = await (await fetch(`${BASE}/api/defis/${d.id}/terminer`, { method: 'POST', headers: { cookie } })).json();
   const gagnes = fin.nouveauxBadges.map((b) => `${b.emoji} ${b.libelle}`).join(', ') || '-';
-  console.log(`  S${d.semaine} ${String(fin.pourcentage).padStart(3)} %   ${gagnes}`);
+  console.log(`  S${d.id} ${String(fin.pourcentage).padStart(3)} %   ${gagnes}`);
   if (fin.pourcentage !== 100) {
     echecs++;
     console.log(`   ECHEC : le sans-faute ne donne pas 100 % (${fin.score}/${fin.scoreMax})`);

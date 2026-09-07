@@ -77,11 +77,11 @@ chargeurs.suivi = async () => {
           déjà connectés et ${s.joueurs} ont terminé au moins un défi.
         </div>`}
 
-      <h2>Participation par semaine</h2>
+      <h2>Participation par défi</h2>
       <div class="tableau-defilant"><table class="admin">
-        <thead><tr><th>Semaine</th><th>Défi</th><th class="num">Participants</th><th class="num">Réussite moyenne</th></tr></thead>
-        <tbody>${s.parSemaine.map((x) => `
-          <tr><td>S${x.semaine}</td><td>${echapper(x.titre)}</td>
+        <thead><tr><th>Parution</th><th>Défi</th><th class="num">Participants</th><th class="num">Réussite moyenne</th></tr></thead>
+        <tbody>${s.parDefi.map((x) => `
+          <tr><td>${echapper(x.ouvre_le)}</td><td>${echapper(x.titre)}</td>
           <td class="num">${x.participants}</td>
           <td class="num">${x.reussite_moyenne === null ? '—' : `${x.reussite_moyenne} %`}</td></tr>`).join('')}
         </tbody></table></div>
@@ -108,11 +108,11 @@ chargeurs.suivi = async () => {
 
       <h2 style="margin-top:2rem">Derniers envois</h2>
       <div class="tableau-defilant"><table class="admin">
-        <thead><tr><th>Date</th><th>Type</th><th class="num">Semaine</th><th class="num">Destinataires</th><th class="num">Succès</th><th>Erreur</th></tr></thead>
+        <thead><tr><th>Date</th><th>Type</th><th>Défi</th><th class="num">Destinataires</th><th class="num">Succès</th><th>Erreur</th></tr></thead>
         <tbody>${d.derniersEnvois.length
           ? d.derniersEnvois.map((e) => `<tr>
               <td>${formaterDate(e.horodatage)}</td><td>${echapper(e.type)}</td>
-              <td class="num">${e.semaine ?? '—'}</td><td class="num">${e.destinataires}</td>
+              <td>${echapper(titreDefi(d.defis, e.defi_id))}</td><td class="num">${e.destinataires}</td>
               <td class="num">${e.succes}</td><td>${echapper(e.erreur || '')}</td></tr>`).join('')
           : '<tr><td colspan="6" class="discret">Aucun envoi pour le moment.</td></tr>'}
         </tbody></table></div>`;
@@ -139,6 +139,14 @@ function allerVers(cible) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+/**
+ * Le defi d'un envoi, designe par son titre.
+ * L'historique garde l'identifiant ; un numero ne dit rien a personne, et le
+ * defi peut avoir ete supprime depuis.
+ */
+const titreDefi = (defis, id) =>
+  (id ? (defis.find((d) => d.id === id)?.titre || `défi ${id}`) : '—');
+
 /** Date du jour au format AAAA-MM-JJ, en heure locale. */
 function aujourdhuiIso() {
   const d = new Date();
@@ -157,10 +165,10 @@ chargeurs.defis = async () => {
         <summary>Comment fonctionne la planification</summary>
         <p>Le catalogue contient des modules prêts à jouer ; le tableau ci-dessous ne montre que
         ceux que vous avez <strong>programmés</strong>. Pour en ajouter, en retirer ou en changer
-        l'ordre, utilisez « Programme de la campagne » juste en dessous — le catalogue complet s'y
+        la date, utilisez « Programme de la campagne » juste en dessous — le catalogue complet s'y
         parcourt, avec un aperçu de chaque questionnaire.</p>
-        <p>Chaque défi s'ouvre automatiquement à sa date d'ouverture, à condition d'être publié.
-        Modifier la date de début de campagne décale les semaines de 7 jours en 7 jours.
+        <p>Chaque défi paraît automatiquement à sa date de parution, à condition d'être publié.
+        Cette date se fixe défi par défi : rien n'oblige à en publier un par semaine.
         Un défi dépublié disparaît du portail sans que les participations soient perdues.</p>
       </details>
 
@@ -171,44 +179,34 @@ chargeurs.defis = async () => {
         <span class="discret ui">Il arrive masqué : rédigez les questions, puis publiez-le.</span>
       </div>
 
-      <div class="carte" style="margin-bottom:1.5rem">
-        <h2>Calendrier de la campagne</h2>
-        <div class="champ-admin" style="max-width:280px">
-          <label for="debut-campagne">Ouverture de la semaine 1</label>
-          <input type="date" id="debut-campagne" value="${defis[0]?.ouvre_le || ''}">
-        </div>
-        <button class="btn btn-secondaire" id="btn-replanifier">Replanifier les semaines</button>
-      </div>
-
       <div class="tableau-defilant"><table class="admin">
-        <thead><tr><th>Semaine</th><th>Titre</th><th>Ouverture</th><th>État</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Parution</th><th>Titre</th><th>État</th><th>Actions</th></tr></thead>
         <tbody>${defis.map((d) => `
           <tr>
-            <td>S${d.semaine}</td>
+            <td>${echapper(d.ouvre_le)}</td>
             <td>${echapper(d.titre)}</td>
-            <td>${d.ouvre_le}</td>
             <td>
               <span class="pastille-etat ${d.publie ? 'etat-ok' : 'etat-ko'}">${d.publie ? 'Publié' : 'Masqué'}</span>
               ${!d.publie && d.ouvre_le <= aujourdhuiIso() ? `
                 <br><span class="discret" style="font-size:.76rem;color:var(--alerte)">
-                  sa date est passée : publiez-le pour qu'il s'ouvre
+                  sa date est passée : publiez-le pour qu'il paraisse
                 </span>` : ''}
             </td>
             <td>
-              <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem" data-editer="${d.semaine}">Modifier</button>
-              <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem" data-publier="${d.semaine}" data-etat="${d.publie}">
+              <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem" data-editer="${d.id}">Modifier</button>
+              <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem" data-publier="${d.id}" data-etat="${d.publie}">
                 ${d.publie ? 'Masquer' : 'Publier'}
               </button>
               <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem"
-                      data-tester-defi="${d.semaine}">Tester</button>
+                      data-tester-defi="${d.id}">Tester</button>
               <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem"
-                      data-apercu-defi="${d.semaine}" data-ouvert="${d.apercuOuvert ? '1' : ''}">
+                      data-apercu-defi="${d.id}" data-ouvert="${d.apercuOuvert ? '1' : ''}">
                 ${d.apercuOuvert ? 'Aperçu actif' : 'Lien d’aperçu'}
               </button>
               <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem"
-                      data-recalculer="${d.semaine}" data-titre="${echapper(d.titre)}">Recalculer</button>
+                      data-recalculer="${d.id}" data-titre="${echapper(d.titre)}">Recalculer</button>
               <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem;border-color:var(--erreur);color:var(--erreur)"
-                      data-supprimer-defi="${d.semaine}" data-titre="${echapper(d.titre)}">Supprimer</button>
+                      data-supprimer-defi="${d.id}" data-titre="${echapper(d.titre)}">Supprimer</button>
             </td>
           </tr>`).join('')}
         </tbody></table></div>
@@ -217,15 +215,6 @@ chargeurs.defis = async () => {
 
     ecranProgramme(document.getElementById('zone-programme'), () => {
       dejaCharge.delete('defis'); dejaCharge.delete('suivi'); chargeurs.defis();
-    });
-
-    document.getElementById('btn-replanifier').addEventListener('click', async () => {
-      const debut = document.getElementById('debut-campagne').value;
-      try {
-        const r = await api('/api/admin/campagne', { method: 'POST', body: { debut } });
-        alerte('alerte', r.message, 'succes');
-        dejaCharge.delete('defis'); chargeurs.defis();
-      } catch (e) { alerte('alerte', e.message); }
     });
 
     cible.querySelectorAll('[data-publier]').forEach((b) => b.addEventListener('click', async () => {
@@ -262,16 +251,16 @@ chargeurs.defis = async () => {
         alerte('alerte', r.message, 'succes');
         dejaCharge.delete('defis');
         await chargeurs.defis();
-        ouvrirEditeur(r.semaine);
+        ouvrirEditeur(r.id);
       } catch (e) { alerte('alerte', e.message); }
     });
 
     cible.querySelectorAll('[data-supprimer-defi]').forEach((b) =>
       b.addEventListener('click', async () => {
-        const semaine = Number(b.dataset.supprimerDefi);
+        const id = Number(b.dataset.supprimerDefi);
         if (!confirm(`Supprimer le défi « ${b.dataset.titre} » ?`)) return;
         try {
-          const r = await api(`/api/admin/defis/${semaine}`, { method: 'DELETE' });
+          const r = await api(`/api/admin/defis/${id}`, { method: 'DELETE' });
           alerte('alerte', r.message, 'succes');
           dejaCharge.delete('defis'); chargeurs.defis();
         } catch (e) {
@@ -281,7 +270,7 @@ chargeurs.defis = async () => {
 
 Confirmer la suppression définitive ?`)) return;
             try {
-              const r = await api(`/api/admin/defis/${semaine}`, {
+              const r = await api(`/api/admin/defis/${id}`, {
                 method: 'DELETE', body: { confirmerPerteResultats: true },
               });
               alerte('alerte', r.message, 'succes');
@@ -293,10 +282,10 @@ Confirmer la suppression définitive ?`)) return;
   } catch (erreur) { cible.innerHTML = `<div class="message message-erreur">${echapper(erreur.message)}</div>`; }
 };
 
-async function ouvrirEditeur(semaine) {
+async function ouvrirEditeur(id) {
   const zone = document.getElementById('editeur');
   zone.innerHTML = '<p class="discret">Chargement du défi…</p>';
-  const defi = await api(`/api/admin/defis/${semaine}`);
+  const defi = await api(`/api/admin/defis/${id}`);
 
   const rendreQuestion = (q, i) => `
     <div class="editeur-question" data-question="${i}">
@@ -344,7 +333,7 @@ async function ouvrirEditeur(semaine) {
 
   zone.innerHTML = `
     <div class="carte">
-      <h2>Semaine ${defi.semaine} — édition</h2>
+      <h2>${echapper(defi.titre)} — édition</h2>
       <div class="champ-admin"><label for="ed-titre">Titre</label><input type="text" id="ed-titre" value="${echapper(defi.titre)}"></div>
       <div class="champ-admin"><label for="ed-accroche">Accroche</label><input type="text" id="ed-accroche" value="${echapper(defi.accroche)}"></div>
       <div class="champ-admin"><label for="ed-intro">Introduction</label><textarea id="ed-intro" style="min-height:90px">${echapper(defi.intro)}</textarea></div>
@@ -363,7 +352,7 @@ async function ouvrirEditeur(semaine) {
       </div>
       <p class="discret" style="margin-top:-.4rem">
         Le défi n'apparaît aux agents qu'à partir de sa date de parution, et seulement s'il est
-        publié. Vous pouvez donc préparer les quatre semaines à l'avance : chacune se dévoilera
+        publié. Vous pouvez donc préparer toute la campagne à l'avance : chaque défi se dévoilera
         le jour venu. Les défis déjà parus restent accessibles quand les suivants s'ouvrent.
       </p>
 
@@ -436,11 +425,11 @@ async function ouvrirEditeur(semaine) {
       <button type="button" class="btn btn-secondaire" id="btn-ajouter-question">+ Ajouter une question</button>
 
       <div class="rang" style="margin-top:1.5rem;border-top:1px solid var(--bordure);padding-top:1.2rem">
-        <button type="button" class="btn btn-principal" id="btn-enregistrer">Enregistrer la semaine ${defi.semaine}</button>
+        <button type="button" class="btn btn-principal" id="btn-enregistrer">Enregistrer ce défi</button>
         <button type="button" class="btn btn-secondaire" id="btn-fermer">Fermer</button>
       </div>
       <p class="discret" style="margin-top:.8rem">
-        Attention : enregistrer remplace toutes les questions de cette semaine. Les participations déjà
+        Attention : enregistrer remplace toutes les questions de ce défi. Les participations déjà
         enregistrées conservent leur score, mais les corrections affichées seront celles du nouveau contenu.
       </p>
     </div>`;
@@ -497,7 +486,7 @@ async function ouvrirEditeur(semaine) {
     }));
 
     try {
-      const r = await api(`/api/admin/defis/${defi.semaine}`, {
+      const r = await api(`/api/admin/defis/${defi.id}`, {
         method: 'POST',
         body: {
           titre: document.getElementById('ed-titre').value.trim(),
@@ -538,21 +527,33 @@ chargeurs.configuration = chargerConfiguration;
 
 chargeurs.mails = async () => {
   const cible = document.getElementById('panneau-mails');
+
+  // La liste des defis remplace le choix d'un numero de semaine : les defis ne
+  // sont plus numerotes, et un menu fige a « 1, 2, 3, 4 » designait de toute
+  // facon des semaines qui pouvaient ne pas exister.
+  let defis = [];
+  try { defis = await api('/api/admin/defis'); } catch { defis = []; }
+
   cible.innerHTML = `
     <details class="aide-admin">
       <summary>Qui envoie quoi</summary>
       <p><strong>Lancement (lundi)</strong> — à copier-coller par la DPO, pour qu'il parte de sa propre boîte
       et porte sa signature. Utilisez le bouton « Copier le texte » ci-dessous.<br>
       <strong>Relance (mercredi)</strong> — envoyée automatiquement par l'application aux seuls agents
-      n'ayant pas encore fait le défi de la semaine.<br>
-      <strong>Résultats (vendredi)</strong> — envoyés automatiquement au groupe de distribution.</p>
+      n'ayant pas encore fait le défi choisi.<br>
+      <strong>Résultats (vendredi)</strong> — envoyés automatiquement au groupe de distribution.<br>
+      Les envois automatiques portent sur le <strong>dernier défi paru</strong>.</p>
     </details>
 
     <div class="carte" style="margin-bottom:1.5rem">
       <div class="rang" style="align-items:flex-end">
-        <div class="champ-admin" style="width:150px">
-          <label for="mail-semaine">Semaine</label>
-          <select id="mail-semaine"><option>1</option><option>2</option><option>3</option><option>4</option></select>
+        <div class="champ-admin" style="width:280px">
+          <label for="mail-defi">Défi concerné</label>
+          <select id="mail-defi">
+            ${defis.length
+              ? defis.map((d) => `<option value="${d.id}">${echapper(d.ouvre_le)} — ${echapper(d.titre)}</option>`).join('')
+              : '<option value="">aucun défi programmé</option>'}
+          </select>
         </div>
         <div class="champ-admin" style="width:200px">
           <label for="mail-type">Type de message</label>
@@ -606,10 +607,10 @@ chargeurs.mails = async () => {
   let dernierMail = null;
 
   async function apercu() {
-    const semaine = document.getElementById('mail-semaine').value;
+    const defiId = document.getElementById('mail-defi').value;
     const type = document.getElementById('mail-type').value;
     try {
-      dernierMail = await api(`/api/admin/mails/${type}/${semaine}`);
+      dernierMail = await api(`/api/admin/mails/${type}/${defiId}`);
       const zone = document.getElementById('zone-apercu');
       zone.innerHTML = `
         <div class="carte">
@@ -632,9 +633,9 @@ chargeurs.mails = async () => {
   }
 
   async function envoyer(quoi, simulation) {
-    const semaine = document.getElementById('mail-semaine').value;
+    const defiId = document.getElementById('mail-defi').value;
     try {
-      const r = await api(`/api/admin/mails/${quoi}/${semaine}`, { method: 'POST', body: { simulation } });
+      const r = await api(`/api/admin/mails/${quoi}/${defiId}`, { method: 'POST', body: { simulation } });
       if (!r.ok) return alerte('alerte', r.message || 'Envoi impossible.');
       alerte('alerte', simulation
         ? `Simulation : ${r.destinataires} destinataire(s) seraient concernés.`
@@ -743,7 +744,7 @@ chargeurs.technique = async () => {
         </tbody></table></div>
 
       <h2 style="margin-top:2rem">Contenus</h2>
-      <p class="discret">Recharge les fichiers <code>content/semaine-*.json</code>. Les défis déjà joués sont préservés sauf si vous forcez.</p>
+      <p class="discret">Recharge les modules de <code>content/modules/</code> dans les défis programmés. Les défis déjà joués sont préservés sauf si vous forcez.</p>
       <div class="rang">
         <button class="btn btn-secondaire" id="btn-reimport">Recharger les contenus</button>
         <button class="btn btn-secondaire" id="btn-reimport-force">Recharger en forçant</button>
@@ -798,7 +799,7 @@ chargeurs.technique = async () => {
   async function reimporter(force) {
     try {
       const r = await api('/api/admin/reimporter', { method: 'POST', body: { force } });
-      alerte('alerte', r.rapport.map((x) => `S${x.semaine} : ${x.statut}${x.motif ? ` (${x.motif})` : ''}`).join(' · '), 'succes');
+      alerte('alerte', r.rapport.map((x) => `${x.module} : ${x.statut}${x.motif ? ` (${x.motif})` : ''}`).join(' · '), 'succes');
     } catch (e) { alerte('alerte', e.message); }
   }
 };
@@ -818,16 +819,16 @@ dejaCharge.add('suivi');
  * invalide le precedent - c'est aussi la facon de reprendre la main sur un
  * lien qui aurait trop circule.
  */
-async function lienApercu(semaine, dejaOuvert) {
+async function lienApercu(id, dejaOuvert) {
   const zone = document.getElementById('editeur');
   zone.innerHTML = '<div class="carte"><p class="discret">Génération du lien…</p></div>';
   zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
   try {
-    const r = await api(`/api/admin/defis/${semaine}/apercu`, { method: 'POST' });
+    const r = await api(`/api/admin/defis/${id}/apercu`, { method: 'POST' });
     zone.innerHTML = `
       <div class="carte" style="border-left:4px solid var(--vert-clair)">
-        <h2>Aperçu de la semaine ${r.semaine} — ${echapper(r.titre)}</h2>
+        <h2>Aperçu du défi « ${echapper(r.titre)} »</h2>
         <p class="discret" style="margin-top:-.3em">
           Ce lien ouvre le défi <strong>avant sa date</strong>. Rien de ce qui s'y joue
           n'entre au classement, aux statistiques ni aux badges : aucune participation
@@ -872,7 +873,7 @@ async function lienApercu(semaine, dejaOuvert) {
 
     document.getElementById('btn-revoquer-apercu').addEventListener('click', async () => {
       try {
-        const rep = await api(`/api/admin/defis/${semaine}/apercu`, { method: 'DELETE' });
+        const rep = await api(`/api/admin/defis/${id}/apercu`, { method: 'DELETE' });
         alerte('alerte', rep.message, 'succes');
         zone.innerHTML = '';
         dejaCharge.delete('defis'); chargeurs.defis();
@@ -898,7 +899,7 @@ async function lienApercu(semaine, dejaOuvert) {
  *
  * Aucune participation n'est ecrite : ni classement, ni statistiques, ni badges.
  */
-async function testerDefi(semaine, bouton) {
+async function testerDefi(id, bouton) {
   const libelle = bouton.textContent;
   bouton.disabled = true;
   bouton.textContent = 'Ouverture…';
@@ -907,7 +908,7 @@ async function testerDefi(semaine, bouton) {
   // surgissement non sollicite et serait bloquee par le navigateur.
   const onglet = window.open('', '_blank');
   try {
-    const r = await api(`/api/admin/defis/${semaine}/apercu`, { method: 'POST' });
+    const r = await api(`/api/admin/defis/${id}/apercu`, { method: 'POST' });
     if (onglet) onglet.location = r.lien;
     else alerte('alerte', `Fenêtre bloquée. Le lien : ${r.lien}`);
     dejaCharge.delete('defis');
@@ -1006,7 +1007,7 @@ function brancherApercuVideo() {
 /**
  * Dépôt d'un fichier vidéo servi par la collectivité.
  *
- * Cinq cents agents qui regardent la même vidéo sur YouTube la même semaine,
+ * Cinq cents agents qui regardent la même vidéo sur YouTube en même temps,
  * cela se voit sur le lien Internet d'une commune. Un fichier déposé ici est
  * servi depuis le serveur : le trafic reste interne, et aucun tiers n'est
  * appelé — donc plus de vignette de consentement côté agent non plus.

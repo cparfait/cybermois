@@ -2,7 +2,7 @@
 
 Portail interne de sensibilisation à la cybersécurité, sous forme de campagne gamifiée de
 quatre semaines. Les agents s'authentifient avec leur compte Active Directory (LDAPS),
-relèvent un défi par semaine, et font gagner des points à leur service.
+relèvent les défis au fil de leurs parutions, et font gagner des points à leur service.
 
 - **Authentification LDAPS** via un compte de service, sans jamais stocker de mot de passe
 - **Rattachement au service déduit de l'annuaire** (OU du DN) : aucune liste à maintenir
@@ -153,7 +153,7 @@ Reportez-vous à `.env.example`, qui documente chaque variable. Les points d'att
 | `SESSION_SECRET` | 32 caractères aléatoires minimum, propre à l'installation |
 | `PUBLIC_URL` | URL réellement vue par les agents — elle alimente les liens des mails |
 | `ADMIN_LOGINS` | Logins AD autorisés au back-office, séparés par des virgules |
-| `CAMPAGNE_DEBUT` | Lundi d'ouverture de la semaine 1 ; les suivantes s'ouvrent à +7 jours |
+| `CAMPAGNE_DEBUT` | Date de référence de la campagne ; chaque défi porte sa propre date de parution |
 | `MAIL_ENVOI_ACTIF` | Laisser à `false` tant que la recette n'est pas terminée |
 
 ### 5. Déploiement
@@ -193,7 +193,7 @@ la liaison LDAPS et le relais SMTP, et affiche la configuration effectivement ch
 
 | Jour | Message | Émetteur |
 |---|---|---|
-| Lundi | Lancement du défi de la semaine | **La DPO**, depuis sa messagerie |
+| Lundi | Lancement du défi qui vient de paraître | **La DPO**, depuis sa messagerie |
 | Mercredi 9h | Relance des agents n'ayant pas joué | Automatique |
 | Vendredi 16h | Résultats et classement | Automatique, au groupe de distribution |
 
@@ -213,7 +213,7 @@ Deux méthodes, au choix :
 - **Par le back-office** — Administration → Défis → Modifier. Édition complète des énoncés,
   contextes, réponses, bonnes réponses, points et explications. C'est la méthode à privilégier
   pendant la campagne.
-- **Par les fichiers** — `content/semaine-N.json`, puis Administration → Technique →
+- **Par les fichiers** — `content/modules/<code>.json`, puis Administration → Technique →
   Recharger les contenus. Pratique pour préparer une édition suivante ou versionner les
   contenus dans Git.
 
@@ -221,7 +221,7 @@ Un défi déjà joué n'est jamais écrasé par un rechargement, sauf en forçan
 
 ### Suivre la participation
 
-**Administration → Suivi** affiche le taux de participation global, le détail par semaine,
+**Administration → Suivi** affiche le taux de participation global, le détail par défi,
 le classement des services et la liste des services à relancer.
 
 Attention à une subtilité de lecture : le nombre d'agents « inscrits » correspond aux agents
@@ -249,7 +249,7 @@ la même question, mais le score d'une question ne descend jamais sous zéro. L'
 pédagogique : on ne punit pas l'erreur, on l'explique.
 
 **Un seul essai comptabilisé.** Rejouer un défi est possible, mais bascule en mode
-entraînement et ne modifie pas le classement. Les défis des semaines précédentes restent
+entraînement et ne modifie pas le classement. Les défis déjà parus restent
 ouverts jusqu'à la fin de la campagne : mieux vaut un agent qui rattrape tardivement qu'un
 agent qui abandonne.
 
@@ -306,9 +306,9 @@ src/
     admin.js             Back-office, exports, mails
     utilisateurs.js      Agents : import, ajout, exclusion, regroupements
     configuration.js     Reglages, tests LDAP et SMTP, comptes locaux
-content/semaine-*.json   Contenus pédagogiques, éditables
+content/modules/          Catalogue des questionnaires, éditables
 public/                  Interface (HTML, CSS, modules ES — aucun outil de build)
-tests/                   Tests de dates, d'extraction de DN, simulation de campagne
+tests/                   Tests d'extraction de DN, de contenus, simulation de campagne
 ```
 
 **Choix techniques.** Node.js 24 avec le module natif `node:sqlite` : pas de dépendance
@@ -319,7 +319,6 @@ un tiers.
 ## Tests
 
 ```bash
-node tests/dates.test.mjs         # planification des semaines, changement d'heure
 node tests/dn.test.mjs            # extraction du service depuis le DN
 node tests/import.test.mjs        # analyse des exports CSV, cas dégradés
 node tests/regroupement.test.mjs  # proposition de regroupement des sous-OU

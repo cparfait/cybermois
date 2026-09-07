@@ -21,19 +21,19 @@ import './modules.js';
  */
 
 /** Genere - ou renouvelle - le jeton d'un defi, et rend le lien complet. */
-export function creerJetonApercu(semaine, parQui) {
-  const defi = db.prepare('SELECT id, semaine, titre FROM defis WHERE semaine = ?').get(Number(semaine));
+export function creerJetonApercu(id, parQui) {
+  const defi = db.prepare('SELECT id, titre FROM defis WHERE id = ?').get(Number(id));
   if (!defi) return null;
 
   const jeton = crypto.randomBytes(24).toString('base64url');
   db.prepare('UPDATE defis SET jeton_apercu = ? WHERE id = ?').run(jeton, defi.id);
-  journaliser(parQui, 'apercu_cree', `semaine ${defi.semaine}`, null);
-  return { semaine: defi.semaine, titre: defi.titre, jeton };
+  journaliser(parQui, 'apercu_cree', `defi ${defi.id} (${defi.titre})`, null);
+  return { id: defi.id, titre: defi.titre, jeton };
 }
 
-export function revoquerJetonApercu(semaine, parQui) {
-  const res = db.prepare('UPDATE defis SET jeton_apercu = NULL WHERE semaine = ?').run(Number(semaine));
-  if (res.changes) journaliser(parQui, 'apercu_revoque', `semaine ${semaine}`, null);
+export function revoquerJetonApercu(id, parQui) {
+  const res = db.prepare('UPDATE defis SET jeton_apercu = NULL WHERE id = ?').run(Number(id));
+  if (res.changes) journaliser(parQui, 'apercu_revoque', `defi ${id}`, null);
   return res.changes > 0;
 }
 
@@ -49,5 +49,5 @@ export function jetonValide(defi, presente) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-export const lienApercu = (base, semaine, jeton) =>
-  `${String(base || '').replace(/\/+$/, '')}/defi/${semaine}?apercu=${jeton}`;
+export const lienApercu = (base, id, jeton) =>
+  `${String(base || '').replace(/\/+$/, '')}/defi/${id}?apercu=${jeton}`;

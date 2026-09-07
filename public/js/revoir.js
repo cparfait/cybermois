@@ -14,11 +14,29 @@ import { api, echapper, initialiserPage, alerte } from '/js/commun.js';
 
 await initialiserPage('/accueil');
 
-const semaine = Number(location.pathname.split('/').pop());
+const defiId = Number(location.pathname.split('/').pop());
 const zone = document.getElementById('zone');
 
+/** « 12 octobre » : la date de parution remplace le numero de semaine d'antan. */
+const dateParution = (iso) => (/^\d{4}-\d{2}-\d{2}$/.test(iso || '')
+  ? new Date(`${iso}T00:00:00Z`)
+    .toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', timeZone: 'UTC' })
+  : '');
+
+/**
+ * Une proposition telle qu'elle a ete vue.
+ * Declaree avant le rendu : `bloc()` est hissee, pas cette constante - l'appeler
+ * depuis le corps du module en dessous jetait « Cannot access before
+ * initialization », et la page ne montrait plus que le bouton de retour.
+ */
+const ligne = (r, classe, marqueur, lecture) => `
+  <li class="${classe}">
+    <span class="marqueur" aria-hidden="true">${marqueur}</span>
+    <span>${echapper(r.libelle)}${lecture ? `<span class="sr-only"> — ${lecture}</span>` : ''}</span>
+  </li>`;
+
 try {
-  const d = await api(`/api/defis/${semaine}/relecture`);
+  const d = await api(`/api/defis/${defiId}/relecture`);
   const pourcentage = d.scoreMax ? Math.round((d.score / d.scoreMax) * 100) : 0;
   const date = d.termineLe
     ? new Date(`${d.termineLe.replace(' ', 'T')}Z`).toLocaleDateString('fr-FR', {
@@ -27,7 +45,7 @@ try {
     : null;
 
   zone.innerHTML = `
-    <p class="numero-question">Semaine ${d.semaine}</p>
+    <p class="numero-question">Paru le ${dateParution(d.ouvreLe)}</p>
     <h1 style="margin-bottom:.15em">${echapper(d.titre)}</h1>
     <p style="font-style:italic;color:var(--encre-douce);margin-top:0">${echapper(d.accroche || '')}</p>
 
@@ -77,9 +95,3 @@ function bloc(q, i) {
       ${q.explication ? `<p style="margin:0">${echapper(q.explication)}</p>` : ''}
     </section>`;
 }
-
-const ligne = (r, classe, marqueur, lecture) => `
-  <li class="${classe}">
-    <span class="marqueur" aria-hidden="true">${marqueur}</span>
-    <span>${echapper(r.libelle)}${lecture ? `<span class="sr-only"> — ${lecture}</span>` : ''}</span>
-  </li>`;

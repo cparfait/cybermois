@@ -2,7 +2,7 @@ import { db, journaliser } from '../lib/db.js';
 import { config } from '../lib/config.js';
 import { exigerAdmin } from '../lib/session.js';
 import { testerConnexion } from '../lib/ldap.js';
-import { importerContenus, exporterDefi, dateOuverture } from '../lib/seed.js';
+import { importerContenus, exporterDefi } from '../lib/seed.js';
 import { listerModules, lireModule, etatProgramme, enregistrerProgramme } from '../lib/modules.js';
 import { versionApplication } from '../lib/version.js';
 import { classementServices, classementAgents, statistiquesGlobales } from '../lib/scoring.js';
@@ -38,7 +38,7 @@ export default async function routesAdmin(app) {
     `).all();
 
     const derniersEnvois = db.prepare('SELECT * FROM envois ORDER BY id DESC LIMIT 10').all();
-    const defis = db.prepare('SELECT semaine, titre, ouvre_le, publie FROM defis ORDER BY semaine').all();
+    const defis = db.prepare('SELECT id, titre, ouvre_le, publie FROM defis ORDER BY ouvre_le, id').all();
 
     return { stats, services, jamaisJoue, derniersEnvois, defis, campagne: config.campagne };
   });
@@ -69,14 +69,13 @@ export default async function routesAdmin(app) {
   /* ------------------------------------------- Catalogue et programmation */
 
   /**
-   * Le catalogue des modules disponibles, et la semaine ou chacun est place.
+   * Le catalogue des modules disponibles, et la date ou chacun parait.
    * Ecrire vingt questionnaires et n'en jouer que quatre suppose de pouvoir
    * choisir : c'est ce que cet ecran permet.
    */
   app.get('/api/admin/modules', async () => ({
     modules: listerModules(),
     programme: etatProgramme(),
-    debut: config.campagne.debut,
   }));
 
   /** Le detail d'un module, reponses comprises, pour le relire avant de le programmer. */
@@ -107,19 +106,19 @@ export default async function routesAdmin(app) {
     const majs = rapport.filter((r) => r.statut === 'mis a jour').length;
     const retires = rapport.filter((r) => r.statut === 'deprogramme').length;
 
-    const bouts = [`${n} semaine(s) programmee(s)`];
+    const bouts = [`${n} defi(s) programme(s)`];
     if (crees) bouts.push(`${crees} questionnaire(s) cree(s)`);
     if (majs) bouts.push(`${majs} mis a jour`);
     if (retires) bouts.push(`${retires} retire(s)`);
     return { message: `${bouts.join(', ')}.`, rapport };
   });
 
-  app.get('/api/admin/defis', async () => db.prepare('SELECT * FROM defis ORDER BY semaine').all()
+  app.get('/api/admin/defis', async () => db.prepare('SELECT * FROM defis ORDER BY ouvre_le, id').all()
     // Le jeton lui-meme ne sort pas d'ici : il n'est rendu qu'a sa creation.
     .map(({ jeton_apercu: jeton, ...d }) => ({ ...d, apercuOuvert: !!jeton })));
 
-  app.get('/api/admin/defis/:semaine', async (requete, reponse) => {
-    const defi = exporterDefi(Number(requete.params.semaine));
+  app.get('/api/admin/defis/:id', async (requete, reponse) => {
+    const defi = exporterDefi(requete.params.id);
     if (!defi) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
     return defi;
   });
@@ -130,27 +129,21 @@ export default async function routesAdmin(app) {
     const titre = String(c.titre || '').trim();
     if (!titre) return reponse.code(400).send({ erreur: 'Le titre est obligatoire.' });
 
-    // Numero libre le plus petit : on rebouche les trous laisses par une suppression
-    const occupees = new Set(db.prepare('SELECT semaine FROM defis').all().map((d) => d.semaine));
-    let semaine = Number(c.semaine) || 0;
-    if (semaine) {
-      if (occupees.has(semaine)) {
-        return reponse.code(409).send({ erreur: `La semaine ${semaine} existe déjà.` });
-      }
-    } else {
-      semaine = 1;
-      while (occupees.has(semaine)) semaine++;
-    }
+    // La date de parution est le seul reperage d'un defi : sans elle, il ne
+    // paraitrait jamais. A defaut, le jour meme - le defi arrivant masque,
+    // rien ne s'ouvre pour autant.
+    const ouvreLe = /^\d{4}-\d{2}-\d{2}$/.test(String(c.ouvre_le || ''))
+      ? c.ouvre_le : new Date().toISOString().slice(0, 10);
 
     const res = db.prepare(`
-      INSERT INTO defis (semaine, titre, accroche, intro, duree_minutes, ouvre_le, publie)
-      VALUES (?, ?, ?, ?, ?, ?, 0)
+      INSERT INTO defis (titre, accroche, intro, duree_minutes, ouvre_le, publie)
+      VALUES (?, ?, ?, ?, ?, 0)
     `).run(
-      semaine, titre,
+      titre,
       String(c.accroche || '').trim(),
       String(c.intro || '').trim(),
       Number(c.duree_minutes) || 7,
-      c.ouvre_le || dateOuverture(semaine)
+      ouvreLe
     );
 
     // Une question d'amorce, pour que l'editeur ne s'ouvre pas sur un ecran vide
@@ -161,19 +154,19 @@ export default async function routesAdmin(app) {
     r.run(q.lastInsertRowid, 1, 'Première réponse (bonne)', 1);
     r.run(q.lastInsertRowid, 2, 'Deuxième réponse', 0);
 
-    journaliser(requete.agent.login, 'defi_cree', `semaine=${semaine} titre=${titre}`, requete.ip);
+    journaliser(requete.agent.login, 'defi_cree', `defi=${res.lastInsertRowid} titre=${titre}`, requete.ip);
     return {
       ok: true,
-      semaine,
-      message: `Défi « ${titre} » créé en semaine ${semaine}, pour l'instant masqué. `
+      id: res.lastInsertRowid,
+      message: `Défi « ${titre} » créé pour le ${ouvreLe}, pour l'instant masqué. `
         + 'Rédigez les questions, puis publiez-le.',
     };
   });
 
   /** Suppression d'un defi. Les participations partent avec : confirmation exigee. */
-  app.delete('/api/admin/defis/:semaine', async (requete, reponse) => {
-    const semaine = Number(requete.params.semaine);
-    const defi = db.prepare('SELECT * FROM defis WHERE semaine = ?').get(semaine);
+  app.delete('/api/admin/defis/:id', async (requete, reponse) => {
+    const id = Number(requete.params.id);
+    const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(id);
     if (!defi) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
 
     const participations = db.prepare(
@@ -191,20 +184,22 @@ export default async function routesAdmin(app) {
     }
 
     db.prepare('DELETE FROM defis WHERE id = ?').run(defi.id); // cascade questions et participations
-    journaliser(requete.agent.login, 'defi_supprime', `semaine=${semaine} (${participations} participations)`, requete.ip);
+    journaliser(requete.agent.login, 'defi_supprime', `defi=${id} (${participations} participations)`, requete.ip);
 
     return {
       ok: true,
       message: `Défi « ${defi.titre} » supprimé.`
         + (participations ? ` ${participations} participation(s) effacée(s).` : '')
-        + ' Attention : il sera recréé au prochain rechargement des contenus si un fichier '
-        + `content/semaine-${semaine}.json existe encore.`,
+        + (defi.module_code
+          ? ' Attention : il sera recréé au prochain rechargement des contenus tant que le '
+            + `module ${defi.module_code} reste au programme.`
+          : ''),
     };
   });
 
-  app.post('/api/admin/defis/:semaine', async (requete, reponse) => {
-    const semaine = Number(requete.params.semaine);
-    const defi = db.prepare('SELECT * FROM defis WHERE semaine = ?').get(semaine);
+  app.post('/api/admin/defis/:id', async (requete, reponse) => {
+    const id = Number(requete.params.id);
+    const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(id);
     if (!defi) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
 
     const corps = requete.body || {};
@@ -262,16 +257,16 @@ export default async function routesAdmin(app) {
       q.reponses.forEach((r, j) => insR.run(res.lastInsertRowid, j + 1, r.libelle, r.correcte ? 1 : 0));
     });
 
-    journaliser(requete.agent.login, 'defi_modifie', `semaine=${semaine} questions=${questions.length}`, requete.ip);
-    return { ok: true, message: `Semaine ${semaine} enregistrée (${questions.length} questions).` };
+    journaliser(requete.agent.login, 'defi_modifie', `defi=${id} questions=${questions.length}`, requete.ip);
+    return { ok: true, message: `Défi « ${corps.titre ?? defi.titre} » enregistré (${questions.length} questions).` };
   });
 
-  app.post('/api/admin/defis/:semaine/publication', async (requete, reponse) => {
-    const semaine = Number(requete.params.semaine);
+  app.post('/api/admin/defis/:id/publication', async (requete, reponse) => {
+    const id = Number(requete.params.id);
     const publie = requete.body?.publie ? 1 : 0;
-    const res = db.prepare('UPDATE defis SET publie = ? WHERE semaine = ?').run(publie, semaine);
+    const res = db.prepare('UPDATE defis SET publie = ? WHERE id = ?').run(publie, id);
     if (res.changes === 0) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
-    journaliser(requete.agent.login, 'defi_publication', `semaine=${semaine} publie=${publie}`, requete.ip);
+    journaliser(requete.agent.login, 'defi_publication', `defi=${id} publie=${publie}`, requete.ip);
     return { ok: true, publie: !!publie };
   });
 
@@ -284,21 +279,21 @@ export default async function routesAdmin(app) {
    * suppose de pouvoir y jouer avant l'ouverture. Le jeton porte l'acces ; le
    * fait que rien ne compte est structurel - aucune participation n'est ecrite.
    */
-  app.post('/api/admin/defis/:semaine/apercu', async (requete, reponse) => {
-    const cree = creerJetonApercu(requete.params.semaine, requete.agent.login);
+  app.post('/api/admin/defis/:id/apercu', async (requete, reponse) => {
+    const cree = creerJetonApercu(requete.params.id, requete.agent.login);
     if (!cree) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
 
     return {
       ok: true,
       ...cree,
-      lien: lienApercu(config.publicUrl, cree.semaine, cree.jeton),
+      lien: lienApercu(config.publicUrl, cree.id, cree.jeton),
       message: "Lien d'aperçu créé. Il ouvre ce défi avant sa date, et rien de ce qui "
         + "s'y joue n'entre au classement. Révoquez-le après vos essais.",
     };
   });
 
-  app.delete('/api/admin/defis/:semaine/apercu', async (requete, reponse) => {
-    if (!revoquerJetonApercu(requete.params.semaine, requete.agent.login)) {
+  app.delete('/api/admin/defis/:id/apercu', async (requete, reponse) => {
+    if (!revoquerJetonApercu(requete.params.id, requete.agent.login)) {
       return reponse.code(404).send({ erreur: 'Défi introuvable.' });
     }
     return { ok: true, message: "Lien d'aperçu révoqué : il ne fonctionne plus." };
@@ -309,7 +304,7 @@ export default async function routesAdmin(app) {
   /**
    * Depot d'une video servie par la collectivite.
    *
-   * Cinq cents agents qui regardent la meme video sur YouTube la meme semaine,
+   * Cinq cents agents qui regardent la meme video sur YouTube en meme temps,
    * cela se voit sur le lien Internet d'une commune. Un fichier depose ici est
    * servi depuis le serveur : le trafic reste interne, et aucun tiers n'est
    * appele - donc aucun consentement a demander non plus.
@@ -348,7 +343,7 @@ export default async function routesAdmin(app) {
   /** Les fichiers deposes, avec le defi qui s'en sert. */
   app.get('/api/admin/videos', async () => {
     const usages = new Map(
-      db.prepare('SELECT semaine, titre, video_url FROM defis WHERE video_url IS NOT NULL')
+      db.prepare('SELECT id, titre, video_url FROM defis WHERE video_url IS NOT NULL')
         .all().map((d) => [d.video_url, d])
     );
     return {
@@ -362,10 +357,10 @@ export default async function routesAdmin(app) {
     // Supprimer un fichier encore reference laisserait un defi pointant vers
     // le vide, ce qui ne se verrait qu'a l'ouverture par un agent.
     const url = `/videos/${requete.params.nom}`;
-    const utilisee = db.prepare('SELECT semaine FROM defis WHERE video_url = ?').get(url);
+    const utilisee = db.prepare('SELECT titre FROM defis WHERE video_url = ?').get(url);
     if (utilisee) {
       return reponse.code(409).send({
-        erreur: `Cette vidéo est utilisée par la semaine ${utilisee.semaine}. `
+        erreur: `Cette vidéo est utilisée par le défi « ${utilisee.titre} ». `
           + 'Retirez-la du défi avant de supprimer le fichier.',
       });
     }
@@ -388,61 +383,36 @@ export default async function routesAdmin(app) {
     return { ok: true, rapport };
   });
 
-  app.post('/api/admin/campagne', async (requete, reponse) => {
-    const debut = String(requete.body?.debut || '');
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(debut)) return reponse.code(400).send({ erreur: 'Date attendue au format AAAA-MM-JJ.' });
-    config.campagne.debut = debut;
-
-    // Replanifier veut dire remettre tout le calendrier au rythme hebdomadaire.
-    // Les dates fixees a la main sont donc levees : les conserver ferait
-    // reapparaitre les anciennes ouvertures au prochain import, et le bouton
-    // paraitrait sans effet sur ces semaines-la.
-    const forcees = db.prepare("SELECT COUNT(*) AS n FROM programme WHERE ouvre_le IS NOT NULL").get().n;
-    db.prepare('UPDATE programme SET ouvre_le = NULL').run();
-
-    for (const d of db.prepare('SELECT semaine FROM defis').all()) {
-      db.prepare('UPDATE defis SET ouvre_le = ? WHERE semaine = ?').run(dateOuverture(d.semaine), d.semaine);
-    }
-    journaliser(requete.agent.login, 'campagne_replanifiee',
-      `${debut}${forcees ? `, ${forcees} date(s) manuelle(s) levee(s)` : ''}`, requete.ip);
-
-    return {
-      ok: true,
-      message: `Semaine 1 ouverte le ${debut}, semaines suivantes décalées de 7 jours.`
-        + (forcees ? ` ${forcees} date(s) fixée(s) à la main ont été réalignées.` : ''),
-    };
-  });
-
   /* --------------------------------------------------------------- Mails */
-  app.get('/api/admin/mails/:type/:semaine', async (requete, reponse) => {
-    const semaine = Number(requete.params.semaine);
+  app.get('/api/admin/mails/:type/:id', async (requete, reponse) => {
+    const id = Number(requete.params.id);
     const type = requete.params.type;
     let m = null;
-    if (type === 'lancement') m = mailLancement(semaine);
-    else if (type === 'resultats') m = mailResultats(semaine);
+    if (type === 'lancement') m = mailLancement(id);
+    else if (type === 'resultats') m = mailResultats(id);
     else if (type === 'relance') {
       const exemple = db.prepare('SELECT * FROM agents LIMIT 1').get()
         || { nom_complet: 'Prénom NOM', service: 'Service exemple' };
-      m = mailRelance(exemple, semaine);
+      m = mailRelance(exemple, id);
     } else return reponse.code(400).send({ erreur: 'Type inconnu (lancement, relance, resultats).' });
 
-    if (!m) return reponse.code(404).send({ erreur: 'Semaine introuvable.' });
+    if (!m) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
     return m;
   });
 
-  app.post('/api/admin/mails/relances/:semaine', async (requete) => {
-    const semaine = Number(requete.params.semaine);
+  app.post('/api/admin/mails/relances/:id', async (requete) => {
+    const id = Number(requete.params.id);
     const simulation = !!requete.body?.simulation;
-    const res = await envoyerRelances(semaine, { simulation });
-    if (!simulation) journaliser(requete.agent.login, 'relances_envoyees', `semaine=${semaine} ${JSON.stringify(res)}`, requete.ip);
+    const res = await envoyerRelances(id, { simulation });
+    if (!simulation) journaliser(requete.agent.login, 'relances_envoyees', `defi=${id} ${JSON.stringify(res)}`, requete.ip);
     return res;
   });
 
-  app.post('/api/admin/mails/resultats/:semaine', async (requete) => {
-    const semaine = Number(requete.params.semaine);
+  app.post('/api/admin/mails/resultats/:id', async (requete) => {
+    const id = Number(requete.params.id);
     const simulation = !!requete.body?.simulation;
-    const res = await envoyerResultats(semaine, { simulation });
-    if (!simulation) journaliser(requete.agent.login, 'resultats_envoyes', `semaine=${semaine} ${JSON.stringify(res)}`, requete.ip);
+    const res = await envoyerResultats(id, { simulation });
+    if (!simulation) journaliser(requete.agent.login, 'resultats_envoyes', `defi=${id} ${JSON.stringify(res)}`, requete.ip);
     return res;
   });
 
@@ -450,18 +420,18 @@ export default async function routesAdmin(app) {
   app.get('/api/admin/export/participations.csv', async (requete, reponse) => {
     const lignes = db.prepare(`
       SELECT a.login, a.nom_complet AS nom, a.service, a.email,
-             d.semaine, d.titre AS defi,
+             d.ouvre_le, d.titre AS defi,
              p.score, p.score_max, p.bonnes, p.total_questions, p.duree_secondes, p.termine_le
       FROM participations p
       JOIN agents a ON a.id = p.agent_id
       JOIN defis d  ON d.id = p.defi_id
       WHERE p.entrainement = 0
-      ORDER BY d.semaine, a.service, a.nom_complet
+      ORDER BY d.ouvre_le, d.id, a.service, a.nom_complet
     `).all();
     journaliser(requete.agent.login, 'export_participations', `${lignes.length} lignes`, requete.ip);
     return reponse.type('text/csv; charset=utf-8')
       .header('Content-Disposition', 'attachment; filename="cybermois-participations.csv"')
-      .send(csv(lignes, ['login', 'nom', 'service', 'email', 'semaine', 'defi', 'score', 'score_max', 'bonnes', 'total_questions', 'duree_secondes', 'termine_le']));
+      .send(csv(lignes, ['login', 'nom', 'service', 'email', 'ouvre_le', 'defi', 'score', 'score_max', 'bonnes', 'total_questions', 'duree_secondes', 'termine_le']));
   });
 
   app.get('/api/admin/export/services.csv', async (requete, reponse) => {

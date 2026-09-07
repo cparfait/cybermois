@@ -29,7 +29,7 @@ export function campagneClose() {
 /**
  * Un defi est jouable s'il est publie, que sa date de parution est atteinte,
  * et que la campagne n'est pas close.
- * Les defis des semaines precedentes restent ouverts : un agent qui prend le
+ * Les defis deja parus restent ouverts : un agent qui prend le
  * train en marche doit pouvoir rattraper.
  */
 function estOuvert(defi) {
@@ -51,7 +51,7 @@ export default async function routesJeu(app) {
   }));
 
   app.get('/api/defis', async (requete) => {
-    const defis = db.prepare('SELECT * FROM defis ORDER BY semaine').all();
+    const defis = db.prepare('SELECT * FROM defis ORDER BY ouvre_le, id').all();
     const faits = db.prepare(
       'SELECT defi_id, score, score_max, bonnes, total_questions FROM participations WHERE agent_id = ? AND entrainement = 0'
     ).all(requete.agent.id);
@@ -65,7 +65,7 @@ export default async function routesJeu(app) {
       // campagne, et le masquer a l'ecran seulement ne masquerait rien - la
       // reponse de l'API se lit dans n'importe quel navigateur.
       return {
-      semaine: d.semaine,
+      id: d.id,
       titre: ouvert ? d.titre : null,
       accroche: ouvert ? d.accroche : null,
       dureeMinutes: ouvert ? d.duree_minutes : null,
@@ -94,8 +94,8 @@ export default async function routesJeu(app) {
   });
 
   /* ------------------------------------------ Contenu d'un defi (sans les corrections) */
-  app.get('/api/defis/:semaine', async (requete, reponse) => {
-    const defi = db.prepare('SELECT * FROM defis WHERE semaine = ?').get(Number(requete.params.semaine));
+  app.get('/api/defis/:id', async (requete, reponse) => {
+    const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(Number(requete.params.id));
     if (!defi) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
     // Apres la cloture le defi reste consultable : on peut relire les
     // corrections, mais plus rien ne s'enregistre.
@@ -118,7 +118,8 @@ export default async function routesJeu(app) {
     const questions = db.prepare('SELECT * FROM questions WHERE defi_id = ? ORDER BY ordre').all(defi.id);
 
     return {
-      semaine: defi.semaine,
+      id: defi.id,
+      ouvreLe: defi.ouvre_le,
       titre: defi.titre,
       accroche: defi.accroche,
       intro: defi.intro,
@@ -152,8 +153,8 @@ export default async function routesJeu(app) {
 
   /* --------------------------------------- Validation, une question a la fois */
 
-  app.post('/api/defis/:semaine/questions/:questionId', async (requete, reponse) => {
-    const defi = db.prepare('SELECT * FROM defis WHERE semaine = ?').get(Number(requete.params.semaine));
+  app.post('/api/defis/:id/questions/:questionId', async (requete, reponse) => {
+    const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(Number(requete.params.id));
     if (!defi) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
     if (campagneClose()) {
       return reponse.code(403).send({
@@ -193,8 +194,8 @@ export default async function routesJeu(app) {
 
   /* ----------------------------------------------------------- Fin du defi */
 
-  app.post('/api/defis/:semaine/terminer', async (requete, reponse) => {
-    const defi = db.prepare('SELECT * FROM defis WHERE semaine = ?').get(Number(requete.params.semaine));
+  app.post('/api/defis/:id/terminer', async (requete, reponse) => {
+    const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(Number(requete.params.id));
     if (!defi) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
     if (campagneClose()) {
       return reponse.code(403).send({ erreur: 'La campagne est terminée.', close: true });
@@ -239,14 +240,14 @@ export default async function routesJeu(app) {
       }
 
       nouveauxBadges = attribuerBadges(requete.agent.id, {
-        semaine: defi.semaine, score: etat.score, scoreMax: etat.scoreMax,
+        defiId: defi.id, score: etat.score, scoreMax: etat.scoreMax,
         // Cocher une mauvaise proposition n'est pas la meme chose qu'en oublier
         // une bonne : seul le premier cas empeche « Œil de lynx ».
         erreurs: etat.erreurs,
       });
 
       journaliser(requete.agent.login, 'defi_termine',
-        `semaine=${defi.semaine} score=${etat.score}/${etat.scoreMax}`, requete.ip);
+        `defi=${defi.id} score=${etat.score}/${etat.scoreMax}`, requete.ip);
     }
 
     effacerTentative(requete.agent.id, defi.id);
@@ -265,8 +266,8 @@ export default async function routesJeu(app) {
   });
 
   /** Abandonner la tentative en cours pour repartir de zero. */
-  app.delete('/api/defis/:semaine/tentative', async (requete, reponse) => {
-    const defi = db.prepare('SELECT * FROM defis WHERE semaine = ?').get(Number(requete.params.semaine));
+  app.delete('/api/defis/:id/tentative', async (requete, reponse) => {
+    const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(Number(requete.params.id));
     if (!defi) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
     effacerTentative(requete.agent.id, defi.id);
     return { ok: true };
@@ -295,8 +296,8 @@ export default async function routesJeu(app) {
    * disparaissait de l'ecran. Cette route rend l'etat enregistre, sans rien
    * offrir a modifier.
    */
-  app.get('/api/defis/:semaine/relecture', async (requete, reponse) => {
-    const defi = db.prepare('SELECT * FROM defis WHERE semaine = ?').get(Number(requete.params.semaine));
+  app.get('/api/defis/:id/relecture', async (requete, reponse) => {
+    const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(Number(requete.params.id));
     if (!defi) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
 
     const participation = db.prepare(`
@@ -321,7 +322,8 @@ export default async function routesJeu(app) {
     `).all(participation.id);
 
     return {
-      semaine: defi.semaine,
+      id: defi.id,
+      ouvreLe: defi.ouvre_le,
       titre: defi.titre,
       accroche: defi.accroche,
       score: participation.score,
@@ -356,9 +358,9 @@ export default async function routesJeu(app) {
 
   app.get('/api/profil', async (requete) => {
     const participations = db.prepare(`
-      SELECT p.*, d.semaine, d.titre FROM participations p
+      SELECT p.*, d.id AS defi, d.titre, d.ouvre_le FROM participations p
       JOIN defis d ON d.id = p.defi_id
-      WHERE p.agent_id = ? AND p.entrainement = 0 ORDER BY d.semaine
+      WHERE p.agent_id = ? AND p.entrainement = 0 ORDER BY d.ouvre_le, d.id
     `).all(requete.agent.id);
 
     const obtenus = db.prepare('SELECT code, obtenu_le FROM badges_agent WHERE agent_id = ?').all(requete.agent.id);
@@ -369,7 +371,7 @@ export default async function routesJeu(app) {
     return {
       agent: { nomComplet: requete.agent.nom_complet, service: requete.agent.service },
       participations: participations.map((p) => ({
-        semaine: p.semaine, titre: p.titre, score: p.score, scoreMax: p.score_max,
+        id: p.defi, titre: p.titre, ouvreLe: p.ouvre_le, score: p.score, scoreMax: p.score_max,
         bonnes: p.bonnes, total: p.total_questions, termineLe: p.termine_le,
       })),
       scoreTotal: participations.reduce((s, p) => s + p.score, 0),

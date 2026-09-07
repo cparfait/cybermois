@@ -2,8 +2,8 @@
  * Le classement s'exprime en pourcentage de reussite, pas en points bruts.
  *
  * « 27 pts » ne veut rien dire sans son maximum : le meme chiffre vaut un
- * sans-faute sur une semaine et un resultat mediocre sur quatre. Ces tests
- * fixent le denominateur - les defis DEJA OUVERTS - et verifient que le
+ * sans-faute sur un defi et un resultat mediocre sur quatre. Ces tests
+ * fixent le denominateur - les defis DEJA PARUS - et verifient que le
  * changement d'unite ne bouscule pas l'ordre du classement, qui reposait
  * jusqu'ici sur la moyenne par agent inscrit.
  */
@@ -18,10 +18,10 @@ fs.rmSync(process.env.DB_FILE, { force: true });
 const { db } = await import('../src/lib/db.js');
 const { classementServices, classementAgents, pointsPossibles } = await import('../src/lib/scoring.js');
 
-const defi = (id, semaine, jours, points) => {
-  db.prepare(`INSERT INTO defis (id, semaine, titre, accroche, intro, duree_minutes, ouvre_le, publie)
-              VALUES (?, ?, ?, 'a', 'i', 5, date('now', ?), 1)`)
-    .run(id, semaine, `Defi ${semaine}`, `${jours} day`);
+const defi = (id, jours, points) => {
+  db.prepare(`INSERT INTO defis (id, titre, accroche, intro, duree_minutes, ouvre_le, publie)
+              VALUES (?, ?, 'a', 'i', 5, date('now', ?), 1)`)
+    .run(id, `Defi ${id}`, `${jours} day`);
   db.prepare('INSERT INTO questions (defi_id, enonce, explication, points, ordre) VALUES (?, ?, ?, ?, 1)')
     .run(id, 'q', 'e', points);
 };
@@ -35,8 +35,8 @@ const jouer = (agentId, defiId, score, max) => db
             VALUES (?, ?, ?, ?, 1, 1, 0)`)
   .run(agentId, defiId, score, max);
 
-defi(1, 1, -1, 100);  // ouvert hier
-defi(2, 2, +7, 500);  // ouvre dans une semaine
+defi(1, -1, 100);  // paru hier
+defi(2, +7, 500);  // parait dans sept jours
 
 // Service A : cinq agents, un seul joue, sans-faute.
 for (let i = 1; i <= 5; i++) agent(i, 'A');
@@ -47,9 +47,9 @@ jouer(1, 1, 100, 100);
 jouer(6, 1, 50, 100);
 jouer(7, 1, 50, 100);
 
-test('seuls les defis deja ouverts entrent dans le total', () => {
-  // Compter la semaine a venir ferait chuter tout le monde a chaque
-  // ouverture, sans que personne ait demerite.
+test('seuls les defis deja parus entrent dans le total', () => {
+  // Compter un defi a venir ferait chuter tout le monde a chaque
+  // parution, sans que personne ait demerite.
   assert.equal(pointsPossibles(), 100);
 });
 
@@ -74,7 +74,7 @@ test('un agent voit ses points sur le total atteignable', () => {
   assert.equal(a[1].pourcentage, 50);
 });
 
-test('sans aucun defi ouvert, aucun pourcentage ne part en division par zero', () => {
+test('sans aucun defi paru, aucun pourcentage ne part en division par zero', () => {
   db.prepare("UPDATE defis SET ouvre_le = date('now', '+30 day')").run();
   assert.equal(pointsPossibles(), 0);
   for (const s of classementServices()) assert.equal(s.pourcentage_moyen, 0);

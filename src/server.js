@@ -135,10 +135,10 @@ await app.register(routesCorrections);
 enregistrerStatiques(app, {
   '/': 'index.html',
   '/accueil': 'accueil.html',
-  '/defi/:semaine': 'defi.html',
+  '/defi/:id': 'defi.html',
   // Relire ses reponses sans rejouer : « revoir les corrections » renvoyait
   // au questionnaire, qui repartait en entrainement.
-  '/revoir/:semaine': 'revoir.html',
+  '/revoir/:id': 'revoir.html',
   '/classement': 'classement.html',
   '/profil': 'profil.html',
   '/attestation': 'attestation.html',
@@ -185,11 +185,13 @@ export function planifier() {
   for (const t of tachesPlanifiees) { try { t.stop(); } catch { /* deja arretee */ } }
   tachesPlanifiees = [];
 
-  const semaineCourante = () => {
-    const debut = new Date(`${config.campagne.debut}T00:00:00`);
-    const jours = Math.floor((Date.now() - debut.getTime()) / 86_400_000);
-    return Math.min(4, Math.max(1, Math.floor(jours / 7) + 1));
-  };
+  // Le defi que les mails automatiques annoncent : le dernier paru. Un rang
+  // calcule sur le calendrier ne veut plus rien dire des lors que les dates de
+  // parution sont libres - deux defis peuvent sortir le meme jour, ou aucun de
+  // la semaine.
+  const defiCourant = () => db.prepare(
+    "SELECT id FROM defis WHERE publie = 1 AND ouvre_le <= date('now') ORDER BY ouvre_le DESC, id DESC LIMIT 1"
+  ).get()?.id || null;
 
   if (!config.smtp.actif) {
     app.log.warn('Envoi de mails desactive : relances et resultats non planifies.');
@@ -202,16 +204,18 @@ export function planifier() {
   }
 
   tachesPlanifiees.push(cron.schedule(config.cron.relance, async () => {
-    const s = semaineCourante();
-    app.log.info(`Relance automatique - semaine ${s}`);
-    const res = await envoyerRelances(s);
+    const id = defiCourant();
+    if (!id) return app.log.warn('Relance automatique ignoree : aucun defi paru.');
+    app.log.info(`Relance automatique - defi ${id}`);
+    const res = await envoyerRelances(id);
     app.log.info(res, 'relances envoyees');
   }, { timezone: config.cron.timezone }));
 
   tachesPlanifiees.push(cron.schedule(config.cron.resultats, async () => {
-    const s = semaineCourante();
-    app.log.info(`Resultats automatiques - semaine ${s}`);
-    const res = await envoyerResultats(s);
+    const id = defiCourant();
+    if (!id) return app.log.warn('Resultats automatiques ignores : aucun defi paru.');
+    app.log.info(`Resultats automatiques - defi ${id}`);
+    const res = await envoyerResultats(id);
     app.log.info(res, 'resultats envoyes');
   }, { timezone: config.cron.timezone }));
 

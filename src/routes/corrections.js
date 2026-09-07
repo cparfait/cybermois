@@ -12,9 +12,9 @@ export default async function routesCorrections(app) {
    * Rejoue toutes les participations d'un defi contre le bareme courant.
    * En simulation par defaut : on annonce qui bouge avant d'ecrire quoi que ce soit.
    */
-  app.post('/api/admin/defis/:semaine/recalculer', async (requete, reponse) => {
+  app.post('/api/admin/defis/:id/recalculer', async (requete, reponse) => {
     const simulation = requete.body?.simulation !== false;
-    const resultat = recalculerDefi(requete.params.semaine, {
+    const resultat = recalculerDefi(requete.params.id, {
       simulation,
       parQui: requete.agent.login,
       ip: requete.ip,
@@ -66,7 +66,7 @@ export default async function routesCorrections(app) {
       return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
     const entetes = ['horodatage', 'par_qui', 'type', 'agent_login', 'agent_nom',
-      'defi_semaine', 'question', 'avant', 'apres', 'motif', 'ip'];
+      'defi_id', 'question', 'avant', 'apres', 'motif', 'ip'];
 
     return reponse.type('text/csv; charset=utf-8')
       .header('Content-Disposition', 'attachment; filename="cybermois-corrections.csv"')

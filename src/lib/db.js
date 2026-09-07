@@ -37,7 +37,6 @@ CREATE TABLE IF NOT EXISTS regroupements_service (
 
 CREATE TABLE IF NOT EXISTS defis (
   id             INTEGER PRIMARY KEY,
-  semaine        INTEGER NOT NULL UNIQUE,
   titre          TEXT NOT NULL,
   accroche       TEXT NOT NULL,
   intro          TEXT NOT NULL,
@@ -110,7 +109,7 @@ CREATE TABLE IF NOT EXISTS envois (
   id             INTEGER PRIMARY KEY AUTOINCREMENT,
   horodatage     TEXT NOT NULL DEFAULT (datetime('now')),
   type           TEXT NOT NULL,
-  semaine        INTEGER,
+  defi_id        INTEGER,
   destinataires  INTEGER NOT NULL DEFAULT 0,
   succes         INTEGER NOT NULL DEFAULT 0,
   erreur         TEXT
@@ -141,6 +140,95 @@ export function ajouterColonne(table, colonne, definition) {
   }
 }
 
+/**
+ * Un defi n'appartient plus a une semaine : il parait a une date, fixee a la
+ * main. Le rythme hebdomadaire etait cable dans la cle du defi lui-meme, ce
+ * qui interdisait d'en publier deux la meme semaine - et obligeait a
+ * renumeroter tout le calendrier des qu'on en inserait un.
+ *
+ * La date devient la seule chose qui ordonne les defis ; l'identifiant
+ * technique devient la seule chose qui les designe. Les numeros de semaine
+ * deja enregistres sont convertis en identifiants avant de disparaitre, pour
+ * que le registre des corrections et l'historique des envois restent lisibles.
+ */
+function colonnes(table) {
+  return db.prepare(`PRAGMA table_info(${table})`).all();
+}
+
+const existe = (table) =>
+  !!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(table);
+
+function migrerVersDatesManuelles() {
+  if (!colonnes('defis').some((c) => c.name === 'semaine')) return;
+
+  // La correspondance se lit tant que la colonne existe encore : apres la
+  // reconstruction de la table, plus rien ne relierait « semaine 3 » a un defi.
+  const parSemaine = new Map(
+    db.prepare('SELECT semaine, id FROM defis').all().map((d) => [d.semaine, d.id])
+  );
+
+  db.exec('PRAGMA foreign_keys = OFF');
+  db.exec('BEGIN');
+  try {
+    // Le programme se range desormais par module : c'est lui qui porte la date
+    // de parution, une par module et non plus une par semaine.
+    if (existe('programme') && colonnes('programme').some((c) => c.name === 'semaine')) {
+      db.exec(`
+        CREATE TABLE programme_nouveau (
+          module_code TEXT PRIMARY KEY,
+          ouvre_le    TEXT NOT NULL,
+          maj_le      TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        INSERT OR IGNORE INTO programme_nouveau (module_code, ouvre_le)
+          SELECT p.module_code,
+                 COALESCE(p.ouvre_le, (SELECT d.ouvre_le FROM defis d WHERE d.semaine = p.semaine))
+            FROM programme p
+           WHERE COALESCE(p.ouvre_le, (SELECT d.ouvre_le FROM defis d WHERE d.semaine = p.semaine)) IS NOT NULL;
+        DROP TABLE programme;
+        ALTER TABLE programme_nouveau RENAME TO programme;
+      `);
+    }
+
+    // Envois et corrections designaient un defi par sa semaine : on retient
+    // l'identifiant, seule reference qui survivra.
+    for (const [table, ancienne] of [['envois', 'semaine'], ['corrections', 'defi_semaine']]) {
+      if (!existe(table) || !colonnes(table).some((c) => c.name === ancienne)) continue;
+      ajouterColonne(table, 'defi_id', 'INTEGER');
+      for (const [semaine, id] of parSemaine) {
+        db.prepare(`UPDATE ${table} SET defi_id = ? WHERE ${ancienne} = ?`).run(id, semaine);
+      }
+      db.exec(`ALTER TABLE ${table} DROP COLUMN ${ancienne}`);
+    }
+
+    // SQLite ne sait pas retirer une colonne portant une contrainte UNIQUE :
+    // la table se reconstruit a l'identique, moins la semaine. Les cles
+    // etrangeres sont desactivees le temps de l'echange, sans quoi la
+    // suppression de l'ancienne table emporterait questions et participations.
+    const gardees = colonnes('defis').filter((c) => c.name !== 'semaine');
+    const definition = gardees.map((c) => [
+      `"${c.name}"`, c.type,
+      c.pk ? 'PRIMARY KEY' : '',
+      c.notnull ? 'NOT NULL' : '',
+      c.dflt_value === null ? '' : `DEFAULT (${c.dflt_value})`,
+    ].filter(Boolean).join(' ')).join(', ');
+    const noms = gardees.map((c) => `"${c.name}"`).join(', ');
+
+    db.exec(`CREATE TABLE defis_nouveau (${definition})`);
+    db.exec(`INSERT INTO defis_nouveau (${noms}) SELECT ${noms} FROM defis`);
+    db.exec('DROP TABLE defis');
+    db.exec('ALTER TABLE defis_nouveau RENAME TO defis');
+
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  } finally {
+    db.exec('PRAGMA foreign_keys = ON');
+  }
+}
+
+migrerVersDatesManuelles();
+
 // Agents pre-importes depuis l'annuaire : effectif de reference, meme sans connexion
 ajouterColonne('agents', 'origine', "TEXT NOT NULL DEFAULT 'connexion'");
 // Agent hors campagne : ne peut pas se connecter, exclu des effectifs et des relances
@@ -164,8 +252,8 @@ ajouterColonne('agents', 'service_ad', 'TEXT');
 // le nom complet, et « NOM Prenom » donne alors « Bonjour DUPONT ».
 ajouterColonne('agents', 'prenom', 'TEXT');
 
-// Chaque defi porte son badge : cable sur le numero de semaine, il devenait
-// faux des qu'on changeait de theme ou qu'on inserait une semaine.
+// Chaque defi porte son badge : cable sur un numero d'ordre, il devenait faux
+// des qu'on changeait de theme ou qu'on inserait un defi.
 ajouterColonne('defis', 'badge_code', 'TEXT');
 ajouterColonne('defis', 'badge_libelle', 'TEXT');
 ajouterColonne('defis', 'badge_emoji', 'TEXT');

@@ -24,7 +24,7 @@ const PREFIXE = 'zz-test-correction-';
 /** Monte un agent, une participation et une reponse fausse sur le premier defi. */
 function decor(suffixe) {
   const login = PREFIXE + suffixe;
-  const defi = db.prepare('SELECT id, semaine FROM defis ORDER BY semaine LIMIT 1').get();
+  const defi = db.prepare('SELECT id FROM defis ORDER BY ouvre_le, id LIMIT 1').get();
   const question = db.prepare('SELECT id, points FROM questions WHERE defi_id = ? ORDER BY ordre LIMIT 1')
     .get(defi.id);
   const bonnes = db.prepare('SELECT id FROM reponses WHERE question_id = ? AND correcte = 1')
@@ -50,7 +50,7 @@ function decor(suffixe) {
   return {
     login,
     agentId: agent.lastInsertRowid,
-    semaine: defi.semaine,
+    defiId: defi.id,
     reponseId: reponse.lastInsertRowid,
     bonnes,
     pointsQuestion: question.points,
@@ -104,7 +104,7 @@ test('la correction laisse une trace nominative', () => {
     assert.ok(trace, 'la correction doit etre tracee');
     assert.equal(trace.par_qui, 'zz.admin');
     assert.equal(trace.motif, 'Barème revu');
-    assert.equal(trace.semaine ?? trace.defi_semaine, d.semaine);
+    assert.equal(trace.defi_id, d.defiId);
     assert.ok(trace.avant && trace.apres, "l'avant et l'apres doivent etre conserves");
     assert.notEqual(trace.avant, trace.apres);
   } finally { nettoyer(); }
@@ -136,7 +136,7 @@ test('le recalcul en simulation ne modifie rien', () => {
     const d = decor('simulation');
     const avant = participationsAgent(d.agentId).participations[0].score;
 
-    const rapport = recalculerDefi(d.semaine, { simulation: true, parQui: 'zz.admin' });
+    const rapport = recalculerDefi(d.defiId, { simulation: true, parQui: 'zz.admin' });
     assert.ok(rapport, 'le recalcul doit rendre un rapport');
 
     assert.equal(participationsAgent(d.agentId).participations[0].score, avant,

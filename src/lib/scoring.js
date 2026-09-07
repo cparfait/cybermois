@@ -38,9 +38,9 @@ export function bonusRapidite(score, dureeSecondes, nbQuestions) {
  * une maniere de jouer et restent valables d'une annee sur l'autre.
  *
  * Les badges de DEFI sont portes par les defis eux-memes, en base. Cables sur
- * le numero de semaine, ils devenaient faux des qu'on changeait un theme ou
- * qu'on inserait une semaine - et un badge inatteignable est pire que pas de
- * badge du tout.
+ * un numero d'ordre, ils devenaient faux des qu'on changeait un theme ou qu'on
+ * inserait un defi - et un badge inatteignable est pire que pas de badge du
+ * tout.
  *
  * Chaque condition ci-dessous est verifiee atteignable par la simulation.
  */
@@ -71,14 +71,14 @@ export const BADGES_GENERIQUES = [
   },
 ];
 
-/** Badges portes par les defis publies, dans l'ordre des semaines. */
+/** Badges portes par les defis publies, dans l'ordre des parutions. */
 export function badgesDefis() {
   return db.prepare(`
-    SELECT semaine, badge_code AS code, badge_libelle AS libelle,
+    SELECT id, badge_code AS code, badge_libelle AS libelle,
            badge_emoji AS emoji, badge_description AS description
     FROM defis
     WHERE publie = 1 AND badge_code IS NOT NULL AND badge_code <> ''
-    ORDER BY semaine
+    ORDER BY ouvre_le, id
   `).all();
 }
 
@@ -95,7 +95,7 @@ export const BADGES = BADGES_GENERIQUES;
  * `erreurs` compte les questions ou l'agent a coche au moins une mauvaise
  * proposition : oublier une bonne reponse n'est pas se tromper.
  */
-export function attribuerBadges(agentId, { semaine, score, scoreMax, erreurs = null } = {}) {
+export function attribuerBadges(agentId, { defiId, score, scoreMax, erreurs = null } = {}) {
   const nouveaux = [];
   const catalogue = tousLesBadges();
   const donner = (code) => {
@@ -117,12 +117,12 @@ export function attribuerBadges(agentId, { semaine, score, scoreMax, erreurs = n
 
   // Le badge du defi qui vient d'etre joue, a partir de 80 % de reussite
   if (scoreMax > 0 && score / scoreMax >= 0.8) {
-    const badge = db.prepare('SELECT badge_code FROM defis WHERE semaine = ?').get(semaine);
+    const badge = db.prepare('SELECT badge_code FROM defis WHERE id = ?').get(defiId);
     donner(badge?.badge_code);
   }
 
-  // Les seuils suivent le nombre reel de defis publies : ajouter une semaine
-  // ne doit pas decerner « Cyber-Heros » par anticipation.
+  // Les seuils suivent le nombre reel de defis publies : en ajouter un ne doit
+  // pas decerner « Cyber-Heros » par anticipation.
   const defisPublies = db.prepare('SELECT COUNT(*) AS n FROM defis WHERE publie = 1').get().n || 4;
 
   if (parts.length >= Math.min(3, defisPublies)) donner('assidu');
@@ -141,7 +141,7 @@ export function attribuerBadges(agentId, { semaine, score, scoreMax, erreurs = n
 /**
  * Points qu'un agent peut avoir gagnes a ce jour.
  *
- * Seuls les defis deja ouverts comptent : inclure une semaine a venir
+ * Seuls les defis deja parus comptent : inclure un defi a venir
  * ferait chuter tout le monde a chaque ouverture, et donnerait un
  * pourcentage qui baisse alors que personne n'a demerite.
  *
@@ -184,7 +184,7 @@ export function classementServices() {
   `).all();
 
   // « 27 pts » ne dit rien sans son maximum : le meme chiffre vaut un sans-faute
-  // sur une semaine et un resultat mediocre sur quatre. Le pourcentage se lit
+  // sur un defi et un resultat mediocre sur quatre. Le pourcentage se lit
   // seul, et le total possible est rappele a cote.
   return lignes.map((l) => ({
     ...l,
@@ -255,14 +255,14 @@ export function statistiquesGlobales() {
       (SELECT COALESCE(SUM(score), 0) FROM participations WHERE entrainement = 0) AS points_cumules
   `).get();
 
-  const parSemaine = db.prepare(`
-    SELECT d.semaine, d.titre,
+  const parDefi = db.prepare(`
+    SELECT d.id, d.titre, d.ouvre_le,
            COUNT(p.id) AS participants,
            ROUND(AVG(CASE WHEN p.score_max > 0 THEN p.score * 100.0 / p.score_max END), 0) AS reussite_moyenne
     FROM defis d
     LEFT JOIN participations p ON p.defi_id = d.id AND p.entrainement = 0
-    GROUP BY d.id ORDER BY d.semaine
+    GROUP BY d.id ORDER BY d.ouvre_le, d.id
   `).all();
 
-  return { ...g, parSemaine };
+  return { ...g, parDefi };
 }

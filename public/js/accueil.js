@@ -3,12 +3,12 @@ import { api, echapper, initialiserPage, alerte } from '/js/commun.js';
 /**
  * Ce qu'on montre d'un defi qui n'est pas encore ouvert.
  *
- * Annoncer « Semaine 3 : Poste sous surveillance » trois semaines a l'avance
- * dissout l'effet de surprise, et donne le temps de reviser le mauvais sujet.
+ * Annoncer « Poste sous surveillance » trois semaines a l'avance dissout
+ * l'effet de surprise, et donne le temps de reviser le mauvais sujet.
  * Le serveur ne renvoie donc plus rien du contenu ; il reste a occuper la
  * carte avec autre chose qu'un blanc.
  *
- * L'index vient du numero de semaine : le message ne change pas d'un
+ * L'index vient de l'identifiant du defi : le message ne change pas d'un
  * rechargement a l'autre, ce qui serait deroutant.
  */
 const TEASERS = [
@@ -85,8 +85,8 @@ try {
 
   document.getElementById('defis').innerHTML = defis.map((defi) => {
     const p = defi.participation;
-    // Le defi jouable de la semaine se signale : sur quatre cartes, il faut
-    // voir d'un regard laquelle attend quelque chose.
+    // Le defi jouable se signale : sur quatre cartes, il faut voir d'un
+    // regard laquelle attend quelque chose.
     const aJouer = defi.ouvert && !p;
     const classe = p ? 'termine' : defi.ouvert ? 'a-jouer' : 'verrouille';
     const pourcentage = p && p.scoreMax ? Math.round((p.score / p.scoreMax) * 100) : 0;
@@ -97,10 +97,10 @@ try {
     // Un defi a venir ne dit rien de lui-meme : le serveur ne renvoie ni son
     // titre ni son accroche. On affiche une carte scellee plutot qu'un trou.
     if (!defi.ouvert) {
-      const t = TEASERS[(defi.semaine - 1) % TEASERS.length];
+      const t = TEASERS[defi.id % TEASERS.length];
       return `
         <article class="carte carte-defi verrouille carte-scellee">
-          <p class="numero-semaine">Semaine ${defi.semaine}</p>
+          <p class="etiquette-defi">Prochain défi</p>
           <div class="sceau" aria-hidden="true"><span class="sceau-icone">${t.icone}</span></div>
           <h3 style="margin-bottom:.2em">${echapper(t.titre)}</h3>
           <p class="accroche" style="margin-top:0">${echapper(t.texte)}</p>
@@ -115,8 +115,8 @@ try {
       // Relire, pas rejouer : le lien menait au questionnaire, qui repartait
       // en entrainement et effacait de l'ecran ce qu'on venait chercher.
       action = `
-        <a class="btn btn-secondaire btn-bloc" href="/revoir/${defi.semaine}">Revoir mes réponses</a>
-        <a class="lien-discret" href="/defi/${defi.semaine}"
+        <a class="btn btn-secondaire btn-bloc" href="/revoir/${defi.id}">Revoir mes réponses</a>
+        <a class="lien-discret" href="/defi/${defi.id}"
            style="display:block;text-align:center;margin-top:.5rem;font-size:.84rem">
           Refaire pour m'entraîner
         </a>`;
@@ -126,19 +126,19 @@ try {
       // dise - sinon on croit devoir tout refaire, et on remet a plus tard.
       const reste = (defi.nbQuestions || 0) - defi.repondues;
       action = `
-        <a class="btn btn-principal btn-bloc" href="/defi/${defi.semaine}">Continuer mon défi</a>
+        <a class="btn btn-principal btn-bloc" href="/defi/${defi.id}">Continuer mon défi</a>
         <p class="discret" style="text-align:center;margin:.5rem 0 0;font-size:.84rem">
           ${defi.repondues} question${defi.repondues > 1 ? 's' : ''} déjà validée${defi.repondues > 1 ? 's' : ''}${
         reste > 0 ? ` · il en reste ${reste}` : ''}
         </p>`;
     } else {
-      action = `<a class="btn btn-principal btn-bloc" href="/defi/${defi.semaine}">Je relève le défi</a>`;
+      action = `<a class="btn btn-principal btn-bloc" href="/defi/${defi.id}">Je relève le défi</a>`;
     }
 
     return `
       <article class="carte carte-defi ${classe}">
         ${aJouer ? '<span class="halo" aria-hidden="true"></span>' : ''}
-        <p class="numero-semaine">Semaine ${defi.semaine}${aJouer ? ' · à relever' : ''}</p>
+        <p class="etiquette-defi">Paru le ${date}${aJouer ? ' · à relever' : ''}</p>
         <h3 style="margin-bottom:.2em">${echapper(defi.titre)}</h3>
         <p class="accroche" style="margin-top:0">${echapper(defi.accroche)}</p>
         <p class="meta-defi">

@@ -72,24 +72,30 @@ const versTexte = (html) => html
 /**
  * Mail de lancement : destine a etre copie-colle par la DPO depuis sa propre boite.
  *
- * La premiere semaine n'annonce pas un defi, elle ouvre une operation : il faut
- * dire qui la porte, ce qui est mesure, et ce qui ne l'est pas. Un agent qui
- * decouvre un classement nominatif sans avoir rien lu se demande d'abord si sa
- * hierarchie va voir son score - et ne joue pas. Les semaines suivantes se
+ * Le premier defi n'annonce pas un questionnaire, il ouvre une operation : il
+ * faut dire qui la porte, ce qui est mesure, et ce qui ne l'est pas. Un agent
+ * qui decouvre un classement nominatif sans avoir rien lu se demande d'abord
+ * si sa hierarchie va voir son score - et ne joue pas. Les suivants se
  * contentent d'annoncer le defi, l'operation etant deja connue.
  */
-export function mailLancement(semaine) {
-  const defi = db.prepare('SELECT * FROM defis WHERE semaine = ?').get(semaine);
+export function mailLancement(defiId) {
+  const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(Number(defiId));
   if (!defi) return null;
-  const lien = `${config.publicUrl}/defi/${semaine}`;
+  const lien = `${config.publicUrl}/defi/${defi.id}`;
   const nbDefis = db.prepare('SELECT COUNT(*) AS n FROM defis WHERE publie = 1').get().n;
 
-  if (Number(semaine) === 1) return mailOuverture(defi, lien, nbDefis);
+  // Le premier defi de la campagne se reconnait a sa date de parution, non a
+  // un rang : rien n'empeche d'en faire paraitre deux le meme jour, mais le
+  // mail d'ouverture ne se justifie que pour le plus ancien.
+  const premier = db.prepare(
+    'SELECT id FROM defis WHERE publie = 1 ORDER BY ouvre_le, id LIMIT 1'
+  ).get();
+  if (premier && premier.id === defi.id) return mailOuverture(defi, lien, nbDefis);
 
   const corps = `
 <p>Bonjour à toutes et à tous,</p>
-<p>Le <strong>Cybermois</strong> se poursuit à la Ville de Châtillon. Le défi de cette semaine est en ligne :</p>
-<h2 style="font-family:'Montserrat',Arial,sans-serif;font-size:21px;color:#006e46;margin:22px 0 6px;">Semaine ${semaine} — ${echapper(defi.titre)}</h2>
+<p>Le <strong>Cybermois</strong> se poursuit à la Ville de Châtillon. Un nouveau défi est en ligne :</p>
+<h2 style="font-family:'Montserrat',Arial,sans-serif;font-size:21px;color:#006e46;margin:22px 0 6px;">${echapper(defi.titre)}</h2>
 <p style="font-style:italic;color:#4a5a53;margin-top:0;">${echapper(defi.accroche)}</p>
 <p>${echapper(defi.intro)}</p>
 <p><strong>${defi.duree_minutes} minutes suffisent.</strong> Connectez-vous avec vos identifiants habituels de session Windows.</p>
@@ -98,8 +104,8 @@ ${bouton(lien, 'Je relève le défi')}
 <p>Bonne chance,<br>La déléguée à la protection des données</p>`;
 
   return {
-    objet: `Cybermois — Semaine ${semaine} : ${defi.titre}`,
-    html: gabarit({ titre: `Semaine ${semaine}`, preheader: defi.accroche, corps }),
+    objet: `Cybermois — Nouveau défi : ${defi.titre}`,
+    html: gabarit({ titre: defi.titre, preheader: defi.accroche, corps }),
     texte: versTexte(corps),
   };
 }
@@ -121,10 +127,10 @@ function mailOuverture(defi, lien, nbDefis) {
 y participe cette année avec une opération courte, ouverte à tous les agents :
 <strong>le Cybermois</strong>.</p>
 
-<h2 style="font-family:'Montserrat',Arial,sans-serif;font-size:21px;color:#006e46;margin:22px 0 6px;">Semaine 1 — ${echapper(defi.titre)}</h2>
+<h2 style="font-family:'Montserrat',Arial,sans-serif;font-size:21px;color:#006e46;margin:22px 0 6px;">${echapper(defi.titre)}</h2>
 <p style="font-style:italic;color:#4a5a53;margin-top:0;">${echapper(defi.accroche)}</p>
 
-<p><strong>${nbDefis} défis, un par semaine, ${defi.duree_minutes} minutes chacun.</strong>
+<p><strong>${nbDefis} défis au fil du mois, ${defi.duree_minutes} minutes chacun.</strong>
 Des questions concrètes, tirées de situations qui se produisent vraiment dans une
 collectivité. Après chaque réponse, la correction vous dit ce que vous avez trouvé,
 ce qui vous a échappé, et pourquoi.</p>
@@ -171,15 +177,15 @@ portail, et je reste à votre disposition pour toute question.</p>
   };
 }
 
-export function mailRelance(agent, semaine) {
-  const defi = db.prepare('SELECT * FROM defis WHERE semaine = ?').get(semaine);
+export function mailRelance(agent, defiId) {
+  const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(Number(defiId));
   if (!defi) return null;
-  const lien = `${config.publicUrl}/defi/${semaine}`;
+  const lien = `${config.publicUrl}/defi/${defi.id}`;
   const stats = classementServices().find((s) => s.service === agent.service);
 
   const corps = `
 <p>Bonjour ${echapper(prenomUsuel(agent.nom_complet, agent.prenom))},</p>
-<p>Le défi de la semaine ${semaine}, <strong>${echapper(defi.titre)}</strong>, vous attend toujours.</p>
+<p>Le défi <strong>${echapper(defi.titre)}</strong> vous attend toujours.</p>
 <p style="background:#f4f8dd;border-left:4px solid #aec80c;padding:12px 16px;margin:20px 0;">
   ${stats
     ? `Votre service — <strong>${echapper(agent.service)}</strong> — affiche <strong>${stats.taux_participation} %</strong> de participation. Chaque défi terminé fait monter votre service au classement.`
@@ -187,20 +193,20 @@ export function mailRelance(agent, semaine) {
 </p>
 <p><strong>${defi.duree_minutes} minutes</strong>, pas plus. Et il n'y a rien à installer.</p>
 ${bouton(lien, 'Faire le défi maintenant')}
-<p style="font-size:14px;color:#4a5a53;">Vous pouvez encore rattraper les défis des semaines précédentes : ils restent ouverts jusqu'au 31 octobre.</p>`;
+<p style="font-size:14px;color:#4a5a53;">Vous pouvez encore rattraper les défis déjà parus : ils restent ouverts jusqu'au 31 octobre.</p>`;
 
   return {
     objet: `Il vous reste 5 minutes ? Le défi « ${defi.titre} » vous attend`,
-    html: gabarit({ titre: 'Relance', preheader: `Semaine ${semaine} : ${defi.accroche}`, corps }),
+    html: gabarit({ titre: 'Relance', preheader: defi.accroche, corps }),
     texte: versTexte(corps),
   };
 }
 
-export function mailResultats(semaine) {
+export function mailResultats(defiId) {
   const services = classementServices();
   const agents = classementAgents(10);
   const stats = statistiquesGlobales();
-  const defi = db.prepare('SELECT * FROM defis WHERE semaine = ?').get(semaine);
+  const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(Number(defiId));
 
   const medaille = ['🥇', '🥈', '🥉'];
   const ligneService = (s, i) => `
@@ -220,7 +226,7 @@ export function mailResultats(semaine) {
 
   const corps = `
 <p>Bonjour à toutes et à tous,</p>
-<p>Voici les résultats de la <strong>semaine ${semaine}${defi ? ` — ${echapper(defi.titre)}` : ''}</strong>.</p>
+<p>Voici les résultats${defi ? ` du défi <strong>${echapper(defi.titre)}</strong>` : ' de la campagne'}.</p>
 
 <table role="presentation" width="100%" style="background:#e6f1ec;border-radius:10px;padding:4px;margin:20px 0;"><tr>
   <td align="center" style="padding:14px 6px;"><div style="font-family:'Montserrat',Arial,sans-serif;font-size:26px;font-weight:900;color:#006e46;">${stats.joueurs}</div><div style="font-size:13px;color:#4a5a53;">participants</div></td>
@@ -236,11 +242,11 @@ export function mailResultats(semaine) {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px;">${agents.map(ligneAgent).join('')}</table>
 
 ${bouton(`${config.publicUrl}/classement`, 'Voir le classement complet')}
-<p>Les défis des semaines précédentes restent accessibles : il n'est jamais trop tard pour faire gagner des points à votre service.</p>
+<p>Les défis déjà parus restent accessibles : il n'est jamais trop tard pour faire gagner des points à votre service.</p>
 <p>Bon week-end,<br>La Direction des systèmes d'information</p>`;
 
   return {
-    objet: `Cybermois — Résultats de la semaine ${semaine}`,
+    objet: `Cybermois — Résultats${defi ? ` : ${defi.titre}` : ''}`,
     html: gabarit({ titre: 'Résultats', preheader: `${stats.joueurs} participants, classement des services`, corps }),
     texte: versTexte(corps),
   };
@@ -276,10 +282,10 @@ async function envoyer({ to, objet, html, texte, bcc }) {
   });
 }
 
-/** Relance des agents n'ayant pas encore joue le defi de la semaine donnee. */
-export async function envoyerRelances(semaine, { simulation = false } = {}) {
-  const defi = db.prepare('SELECT id FROM defis WHERE semaine = ? AND publie = 1').get(semaine);
-  if (!defi) return { ok: false, message: `Semaine ${semaine} introuvable ou non publiee.` };
+/** Relance des agents n'ayant pas encore joue le defi donne. */
+export async function envoyerRelances(defiId, { simulation = false } = {}) {
+  const defi = db.prepare('SELECT id FROM defis WHERE id = ? AND publie = 1').get(Number(defiId));
+  if (!defi) return { ok: false, message: `Defi ${defiId} introuvable ou non publie.` };
 
   const cibles = db.prepare(`
     SELECT a.* FROM agents a
@@ -293,30 +299,31 @@ export async function envoyerRelances(semaine, { simulation = false } = {}) {
   let succes = 0; let derniereErreur = null;
   for (const agent of cibles) {
     try {
-      const m = mailRelance(agent, semaine);
+      const m = mailRelance(agent, defi.id);
       await envoyer({ to: agent.email, ...m });
       succes++;
     } catch (err) { derniereErreur = err.message; }
   }
 
-  db.prepare('INSERT INTO envois (type, semaine, destinataires, succes, erreur) VALUES (?, ?, ?, ?, ?)')
-    .run('relance', semaine, cibles.length, succes, derniereErreur);
+  db.prepare('INSERT INTO envois (type, defi_id, destinataires, succes, erreur) VALUES (?, ?, ?, ?, ?)')
+    .run('relance', defi.id, cibles.length, succes, derniereErreur);
 
   return { ok: true, destinataires: cibles.length, succes, erreur: derniereErreur };
 }
 
-/** Resultats hebdomadaires envoyes au groupe de distribution. */
-export async function envoyerResultats(semaine, { simulation = false } = {}) {
-  const m = mailResultats(semaine);
+/** Resultats d'un defi envoyes au groupe de distribution. */
+export async function envoyerResultats(defiId, { simulation = false } = {}) {
+  const id = Number(defiId) || null;
+  const m = mailResultats(id);
   if (simulation) return { ok: true, simulation: true, destinataires: config.smtp.groupeDiffusion, apercu: m.objet };
   if (!config.smtp.groupeDiffusion) return { ok: false, message: 'MAIL_GROUPE_DIFFUSION non renseigne.' };
 
   try {
     await envoyer({ to: config.smtp.groupeDiffusion, ...m });
-    db.prepare('INSERT INTO envois (type, semaine, destinataires, succes) VALUES (?, ?, 1, 1)').run('resultats', semaine);
+    db.prepare('INSERT INTO envois (type, defi_id, destinataires, succes) VALUES (?, ?, 1, 1)').run('resultats', id);
     return { ok: true, destinataires: 1, succes: 1 };
   } catch (err) {
-    db.prepare('INSERT INTO envois (type, semaine, destinataires, succes, erreur) VALUES (?, ?, 1, 0, ?)').run('resultats', semaine, err.message);
+    db.prepare('INSERT INTO envois (type, defi_id, destinataires, succes, erreur) VALUES (?, ?, 1, 0, ?)').run('resultats', id, err.message);
     return { ok: false, message: err.message };
   }
 }

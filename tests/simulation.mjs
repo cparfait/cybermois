@@ -9,18 +9,18 @@ const BASE = process.argv[2] || 'http://localhost:3000';
 const MOT_DE_PASSE = 'demo2026';
 
 const AGENTS = [
-  { login: 's.leroy', niveau: 1.0, defis: [1, 2, 3, 4] },
-  { login: 'p.martin', niveau: 0.8, defis: [1, 2, 3, 4] },
-  { login: 'a.bernard', niveau: 0.6, defis: [1, 2] },
-  { login: 'j.dubois', niveau: 0.9, defis: [1, 2, 3] },
-  { login: 'n.moreau', niveau: 0.4, defis: [1] },
-  { login: 'l.petit', niveau: 0.7, defis: [1, 2, 3, 4] },
-  { login: 'e.roux', niveau: 0.5, defis: [1, 2] },
-  { login: 't.girard', niveau: 0.3, defis: [1] },
-  { login: 'f.lambert', niveau: 0.95, defis: [1, 2, 3, 4] },
-  { login: 'v.chevalier', niveau: 0.85, defis: [1, 2, 3] },
-  { login: 'd.robin', niveau: 0.65, defis: [1, 2] },
-  { login: 'c.parfait', niveau: 1.0, defis: [1, 2, 3, 4] },
+  { login: 's.leroy', niveau: 1.0, nbDefis: 4 },
+  { login: 'p.martin', niveau: 0.8, nbDefis: 4 },
+  { login: 'a.bernard', niveau: 0.6, nbDefis: 2 },
+  { login: 'j.dubois', niveau: 0.9, nbDefis: 3 },
+  { login: 'n.moreau', niveau: 0.4, nbDefis: 1 },
+  { login: 'l.petit', niveau: 0.7, nbDefis: 4 },
+  { login: 'e.roux', niveau: 0.5, nbDefis: 2 },
+  { login: 't.girard', niveau: 0.3, nbDefis: 1 },
+  { login: 'f.lambert', niveau: 0.95, nbDefis: 4 },
+  { login: 'v.chevalier', niveau: 0.85, nbDefis: 3 },
+  { login: 'd.robin', niveau: 0.65, nbDefis: 2 },
+  { login: 'c.parfait', niveau: 1.0, nbDefis: 4 },
 ];
 
 // Generateur pseudo-aleatoire deterministe : la simulation est reproductible
@@ -37,8 +37,8 @@ async function connecter(login) {
   return r.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ');
 }
 
-async function jouer(cookie, semaine, niveau) {
-  const defi = await (await fetch(`${BASE}/api/defis/${semaine}`, { headers: { cookie } })).json();
+async function jouer(cookie, defiId, niveau) {
+  const defi = await (await fetch(`${BASE}/api/defis/${defiId}`, { headers: { cookie } })).json();
   if (defi.erreur) throw new Error(defi.erreur);
 
   const dejaFaites = new Set(defi.dejaRepondu || []);
@@ -57,7 +57,7 @@ async function jouer(cookie, semaine, niveau) {
     }
     if (!choix.length) choix.push(q.reponses[0].id);
 
-    const rep = await fetch(`${BASE}/api/defis/${semaine}/questions/${q.id}`, {
+    const rep = await fetch(`${BASE}/api/defis/${defiId}/questions/${q.id}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', cookie },
       body: JSON.stringify({ choix }),
@@ -65,7 +65,7 @@ async function jouer(cookie, semaine, niveau) {
     if (!rep.ok) throw new Error((await rep.json()).erreur);
   }
 
-  const fin = await fetch(`${BASE}/api/defis/${semaine}/terminer`, { method: 'POST', headers: { cookie } });
+  const fin = await fetch(`${BASE}/api/defis/${defiId}/terminer`, { method: 'POST', headers: { cookie } });
   const res = await fin.json();
   if (!fin.ok) throw new Error(res.erreur);
   return res;
@@ -74,13 +74,19 @@ async function jouer(cookie, semaine, niveau) {
 console.log(`Simulation sur ${BASE}\n`);
 let erreurs = 0;
 
+// Les defis n'ont plus de numero d'ordre : chaque agent joue les N premiers
+// deja parus, dans l'ordre des dates de parution.
+const ouverts = (await (await fetch(`${BASE}/api/defis`, {
+  headers: { cookie: await connecter(AGENTS[0].login) },
+})).json()).filter((d) => d.ouvert);
+
 for (const agent of AGENTS) {
   try {
     const cookie = await connecter(agent.login);
     const traces = [];
-    for (const semaine of agent.defis) {
-      const r = await jouer(cookie, semaine, agent.niveau);
-      traces.push(`S${semaine} ${String(r.pourcentage).padStart(3)}%`);
+    for (const d of ouverts.slice(0, agent.nbDefis)) {
+      const r = await jouer(cookie, d.id, agent.niveau);
+      traces.push(`${d.ouvreLe} ${String(r.pourcentage).padStart(3)}%`);
       if (r.nouveauxBadges?.length) traces.push(`[${r.nouveauxBadges.map((b) => b.libelle).join(', ')}]`);
     }
     console.log(`  ${agent.login.padEnd(13)} ${traces.join('  ')}`);

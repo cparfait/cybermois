@@ -4,23 +4,24 @@ import { db, journaliser } from './db.js';
 import { ajouterColonne } from './db.js';
 
 /**
- * Catalogue de modules et programmation des semaines.
+ * Catalogue de modules et programmation des parutions.
  *
  * Un module est un questionnaire complet, ecrit une fois pour toutes dans
- * content/modules. Il ne connait pas la semaine ou il sera joue : c'est la
- * programmation qui l'y place. Sans cette separation, changer l'ordre des
+ * content/modules. Il ne connait pas sa date de parution : c'est la
+ * programmation qui la lui donne. Sans cette separation, changer l'ordre des
  * themes obligeait a renommer des fichiers et a deplacer du contenu.
  *
- * On peut donc preparer vingt modules et n'en jouer que quatre, ou decaler
- * tout le calendrier sans toucher a une seule question.
+ * Chaque module programme porte sa propre date, saisie a la main. Rien
+ * n'impose un defi par semaine : on peut en faire paraitre deux le meme jour,
+ * ou laisser passer quinze jours entre deux.
  */
 
 const DOSSIER = path.resolve(process.cwd(), 'content', 'modules');
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS programme (
-  semaine     INTEGER PRIMARY KEY,
-  module_code TEXT NOT NULL,
+  module_code TEXT PRIMARY KEY,
+  ouvre_le    TEXT NOT NULL,
   maj_le      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 `);
@@ -28,11 +29,6 @@ CREATE TABLE IF NOT EXISTS programme (
 // Le defi porte le module qu'il joue : c'est ce qui permet de savoir, une fois
 // la campagne finie, quel questionnaire a reellement ete pose.
 ajouterColonne('defis', 'module_code', 'TEXT');
-
-// Une date propre a la semaine. Vide, l'ouverture se calcule a partir du debut
-// de campagne - le rythme hebdomadaire couvre la plupart des cas, mais un jour
-// ferie ou une semaine de vacances scolaires ne s'y plient pas.
-ajouterColonne('programme', 'ouvre_le', 'TEXT');
 
 // Jeton d'apercu : permet de faire jouer un defi avant son ouverture, sans que
 // le resultat compte. Nul par defaut - un apercu se demande, il ne trouve pas
@@ -78,31 +74,28 @@ export function listerModules() {
 }
 
 export const lireProgramme = () =>
-  db.prepare('SELECT semaine, module_code, ouvre_le FROM programme ORDER BY semaine').all();
+  db.prepare('SELECT module_code, ouvre_le FROM programme ORDER BY ouvre_le, module_code').all();
 
 /**
- * Etat des semaines : ce qui est programme, ce qui est deja joue, et ce qu'on
- * peut encore changer. Un questionnaire deja joue ne se remplace pas : les
+ * Etat du programme : ce qui est prevu, ce qui est deja joue, et ce qu'on peut
+ * encore changer. Un questionnaire deja joue ne se deprogramme pas : les
  * participations enregistrees porteraient sur des questions disparues.
  */
 export function etatProgramme() {
   const defis = db.prepare(`
-    SELECT d.semaine, d.id, d.titre, d.module_code, d.ouvre_le, d.publie,
+    SELECT d.id, d.titre, d.module_code, d.ouvre_le, d.publie,
            (SELECT COUNT(*) FROM participations p WHERE p.defi_id = d.id) AS participations
-    FROM defis d ORDER BY d.semaine
+    FROM defis d WHERE d.module_code IS NOT NULL
   `).all();
-  const parSemaine = new Map(defis.map((d) => [d.semaine, d]));
+  const parModule = new Map(defis.map((d) => [d.module_code, d]));
 
   return lireProgramme().map((p) => {
-    const d = parSemaine.get(p.semaine);
+    const d = parModule.get(p.module_code);
     return {
-      semaine: p.semaine,
+      id: d?.id || null,
       module_code: p.module_code,
       titre: d?.titre || lireModule(p.module_code)?.titre || null,
-      // La date effective vient du defi ; celle du programme dit seulement si
-      // elle a ete fixee a la main, ce que l'ecran doit pouvoir distinguer.
-      ouvre_le: d?.ouvre_le || p.ouvre_le || null,
-      date_forcee: p.ouvre_le || null,
+      ouvre_le: p.ouvre_le,
       publie: d ? !!d.publie : false,
       participations: d?.participations || 0,
       verrouille: (d?.participations || 0) > 0,
@@ -111,43 +104,44 @@ export function etatProgramme() {
 }
 
 /**
- * Enregistre la programmation. Chaque entree est { semaine, module_code } ;
- * une semaine absente de la liste est deprogrammee.
+ * Enregistre la programmation. Chaque entree est { module_code, ouvre_le } ;
+ * un module absent de la liste est deprogramme.
+ *
+ * La date est obligatoire et propre a chaque module : c'est elle, et elle
+ * seule, qui fait paraitre le defi. Deux modules peuvent porter la meme.
  *
  * Le contenu n'est pas copie ici : c'est importerContenus() qui, ensuite,
  * verse les questions dans les defis. Separer les deux evite qu'un simple
- * changement d'ordre ne reecrive quatre questionnaires.
+ * changement de date ne reecrive quatre questionnaires.
  */
 export function enregistrerProgramme(entrees, parQui) {
   const propres = [];
   const vues = new Set();
   for (const e of entrees) {
-    const semaine = Number(e.semaine);
     const code = String(e.module_code || '').trim();
-    if (!Number.isInteger(semaine) || semaine < 1 || !code) continue;
-    if (vues.has(semaine)) continue;
+    if (!code || vues.has(code)) continue;
     if (!lireModule(code)) throw new Error(`Module inconnu : ${code}`);
 
-    // Une date mal formee vaut absence de date : on retombe alors sur le
-    // calcul hebdomadaire plutot que d'ecrire une ouverture invalide.
-    const brut = String(e.ouvre_le || '').trim();
-    const date = /^\d{4}-\d{2}-\d{2}$/.test(brut) ? brut : null;
+    const date = String(e.ouvre_le || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      throw new Error(`Date de parution manquante ou invalide pour le module ${code}.`);
+    }
 
-    vues.add(semaine);
-    propres.push({ semaine, code, date });
+    vues.add(code);
+    propres.push({ code, date });
   }
 
-  // Une semaine deja jouee ne se reprogramme pas : les participations
+  // Un module deja joue ne se deprogramme pas : les participations
   // enregistrees porteraient sur des questions qui n'existeraient plus.
   const jouees = db.prepare(`
-    SELECT d.semaine, d.module_code FROM defis d
-    WHERE (SELECT COUNT(*) FROM participations p WHERE p.defi_id = d.id) > 0
+    SELECT DISTINCT d.module_code FROM defis d
+    WHERE d.module_code IS NOT NULL
+      AND (SELECT COUNT(*) FROM participations p WHERE p.defi_id = d.id) > 0
   `).all();
   for (const j of jouees) {
-    const demande = propres.find((p) => p.semaine === j.semaine);
-    if (j.module_code && demande && demande.code !== j.module_code) {
+    if (!vues.has(j.module_code)) {
       throw new Error(
-        `La semaine ${j.semaine} a deja ete jouee : son module ne peut plus changer.`
+        `Le module ${j.module_code} a deja ete joue : il ne peut plus etre deprogramme.`
       );
     }
   }
@@ -155,8 +149,8 @@ export function enregistrerProgramme(entrees, parQui) {
   db.exec('BEGIN');
   try {
     db.exec('DELETE FROM programme');
-    const inserer = db.prepare('INSERT INTO programme (semaine, module_code, ouvre_le) VALUES (?, ?, ?)');
-    for (const p of propres) inserer.run(p.semaine, p.code, p.date);
+    const inserer = db.prepare('INSERT INTO programme (module_code, ouvre_le) VALUES (?, ?)');
+    for (const p of propres) inserer.run(p.code, p.date);
     db.exec('COMMIT');
   } catch (err) {
     db.exec('ROLLBACK');
@@ -164,6 +158,6 @@ export function enregistrerProgramme(entrees, parQui) {
   }
 
   journaliser(parQui, 'programme_enregistre',
-    propres.map((p) => `S${p.semaine}=${p.code}`).join(', ') || 'aucune semaine', null);
+    propres.map((p) => `${p.date}=${p.code}`).join(', ') || 'aucun defi', null);
   return propres.length;
 }

@@ -16,20 +16,20 @@ let auTermine = () => {};
 
 /* ------------------------------------------------------------- Recalcul */
 
-export async function formulaireRecalcul(semaine, titre, onTermine) {
+export async function formulaireRecalcul(defiId, titre, onTermine) {
   if (onTermine) auTermine = onTermine;
   const zone = document.getElementById('editeur') || document.getElementById('zone-formulaire');
 
   zone.innerHTML = `
     <div class="carte" style="margin-bottom:1.5rem;border-left:4px solid var(--vert-clair)">
-      <h2>Recalculer la semaine ${semaine}</h2>
+      <h2>Recalculer « ${echapper(titre)} »</h2>
       <p class="discret">Analyse en cours…</p>
     </div>`;
   zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
   let d;
   try {
-    d = await api(`/api/admin/defis/${semaine}/recalculer`, { method: 'POST', body: { simulation: true } });
+    d = await api(`/api/admin/defis/${defiId}/recalculer`, { method: 'POST', body: { simulation: true } });
   } catch (e) {
     zone.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`;
     return;
@@ -98,7 +98,7 @@ export async function formulaireRecalcul(semaine, titre, onTermine) {
     bouton.disabled = true;
     bouton.textContent = 'Recalcul en cours…';
     try {
-      const r = await api(`/api/admin/defis/${semaine}/recalculer`, {
+      const r = await api(`/api/admin/defis/${defiId}/recalculer`, {
         method: 'POST', body: { simulation: false, motif },
       });
       alerte('alerte', r.message, 'succes');
@@ -180,7 +180,7 @@ export async function formulaireResultatsAgent(agentId, onTermine) {
       ${d.participations.length ? d.participations.map((p) => `
         <details style="margin-bottom:1rem" ${d.participations.length === 1 ? 'open' : ''}>
           <summary class="ui" style="cursor:pointer;font-weight:700;padding:.5rem 0">
-            Semaine ${p.semaine} — ${echapper(p.titre)}
+            ${echapper(p.titre)}
             <span class="discret" style="font-weight:400">
               · ${p.score} / ${p.score_max} pts · terminé le ${formaterDate(p.termine_le)}
             </span>

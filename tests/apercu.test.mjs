@@ -17,8 +17,8 @@ import { creerJetonApercu, revoquerJetonApercu, jetonValide, lienApercu } from '
 import { repondre, progression, effacerTentatives } from '../src/lib/tentatives.js';
 
 const PREFIXE = 'zz-test-apercu-';
-const defiDe = (semaine) => db.prepare('SELECT * FROM defis WHERE semaine = ?').get(semaine);
-const premiereSemaine = db.prepare('SELECT semaine FROM defis ORDER BY semaine LIMIT 1').get()?.semaine;
+const defiDe = (id) => db.prepare('SELECT * FROM defis WHERE id = ?').get(id);
+const premierDefi = db.prepare('SELECT id FROM defis ORDER BY ouvre_le, id LIMIT 1').get()?.id;
 
 function agent(suffixe) {
   const login = PREFIXE + suffixe;
@@ -40,18 +40,18 @@ function nettoyer(jetonInitial) {
     }
     db.prepare('DELETE FROM agents WHERE id = ?').run(a.id);
   }
-  db.prepare('UPDATE defis SET jeton_apercu = ? WHERE semaine = ?').run(jetonInitial ?? null, premiereSemaine);
+  db.prepare('UPDATE defis SET jeton_apercu = ? WHERE id = ?').run(jetonInitial ?? null, premierDefi);
   db.prepare("DELETE FROM journal WHERE action LIKE 'apercu_%'").run();
 }
 
-const jetonInitial = defiDe(premiereSemaine)?.jeton_apercu ?? null;
+const jetonInitial = defiDe(premierDefi)?.jeton_apercu ?? null;
 
 test('un jeton cree ouvre le defi, un autre non', () => {
   try {
-    const cree = creerJetonApercu(premiereSemaine, 'test');
+    const cree = creerJetonApercu(premierDefi, 'test');
     assert.ok(cree.jeton, 'un jeton doit etre rendu');
 
-    const defi = defiDe(premiereSemaine);
+    const defi = defiDe(premierDefi);
     assert.equal(jetonValide(defi, cree.jeton), true);
     assert.equal(jetonValide(defi, 'jeton-invente'), false, 'un jeton quelconque ne doit pas ouvrir');
     assert.equal(jetonValide(defi, ''), false);
@@ -61,36 +61,36 @@ test('un jeton cree ouvre le defi, un autre non', () => {
 
 test('regenerer invalide le lien precedent', () => {
   try {
-    const premier = creerJetonApercu(premiereSemaine, 'test').jeton;
-    const second = creerJetonApercu(premiereSemaine, 'test').jeton;
+    const premier = creerJetonApercu(premierDefi, 'test').jeton;
+    const second = creerJetonApercu(premierDefi, 'test').jeton;
     assert.notEqual(premier, second);
-    assert.equal(jetonValide(defiDe(premiereSemaine), premier), false,
+    assert.equal(jetonValide(defiDe(premierDefi), premier), false,
       'un lien qui a trop circule doit pouvoir etre repris');
   } finally { nettoyer(jetonInitial); }
 });
 
 test('revoquer ferme la porte', () => {
   try {
-    const jeton = creerJetonApercu(premiereSemaine, 'test').jeton;
-    assert.equal(revoquerJetonApercu(premiereSemaine, 'test'), true);
-    assert.equal(jetonValide(defiDe(premiereSemaine), jeton), false);
+    const jeton = creerJetonApercu(premierDefi, 'test').jeton;
+    assert.equal(revoquerJetonApercu(premierDefi, 'test'), true);
+    assert.equal(jetonValide(defiDe(premierDefi), jeton), false);
   } finally { nettoyer(jetonInitial); }
 });
 
 test('un defi sans jeton n’ouvre pour personne', () => {
   try {
-    revoquerJetonApercu(premiereSemaine, 'test');
-    assert.equal(jetonValide(defiDe(premiereSemaine), 'nimporte-quoi'), false);
+    revoquerJetonApercu(premierDefi, 'test');
+    assert.equal(jetonValide(defiDe(premierDefi), 'nimporte-quoi'), false);
     // Le piege serait qu'un jeton vide en base accepte un jeton vide presente.
-    assert.equal(jetonValide(defiDe(premiereSemaine), ''), false);
-    assert.equal(jetonValide(defiDe(premiereSemaine), null), false);
+    assert.equal(jetonValide(defiDe(premierDefi), ''), false);
+    assert.equal(jetonValide(defiDe(premierDefi), null), false);
   } finally { nettoyer(jetonInitial); }
 });
 
 test("les reponses d'apercu ne preremplissent pas le parcours reel", () => {
   try {
     const id = agent('trace');
-    const defi = defiDe(premiereSemaine);
+    const defi = defiDe(premierDefi);
     const question = db.prepare('SELECT * FROM questions WHERE defi_id = ? ORDER BY ordre LIMIT 1').get(defi.id);
 
     repondre(id, defi.id, { ...question }, [], { apercu: true });
@@ -106,7 +106,7 @@ test("les reponses d'apercu ne preremplissent pas le parcours reel", () => {
 test("une reponse reelle n'est pas effacee par le nettoyage des apercus", () => {
   try {
     const id = agent('reelle');
-    const defi = defiDe(premiereSemaine);
+    const defi = defiDe(premierDefi);
     const question = db.prepare('SELECT * FROM questions WHERE defi_id = ? ORDER BY ordre LIMIT 1').get(defi.id);
 
     repondre(id, defi.id, { ...question }, [], { apercu: false });
@@ -115,7 +115,7 @@ test("une reponse reelle n'est pas effacee par le nettoyage des apercus", () => 
   } finally { nettoyer(jetonInitial); }
 });
 
-test('le lien porte la semaine et le jeton', () => {
+test('le lien porte le defi et le jeton', () => {
   const lien = lienApercu('https://cybermois.chatillon92.fr/', 3, 'abc');
   assert.equal(lien, 'https://cybermois.chatillon92.fr/defi/3?apercu=abc');
 });
