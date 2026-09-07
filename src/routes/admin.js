@@ -232,9 +232,11 @@ export default async function routesAdmin(app) {
       ? (videoUrl ? (String(corps.video?.titre || '').trim() || null) : null)
       : defi.video_titre;
 
+    // Ce defi a ete ecrit a la main : le rechargement des contenus, qui
+    // s'execute a chaque demarrage, ne doit plus le remplacer par son module.
     db.prepare(`UPDATE defis SET titre = ?, accroche = ?, intro = ?, duree_minutes = ?, ouvre_le = ?, publie = ?,
                   badge_code = ?, badge_libelle = ?, badge_emoji = ?, badge_description = ?,
-                  video_url = ?, video_titre = ?,
+                  video_url = ?, video_titre = ?, contenu_modifie = 1,
                   maj_le = datetime('now') WHERE id = ?`)
       .run(
         corps.titre ?? defi.titre, corps.accroche ?? defi.accroche, corps.intro ?? defi.intro,
@@ -258,7 +260,12 @@ export default async function routesAdmin(app) {
     });
 
     journaliser(requete.agent.login, 'defi_modifie', `defi=${id} questions=${questions.length}`, requete.ip);
-    return { ok: true, message: `Défi « ${corps.titre ?? defi.titre} » enregistré (${questions.length} questions).` };
+    return {
+      ok: true,
+      message: `Défi « ${corps.titre ?? defi.titre} » enregistré (${questions.length} questions). `
+        + 'Vos modifications sont désormais protégées : le rechargement des contenus ne les '
+        + 'remplacera plus par le module d’origine.',
+    };
   });
 
   app.post('/api/admin/defis/:id/publication', async (requete, reponse) => {

@@ -39,6 +39,22 @@ ajouterColonne('defis', 'jeton_apercu', 'TEXT');
 ajouterColonne('defis', 'video_url', 'TEXT');
 ajouterColonne('defis', 'video_titre', 'TEXT');
 
+/**
+ * Le defi a ete retouche dans le back-office.
+ *
+ * Le rechargement des contenus rejoue les fichiers du catalogue dans les
+ * defis, et il s'execute a chaque demarrage du serveur. Une question corrigee
+ * a la main sur un defi que personne n'avait encore joue etait donc effacee au
+ * redemarrage suivant, sans que rien ne le signale : on retrouvait le texte du
+ * module, et on croyait avoir mal enregistre.
+ *
+ * Ce drapeau rend la correction plus forte que le fichier. Il ne se leve que
+ * par un rechargement force, qui dit explicitement vouloir revenir au module.
+ */
+const drapeauInexistant = !db.prepare('PRAGMA table_info(defis)').all()
+  .some((c) => c.name === 'contenu_modifie');
+ajouterColonne('defis', 'contenu_modifie', 'INTEGER NOT NULL DEFAULT 0');
+
 /** Lit un module du catalogue. Renvoie null s'il n'existe pas. */
 export function lireModule(code) {
   const fichier = path.join(DOSSIER, `${path.basename(code)}.json`);
@@ -46,6 +62,43 @@ export function lireModule(code) {
   const m = JSON.parse(fs.readFileSync(fichier, 'utf8'));
   return { ...m, code: m.code || path.basename(code) };
 }
+
+/**
+ * Rattrapage, une seule fois : les defis qui different deja de leur module ont
+ * ete retouches avant que le drapeau n'existe.
+ *
+ * Sans cela, la protection n'aurait servi qu'aux corrections a venir, et le
+ * premier redemarrage aurait emporte celles qui l'ont motivee. On compare le
+ * texte des questions et des propositions : c'est ce que quelqu'un corrige.
+ */
+export function marquerLesDefisDejaRetouches() {
+  const empreinte = (questions) => JSON.stringify(questions.map((q) => [
+    String(q.enonce || '').trim(),
+    String(q.contexte || '').trim(),
+    q.multiple ? 1 : 0,
+    Number(q.points) || 10,
+    String(q.explication || '').trim(),
+    (q.reponses || []).map((r) => [String(r.libelle || '').trim(), r.correcte ? 1 : 0]),
+  ]));
+
+  for (const d of db.prepare('SELECT id, module_code, titre, accroche, intro FROM defis WHERE module_code IS NOT NULL').all()) {
+    const module = lireModule(d.module_code);
+    if (!module) continue;
+
+    const questions = db.prepare('SELECT * FROM questions WHERE defi_id = ? ORDER BY ordre').all(d.id)
+      .map((q) => ({
+        ...q,
+        reponses: db.prepare('SELECT libelle, correcte FROM reponses WHERE question_id = ? ORDER BY ordre').all(q.id),
+      }));
+
+    const differe = empreinte(questions) !== empreinte(module.questions)
+      || d.titre !== module.titre || d.accroche !== module.accroche || d.intro !== module.intro;
+
+    if (differe) db.prepare('UPDATE defis SET contenu_modifie = 1 WHERE id = ?').run(d.id);
+  }
+}
+
+if (drapeauInexistant) marquerLesDefisDejaRetouches();
 
 /**
  * Catalogue complet, trie par theme puis par titre. On expose l'essentiel -

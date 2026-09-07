@@ -15,8 +15,16 @@ import { lireModule, lireProgramme } from './modules.js';
  * tire les questionnaires. Elle est idempotente : la rejouer met a jour
  * titres, dates et questions sans toucher aux participations.
  *
- * Un defi deja joue n'est pas reecrit sans force : ses participants ont
- * repondu a des questions qui doivent rester celles qu'ils ont vues.
+ * Deux choses ne sont jamais reecrites sans force :
+ *   - un defi deja joue, dont les participants ont repondu a des questions qui
+ *     doivent rester celles qu'ils ont vues ;
+ *   - un defi retouche dans le back-office, dont la correction vaut mieux que
+ *     le fichier. Cette fonction s'executant a chaque demarrage du serveur,
+ *     sans cette protection une question corrigee le lundi disparaissait au
+ *     redemarrage du mardi, remplacee par le texte d'origine.
+ *
+ * Dans les deux cas la DATE reste appliquee : la repousser ou l'avancer ne
+ * touche pas au questionnaire.
  */
 export function importerContenus({ force = false } = {}) {
   const rapport = [];
@@ -31,23 +39,29 @@ export function importerContenus({ force = false } = {}) {
 
     // Le module est ce qui identifie un defi d'un import a l'autre : c'est lui
     // qu'on retrouve, sa date n'etant qu'une propriete de plus a mettre a jour.
-    const existant = db.prepare('SELECT id FROM defis WHERE module_code = ?').get(code);
+    const existant = db.prepare('SELECT id, contenu_modifie FROM defis WHERE module_code = ?').get(code);
     const badge = module.badge || {};
     const video = module.video || {};
 
     if (existant) {
       const joue = db.prepare('SELECT COUNT(*) AS n FROM participations WHERE defi_id = ?').get(existant.id).n;
-      if (joue > 0 && !force) {
+      const motif = existant.contenu_modifie
+        ? 'modifie dans le back-office'
+        : joue > 0 ? `${joue} participation(s) enregistree(s)` : null;
+
+      if (motif && !force) {
         // La date, elle, reste modifiable : la repousser ou l'avancer ne
-        // change rien aux questions deja posees.
+        // change rien au questionnaire.
         db.prepare("UPDATE defis SET ouvre_le = ?, maj_le = datetime('now') WHERE id = ?")
           .run(ouverture, existant.id);
-        rapport.push({ module: code, statut: 'ignore', motif: `${joue} participation(s) enregistree(s)` });
+        rapport.push({ module: code, ouvre_le: ouverture, statut: 'protege', motif });
         continue;
       }
+      // Le defi redevient conforme a son module : le drapeau tombe, sans quoi
+      // un rechargement force resterait annonce comme « protege » ensuite.
       db.prepare(`UPDATE defis SET titre = ?, accroche = ?, intro = ?, duree_minutes = ?, ouvre_le = ?,
                     module_code = ?, badge_code = ?, badge_libelle = ?, badge_emoji = ?, badge_description = ?,
-                    video_url = ?, video_titre = ?,
+                    video_url = ?, video_titre = ?, contenu_modifie = 0,
                     maj_le = datetime('now') WHERE id = ?`)
         .run(module.titre, module.accroche, module.intro, module.duree_minutes || 7, ouverture,
              module.code, badge.code || null, badge.libelle || null,

@@ -191,6 +191,11 @@ chargeurs.defis = async () => {
                 <br><span class="discret" style="font-size:.76rem;color:var(--alerte)">
                   sa date est passée : publiez-le pour qu'il paraisse
                 </span>` : ''}
+              ${d.contenu_modifie ? `
+                <br><span class="discret" style="font-size:.76rem"
+                      title="Le rechargement des contenus ne remplacera pas ce défi par son module.">
+                  ✎ modifié ici — protégé du rechargement
+                </span>` : ''}
             </td>
             <td>
               <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem" data-editer="${d.id}">Modifier</button>
@@ -744,10 +749,17 @@ chargeurs.technique = async () => {
         </tbody></table></div>
 
       <h2 style="margin-top:2rem">Contenus</h2>
-      <p class="discret">Recharge les modules de <code>content/modules/</code> dans les défis programmés. Les défis déjà joués sont préservés sauf si vous forcez.</p>
+      <p class="discret">Recharge les modules de <code>content/modules/</code> dans les défis programmés.
+      Les défis déjà joués, et ceux que vous avez modifiés dans l'éditeur, sont préservés.</p>
+      <div class="message message-alerte" style="margin-bottom:.8rem">
+        <strong>Forcer efface les modifications faites dans l'éditeur.</strong> Le questionnaire
+        revient au texte du fichier du module. À n'utiliser que si c'est précisément ce que
+        vous voulez : il n'y a pas de retour en arrière.
+      </div>
       <div class="rang">
         <button class="btn btn-secondaire" id="btn-reimport">Recharger les contenus</button>
-        <button class="btn btn-secondaire" id="btn-reimport-force">Recharger en forçant</button>
+        <button class="btn btn-secondaire" id="btn-reimport-force"
+                style="border-color:var(--erreur);color:var(--erreur)">Recharger en forçant</button>
       </div>
 
       <h2 style="margin-top:2rem">Registre des corrections</h2>
@@ -765,7 +777,13 @@ chargeurs.technique = async () => {
 
     document.getElementById('btn-reimport').addEventListener('click', () => reimporter(false));
     document.getElementById('btn-reimport-force').addEventListener('click', () => {
-      if (confirm('Forcer le rechargement écrase les questions des défis déjà joués. Continuer ?')) reimporter(true);
+      const saut = String.fromCharCode(10);
+      if (confirm([
+        'Forcer le rechargement écrase les questions par le texte des fichiers de modules.',
+        'Sont concernés les défis déjà joués ET ceux que vous avez modifiés dans l\'éditeur : '
+          + 'ces modifications seront définitivement perdues.',
+        'Continuer ?',
+      ].join(saut + saut))) reimporter(true);
     });
 
     document.getElementById('btn-reinit').addEventListener('click', async () => {
