@@ -5,12 +5,6 @@ await initialiserPage('/accueil');
 const defiId = Number(location.pathname.split('/').pop());
 const zone = document.getElementById('zone');
 
-/** « 12 octobre » : la date de parution remplace le numero de semaine d'antan. */
-const dateParution = (iso) => (/^\d{4}-\d{2}-\d{2}$/.test(iso || '')
-  ? new Date(`${iso}T00:00:00Z`)
-    .toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', timeZone: 'UTC' })
-  : '');
-
 // Le jeton d'apercu vit dans l'URL du navigateur, mais c'est l'API qui decide
 // d'ouvrir un defi scelle : il doit donc accompagner chaque appel. Sans cela le
 // lien partage affichait bien la page, et se faisait refuser au premier octet
@@ -49,7 +43,7 @@ try {
 
 function afficherCloture() {
   zone.innerHTML = `
-    <p class="numero-question">Paru le ${dateParution(defi.ouvreLe)}</p>
+    <p class="numero-question">Défi n°${defi.numero}</p>
     <h1 style="margin-bottom:.15em">${echapper(defi.titre)}</h1>
     <div class="message message-info" style="margin:1.5rem 0">
       <strong>La campagne est terminée.</strong> Le classement est définitif et les défis ne
@@ -66,7 +60,7 @@ function afficherIntro(dejaFaites) {
   const total = defi.questions.length;
 
   zone.innerHTML = `
-    <p class="numero-question">Paru le ${dateParution(defi.ouvreLe)}</p>
+    <p class="numero-question">Défi n°${defi.numero}</p>
     <h1 style="margin-bottom:.15em">${echapper(defi.titre)}</h1>
     <p style="font-style:italic;color:var(--encre-douce);margin-top:0">${echapper(defi.accroche)}</p>
     <div class="carte" style="margin:1.5rem 0">${echapper(defi.intro)}</div>

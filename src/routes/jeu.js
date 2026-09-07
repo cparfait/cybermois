@@ -41,6 +41,26 @@ function estParu(defi) {
   return defi.publie === 1 && defi.ouvre_le <= aujourdhui();
 }
 
+/**
+ * Rang d'un defi dans la campagne : « Défi n°3 ».
+ *
+ * Une date de parution situe un defi dans le calendrier, elle ne le nomme pas.
+ * « Paru le jeudi 30 juillet » se lit deux fois avant de comprendre de quel
+ * defi on parle, la ou un numero se retient.
+ *
+ * Le numero se CALCULE a partir de l'ordre des parutions, il ne se stocke pas :
+ * c'est ce qui evite de retomber sur l'ancien travers, ou un rang inscrit en
+ * base devenait faux des qu'on inserait un defi ou qu'on deplacait une date.
+ * L'identifiant departage deux defis parus le meme jour, pour que l'ordre soit
+ * le meme d'un ecran a l'autre.
+ */
+function numeroDefi(defi) {
+  return db.prepare(`
+    SELECT COUNT(*) AS n FROM defis
+    WHERE ouvre_le < ? OR (ouvre_le = ? AND id <= ?)
+  `).get(defi.ouvre_le, defi.ouvre_le, defi.id).n;
+}
+
 export default async function routesJeu(app) {
   app.addHook('preHandler', exigerAuth);
 
@@ -57,7 +77,7 @@ export default async function routesJeu(app) {
     ).all(requete.agent.id);
     const parDefi = Object.fromEntries(faits.map((f) => [f.defi_id, f]));
 
-    return defis.map((d) => {
+    return defis.map((d, rang) => {
       const ouvert = estOuvert(d);
 
       // Un defi a venir ne livre rien de son contenu : ni titre, ni accroche,
@@ -66,6 +86,9 @@ export default async function routesJeu(app) {
       // reponse de l'API se lit dans n'importe quel navigateur.
       return {
       id: d.id,
+      // La liste est deja triee par parution : le rang s'y lit directement,
+      // sans repasser par la base pour chaque carte.
+      numero: rang + 1,
       titre: ouvert ? d.titre : null,
       accroche: ouvert ? d.accroche : null,
       dureeMinutes: ouvert ? d.duree_minutes : null,
@@ -120,6 +143,7 @@ export default async function routesJeu(app) {
     return {
       id: defi.id,
       ouvreLe: defi.ouvre_le,
+      numero: numeroDefi(defi),
       titre: defi.titre,
       accroche: defi.accroche,
       intro: defi.intro,
@@ -324,6 +348,7 @@ export default async function routesJeu(app) {
     return {
       id: defi.id,
       ouvreLe: defi.ouvre_le,
+      numero: numeroDefi(defi),
       titre: defi.titre,
       accroche: defi.accroche,
       score: participation.score,
@@ -371,7 +396,8 @@ export default async function routesJeu(app) {
     return {
       agent: { nomComplet: requete.agent.nom_complet, service: requete.agent.service },
       participations: participations.map((p) => ({
-        id: p.defi, titre: p.titre, ouvreLe: p.ouvre_le, score: p.score, scoreMax: p.score_max,
+        id: p.defi, numero: numeroDefi({ id: p.defi, ouvre_le: p.ouvre_le }),
+        titre: p.titre, ouvreLe: p.ouvre_le, score: p.score, scoreMax: p.score_max,
         bonnes: p.bonnes, total: p.total_questions, termineLe: p.termine_le,
       })),
       scoreTotal: participations.reduce((s, p) => s + p.score, 0),

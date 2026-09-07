@@ -3,13 +3,6 @@ import { api, echapper, initialiserPage, alerte, formaterDate } from '/js/commun
 await initialiserPage('/profil');
 const zone = document.getElementById('zone');
 
-/** Quantieme et mois abrege, sur deux lignes : la pastille tient dans 44 pixels. */
-function jourEtMois(iso) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || '')) return '·';
-  const d = new Date(`${iso}T00:00:00Z`);
-  const mois = d.toLocaleDateString('fr-FR', { month: 'short', timeZone: 'UTC' });
-  return `${d.getUTCDate()}<small>${echapper(mois)}</small>`;
-}
 
 try {
   const p = await api('/api/profil');
@@ -62,7 +55,7 @@ try {
         <a class="ligne-defi" href="/revoir/${x.id}"
            style="text-decoration:none;color:inherit"
            title="Revoir mes réponses à ce défi">
-          <div class="pastille">${jourEtMois(x.ouvreLe)}</div>
+          <div class="pastille">n°${x.numero}</div>
           <div>
             <div style="font-family:var(--police-ui);font-weight:700">${echapper(x.titre)}</div>
             <div class="discret ui">${x.bonnes} / ${x.total} réponses parfaites · terminé le ${formaterDate(x.termineLe)}</div>

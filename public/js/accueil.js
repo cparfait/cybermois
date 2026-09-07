@@ -100,7 +100,7 @@ try {
       const t = TEASERS[defi.id % TEASERS.length];
       return `
         <article class="carte carte-defi verrouille carte-scellee">
-          <p class="etiquette-defi">Prochain défi</p>
+          <p class="etiquette-defi">Défi n°${defi.numero}</p>
           <div class="sceau" aria-hidden="true"><span class="sceau-icone">${t.icone}</span></div>
           <h3 style="margin-bottom:.2em">${echapper(t.titre)}</h3>
           <p class="accroche" style="margin-top:0">${echapper(t.texte)}</p>
@@ -138,7 +138,7 @@ try {
     return `
       <article class="carte carte-defi ${classe}">
         ${aJouer ? '<span class="halo" aria-hidden="true"></span>' : ''}
-        <p class="etiquette-defi">Paru le ${date}${aJouer ? ' · à relever' : ''}</p>
+        <p class="etiquette-defi">Défi n°${defi.numero}${aJouer ? ' · à relever' : ''}</p>
         <h3 style="margin-bottom:.2em">${echapper(defi.titre)}</h3>
         <p class="accroche" style="margin-top:0">${echapper(defi.accroche)}</p>
         <p class="meta-defi">

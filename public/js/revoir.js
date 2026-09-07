@@ -17,12 +17,6 @@ await initialiserPage('/accueil');
 const defiId = Number(location.pathname.split('/').pop());
 const zone = document.getElementById('zone');
 
-/** « 12 octobre » : la date de parution remplace le numero de semaine d'antan. */
-const dateParution = (iso) => (/^\d{4}-\d{2}-\d{2}$/.test(iso || '')
-  ? new Date(`${iso}T00:00:00Z`)
-    .toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', timeZone: 'UTC' })
-  : '');
-
 /**
  * Une proposition telle qu'elle a ete vue.
  * Declaree avant le rendu : `bloc()` est hissee, pas cette constante - l'appeler
@@ -45,7 +39,7 @@ try {
     : null;
 
   zone.innerHTML = `
-    <p class="numero-question">Paru le ${dateParution(d.ouvreLe)}</p>
+    <p class="numero-question">Défi n°${d.numero}</p>
     <h1 style="margin-bottom:.15em">${echapper(d.titre)}</h1>
     <p style="font-style:italic;color:var(--encre-douce);margin-top:0">${echapper(d.accroche || '')}</p>
 
