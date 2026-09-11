@@ -113,7 +113,17 @@ export default async function routesAdmin(app) {
     return { message: `${bouts.join(', ')}.`, rapport };
   });
 
-  app.get('/api/admin/defis', async () => db.prepare('SELECT * FROM defis ORDER BY ouvre_le, id').all()
+  // Les compteurs accompagnent chaque defi : l'ecran doit pouvoir annoncer ce
+  // qu'une suppression emporte AVANT qu'on la demande, et distinguer de vrais
+  // resultats de simples essais - les seconds ne valent rien.
+  app.get('/api/admin/defis', async () => db.prepare(`
+    SELECT d.*,
+           (SELECT COUNT(*) FROM participations p
+             WHERE p.defi_id = d.id AND p.entrainement = 0) AS participations,
+           (SELECT COUNT(*) FROM participations p
+             WHERE p.defi_id = d.id AND p.entrainement = 1) AS essais
+    FROM defis d ORDER BY d.ouvre_le, d.id
+  `).all()
     // Le jeton lui-meme ne sort pas d'ici : il n'est rendu qu'a sa creation.
     .map(({ jeton_apercu: jeton, ...d }) => ({ ...d, apercuOuvert: !!jeton })));
 
@@ -169,16 +179,25 @@ export default async function routesAdmin(app) {
     const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(id);
     if (!defi) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
 
-    const participations = db.prepare(
-      'SELECT COUNT(*) AS n FROM participations WHERE defi_id = ?'
-    ).get(defi.id).n;
+    // Un defi en cours se supprime comme un autre : rien n'est verrouille par
+    // sa date. Ce qui se protege, ce sont les resultats - et seuls les vrais
+    // comptent : un essai en entrainement n'a jamais valu au classement.
+    const { reels, essais } = db.prepare(`
+      SELECT COALESCE(SUM(entrainement = 0), 0) AS reels,
+             COALESCE(SUM(entrainement = 1), 0) AS essais
+      FROM participations WHERE defi_id = ?
+    `).get(defi.id);
+    const participations = reels + essais;
 
     if (participations > 0 && !requete.body?.confirmerPerteResultats) {
       return reponse.code(409).send({
-        erreur: `« ${defi.titre} » a été joué ${participations} fois. Le supprimer effacera `
-          + 'définitivement ces résultats et modifiera tous les classements. '
-          + 'Préférez le masquer : il disparaît du portail sans perdre les scores.',
+        erreur: `« ${defi.titre} » porte ${reels} résultat(s) réel(s)`
+          + (essais ? ` et ${essais} essai(s) d'entraînement` : '')
+          + '. Le supprimer les effacera définitivement et modifiera les classements. '
+          + 'Vous pouvez aussi le masquer : il disparaît du portail sans perdre les scores.',
         participations,
+        reels,
+        essais,
         confirmationRequise: true,
       });
     }

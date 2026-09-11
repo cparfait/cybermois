@@ -179,6 +179,8 @@ chargeurs.defis = async () => {
         <span class="discret ui">Il arrive masqué : rédigez les questions, puis publiez-le.</span>
       </div>
 
+      <div id="zone-suppression"></div>
+
       <div class="tableau-defilant"><table class="admin">
         <thead><tr><th>Parution</th><th>Titre</th><th>État</th><th>Actions</th></tr></thead>
         <tbody>${defis.map((d) => `
@@ -195,6 +197,11 @@ chargeurs.defis = async () => {
                 <br><span class="discret" style="font-size:.76rem"
                       title="Le rechargement des contenus ne remplacera pas ce défi par son module.">
                   ✎ modifié ici — protégé du rechargement
+                </span>` : ''}
+              ${d.participations || d.essais ? `
+                <br><span class="discret" style="font-size:.76rem">
+                  ${d.participations} résultat${d.participations > 1 ? 's' : ''}${
+                    d.essais ? `, ${d.essais} essai${d.essais > 1 ? 's' : ''}` : ''}
                 </span>` : ''}
             </td>
             <td>
@@ -261,34 +268,88 @@ chargeurs.defis = async () => {
     });
 
     cible.querySelectorAll('[data-supprimer-defi]').forEach((b) =>
-      b.addEventListener('click', async () => {
-        const id = Number(b.dataset.supprimerDefi);
-        if (!confirm(`Supprimer le défi « ${b.dataset.titre} » ?`
-          + String.fromCharCode(10, 10)
-          + 'Sa parution est retirée du programme, pour qu’il ne revienne pas au prochain '
-          + 'rechargement des contenus. Le module reste au catalogue et peut être reprogrammé.')) return;
-        try {
-          const r = await api(`/api/admin/defis/${id}`, { method: 'DELETE' });
-          alerte('alerte', r.message, 'succes');
-          dejaCharge.delete('defis'); chargeurs.defis();
-        } catch (e) {
-          // Le serveur refuse tant que la perte des resultats n'est pas confirmee
-          if (/a été joué/.test(e.message)) {
-            if (!confirm(`${e.message}
-
-Confirmer la suppression définitive ?`)) return;
-            try {
-              const r = await api(`/api/admin/defis/${id}`, {
-                method: 'DELETE', body: { confirmerPerteResultats: true },
-              });
-              alerte('alerte', r.message, 'succes');
-              dejaCharge.delete('defis'); chargeurs.defis();
-            } catch (e2) { alerte('alerte', e2.message); }
-          } else alerte('alerte', e.message);
-        }
-      }));
+      b.addEventListener('click', () => formulaireSuppressionDefi(
+        defis.find((d) => d.id === Number(b.dataset.supprimerDefi)),
+        () => { dejaCharge.delete('defis'); dejaCharge.delete('suivi'); chargeurs.defis(); }
+      )));
   } catch (erreur) { cible.innerHTML = `<div class="message message-erreur">${echapper(erreur.message)}</div>`; }
 };
+
+/**
+ * Suppression d'un defi, resultats compris.
+ *
+ * Le double « confirm » du navigateur ne disait pas ce qu'il emportait : le
+ * premier ne parlait pas des resultats, le second affichait un message
+ * d'erreur du serveur, ce qui ressemblait a un echec plutot qu'a une
+ * question. On pose la question une fois, en montrant ce qui part - et en
+ * rappelant qu'un defi en cours peut simplement se masquer.
+ */
+function formulaireSuppressionDefi(defi, onTermine) {
+  const zone = document.getElementById('zone-suppression');
+  const enCours = defi.publie && defi.ouvre_le <= aujourdhuiIso();
+  const etat = enCours ? 'en cours' : defi.publie ? 'à venir' : 'masqué';
+  const reels = defi.participations || 0;
+  const essais = defi.essais || 0;
+
+  zone.innerHTML = `
+    <div class="carte" style="margin-bottom:1.5rem;border-left:4px solid var(--erreur)">
+      <h2>Supprimer « ${echapper(defi.titre)} » ?</h2>
+      <p class="discret" style="margin-top:-.3em">
+        Défi <strong>${etat}</strong>, paru le ${echapper(defi.ouvre_le)}.
+      </p>
+
+      ${reels || essais ? `
+        <div class="message message-alerte" style="margin:1rem 0">
+          <strong>${reels} résultat${reels > 1 ? 's' : ''} réel${reels > 1 ? 's' : ''}${
+            essais ? ` et ${essais} essai${essais > 1 ? 's' : ''} d’entraînement` : ''} seront effacés.</strong>
+          ${reels ? '<br>Les scores, les badges gagnés sur ce défi et les classements en seront modifiés. '
+            + 'Cette suppression ne se rattrape pas.' : ''}
+        </div>` : `
+        <p class="discret" style="margin:1rem 0">Personne n’y a joué : rien ne sera perdu.</p>`}
+
+      <p class="discret" style="font-size:.86rem">
+        Sa parution est retirée du programme, pour qu’il ne revienne pas au prochain rechargement
+        des contenus. Le module reste au catalogue et peut être reprogrammé plus tard.
+      </p>
+
+      <div class="rang" style="margin-top:1rem">
+        <button class="btn btn-secondaire" id="btn-confirmer-suppr"
+                style="border-color:var(--erreur);color:var(--erreur)">
+          ${reels || essais
+            ? `Supprimer le défi et ses ${reels + essais} résultat${reels + essais > 1 ? 's' : ''}`
+            : 'Supprimer le défi'}
+        </button>
+        ${defi.publie ? `
+          <button class="btn btn-principal" id="btn-masquer-plutot">Masquer seulement, garder les résultats</button>` : ''}
+        <button class="btn btn-secondaire" id="btn-annuler-suppr">Annuler</button>
+      </div>
+    </div>`;
+
+  zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  const fermer = () => { zone.innerHTML = ''; };
+  document.getElementById('btn-annuler-suppr').addEventListener('click', fermer);
+
+  document.getElementById('btn-masquer-plutot')?.addEventListener('click', async () => {
+    try {
+      await api(`/api/admin/defis/${defi.id}/publication`, { method: 'POST', body: { publie: false } });
+      fermer();
+      alerte('alerte', `« ${defi.titre} » est masqué. Les résultats sont conservés.`, 'succes');
+      onTermine();
+    } catch (e) { alerte('alerte', e.message); }
+  });
+
+  document.getElementById('btn-confirmer-suppr').addEventListener('click', async () => {
+    try {
+      const r = await api(`/api/admin/defis/${defi.id}`, {
+        method: 'DELETE', body: { confirmerPerteResultats: true },
+      });
+      fermer();
+      alerte('alerte', r.message, 'succes');
+      onTermine();
+    } catch (e) { alerte('alerte', e.message); }
+  });
+}
 
 async function ouvrirEditeur(id) {
   const zone = document.getElementById('editeur');
