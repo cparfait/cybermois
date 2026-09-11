@@ -71,6 +71,11 @@ function brancherVoirPlus(idTable, idBouton, total, libelle) {
 function rendreServices(donnees) {
   const services = donnees.services;
 
+  // La direction de l'agent est reconnue par la ligne que le serveur a deja
+  // identifiee : comparer les libelles ne marche plus, puisque le classement
+  // ramene chaque direction a l'orthographe du referentiel.
+  const maDirection = donnees.monRangService?.detail?.service || null;
+
   document.getElementById('podium-services').innerHTML = podium(services, (s, i) => `
     <div class="medaille" aria-hidden="true">${medaille(i + 1)}</div>
     <div class="nom">${echapper(s.service)}</div>
@@ -78,18 +83,18 @@ function rendreServices(donnees) {
     <div class="sous">${s.score_total} / ${s.points_possibles} pts · ${s.taux_participation} % de participation</div>`);
 
   document.getElementById('table-services').innerHTML = `
-    <caption class="sr-only">Classement des services par taux de réussite</caption>
+    <caption class="sr-only">Classement des directions par taux de réussite</caption>
     <thead><tr>
-      <th scope="col">Rang</th><th scope="col">Service</th>
+      <th scope="col">Rang</th><th scope="col">Direction</th>
       <th scope="col" class="num">Réussite</th>
       <th scope="col" class="num">Points</th>
       <th scope="col" class="num">Participation</th>
       <th scope="col" class="num">Agents</th>
     </tr></thead>
     <tbody>${services.map((s, i) => `
-      <tr class="${s.service === agent.service ? 'moi' : ''}"${i >= PREMIERS ? ' data-au-dela hidden' : ''}>
+      <tr class="${s.service === maDirection ? 'moi' : ''}"${i >= PREMIERS ? ' data-au-dela hidden' : ''}>
         <td class="rang-cell">${medaille(i + 1) || i + 1}</td>
-        <td>${echapper(s.service)}${s.service === agent.service ? ' <span class="discret">(mon service)</span>' : ''}</td>
+        <td>${echapper(s.service)}${s.service === maDirection ? ' <span class="discret">(ma direction)</span>' : ''}</td>
         <td class="num"><strong>${s.pourcentage_moyen} %</strong></td>
         <td class="num discret" style="white-space:nowrap">${s.score_total} / ${s.points_possibles}</td>
         <td class="num">
@@ -105,7 +110,7 @@ function rendreServices(donnees) {
     document.getElementById('table-services').innerHTML =
       '<tbody><tr><td class="discret">Aucune participation pour le moment. Soyez le premier !</td></tr></tbody>';
   }
-  brancherVoirPlus('table-services', 'voir-plus-services', services.length, 'service');
+  brancherVoirPlus('table-services', 'voir-plus-services', services.length, 'direction');
 }
 
 function rendreAgents(donnees) {
@@ -152,9 +157,13 @@ try {
     <div class="encart-moi">
       <strong>${echapper(agent.service)}</strong>
       ${rs.rang
-        ? ` — ${rs.rang}<sup>${rs.rang === 1 ? 're' : 'e'}</sup> place sur ${rs.total} services,
+        ? ` — ${rs.rang}<sup>${rs.rang === 1 ? 're' : 'e'}</sup> place sur ${rs.total} directions,
             ${rs.detail?.pourcentage_moyen ?? 0} % de réussite et ${rs.detail?.taux_participation ?? 0} % de participation.`
-        : ' — pas encore classé, à vous de lancer la machine.'}
+        : rs.horsReferentiel
+          // Dire « pas encore classé » ferait croire a un manque de
+          // participation, alors que c'est le rattachement qui manque.
+          ? ' — cette direction n’est pas encore rattachée au référentiel : vos points comptent, mais elle n’apparaît pas au classement collectif.'
+          : ' — pas encore classé, à vous de lancer la machine.'}
       ${ra.rang ? `<br>Vous êtes ${ra.rang}<sup>${ra.rang === 1 ? 'er' : 'e'}</sup> sur ${ra.total} agents ayant participé.` : ''}
     </div>`;
 
@@ -162,7 +171,7 @@ try {
   document.getElementById('stats').innerHTML = `
     <div class="stat"><div class="v">${s.joueurs}</div><div class="l">agents ont joué</div></div>
     <div class="stat"><div class="v">${s.inscrits ? Math.round((s.joueurs / s.inscrits) * 100) : 0} %</div><div class="l">de participation</div></div>
-    <div class="stat"><div class="v">${s.services}</div><div class="l">services en lice</div></div>
+    <div class="stat"><div class="v">${s.services}</div><div class="l">directions en lice</div></div>
     <div class="stat"><div class="v">${s.participations}</div><div class="l">défis terminés</div></div>
     <div class="stat"><div class="v">${s.points_cumules}</div><div class="l">points cumulés</div></div>`;
 

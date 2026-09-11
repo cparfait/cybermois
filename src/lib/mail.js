@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 import { prenomUsuel } from './prenom.js';
 import { config } from './config.js';
 import { db } from './db.js';
-import { classementServices, classementAgents, statistiquesGlobales } from './scoring.js';
+import { classementServices, classementAgents, statistiquesGlobales, ligneClassement } from './scoring.js';
 
 let transport = null;
 function obtenirTransport() {
@@ -181,7 +181,7 @@ export function mailRelance(agent, defiId) {
   const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(Number(defiId));
   if (!defi) return null;
   const lien = `${config.publicUrl}/defi/${defi.id}`;
-  const stats = classementServices().find((s) => s.service === agent.service);
+  const stats = ligneClassement(agent.service);
 
   const corps = `
 <p>Bonjour ${echapper(prenomUsuel(agent.nom_complet, agent.prenom))},</p>

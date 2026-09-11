@@ -1,4 +1,6 @@
 import { db } from './db.js';
+import { nomsReferentiel } from './referentiel.js';
+import { cleComparaison } from './services.js';
 
 /**
  * Bareme d'une question a choix multiples.
@@ -159,40 +161,85 @@ export function pointsPossibles() {
 }
 
 /**
- * Classement par service.
- * Le score retenu est la MOYENNE par agent inscrit du service, pas le total :
- * sinon un service de 40 agents ecraserait mecaniquement un service de 4.
- * Le taux de participation est affiche a cote, c'est le vrai levier de mobilisation.
+ * Classement par direction.
+ *
+ * Seules les directions du referentiel sont classees. Sans ce filtre, chaque
+ * libelle d'annuaire non rattache formait sa propre ligne : le classement
+ * annoncait cinquante « directions » la ou la collectivite en compte cinq, et
+ * la premiere place se jouait entre des services de trois agents.
+ *
+ * Les agents dont la direction ne figure pas au referentiel n'entrent donc pas
+ * au classement, ni au numerateur ni au denominateur. Ils se rattachent depuis
+ * « Services non references », qui est l'ecran fait pour cela.
+ *
+ * Referentiel vide : il n'y a rien a quoi comparer, on classe tout. Sinon
+ * l'ecran serait vide avant meme qu'on ait pu renseigner la liste.
+ *
+ * Le score retenu est la MOYENNE par agent inscrit de la direction, pas le
+ * total : sinon une direction de 40 agents ecraserait mecaniquement une
+ * direction de 4. Le taux de participation est affiche a cote, c'est le vrai
+ * levier de mobilisation.
  */
 export function classementServices() {
   const possible = pointsPossibles();
 
   const lignes = db.prepare(`
     SELECT
-      a.service                                     AS service,
-      COUNT(DISTINCT a.id)                          AS inscrits,
-      COUNT(DISTINCT p.agent_id)                    AS joueurs,
-      COALESCE(SUM(p.score), 0)                     AS score_total,
-      ROUND(COALESCE(SUM(p.score), 0) * 1.0 / COUNT(DISTINCT a.id), 1) AS score_moyen,
-      ROUND(COUNT(DISTINCT p.agent_id) * 100.0 / COUNT(DISTINCT a.id), 0) AS taux_participation,
-      COUNT(p.id)                                   AS defis_joues
+      a.service                  AS service,
+      COUNT(DISTINCT a.id)       AS inscrits,
+      COUNT(DISTINCT p.agent_id) AS joueurs,
+      COALESCE(SUM(p.score), 0)  AS score_total,
+      COUNT(p.id)                AS defis_joues
     FROM agents a
     LEFT JOIN participations p ON p.agent_id = a.id AND p.entrainement = 0
     WHERE a.exclu = 0
     GROUP BY a.service
-    ORDER BY score_moyen DESC, taux_participation DESC, service ASC
   `).all();
+
+  // Deux graphies d'une meme direction comptaient pour deux. On les ramene a
+  // l'orthographe du referentiel, qui fait foi, et leurs agents se rejoignent.
+  const reference = nomsReferentiel();
+  const canonique = new Map(reference.map((n) => [cleComparaison(n), n]));
+
+  const cumul = new Map();
+  for (const l of lignes) {
+    const nom = reference.length ? canonique.get(cleComparaison(l.service)) : l.service;
+    if (!nom) continue; // direction absente du referentiel : hors classement
+    const c = cumul.get(nom)
+      || { service: nom, inscrits: 0, joueurs: 0, score_total: 0, defis_joues: 0 };
+    c.inscrits += l.inscrits;
+    c.joueurs += l.joueurs;
+    c.score_total += l.score_total;
+    c.defis_joues += l.defis_joues;
+    cumul.set(nom, c);
+  }
 
   // « 27 pts » ne dit rien sans son maximum : le meme chiffre vaut un sans-faute
   // sur un defi et un resultat mediocre sur quatre. Le pourcentage se lit
   // seul, et le total possible est rappele a cote.
-  return lignes.map((l) => ({
-    ...l,
-    points_possibles: possible * l.inscrits,
-    pourcentage_moyen: possible && l.inscrits
-      ? Math.round((l.score_total * 100) / (possible * l.inscrits))
-      : 0,
-  }));
+  return [...cumul.values()]
+    .map((c) => ({
+      ...c,
+      score_moyen: c.inscrits ? Math.round((c.score_total * 10) / c.inscrits) / 10 : 0,
+      taux_participation: c.inscrits ? Math.round((c.joueurs * 100) / c.inscrits) : 0,
+      points_possibles: possible * c.inscrits,
+      pourcentage_moyen: possible && c.inscrits
+        ? Math.round((c.score_total * 100) / (possible * c.inscrits))
+        : 0,
+    }))
+    .sort((a, b) => b.score_moyen - a.score_moyen
+      || b.taux_participation - a.taux_participation
+      || a.service.localeCompare(b.service, 'fr'));
+}
+
+/**
+ * La ligne du classement qui porte cette direction, quelle que soit sa
+ * graphie. Comparer les chaines telles quelles ratait « Population &
+ * Citoyennete » face a « Population et Citoyennete ».
+ */
+export function ligneClassement(service, lignes = classementServices()) {
+  const cle = cleComparaison(service);
+  return lignes.find((s) => cleComparaison(s.service) === cle) || null;
 }
 
 /** Classement individuel nominatif. */
@@ -234,11 +281,21 @@ export function rangAgent(agentId) {
   return { rang: i === -1 ? null : i + 1, total: tous.length };
 }
 
-/** Position d'un service dans le classement des services. */
+/**
+ * Position d'une direction au classement.
+ * Un agent dont la direction ne figure pas au referentiel n'a pas de rang :
+ * l'ecran le dit, plutot que de le faire passer pour dernier.
+ */
 export function rangService(service) {
   const tous = classementServices();
-  const i = tous.findIndex((s) => s.service === service);
-  return { rang: i === -1 ? null : i + 1, total: tous.length, detail: tous[i] || null };
+  const cle = cleComparaison(service);
+  const i = tous.findIndex((s) => cleComparaison(s.service) === cle);
+  return {
+    rang: i === -1 ? null : i + 1,
+    total: tous.length,
+    detail: tous[i] || null,
+    horsReferentiel: i === -1 && tous.length > 0,
+  };
 }
 
 /** Statistiques globales pour le tableau de bord et les mails. */
@@ -251,7 +308,10 @@ export function statistiquesGlobales() {
          JOIN agents a ON a.id = p.agent_id
         WHERE p.entrainement = 0 AND a.exclu = 0)                              AS joueurs,
       (SELECT COUNT(*) FROM participations WHERE entrainement = 0)             AS participations,
-      (SELECT COUNT(DISTINCT service) FROM agents WHERE exclu = 0)             AS services,
+      -- Remplace plus bas par le nombre de directions reellement classees :
+      -- compter les libelles distincts annoncait « 86 services en lice » sous
+      -- un tableau qui n'en montrait que cinq.
+      (SELECT COUNT(DISTINCT service) FROM agents WHERE exclu = 0)             AS services_distincts,
       (SELECT COALESCE(SUM(score), 0) FROM participations WHERE entrainement = 0) AS points_cumules
   `).get();
 
@@ -264,5 +324,5 @@ export function statistiquesGlobales() {
     GROUP BY d.id ORDER BY d.ouvre_le, d.id
   `).all();
 
-  return { ...g, parDefi };
+  return { ...g, services: classementServices().length, parDefi };
 }
