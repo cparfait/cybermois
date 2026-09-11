@@ -143,17 +143,49 @@ function brancher() {
     .map((c) => ({ id: Number(c.closest('tr').dataset.id) || null, nom: c.value.trim() }))
     .filter((s) => s.nom);
 
+  // Supprimer une ligne ne touche a rien tant qu'on n'a pas enregistre. Les
+  // autres boutons de l'ecran rechargent la liste depuis le serveur : ils
+  // effacaient donc en silence les suppressions en attente. On vidait ses 42
+  // lignes, on collait ses 6 services sans cocher « Remplacer », et le
+  // referentiel en comptait 48 - les 42 revenues, plus les 6 ajoutees.
+  let modifie = false;
+  const marquer = () => { modifie = true; };
+
   zone.addEventListener('click', (e) => {
-    if (e.target.matches('[data-supprimer-ligne]')) e.target.closest('tr').remove();
+    if (e.target.matches('[data-supprimer-ligne]')) { e.target.closest('tr').remove(); marquer(); }
   });
+  zone.addEventListener('input', (e) => {
+    if (e.target.matches('.nom-service-ref')) marquer();
+  });
+
+  /** Previent avant qu'une action ne reparte de la liste enregistree. */
+  const modificationsPerdues = (action) => modifie && !confirm(
+    `Vos modifications de la liste ne sont pas enregistrées.\n\n${action} repart de la liste `
+    + 'enregistrée : les lignes supprimées ou renommées ici seront perdues.\n\n'
+    + 'Enregistrez d’abord si vous voulez les conserver. Continuer quand même ?'
+  );
 
   document.getElementById('btn-ajouter-ligne').addEventListener('click', () => {
     const corps = document.getElementById('corps-referentiel');
     corps.insertAdjacentHTML('beforeend', ligne({ nom: '', effectif: 0 }, corps.children.length));
     corps.lastElementChild.querySelector('input').focus();
+    marquer();
   });
 
-  document.getElementById('btn-fermer-ref').addEventListener('click', () => { zone.innerHTML = ''; });
+  document.getElementById('btn-fermer-ref').addEventListener('click', () => {
+    if (modificationsPerdues('Fermer')) return;
+    zone.innerHTML = '';
+  });
+
+  // Le bouton dit ce qu'il va faire : « Ajouter » et « Remplacer » n'ont pas
+  // le meme effet, et la case se lit mal a cote d'un libelle qui ne bouge pas.
+  const remplacer = document.getElementById('remplacer-referentiel');
+  const boutonColler = document.getElementById('btn-coller');
+  const majLibelleColler = () => {
+    boutonColler.textContent = remplacer.checked ? 'Remplacer le référentiel' : 'Ajouter au référentiel';
+  };
+  remplacer.addEventListener('change', majLibelleColler);
+  majLibelleColler();
 
   const recharger = async (message) => {
     if (message) alerte('alerte', message, 'succes');
@@ -168,19 +200,29 @@ function brancher() {
     } catch (e) { alerte('alerte', e.message); }
   });
 
-  document.getElementById('btn-coller').addEventListener('click', async () => {
+  boutonColler.addEventListener('click', async () => {
     const texte = document.getElementById('collage-services').value;
     if (!texte.trim()) return alerte('alerte', 'Collez la liste des services.');
+    if (modificationsPerdues('Coller une liste')) return;
     try {
       const r = await api('/api/admin/referentiel/coller', {
         method: 'POST',
-        body: { texte, remplacer: document.getElementById('remplacer-referentiel').checked },
+        body: { texte, remplacer: remplacer.checked },
       });
       await recharger(r.message);
     } catch (e) { alerte('alerte', e.message); }
   });
 
   document.getElementById('btn-initialiser').addEventListener('click', async () => {
+    if (modificationsPerdues('Amorcer depuis les données')) return;
+    // Ce bouton verse TOUS les libelles d'annuaire au referentiel : sur un
+    // annuaire reel cela en fait des dizaines, soit l'inverse d'une liste de
+    // directions. Il ne rend service que sur un referentiel vide.
+    if (!confirm(
+      'Ajouter au référentiel tous les services trouvés dans les données ?\n\n'
+      + 'Il y en a souvent plusieurs dizaines, un par libellé d’annuaire. '
+      + 'À réserver à un référentiel vide : pour une liste de directions, collez-la vous-même.'
+    )) return;
     try {
       const r = await api('/api/admin/referentiel/initialiser', { method: 'POST' });
       await recharger(r.message);
@@ -188,6 +230,7 @@ function brancher() {
   });
 
   document.getElementById('btn-appliquer-ref').addEventListener('click', async () => {
+    if (modificationsPerdues('Rattacher les libellés')) return;
     if (!confirm(
       'Rattacher chaque libellé d\'annuaire au service du référentiel qui lui correspond ?\n\n'
       + 'Le rapprochement se fait sur le nom, en ignorant la casse et les accents, et par préfixe : '
