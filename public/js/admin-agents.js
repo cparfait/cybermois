@@ -153,10 +153,10 @@ export async function chargerAgents() {
     ${etatFiltres.service ? `
       <div class="message message-info" style="margin-bottom:1rem">
         <div class="rang" style="justify-content:space-between">
-          <span>Service filtré : <strong>${echapper(etatFiltres.service)}</strong></span>
+          <span>Direction filtrée : <strong>${echapper(etatFiltres.service)}</strong></span>
           <span class="rang">
             <button type="button" class="btn btn-secondaire" id="btn-renommer-service"
-                    style="padding:.35rem .8rem;font-size:.82rem">Renommer ou regrouper ce service</button>
+                    style="padding:.35rem .8rem;font-size:.82rem">Renommer ou regrouper cette direction</button>
             <button type="button" class="btn btn-secondaire" id="btn-retirer-service"
                     style="padding:.35rem .8rem;font-size:.82rem">Retirer le filtre</button>
           </span>
@@ -170,9 +170,9 @@ export async function chargerAgents() {
         <input type="search" id="f-recherche" value="${echapper(etatFiltres.recherche)}" placeholder="nom, identifiant ou adresse">
       </div>
       <div class="champ-admin" style="flex:1;min-width:190px">
-        <label for="f-service">Service</label>
+        <label for="f-service">Direction</label>
         <select id="f-service">
-          <option value="">Tous les services</option>
+          <option value="">Toutes les directions</option>
           ${d.services.map((s) => `<option value="${echapper(s.service)}"${s.service === etatFiltres.service ? ' selected' : ''}>${echapper(s.service)} (${s.n})</option>`).join('')}
         </select>
       </div>
@@ -218,7 +218,7 @@ export async function chargerAgents() {
     <div class="tableau-defilant"><table class="admin agents">
       <thead><tr>
         <th style="width:32px"><input type="checkbox" id="tout-selectionner" aria-label="Tout sélectionner" style="width:18px;height:18px;accent-color:var(--vert-fonce)"></th>
-        <th>Agent</th><th>Service</th><th>Adresse</th>
+        <th>Agent</th><th>Direction</th><th>Adresse</th>
         <th class="num">Défis</th><th class="num">Points</th><th>État</th><th>Actions</th>
       </tr></thead>
       <tbody>${d.agents.length ? d.agents.map(ligneAgent).join('')
@@ -238,22 +238,32 @@ function ligneAgent(a) {
   if (a.anonyme) etats.push('<span class="pastille-etat" style="background:var(--info-fond);color:var(--info)">Masqué</span>');
   if (a.est_admin) etats.push('<span class="pastille-etat etat-ok">Admin</span>');
 
-  // Le libelle d'annuaire n'apparait qu'en infobulle quand il differe du nom
-  // affiche : l'afficher sur une seconde ligne doublait la hauteur du tableau.
-  const infobulle = a.service_ad && a.service_ad !== a.service
-    ? `Annuaire : ${a.service_ad} — cliquer pour filtrer sur ce service`
-    : `${a.service} — cliquer pour filtrer sur ce service`;
+  // La direction est ce qui parait au classement ; le service d'annuaire dont
+  // elle decoule ne se lisait que dans une infobulle, derriere une asterisque.
+  // Il fallait survoler chaque ligne pour savoir a quoi un agent est rattache,
+  // et donc pour comprendre pourquoi il compte pour telle direction.
+  const provenance = a.service_force
+    ? 'Direction choisie à la main : la synchronisation avec l’annuaire ne la modifie plus.'
+    : a.service_ad && a.service_ad !== a.service
+      ? `Service « ${a.service_ad} » lu dans l’annuaire, rattaché à cette direction.`
+      : null;
 
-  // Un service absent du referentiel paraitra au classement sous un nom que la
-  // collectivite ne reconnait pas. Le signaler ici evite de le decouvrir une
+  const origine = a.service_force
+    ? '<span class="discret" style="font-size:.72rem">Rattachement manuel</span>'
+    : a.service_ad && a.service_ad !== a.service
+      ? `<span class="discret tronque" style="font-size:.72rem">Annuaire : ${echapper(a.service_ad)}</span>`
+      : '';
+
+  // Une direction absente du referentiel paraitra au classement sous un nom que
+  // la collectivite ne reconnait pas. Le signaler ici evite de le decouvrir une
   // fois la campagne ouverte.
   const service = `
     <button type="button" class="lien-service tronque" data-service="${echapper(a.service)}"
-            title="${echapper(infobulle)}">${echapper(a.service)}${
-      a.service_ad && a.service_ad !== a.service ? ' <span class="discret">*</span>' : ''}</button>${
+            title="${echapper(`${a.service} — cliquer pour filtrer sur cette direction`)}">${echapper(a.service)}</button>${
+    origine ? `<br><span title="${echapper(provenance || '')}">${origine}</span>` : ''}${
     a.serviceReference === false
       ? '<br><span class="pastille-etat" style="font-size:.66rem;background:var(--alerte-fond);color:var(--alerte)"'
-        + ' title="Ce service ne figure pas au référentiel">hors référentiel</span>'
+        + ' title="Cette direction ne figure pas au référentiel">hors référentiel</span>'
       : ''}`;
 
   return `
@@ -420,6 +430,15 @@ async function formulaireAgent(agent, services) {
   let referentiel = [];
   try { referentiel = (await api('/api/admin/referentiel')).services.map((s) => s.nom); } catch { /* saisie libre */ }
   const actuel = creation ? '' : agent.service;
+
+  // De quel service d'annuaire la direction affichee decoule : sans cette
+  // ligne, on ne sait pas si la direction proposee vient de l'annuaire ou
+  // d'une decision anterieure, et on la rechange a l'aveugle.
+  const rattachement = creation ? '' : agent.service_force
+    ? '<br>Rattachement fait à la main : la synchronisation avec l’annuaire ne le défait plus.'
+    : agent.service_ad && agent.service_ad !== agent.service
+      ? `<br>Service lu dans l’annuaire : <strong>${echapper(agent.service_ad)}</strong>, rattaché à cette direction.`
+      : '<br>Direction lue directement dans l’annuaire.';
   const choix = referentiel.length
     ? [...(actuel && !referentiel.includes(actuel) ? [actuel] : []), ...referentiel]
     : [];
@@ -429,10 +448,10 @@ async function formulaireAgent(agent, services) {
         ${choix.map((s) => `<option value="${echapper(s)}"${s === actuel ? ' selected' : ''}>${echapper(s)}${
           s === actuel && !referentiel.includes(s) ? ' (hors référentiel)' : ''}</option>`).join('')}
       </select>
-      <p class="discret" style="margin:.3rem 0 0;font-size:.8rem">Directions du référentiel. Ce choix résiste aux synchronisations avec l'annuaire.</p>`
+      <p class="discret" style="margin:.3rem 0 0;font-size:.8rem">Directions du référentiel. Ce choix résiste aux synchronisations avec l'annuaire.${rattachement}</p>`
     : `<input type="text" id="a-service" list="liste-services" value="${echapper(actuel)}" placeholder="Etat civil">
       <datalist id="liste-services">${services.map((s) => `<option value="${echapper(s.service)}">`).join('')}</datalist>
-      <p class="discret" style="margin:.3rem 0 0;font-size:.8rem">Le référentiel est vide : saisie libre.</p>`;
+      <p class="discret" style="margin:.3rem 0 0;font-size:.8rem">Le référentiel est vide : saisie libre.${rattachement}</p>`;
 
   zone.innerHTML = `
     <div class="carte" style="margin-bottom:1.5rem;border-left:4px solid var(--vert-clair)">

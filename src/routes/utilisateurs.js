@@ -66,6 +66,9 @@ export default async function routesUtilisateurs(app) {
 
     const agents = db.prepare(`
       SELECT a.id, a.login, a.nom_complet, a.email, a.service, a.service_ad, a.origine,
+             -- Dit d'ou vient la direction affichee : de l'annuaire, ou d'une
+             -- decision prise dans le back-office que la synchronisation respecte.
+             a.service_force,
              a.est_admin, a.exclu, a.anonyme, a.note, a.cree_le, a.vu_le,
              COUNT(p.id)               AS defis_joues,
              COALESCE(SUM(p.score), 0) AS score_total
