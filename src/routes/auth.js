@@ -108,8 +108,10 @@ export default async function routesAuth(app) {
         -- prenom deja connu par ailleurs.
         prenom      = COALESCE(excluded.prenom, agents.prenom),
         email       = excluded.email,
-        service     = excluded.service,
-        service_ad  = excluded.service_ad,
+        -- Une direction affectee a la main dans le back-office ne se defait
+        -- pas a la connexion suivante : l'annuaire ne fait foi que par defaut.
+        service     = CASE WHEN agents.service_force = 1 THEN agents.service    ELSE excluded.service    END,
+        service_ad  = CASE WHEN agents.service_force = 1 THEN agents.service_ad ELSE excluded.service_ad END,
         service_brut= excluded.service_brut,
         est_admin   = excluded.est_admin,
         vu_le       = datetime('now')

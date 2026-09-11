@@ -410,9 +410,29 @@ function brancher(d) {
 
 /* ------------------------------------------------- Ajout et modification */
 
-function formulaireAgent(agent, services) {
+async function formulaireAgent(agent, services) {
   const zone = document.getElementById('zone-formulaire');
   const creation = !agent;
+
+  // Le referentiel fait foi : on affecte l'agent a une direction reconnue,
+  // pas a un texte libre qui creerait une graphie de plus au classement.
+  // Sans referentiel, on retombe sur la saisie libre aidee des services en usage.
+  let referentiel = [];
+  try { referentiel = (await api('/api/admin/referentiel')).services.map((s) => s.nom); } catch { /* saisie libre */ }
+  const actuel = creation ? '' : agent.service;
+  const choix = referentiel.length
+    ? [...(actuel && !referentiel.includes(actuel) ? [actuel] : []), ...referentiel]
+    : [];
+  const champService = choix.length
+    ? `<select id="a-service">
+        ${creation ? '<option value="">— Choisir une direction —</option>' : ''}
+        ${choix.map((s) => `<option value="${echapper(s)}"${s === actuel ? ' selected' : ''}>${echapper(s)}${
+          s === actuel && !referentiel.includes(s) ? ' (hors référentiel)' : ''}</option>`).join('')}
+      </select>
+      <p class="discret" style="margin:.3rem 0 0;font-size:.8rem">Directions du référentiel. Ce choix résiste aux synchronisations avec l'annuaire.</p>`
+    : `<input type="text" id="a-service" list="liste-services" value="${echapper(actuel)}" placeholder="Etat civil">
+      <datalist id="liste-services">${services.map((s) => `<option value="${echapper(s.service)}">`).join('')}</datalist>
+      <p class="discret" style="margin:.3rem 0 0;font-size:.8rem">Le référentiel est vide : saisie libre.</p>`;
 
   zone.innerHTML = `
     <div class="carte" style="margin-bottom:1.5rem;border-left:4px solid var(--vert-clair)">
@@ -437,9 +457,8 @@ function formulaireAgent(agent, services) {
           <p class="discret" style="margin:.3rem 0 0;font-size:.8rem">Sans adresse, l'agent ne recevra aucune relance.</p>
         </div>
         <div class="champ-admin">
-          <label for="a-service">Service</label>
-          <input type="text" id="a-service" list="liste-services" value="${creation ? '' : echapper(agent.service)}" placeholder="Etat civil">
-          <datalist id="liste-services">${services.map((s) => `<option value="${echapper(s.service)}">`).join('')}</datalist>
+          <label for="a-service">Direction</label>
+          ${champService}
         </div>
       </div>
 

@@ -167,8 +167,13 @@ export default async function routesUtilisateurs(app) {
       // On force aussi le libelle d'origine : sans cela, un recalcul des
       // regroupements ecraserait la correction saisie a la main.
       const service = String(c.service).replace(/\s+/g, ' ').trim() || 'Non rattache';
-      champs.push('service = ?'); valeurs.push(service);
-      champs.push('service_ad = ?'); valeurs.push(service);
+      if (service !== agent.service) {
+        champs.push('service = ?'); valeurs.push(service);
+        champs.push('service_ad = ?'); valeurs.push(service);
+        // Une direction choisie a la main est une decision : la synchronisation
+        // avec l'annuaire ne doit pas la defaire a la connexion suivante.
+        champs.push('service_force = 1');
+      }
     }
     if (c.exclu !== undefined) {
       champs.push('exclu = ?'); valeurs.push(c.exclu ? 1 : 0);

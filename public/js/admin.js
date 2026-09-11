@@ -768,12 +768,16 @@ chargeurs.technique = async () => {
       <h2 style="margin-top:2rem">Journal récent</h2>
       <div class="tableau-defilant"><table class="admin" id="table-journal"><tbody><tr><td class="discret">Chargement…</td></tr></tbody></table></div>
 
-      <h2 style="margin-top:2rem">Réinitialisation</h2>
+      <h2 style="margin-top:2rem">Remettre la campagne à zéro</h2>
       <div class="message message-alerte">
-        Efface toutes les participations, badges et historiques d'envoi. Les comptes agents et les défis
-        sont conservés. À n'utiliser qu'à l'issue de la phase de test, avant l'ouverture réelle.
+        <strong>Efface</strong> les participations, les réponses, les tentatives en cours, les badges,
+        l'historique des envois et les dates de première connexion : les statistiques et le classement
+        repartent de zéro.<br>
+        <strong>Conserve</strong> tout le paramétrage : annuaire Active Directory, messagerie, référentiel
+        des directions, regroupements, exclusions, comptes agents, défis et programmation.
+        À utiliser à l'issue de la phase de test, ou pour lancer une nouvelle campagne.
       </div>
-      <button class="btn btn-secondaire" id="btn-reinit" style="border-color:var(--erreur);color:var(--erreur)">Réinitialiser les participations</button>`;
+      <button class="btn btn-secondaire" id="btn-reinit" style="border-color:var(--erreur);color:var(--erreur)">Remettre la campagne à zéro</button>`;
 
     document.getElementById('btn-reimport').addEventListener('click', () => reimporter(false));
     document.getElementById('btn-reimport-force').addEventListener('click', () => {
@@ -790,12 +794,15 @@ chargeurs.technique = async () => {
       // On enumere ce qui part : « participations et badges » laissait croire
       // que les dates de connexion survivaient, ce qui n'est plus le cas.
       if (!confirm(
-        'Effacer tous les résultats ?'
+        'Remettre la campagne à zéro ?'
         + String.fromCharCode(10, 10)
-        + 'Participations, réponses, tentatives en cours, badges, historique des envois '
-        + 'et dates de première connexion — le taux de participation repart de zéro.'
+        + 'Effacés : participations, réponses, tentatives en cours, badges, historique des envois '
+        + 'et dates de première connexion. Le classement repart de zéro.'
         + String.fromCharCode(10, 10)
-        + 'Les comptes agents, les défis et le paramétrage sont conservés. Action irréversible.'
+        + 'Conservés : annuaire, messagerie, référentiel des directions, regroupements, exclusions, '
+        + 'comptes agents, défis et programmation.'
+        + String.fromCharCode(10, 10)
+        + 'Action irréversible.'
       )) return;
       try {
         const r = await api('/api/admin/reinitialiser', { method: 'POST', body: { confirmation: 'REINITIALISER' } });
