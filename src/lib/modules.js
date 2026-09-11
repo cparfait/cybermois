@@ -186,15 +186,21 @@ export function enregistrerProgramme(entrees, parQui) {
 
   // Un module deja joue ne se deprogramme pas : les participations
   // enregistrees porteraient sur des questions qui n'existeraient plus.
+  //
+  // Les parties d'entrainement ne comptent pas. Elles ne valent ni au
+  // classement ni aux statistiques : les faire compter ici bloquait a jamais
+  // un defi qu'on avait seulement voulu essayer avant l'ouverture.
   const jouees = db.prepare(`
     SELECT DISTINCT d.module_code FROM defis d
     WHERE d.module_code IS NOT NULL
-      AND (SELECT COUNT(*) FROM participations p WHERE p.defi_id = d.id) > 0
+      AND (SELECT COUNT(*) FROM participations p
+            WHERE p.defi_id = d.id AND p.entrainement = 0) > 0
   `).all();
   for (const j of jouees) {
     if (!vues.has(j.module_code)) {
       throw new Error(
-        `Le module ${j.module_code} a deja ete joue : il ne peut plus etre deprogramme.`
+        `Le module ${j.module_code} a deja ete joue pour de vrai : il ne peut plus etre `
+        + 'deprogramme. Remettez la campagne a zero si vous voulez repartir de rien.'
       );
     }
   }

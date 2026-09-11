@@ -263,7 +263,10 @@ chargeurs.defis = async () => {
     cible.querySelectorAll('[data-supprimer-defi]').forEach((b) =>
       b.addEventListener('click', async () => {
         const id = Number(b.dataset.supprimerDefi);
-        if (!confirm(`Supprimer le défi « ${b.dataset.titre} » ?`)) return;
+        if (!confirm(`Supprimer le défi « ${b.dataset.titre} » ?`
+          + String.fromCharCode(10, 10)
+          + 'Sa parution est retirée du programme, pour qu’il ne revienne pas au prochain '
+          + 'rechargement des contenus. Le module reste au catalogue et peut être reprogrammé.')) return;
         try {
           const r = await api(`/api/admin/defis/${id}`, { method: 'DELETE' });
           alerte('alerte', r.message, 'succes');

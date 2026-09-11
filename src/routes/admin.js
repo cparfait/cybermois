@@ -183,16 +183,35 @@ export default async function routesAdmin(app) {
       });
     }
 
-    db.prepare('DELETE FROM defis WHERE id = ?').run(defi.id); // cascade questions et participations
-    journaliser(requete.agent.login, 'defi_supprime', `defi=${id} (${participations} participations)`, requete.ip);
+    // Supprimer le defi ne suffisait pas : son module restait au programme, et
+    // importerContenus() le recreait au demarrage suivant du serveur - donc a
+    // chaque deploiement, qui redemarre le conteneur. Le defi revenait seul, et
+    // « Supprimer » ne tenait pas sa promesse. Retirer aussi la parution est ce
+    // que le geste veut dire : le module reste au catalogue, reprogrammable.
+    db.exec('BEGIN');
+    let deprogramme = 0;
+    try {
+      db.prepare('DELETE FROM defis WHERE id = ?').run(defi.id); // cascade questions et participations
+      if (defi.module_code) {
+        deprogramme = db.prepare('DELETE FROM programme WHERE module_code = ?').run(defi.module_code).changes;
+      }
+      db.exec('COMMIT');
+    } catch (err) {
+      db.exec('ROLLBACK');
+      return reponse.code(500).send({ erreur: `Suppression impossible : ${err.message}` });
+    }
+
+    journaliser(requete.agent.login, 'defi_supprime',
+      `defi=${id} (${participations} participations)${deprogramme ? `, module ${defi.module_code} deprogramme` : ''}`,
+      requete.ip);
 
     return {
       ok: true,
       message: `Défi « ${defi.titre} » supprimé.`
         + (participations ? ` ${participations} participation(s) effacée(s).` : '')
-        + (defi.module_code
-          ? ' Attention : il sera recréé au prochain rechargement des contenus tant que le '
-            + `module ${defi.module_code} reste au programme.`
+        + (deprogramme
+          ? ` Le module ${defi.module_code} est retiré du programme : le défi ne reviendra pas `
+            + 'au prochain rechargement. Il reste au catalogue si vous voulez le reprogrammer.'
           : ''),
     };
   });
