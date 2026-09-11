@@ -125,7 +125,7 @@ function rendre() {
 }
 
 const ligne = (s, i) => `
-  <tr>
+  <tr data-id="${s.id || ''}">
     <td class="discret">${i + 1}</td>
     <td><input type="text" class="nom-service-ref" value="${echapper(s.nom || '')}"
                aria-label="Nom du service ${i + 1}"></td>
@@ -137,7 +137,11 @@ const ligne = (s, i) => `
 
 function brancher() {
   const zone = document.getElementById('zone-formulaire');
-  const noms = () => [...zone.querySelectorAll('.nom-service-ref')].map((c) => c.value.trim()).filter(Boolean);
+  // L'identifiant accompagne le nom : c'est lui qui permet au serveur de
+  // distinguer un renommage d'une suppression suivie d'un ajout.
+  const noms = () => [...zone.querySelectorAll('.nom-service-ref')]
+    .map((c) => ({ id: Number(c.closest('tr').dataset.id) || null, nom: c.value.trim() }))
+    .filter((s) => s.nom);
 
   zone.addEventListener('click', (e) => {
     if (e.target.matches('[data-supprimer-ligne]')) e.target.closest('tr').remove();

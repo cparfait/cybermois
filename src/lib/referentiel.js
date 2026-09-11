@@ -57,17 +57,31 @@ export function etatReferentiel() {
   };
 }
 
-/** Remplace le referentiel par la liste fournie, dans l'ordre donne. */
-export function enregistrerReferentiel(noms, parQui) {
+/**
+ * Remplace le referentiel par la liste fournie, dans l'ordre donne.
+ *
+ * Chaque entree est un nom, ou un objet { id, nom } quand elle vient de
+ * l'ecran d'edition. L'identifiant est ce qui permet de reconnaitre un
+ * renommage : sans lui, « Finances » devenu « Direction des finances » serait
+ * une suppression suivie d'une creation, et les agents resteraient rattaches
+ * a l'ancien nom - celui que le classement continuerait d'afficher.
+ */
+export function enregistrerReferentiel(entrees, parQui) {
+  const existants = new Map(lireReferentiel().map((s) => [s.id, s.nom]));
   const propres = [];
+  const renommages = [];
   const vues = new Set();
-  for (const brut of noms) {
-    const nom = normaliser(brut);
+  for (const entree of entrees) {
+    const objet = typeof entree === 'object' && entree !== null;
+    const nom = normaliser(objet ? entree.nom : entree);
     if (!nom) continue;
     const cle = cleComparaison(nom);
     if (vues.has(cle)) continue; // deux graphies du meme service : on garde la premiere
     vues.add(cle);
     propres.push(nom);
+
+    const ancien = objet ? existants.get(Number(entree.id)) : null;
+    if (ancien && ancien !== nom) renommages.push({ ancien, nouveau: nom });
   }
 
   db.exec('BEGIN');
@@ -75,14 +89,33 @@ export function enregistrerReferentiel(noms, parQui) {
     db.exec('DELETE FROM referentiel_services');
     const inserer = db.prepare('INSERT INTO referentiel_services (nom, ordre) VALUES (?, ?)');
     propres.forEach((nom, i) => inserer.run(nom, i));
+    for (const r of renommages) propagerRenommage(r.ancien, r.nouveau);
     db.exec('COMMIT');
   } catch (err) {
     db.exec('ROLLBACK');
     throw err;
   }
 
-  journaliser(parQui, 'referentiel_enregistre', `${propres.length} service(s)`, null);
+  const detail = `${propres.length} service(s)`
+    + (renommages.length ? `, renomme(s) : ${renommages.map((r) => `${r.ancien} -> ${r.nouveau}`).join(', ')}` : '');
+  journaliser(parQui, 'referentiel_enregistre', detail, null);
   return propres.length;
+}
+
+/**
+ * Un service renomme reste le meme service : ses agents le suivent, y compris
+ * ceux rattaches a la main, et les regles qui pointaient sur l'ancien nom
+ * visent desormais le nouveau. L'ancien nom devient lui-meme une regle, pour
+ * qu'un agent dont l'annuaire dit encore « Finances » ne retombe pas sur
+ * l'ancien service a sa prochaine connexion.
+ */
+function propagerRenommage(ancien, nouveau) {
+  db.prepare('UPDATE regroupements_service SET cible = ? WHERE cible = ?').run(nouveau, ancien);
+  // Une regle « nouveau -> x » ferait boucler la resolution : elle n'a plus de sens
+  db.prepare('DELETE FROM regroupements_service WHERE source = ?').run(nouveau);
+  db.prepare('INSERT INTO regroupements_service (source, cible) VALUES (?, ?) ON CONFLICT(source) DO UPDATE SET cible = excluded.cible')
+    .run(ancien, nouveau);
+  db.prepare('UPDATE agents SET service = ? WHERE service = ?').run(nouveau, ancien);
 }
 
 /** Alimente le referentiel a partir des services reellement utilises. */
