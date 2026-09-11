@@ -172,7 +172,7 @@ try {
   const nS = donnees.services.length;
   const nA = donnees.agents.length;
   document.getElementById('compte-services').textContent =
-    nS ? `${nS} service${nS > 1 ? 's' : ''} classé${nS > 1 ? 's' : ''}` : 'aucun service classé';
+    nS ? `${nS} direction${nS > 1 ? 's' : ''} classée${nS > 1 ? 's' : ''}` : 'aucune direction classée';
   document.getElementById('compte-agents').textContent =
     nA ? `${nA} agent${nA > 1 ? 's' : ''} classé${nA > 1 ? 's' : ''}` : 'aucun agent classé';
 
