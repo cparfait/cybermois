@@ -108,6 +108,7 @@ export async function chargerAgents() {
       ${tuile(r.importes, "issus de l'annuaire", 'annuaire')}
       ${tuile(r.exclus, 'exclus de la campagne', 'exclus')}
       ${tuile(r.anonymes, 'masqués du classement', 'anonymes')}
+      ${r.hors_referentiel ? tuile(r.hors_referentiel, 'hors référentiel', 'hors_referentiel') : ''}
     </div>
 
     ${d.horsReferentiel?.length ? `
@@ -126,9 +127,14 @@ export async function chargerAgents() {
             : ''}
         </details>
         <p style="margin:.6rem 0 0;font-size:.86rem">
-          Traitez-les depuis <strong>« Services non référencés »</strong> : rattachez-les à un
-          service reconnu, ou ajoutez-les au référentiel.
+          Ils n'entrent pas au classement collectif, qui ne retient que les directions du
+          référentiel. Traitez-les depuis <strong>« Services non référencés »</strong> :
+          rattachez-les à une direction reconnue, ou ajoutez-les au référentiel.
         </p>
+        <div class="rang" style="margin-top:.6rem">
+          <button type="button" class="btn btn-secondaire" data-filtre="hors_referentiel"
+                  style="padding:.35rem .8rem;font-size:.82rem">Voir ces agents dans la liste</button>
+        </div>
       </div>` : ''}
 
     <div class="barre-outils" style="margin-bottom:1.2rem">
@@ -184,6 +190,7 @@ export async function chargerAgents() {
           <option value="connectes"${etatFiltres.etat === 'connectes' ? ' selected' : ''}>Déjà connectés</option>
           <option value="annuaire"${etatFiltres.etat === 'annuaire' ? ' selected' : ''}>Issus de l'annuaire</option>
           <option value="anonymes"${etatFiltres.etat === 'anonymes' ? ' selected' : ''}>Masqués du classement</option>
+          <option value="hors_referentiel"${etatFiltres.etat === 'hors_referentiel' ? ' selected' : ''}>Hors référentiel</option>
           <option value="jamais_connecte"${etatFiltres.etat === 'jamais_connecte' ? ' selected' : ''}>Jamais connectés</option>
           <option value="inactifs"${etatFiltres.etat === 'inactifs' ? ' selected' : ''}>Aucun défi terminé</option>
           <option value="sans_email"${etatFiltres.etat === 'sans_email' ? ' selected' : ''}>Sans adresse mail</option>
