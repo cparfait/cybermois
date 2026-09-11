@@ -36,11 +36,11 @@
           "correcte": true
         },
         {
-          "libelle": "Le fait de laisser son poste allumé la nuit",
+          "libelle": "Une clé USB inconnue branchée sur un poste par un agent",
           "correcte": false
         },
         {
-          "libelle": "La consultation d'un site d'actualité",
+          "libelle": "Un poste laissé allumé la nuit, qui laisse le temps à l'attaque de se dérouler",
           "correcte": false
         }
       ]
@@ -50,22 +50,22 @@
       "contexte": "Le document se présente comme une facture d'un fournisseur des Services Techniques.",
       "multiple": false,
       "points": 10,
-      "explication": "Une macro est un programme. L'activer, c'est autoriser un fichier reçu par mail à exécuter du code sur votre poste : c'est exactement ce que l'attaquant demande, et le bandeau flou sur « le contenu à afficher » est le prétexte. Un vrai document n'a pas besoin de macro pour montrer une facture. La bonne réaction est de ne pas activer, de fermer le document et de signaler le message à la DSI — pas de le transférer à un collègue pour avis, ce qui ne fait que déplacer le piège. Si vous avez un doute légitime sur une facture attendue, appelez le fournisseur au numéro du contrat.",
+      "explication": "Une macro est un programme. L'activer, c'est autoriser un fichier reçu par mail à exécuter du code sur votre poste : c'est exactement ce que l'attaquant demande, et le bandeau flou sur « le contenu à afficher » est le prétexte. Un vrai document n'a pas besoin de macro pour montrer une facture. La bonne réaction est de ne pas activer, de fermer le document et de signaler le message à la DSI — pas de le transférer à un collègue pour avis, ce qui ne fait que déplacer le piège. Si vous avez un doute légitime sur une facture attendue, appelez le fournisseur au numéro du contrat. Une adresse d'expéditeur se falsifie ou se vole : ce n'est pas une garantie. Et regarder d'abord en mode protégé ne change rien : le piège est justement que la facture ressemble à la vraie, et c'est le clic sur « Activer » qui déclenche tout.",
       "reponses": [
         {
           "libelle": "Je n'active rien, je ferme et je signale le message à la DSI",
           "correcte": true
         },
         {
-          "libelle": "J'active : sans macro, je ne peux pas lire la facture",
+          "libelle": "J'active : le fournisseur est référencé et l'adresse de l'expéditeur est bien la sienne",
           "correcte": false
         },
         {
-          "libelle": "J'active puis je referme aussitôt, le temps d'un coup d'œil",
+          "libelle": "J'ouvre d'abord en mode protégé pour vérifier, puis j'active si la facture ressemble à celles d'habitude",
           "correcte": false
         },
         {
-          "libelle": "Je transfère à un collègue pour savoir s'il arrive à l'ouvrir",
+          "libelle": "Je transfère au service comptabilité : c'est à lui de traiter les factures fournisseurs",
           "correcte": false
         }
       ]
@@ -74,7 +74,7 @@
       "enonce": "Pourquoi une sauvegarde ne suffit-elle pas toujours à s'en sortir ?",
       "multiple": true,
       "points": 10,
-      "explication": "Les attaquants ont appris : leur premier geste, une fois dans le réseau, est de chercher et de détruire les sauvegardes. Un disque de sauvegarde branché en permanence est chiffré en même temps que le reste — c'est ce qui explique la plupart des situations désespérées. D'où la règle d'une copie hors ligne ou immuable, que rien de connecté ne peut atteindre. Une sauvegarde jamais testée est un pari : beaucoup découvrent au pire moment qu'elle ne restaure pas. Enfin, la sauvegarde ne répond pas à la seconde menace : les données ont souvent été copiées avant d'être chiffrées, et leur publication est un chantage distinct que la restauration ne règle pas.",
+      "explication": "Les attaquants ont appris : leur premier geste, une fois dans le réseau, est de chercher et de détruire les sauvegardes. Un disque de sauvegarde branché en permanence est chiffré en même temps que le reste — c'est ce qui explique la plupart des situations désespérées. D'où la règle d'une copie hors ligne ou immuable, que rien de connecté ne peut atteindre. Une sauvegarde jamais testée est un pari : beaucoup découvrent au pire moment qu'elle ne restaure pas. Enfin, la sauvegarde ne répond pas à la seconde menace : les données ont souvent été copiées avant d'être chiffrées, et leur publication est un chantage distinct que la restauration ne règle pas. Un dossier réservé à la DSI sur le serveur de fichiers reste un dossier connecté : l'attaquant qui a pris la main sur le serveur le chiffre avec le reste. Et le « cloud » synchronisé n'est pas hors ligne : une copie qui suit les modifications en temps réel reproduit fidèlement le chiffrement.",
       "reponses": [
         {
           "libelle": "Un disque de sauvegarde connecté en permanence est chiffré avec le reste",
@@ -89,11 +89,11 @@
           "correcte": true
         },
         {
-          "libelle": "Les sauvegardes sont inutiles face à un rançongiciel moderne",
+          "libelle": "Une sauvegarde sur le serveur de fichiers, dans un dossier réservé à la DSI, reste à l'abri du chiffrement",
           "correcte": false
         },
         {
-          "libelle": "Une sauvegarde quotidienne rend l'attaque sans conséquence",
+          "libelle": "Une sauvegarde quotidienne synchronisée dans le cloud rend l'attaque sans conséquence, les données étant hors du réseau",
           "correcte": false
         }
       ]
@@ -117,11 +117,11 @@
           "correcte": true
         },
         {
-          "libelle": "L'accueil physique dans les crèches et les écoles",
+          "libelle": "Les patrouilles de la Police Municipale, suspendues faute d'accès aux fichiers",
           "correcte": false
         },
         {
-          "libelle": "Le retour à la normale, qui se compte en heures",
+          "libelle": "Le retour à la normale, obtenu en quelques jours une fois les sauvegardes restaurées",
           "correcte": false
         }
       ]
@@ -130,7 +130,7 @@
       "enonce": "Pourquoi limiter les droits d'accès des agents aux seuls dossiers dont ils ont besoin ?",
       "multiple": true,
       "points": 10,
-      "explication": "Un rançongiciel chiffre ce que voit le compte qu'il a détourné, ni plus ni moins. Un agent qui accède à trois dossiers métier expose trois dossiers ; un compte qui voit tout le serveur expose tout le serveur. C'est la raison la plus concrète de la restriction des droits, avant même la confidentialité. Celle-ci compte aussi : les dossiers du CMS ou de la paie n'ont pas à être ouvrables par l'ensemble des agents. Et des droits propres à chacun rendent les journaux lisibles, ce qui permet de reconstituer ce qui s'est passé. Ce n'est pas une marque de défiance envers les agents — c'est ce qui limite les dégâts le jour où l'un des comptes tombe.",
+      "explication": "Un rançongiciel chiffre ce que voit le compte qu'il a détourné, ni plus ni moins. Un agent qui accède à trois dossiers métier expose trois dossiers ; un compte qui voit tout le serveur expose tout le serveur. C'est la raison la plus concrète de la restriction des droits, avant même la confidentialité. Celle-ci compte aussi : les dossiers du CMS ou de la paie n'ont pas à être ouvrables par l'ensemble des agents. Et des droits propres à chacun rendent les journaux lisibles, ce qui permet de reconstituer ce qui s'est passé. Ce n'est pas une marque de défiance envers les agents — c'est ce qui limite les dégâts le jour où l'un des comptes tombe. Un rançongiciel n'a pas besoin de droits d'administrateur pour chiffrer ce que l'agent peut modifier : il s'exécute avec les droits du compte, tout simplement. Et l'attaquant ne les obtient pas toujours : bien des attaques restent au niveau du compte volé, ce qui rend la restriction décisive.",
       "reponses": [
         {
           "libelle": "Un rançongiciel ne chiffre que ce que voit le compte compromis",
@@ -145,11 +145,11 @@
           "correcte": true
         },
         {
-          "libelle": "C'est une marque de défiance envers les agents",
+          "libelle": "Cela empêche le rançongiciel de s'exécuter : sans droits d'administrateur, un programme malveillant ne démarre pas",
           "correcte": false
         },
         {
-          "libelle": "Cela n'a aucun effet : l'attaquant obtient les droits d'administrateur de toute façon",
+          "libelle": "Cela protège surtout des erreurs des agents, pas d'un attaquant, qui obtient de toute façon les droits d'administrateur",
           "correcte": false
         }
       ]
@@ -158,7 +158,7 @@
       "enonce": "Quels signes doivent vous faire appeler la DSI immédiatement ?",
       "multiple": true,
       "points": 10,
-      "explication": "Une attaque laisse des traces avant de se déclarer. Des fichiers qui changent d'extension ou deviennent illisibles, un poste qui rame anormalement alors que rien ne tourne, des documents renommés en série, des fenêtres qui s'ouvrent seules : autant de signaux qui, pris tôt, permettent d'isoler le poste avant la propagation. La lenteur peut avoir cent causes banales — c'est justement pourquoi il vaut mieux appeler pour rien. Une mise à jour Windows qui s'installe au démarrage, en revanche, est le fonctionnement normal, et la bonne réaction est de la laisser finir.",
+      "explication": "Une attaque laisse des traces avant de se déclarer. Des fichiers qui changent d'extension ou deviennent illisibles, un poste qui rame anormalement alors que rien ne tourne, des documents renommés en série, des fenêtres qui s'ouvrent seules : autant de signaux qui, pris tôt, permettent d'isoler le poste avant la propagation. La lenteur peut avoir cent causes banales — c'est justement pourquoi il vaut mieux appeler pour rien. Une mise à jour Windows qui s'installe au démarrage, en revanche, est le fonctionnement normal, et la bonne réaction est de la laisser finir. De même, une analyse planifiée de l'antivirus est un signe de bonne santé, pas d'alerte.",
       "reponses": [
         {
           "libelle": "Des fichiers dont l'extension a changé ou qui ne s'ouvrent plus",
@@ -177,7 +177,7 @@
           "correcte": false
         },
         {
-          "libelle": "Un mot de passe qui arrive à expiration",
+          "libelle": "L'antivirus qui indique qu'une analyse planifiée est en cours",
           "correcte": false
         }
       ]
@@ -186,7 +186,7 @@
       "enonce": "L'attaquant demande une rançon en promettant la clé de déchiffrement. Que dit la doctrine française ?",
       "multiple": true,
       "points": 10,
-      "explication": "La position des autorités françaises est constante : on ne paye pas. D'abord parce que rien n'est garanti — des organisations ont payé et n'ont récupéré qu'une partie de leurs données, voire rien. Ensuite parce que payer finance directement les attaques suivantes et désigne la collectivité comme bonne cliente : les récidives sur des victimes ayant payé sont documentées. Enfin parce que les fonds publics ne peuvent pas alimenter une organisation criminelle. Ce qu'il faut faire, en revanche, est cadré : déposer plainte, signaler sur cybermalveillance.gouv.fr, et prévenir la CNIL sous 72 heures dès que des données personnelles sont touchées — ce qui est presque toujours le cas dans une commune.",
+      "explication": "La position des autorités françaises est constante : on ne paye pas. D'abord parce que rien n'est garanti — des organisations ont payé et n'ont récupéré qu'une partie de leurs données, voire rien. Ensuite parce que payer finance directement les attaques suivantes et désigne la collectivité comme bonne cliente : les récidives sur des victimes ayant payé sont documentées. Enfin parce que les fonds publics ne peuvent pas alimenter une organisation criminelle. Ce qu'il faut faire, en revanche, est cadré : déposer plainte, signaler sur cybermalveillance.gouv.fr, et prévenir la CNIL sous 72 heures dès que des données personnelles sont touchées — ce qui est presque toujours le cas dans une commune. Aucun intermédiaire, si spécialisé soit-il, ne peut garantir ce que l'attaquant fera de l'argent : la promesse de restitution n'engage que celui qui la reçoit.",
       "reponses": [
         {
           "libelle": "On ne paye pas : rien ne garantit la restitution des données",
@@ -205,7 +205,7 @@
           "correcte": true
         },
         {
-          "libelle": "Payer est acceptable si le montant reste inférieur au coût de la remise en route",
+          "libelle": "Payer est acceptable si la négociation est confiée à un prestataire spécialisé, qui garantit la restitution",
           "correcte": false
         }
       ]

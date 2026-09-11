@@ -40,7 +40,7 @@
           "correcte": false
         },
         {
-          "libelle": "Le fait de travailler sur un document, en soi",
+          "libelle": "Le Wi-Fi du train, même en passant par le tunnel sécurisé",
           "correcte": false
         }
       ]
@@ -49,7 +49,7 @@
       "enonce": "Le Wi-Fi gratuit d'un hôtel ou d'un centre de congrès : que faut-il en penser ?",
       "multiple": true,
       "points": 10,
-      "explication": "Un réseau ouvert n'est pas maudit, il est simplement partagé avec des inconnus. Deux précautions le rendent acceptable : passer par le tunnel sécurisé de la Ville, qui chiffre tout ce qui sort du poste, et se méfier des réseaux au nom crédible mais inconnu — un faux point d'accès nommé « Hotel_Wifi_Gratuit » se monte en dix minutes et capte tout ce qui passe. Demander le nom exact du réseau à l'accueil coûte une question. Ce qui doit alerter, c'est un avertissement de certificat au moment de se connecter : c'est le signe qu'on s'interpose. Et un portail qui demande un compte de messagerie pour « s'authentifier » n'a besoin de rien d'autre que de vos identifiants.",
+      "explication": "Un réseau ouvert n'est pas maudit, il est simplement partagé avec des inconnus. Deux précautions le rendent acceptable : passer par le tunnel sécurisé de la Ville, qui chiffre tout ce qui sort du poste, et se méfier des réseaux au nom crédible mais inconnu — un faux point d'accès nommé « Hotel_Wifi_Gratuit » se monte en dix minutes et capte tout ce qui passe. Demander le nom exact du réseau à l'accueil coûte une question. Ce qui doit alerter, c'est un avertissement de certificat au moment de se connecter : c'est le signe qu'on s'interpose. Et un portail qui demande un compte de messagerie pour « s'authentifier » n'a besoin de rien d'autre que de vos identifiants. HTTPS protège chaque site pris un par un ; le tunnel protège tout le poste, y compris ce qui se connecte tout seul en arrière-plan.",
       "reponses": [
         {
           "libelle": "Passer par le tunnel sécurisé fourni par la DSI",
@@ -64,11 +64,11 @@
           "correcte": true
         },
         {
-          "libelle": "Saisir ses identifiants de messagerie sur le portail de connexion s'il le demande",
+          "libelle": "S'authentifier sur le portail avec son compte de messagerie, comme le proposent la plupart des hôtels",
           "correcte": false
         },
         {
-          "libelle": "Se connecter au réseau ouvert dont le nom semble le plus officiel",
+          "libelle": "Se limiter aux sites en HTTPS, ce qui rend le tunnel sécurisé inutile",
           "correcte": false
         }
       ]
@@ -96,7 +96,7 @@
           "correcte": true
         },
         {
-          "libelle": "Me fier au mot de passe de session, qui suffit à protéger les fichiers",
+          "libelle": "Le mettre en veille avec mot de passe de session, ce qui protège aussi bien que l'arrêt",
           "correcte": false
         }
       ]
@@ -105,14 +105,14 @@
       "enonce": "Votre téléphone n'a plus de batterie dans une gare. Une borne de recharge USB est disponible. Que faites-vous ?",
       "multiple": false,
       "points": 10,
-      "explication": "Un port USB transporte de l'électricité et des données : brancher un téléphone sur une borne inconnue, c'est le brancher sur un appareil inconnu. La parade est simple et tient dans le sac : une batterie externe, ou un câble de charge seule dont les broches de données sont absentes, ou encore votre propre chargeur sur une prise électrique classique — une prise de courant ne transporte pas de données. Refuser la connexion sur l'écran du téléphone aide, mais dépend d'un choix fait dans la précipitation, avec 2 % de batterie et un train à prendre. Autant ne pas dépendre de sa vigilance à ce moment-là.",
+      "explication": "Un port USB transporte de l'électricité et des données : brancher un téléphone sur une borne inconnue, c'est le brancher sur un appareil inconnu. La parade est simple et tient dans le sac : une batterie externe, ou un câble de charge seule dont les broches de données sont absentes, ou encore votre propre chargeur sur une prise électrique classique — une prise de courant ne transporte pas de données. Refuser la connexion sur l'écran du téléphone aide, mais dépend d'un choix fait dans la précipitation, avec 2 % de batterie et un train à prendre. Autant ne pas dépendre de sa vigilance à ce moment-là. Que la borne soit installée par l'exploitant ne garantit rien : elle peut avoir été modifiée après coup, sans que rien ne se voie. Et le mode avion coupe les ondes, pas le câble.",
       "reponses": [
         {
           "libelle": "J'utilise ma batterie externe, ou mon chargeur sur une prise électrique",
           "correcte": true
         },
         {
-          "libelle": "Je branche sur la borne USB : c'est prévu pour ça",
+          "libelle": "Je branche sur la borne USB : en gare, l'équipement est sous la responsabilité de l'exploitant",
           "correcte": false
         },
         {
@@ -120,7 +120,7 @@
           "correcte": false
         },
         {
-          "libelle": "Je branche en éteignant le téléphone, ce qui empêche tout échange",
+          "libelle": "Je branche en mode avion, ce qui coupe toute communication",
           "correcte": false
         }
       ]
@@ -200,7 +200,7 @@
           "correcte": true
         },
         {
-          "libelle": "Ne rien faire puisque rien ne manque",
+          "libelle": "Le rebrancher au réseau de la Ville pour vérifier qu'il fonctionne normalement",
           "correcte": false
         },
         {

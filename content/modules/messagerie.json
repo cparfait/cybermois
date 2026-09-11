@@ -21,22 +21,22 @@
       "enonce": "Vous écrivez à 180 administrés inscrits à une réunion publique. Comment procédez-vous ?",
       "multiple": false,
       "points": 10,
-      "explication": "Mettre 180 adresses en copie visible, c'est communiquer à chacun le carnet d'adresses des 179 autres : c'est une violation de données personnelles, et l'une des plus fréquemment notifiées à la CNIL. La copie cachée règle le problème pour un envoi ponctuel, à condition de mettre son propre service en destinataire principal. Pour un envoi récurrent, l'outil de diffusion est préférable : il gère les désinscriptions, ce que le Cci ne fait pas. Envoyer 180 messages un par un serait correct sur le fond, mais personne ne le fait jusqu'au bout — et c'est ainsi que la moitié part en copie visible.",
+      "explication": "Mettre 180 adresses en copie visible, c'est communiquer à chacun le carnet d'adresses des 179 autres : c'est une violation de données personnelles, et l'une des plus fréquemment notifiées à la CNIL. La copie cachée règle le problème pour un envoi ponctuel, à condition de mettre son propre service en destinataire principal. Pour un envoi récurrent, l'outil de diffusion est préférable : il gère les désinscriptions, ce que le Cci ne fait pas. Envoyer 180 messages un par un serait correct sur le fond, mais personne ne le fait jusqu'au bout — et c'est ainsi que la moitié part en copie visible. Le consentement donné à l'inscription porte sur la réunion, pas sur la diffusion de l'adresse aux 179 autres participants ; et une consigne « ne pas répondre à tous » n'empêche personne de lire la liste.",
       "reponses": [
         {
           "libelle": "En copie cachée (Cci), avec mon service en destinataire principal",
           "correcte": true
         },
         {
-          "libelle": "En copie visible (Cc), pour que chacun sache qui participe",
+          "libelle": "En copie visible (Cc) : les inscrits ont déjà accepté que leur adresse serve à cette réunion",
           "correcte": false
         },
         {
-          "libelle": "En destinataires principaux, c'est plus direct",
+          "libelle": "En destinataires principaux, avec la consigne « merci de ne pas répondre à tous » en tête du message",
           "correcte": false
         },
         {
-          "libelle": "En copie visible mais en petits groupes de vingt, pour limiter la casse",
+          "libelle": "En copie visible (Cc), en scindant l'envoi en petits groupes de vingt pour limiter l'exposition",
           "correcte": false
         }
       ]
@@ -45,14 +45,14 @@
       "enonce": "Vous devez transmettre un dossier de 60 Mo à un partenaire extérieur. Que faites-vous ?",
       "multiple": true,
       "points": 10,
-      "explication": "Un lien de partage vaut mieux qu'une pièce jointe : il évite d'engorger les boîtes, il permet de retirer l'accès après coup et il trace qui a téléchargé. Encore faut-il le régler : un lien « toute personne disposant du lien », sans échéance, est un document public posé sur internet, et les moteurs de recherche en trouvent régulièrement. Limitez-le au destinataire, donnez-lui une date de fin. Ce qu'il faut éviter, c'est le service de transfert gratuit trouvé au hasard, qui héberge où il veut sous des conditions que personne n'a lues, et bien sûr le dépôt sur un compte cloud personnel — le document quitte alors la Ville définitivement.",
+      "explication": "Un lien de partage vaut mieux qu'une pièce jointe : il évite d'engorger les boîtes, il permet de retirer l'accès après coup et il trace qui a téléchargé. Encore faut-il le régler : un lien « toute personne disposant du lien », sans échéance, est un document public posé sur internet, et les moteurs de recherche en trouvent régulièrement. Limitez-le au destinataire, donnez-lui une date de fin. Ce qu'il faut éviter, c'est le service de transfert gratuit trouvé au hasard, qui héberge où il veut sous des conditions que personne n'a lues, et bien sûr le dépôt sur un compte cloud personnel — le document quitte alors la Ville définitivement. Un lien « impossible à deviner » se retrouve dans les historiques, les transferts de mails et les index des moteurs ; le cadenas HTTPS chiffre le trajet, pas la destination ; et un cloud personnel, même bien protégé, reste un espace qui n'appartient pas à la Ville.",
       "reponses": [
         {
           "libelle": "Un lien de partage limité au destinataire, avec une date d'expiration",
           "correcte": true
         },
         {
-          "libelle": "Un lien de partage ouvert à toute personne disposant de l'adresse, sans échéance",
+          "libelle": "Un lien de partage ouvert à toute personne disposant de l'adresse : elle est trop longue pour être devinée",
           "correcte": false
         },
         {
@@ -60,11 +60,11 @@
           "correcte": true
         },
         {
-          "libelle": "Un service de transfert gratuit trouvé sur internet",
+          "libelle": "Un service de transfert en ligne connu, qui affiche le cadenas HTTPS et efface le fichier après sept jours",
           "correcte": false
         },
         {
-          "libelle": "Un dépôt sur mon compte cloud personnel, avec le lien par mail",
+          "libelle": "Un dépôt sur mon espace cloud personnel, protégé par mon mot de passe et la double authentification",
           "correcte": false
         }
       ]
@@ -74,7 +74,7 @@
       "contexte": "Par exemple les boîtes d'accueil des écoles maternelles ou celle de la logistique.",
       "multiple": true,
       "points": 10,
-      "explication": "Une boîte partagée est utile mais elle brouille la responsabilité : quand tout le monde écrit sous la même adresse, personne n'a écrit. D'où deux exigences. L'accès doit être nominatif — chacun ouvre la boîte avec son propre compte, et la DSI sait qui y a accès — ce qui interdit le mot de passe commun noté sur un papier. Et la liste des accès doit être revue quand quelqu'un change de poste : les boîtes partagées accumulent les anciens agents pendant des années. Signer ses messages de son nom relève de la même logique, et rend le travail plus simple pour le destinataire.",
+      "explication": "Une boîte partagée est utile mais elle brouille la responsabilité : quand tout le monde écrit sous la même adresse, personne n'a écrit. D'où deux exigences. L'accès doit être nominatif — chacun ouvre la boîte avec son propre compte, et la DSI sait qui y a accès — ce qui interdit le mot de passe commun noté sur un papier. Et la liste des accès doit être revue quand quelqu'un change de poste : les boîtes partagées accumulent les anciens agents pendant des années. Signer ses messages de son nom relève de la même logique, et rend le travail plus simple pour le destinataire. Un mot de passe commun, même solide et changé à chaque départ, empêche de savoir qui a écrit quoi ; et écrire au nom du service ne dispense pas de dire qui parle.",
       "reponses": [
         {
           "libelle": "L'accès se fait avec le compte nominatif de chaque agent, pas avec un mot de passe commun",
@@ -89,11 +89,11 @@
           "correcte": true
         },
         {
-          "libelle": "Le mot de passe peut être noté dans le tiroir de l'accueil, c'est plus pratique",
+          "libelle": "Un mot de passe commun est acceptable s'il est solide et changé à chaque départ d'un agent",
           "correcte": false
         },
         {
-          "libelle": "Une boîte partagée dispense de toute traçabilité",
+          "libelle": "Les messages partent au nom du service : la signature nominative est superflue, voire déconseillée",
           "correcte": false
         }
       ]
@@ -102,7 +102,7 @@
       "enonce": "Un collègue configure un transfert automatique de sa boîte professionnelle vers son adresse personnelle. Qu'en pensez-vous ?",
       "multiple": true,
       "points": 10,
-      "explication": "Cette règle recopie en continu des dossiers d'administrés vers une messagerie que la Ville ne maîtrise pas, chez un fournisseur qui n'a signé aucun contrat avec elle : c'est une violation de données permanente, et elle survit au départ de l'agent si personne ne la remarque. C'est aussi, et c'est ce qui rend le sujet important, l'un des premiers gestes d'un attaquant qui vient de compromettre un compte : il crée une règle de transfert discrète et lit tout le courrier pendant des mois. Vérifier périodiquement les règles de sa propre boîte est un réflexe simple et rentable. Le besoin sous-jacent — travailler depuis chez soi — se traite avec la DSI, qui a des solutions prévues pour cela.",
+      "explication": "Cette règle recopie en continu des dossiers d'administrés vers une messagerie que la Ville ne maîtrise pas, chez un fournisseur qui n'a signé aucun contrat avec elle : c'est une violation de données permanente, et elle survit au départ de l'agent si personne ne la remarque. C'est aussi, et c'est ce qui rend le sujet important, l'un des premiers gestes d'un attaquant qui vient de compromettre un compte : il crée une règle de transfert discrète et lit tout le courrier pendant des mois. Vérifier périodiquement les règles de sa propre boîte est un réflexe simple et rentable. Le besoin sous-jacent — travailler depuis chez soi — se traite avec la DSI, qui a des solutions prévues pour cela. La solidité du compte personnel ne change rien : le problème est le fournisseur, pas le mot de passe. Et il n'existe pas de version temporaire acceptable : chaque message transféré est déjà sorti.",
       "reponses": [
         {
           "libelle": "C'est une fuite continue de données vers un service non contractualisé",
@@ -117,11 +117,11 @@
           "correcte": true
         },
         {
-          "libelle": "C'est acceptable si l'agent est le seul à lire son adresse personnelle",
+          "libelle": "C'est acceptable si son adresse personnelle est protégée par un mot de passe solide et la double authentification",
           "correcte": false
         },
         {
-          "libelle": "C'est acceptable pendant les congés uniquement",
+          "libelle": "C'est acceptable à titre temporaire, le temps que la DSI mette en place un accès à distance",
           "correcte": false
         }
       ]
@@ -130,7 +130,7 @@
       "enonce": "Que peut-on écrire dans un message d'absence automatique ?",
       "multiple": true,
       "points": 10,
-      "explication": "Le message d'absence part à tout le monde, y compris aux expéditeurs de messages frauduleux : c'est une source de renseignement gratuite pour qui prépare une usurpation. Les dates et le contact d'un collègue joignable sont utiles et suffisent. En revanche, préciser que vous êtes hospitalisé relève de votre vie privée, indiquer votre numéro de portable personnel vous expose, et annoncer que le service tourne à effectif réduit renseigne exactement ce qu'un escroc cherche à savoir avant d'appeler en se faisant passer pour un fournisseur pressé.",
+      "explication": "Le message d'absence part à tout le monde, y compris aux expéditeurs de messages frauduleux : c'est une source de renseignement gratuite pour qui prépare une usurpation. Les dates et le contact d'un collègue joignable sont utiles et suffisent. En revanche, préciser que vous êtes hospitalisé relève de votre vie privée, indiquer votre numéro de portable personnel vous expose, et annoncer que le service tourne à effectif réduit renseigne exactement ce qu'un escroc cherche à savoir avant d'appeler en se faisant passer pour un fournisseur pressé. Le motif n'aide pas l'interlocuteur : les dates suffisent.",
       "reponses": [
         {
           "libelle": "Les dates d'absence",
@@ -141,15 +141,15 @@
           "correcte": true
         },
         {
-          "libelle": "Le motif de l'absence, notamment médical",
+          "libelle": "Le motif de l'absence, pour que l'interlocuteur adapte son degré d'urgence",
           "correcte": false
         },
         {
-          "libelle": "Son numéro de téléphone personnel",
+          "libelle": "Son numéro de portable personnel, réservé aux urgences",
           "correcte": false
         },
         {
-          "libelle": "Le fait que le service fonctionne en effectif réduit tout l'été",
+          "libelle": "Un délai de réponse plus long, en précisant que le service tourne en effectif réduit",
           "correcte": false
         }
       ]
@@ -158,7 +158,7 @@
       "enonce": "Quels documents ne s'envoient pas en pièce jointe non protégée, même en interne ?",
       "multiple": true,
       "points": 10,
-      "explication": "Un mail traverse plusieurs serveurs et reste stocké dans les boîtes des deux côtés, souvent pour des années. Un bulletin de paie, un compte rendu du CMS ou un scan de pièce d'identité n'ont rien à y faire sans protection : ils passent par l'espace partagé prévu, avec les droits qui vont bien, ou par un fichier protégé dont le mot de passe est transmis par un autre canal — jamais dans le même message, ce qui reviendrait à scotcher la clé sur la porte. Une convocation à une réunion ou un ordre du jour, en revanche, sont faits pour circuler.",
+      "explication": "Un mail traverse plusieurs serveurs et reste stocké dans les boîtes des deux côtés, souvent pour des années. Un bulletin de paie, un compte rendu du CMS ou un scan de pièce d'identité n'ont rien à y faire sans protection : ils passent par l'espace partagé prévu, avec les droits qui vont bien, ou par un fichier protégé dont le mot de passe est transmis par un autre canal — jamais dans le même message, ce qui reviendrait à scotcher la clé sur la porte. Une délibération publiée ou un planning de permanences contiennent des noms, mais rien de sensible : ils sont faits pour circuler.",
       "reponses": [
         {
           "libelle": "Un bulletin de paie",
@@ -173,11 +173,11 @@
           "correcte": true
         },
         {
-          "libelle": "L'ordre du jour d'une réunion de service",
+          "libelle": "La délibération du conseil municipal, telle que publiée sur le site de la Ville",
           "correcte": false
         },
         {
-          "libelle": "Une convocation à une commission",
+          "libelle": "Le planning nominatif des permanences d'accueil de la semaine",
           "correcte": false
         }
       ]
@@ -186,7 +186,7 @@
       "enonce": "Vous recevez un message que vous jugez suspect. Quelle est la bonne façon de le signaler ?",
       "multiple": true,
       "points": 10,
-      "explication": "Le signaler est toujours utile, même si vous vous trompez : la DSI préfère dix fausses alertes à un silence. Transmettez-le en pièce jointe plutôt qu'en simple transfert quand votre messagerie le permet, car cela conserve les en-têtes techniques, qui sont précisément ce qui permet d'identifier la campagne. Et surtout, ne cliquez pas « pour vérifier » : l'ouverture du lien signale à l'attaquant que l'adresse est vivante, et parfois suffit. Le supprimer sans rien dire prive les collègues d'une alerte — vous êtes rarement le seul destinataire.",
+      "explication": "Le signaler est toujours utile, même si vous vous trompez : la DSI préfère dix fausses alertes à un silence. Transmettez-le en pièce jointe plutôt qu'en simple transfert quand votre messagerie le permet, car cela conserve les en-têtes techniques, qui sont précisément ce qui permet d'identifier la campagne. Et surtout, ne cliquez pas « pour vérifier » : l'ouverture du lien signale à l'attaquant que l'adresse est vivante, et parfois suffit. Le supprimer sans rien dire prive les collègues d'une alerte — vous êtes rarement le seul destinataire. Que le filtre l'ait classé indésirable ne change rien : il n'aura pas attrapé toutes les variantes. Et le numéro indiqué dans le message appartient à celui qui l'a écrit : vous confirmeriez auprès de l'escroc.",
       "reponses": [
         {
           "libelle": "Le signaler à la DSI même si je ne suis pas certain",
@@ -201,11 +201,11 @@
           "correcte": true
         },
         {
-          "libelle": "Le supprimer discrètement pour ne pas encombrer la DSI",
+          "libelle": "Le supprimer sans le signaler dès lors que le filtre antispam l'a déjà classé comme indésirable",
           "correcte": false
         },
         {
-          "libelle": "Répondre à l'expéditeur pour lui demander de qui il s'agit",
+          "libelle": "Appeler le numéro indiqué dans le message pour confirmer avec l'expéditeur",
           "correcte": false
         }
       ]

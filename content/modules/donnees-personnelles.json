@@ -49,7 +49,7 @@
       "enonce": "Certaines données sont dites « sensibles » et bénéficient d'une protection renforcée. Lesquelles ?",
       "multiple": true,
       "points": 10,
-      "explication": "Le RGPD dresse une liste courte et fermée : santé, origine, opinions politiques, convictions religieuses, appartenance syndicale, vie sexuelle, données biométriques et génétiques. Leur traitement est interdit par principe, sauf exceptions prévues par la loi — dont la mission d'action sociale des communes. En pratique, cela signifie que le suivi d'un usager au CMS, un certificat médical joint à un dossier d'inscription ou un signalement de handicap réclament une prudence supérieure : accès limités aux seuls agents concernés, jamais de circulation par mail non protégé, jamais de conversation dans un couloir. Le numéro de sécurité sociale, sans être « sensible » au sens strict, est encadré à part et tout aussi peu bavard.",
+      "explication": "Le RGPD dresse une liste courte et fermée : santé, origine, opinions politiques, convictions religieuses, appartenance syndicale, vie sexuelle, données biométriques et génétiques. Leur traitement est interdit par principe, sauf exceptions prévues par la loi — dont la mission d'action sociale des communes. En pratique, cela signifie que le suivi d'un usager au CMS, un certificat médical joint à un dossier d'inscription ou un signalement de handicap réclament une prudence supérieure : accès limités aux seuls agents concernés, jamais de circulation par mail non protégé, jamais de conversation dans un couloir. Le numéro de sécurité sociale, sans être « sensible » au sens strict, est encadré à part et tout aussi peu bavard. Le quotient familial ou le revenu sont des données personnelles à protéger, mais ils ne figurent pas dans la liste des données sensibles.",
       "reponses": [
         {
           "libelle": "Les informations de santé figurant dans un dossier du CMS",
@@ -64,11 +64,11 @@
           "correcte": true
         },
         {
-          "libelle": "L'adresse postale d'un administré",
+          "libelle": "Le quotient familial d'une famille inscrite au centre de loisirs",
           "correcte": false
         },
         {
-          "libelle": "Le nom de famille d'un agent",
+          "libelle": "Le numéro de sécurité sociale d'un agent",
           "correcte": false
         }
       ]
@@ -77,22 +77,22 @@
       "enonce": "Vous conservez depuis 2014 un fichier des inscriptions au centre de loisirs, « au cas où ». Est-ce un problème ?",
       "multiple": false,
       "points": 10,
-      "explication": "Oui, et c'est l'un des manquements les plus fréquents en collectivité. Chaque traitement a une durée de conservation définie, au-delà de laquelle les données doivent être supprimées ou archivées selon les règles des archives publiques — qui existent et qui priment. Garder « au cas où » n'est pas une justification : c'est même le contraire d'une justification. Le risque n'est pas théorique : dix ans de fichiers d'enfants sur un partage réseau, c'est ce qui part en entier le jour d'un rançongiciel. La bonne démarche est de demander à la DPO la durée applicable, puis de purger — et non de décider seul de supprimer, car certaines données relèvent de l'archivage obligatoire.",
+      "explication": "Oui, et c'est l'un des manquements les plus fréquents en collectivité. Chaque traitement a une durée de conservation définie, au-delà de laquelle les données doivent être supprimées ou archivées selon les règles des archives publiques — qui existent et qui priment. Garder « au cas où » n'est pas une justification : c'est même le contraire d'une justification. Le risque n'est pas théorique : dix ans de fichiers d'enfants sur un partage réseau, c'est ce qui part en entier le jour d'un rançongiciel. La bonne démarche est de demander à la DPO la durée applicable, puis de purger — et non de décider seul de supprimer, car certaines données relèvent de l'archivage obligatoire. Une collecte légale ne rend pas la conservation illimitée : la durée fait partie des règles, au même titre que la finalité.",
       "reponses": [
         {
           "libelle": "Oui : je dois demander à la DPO la durée applicable, puis purger ou archiver",
           "correcte": true
         },
         {
-          "libelle": "Non : tant que le fichier n'est pas diffusé, sa conservation est libre",
+          "libelle": "Non : les données ont été collectées légalement, leur conservation l'est donc aussi",
           "correcte": false
         },
         {
-          "libelle": "Non : les archives d'une commune doivent tout conserver indéfiniment",
+          "libelle": "Non : les fichiers d'une commune relèvent des archives publiques et ne se suppriment jamais",
           "correcte": false
         },
         {
-          "libelle": "Oui : je le supprime immédiatement moi-même pour être en règle",
+          "libelle": "Oui : je le supprime moi-même sans attendre, la suppression étant toujours la solution la plus sûre",
           "correcte": false
         }
       ]
@@ -101,7 +101,7 @@
       "enonce": "Un administré demande à voir toutes les informations que la Ville détient sur lui. Que faites-vous ?",
       "multiple": true,
       "points": 10,
-      "explication": "C'est le droit d'accès, et il est de droit : la Ville doit répondre dans un délai d'un mois, gratuitement. Ce n'est pas à l'agent de guichet d'y répondre seul — la demande se transmet à la DPO, qui coordonne la réponse entre les services concernés et vérifie ce qui peut légalement être communiqué. Deux précautions comptent : s'assurer de l'identité du demandeur, car répondre au mauvais destinataire serait précisément la violation qu'on veut éviter, et ne pas communiquer au passage les données de tiers qui figureraient dans les mêmes documents. Ce qui n'est pas acceptable, c'est d'exiger un motif : la personne n'a pas à se justifier.",
+      "explication": "C'est le droit d'accès, et il est de droit : la Ville doit répondre dans un délai d'un mois, gratuitement. Ce n'est pas à l'agent de guichet d'y répondre seul — la demande se transmet à la DPO, qui coordonne la réponse entre les services concernés et vérifie ce qui peut légalement être communiqué. Deux précautions comptent : s'assurer de l'identité du demandeur, car répondre au mauvais destinataire serait précisément la violation qu'on veut éviter, et ne pas communiquer au passage les données de tiers qui figureraient dans les mêmes documents. Ce qui n'est pas acceptable, c'est d'exiger un motif : la personne n'a pas à se justifier. Imprimer le dossier au guichet, c'est répondre trop vite et trop partiellement : le logiciel métier n'est qu'une source parmi d'autres, et il contient des données de tiers.",
       "reponses": [
         {
           "libelle": "Transmettre la demande à la DPO, qui coordonne la réponse",
@@ -120,7 +120,7 @@
           "correcte": false
         },
         {
-          "libelle": "Lui répondre qu'une telle demande n'est pas prévue par la réglementation",
+          "libelle": "Lui répondre au guichet en imprimant son dossier depuis le logiciel métier",
           "correcte": false
         }
       ]
@@ -129,7 +129,7 @@
       "enonce": "Vous refondez la fiche d'inscription au centre de loisirs. Quelles informations demander ?",
       "multiple": true,
       "points": 10,
-      "explication": "Le principe de minimisation dit qu'on ne collecte que ce qui est nécessaire à la finalité annoncée. Pour accueillir un enfant, il faut savoir qui prévenir en urgence, ce qu'il ne peut pas manger et qui est autorisé à venir le chercher : tout cela est indispensable. La profession des parents et leur situation matrimoniale n'ont aucun rapport avec l'accueil de l'enfant — sauf si un tarif en dépend, et alors c'est le service qui calcule le quotient qui les traite, pas la fiche d'accueil. La question à se poser devant chaque champ : que se passe-t-il si je ne l'ai pas ? Si la réponse est « rien », le champ n'a pas lieu d'être.",
+      "explication": "Le principe de minimisation dit qu'on ne collecte que ce qui est nécessaire à la finalité annoncée. Pour accueillir un enfant, il faut savoir qui prévenir en urgence, ce qu'il ne peut pas manger et qui est autorisé à venir le chercher : tout cela est indispensable. La profession des parents et leur situation matrimoniale n'ont aucun rapport avec l'accueil de l'enfant — sauf si un tarif en dépend, et alors c'est le service qui calcule le quotient qui les traite, pas la fiche d'accueil. La question à se poser devant chaque champ : que se passe-t-il si je ne l'ai pas ? Si la réponse est « rien », le champ n'a pas lieu d'être. Le numéro de sécurité sociale n'a rien à faire sur une fiche d'accueil : son usage est réservé à des cas fixés par décret, et un numéro de dossier interne suffit à retrouver une famille.",
       "reponses": [
         {
           "libelle": "Les coordonnées des personnes à prévenir en cas d'urgence",
@@ -144,11 +144,11 @@
           "correcte": true
         },
         {
-          "libelle": "La profession des parents, pour mieux connaître les familles",
+          "libelle": "La profession des parents, utile pour adapter les horaires d'accueil",
           "correcte": false
         },
         {
-          "libelle": "La situation matrimoniale des parents, par curiosité statistique",
+          "libelle": "Le numéro de sécurité sociale des parents, pour retrouver facilement le dossier",
           "correcte": false
         }
       ]
@@ -157,7 +157,7 @@
       "enonce": "La Police Municipale demande au CCAS la liste des bénéficiaires d'une aide, pour « faciliter ses tournées ». Que répondez-vous ?",
       "multiple": true,
       "points": 10,
-      "explication": "Appartenir à la même collectivité ne crée aucun droit d'accès. Chaque traitement a une finalité, et des données collectées pour instruire une aide sociale ne peuvent pas servir à autre chose sans base légale — c'est le détournement de finalité, l'un des manquements les plus lourdement sanctionnés. S'ajoute ici le secret professionnel qui s'impose aux agents du CCAS. Cela ne veut pas dire qu'aucun échange n'est possible : certains cas, dont le signalement de personnes vulnérables, sont expressément prévus par les textes. C'est précisément pour distinguer les deux que la DPO existe : on lui pose la question avant de transmettre, pas après.",
+      "explication": "Appartenir à la même collectivité ne crée aucun droit d'accès. Chaque traitement a une finalité, et des données collectées pour instruire une aide sociale ne peuvent pas servir à autre chose sans base légale — c'est le détournement de finalité, l'un des manquements les plus lourdement sanctionnés. S'ajoute ici le secret professionnel qui s'impose aux agents du CCAS. Cela ne veut pas dire qu'aucun échange n'est possible : certains cas, dont le signalement de personnes vulnérables, sont expressément prévus par les textes. C'est précisément pour distinguer les deux que la DPO existe : on lui pose la question avant de transmettre, pas après. La signature de la Maire ne crée pas une base légale : l'autorité hiérarchique ne lève ni la finalité ni le secret professionnel.",
       "reponses": [
         {
           "libelle": "Que la finalité de la collecte ne permet pas cet usage",
@@ -176,7 +176,7 @@
           "correcte": false
         },
         {
-          "libelle": "Que c'est possible si la demande est faite par écrit",
+          "libelle": "Que c'est possible si la demande est validée par la Maire, autorité hiérarchique des deux services",
           "correcte": false
         }
       ]
@@ -185,7 +185,7 @@
       "enonce": "Dans quelles situations faut-il saisir la DPO ?",
       "multiple": true,
       "points": 10,
-      "explication": "La DPO n'est pas là pour dire non : elle est là pour que le projet tienne. Quatre moments comptent. Avant de mettre en place un nouveau traitement — logiciel, formulaire, dispositif de vidéoprotection, outil d'IA — car il est infiniment plus simple de cadrer avant que de corriger après. Dès qu'un incident touche des données personnelles, à cause du délai de 72 heures. Quand un administré exerce un droit. Et quand vous hésitez, tout simplement : une question posée pour rien ne coûte que quelques minutes. Ce qui coûte cher, c'est le fichier envoyé à un prestataire sans que personne ne sache qu'il existe.",
+      "explication": "La DPO n'est pas là pour dire non : elle est là pour que le projet tienne. Quatre moments comptent. Avant de mettre en place un nouveau traitement — logiciel, formulaire, dispositif de vidéoprotection, outil d'IA — car il est infiniment plus simple de cadrer avant que de corriger après. Dès qu'un incident touche des données personnelles, à cause du délai de 72 heures. Quand un administré exerce un droit. Et quand vous hésitez, tout simplement : une question posée pour rien ne coûte que quelques minutes. Ce qui coûte cher, c'est le fichier envoyé à un prestataire sans que personne ne sache qu'il existe. Prévenir la DPO une fois l'outil en place, « pour le registre », c'est trop tard : le registre se remplit avant, pas après.",
       "reponses": [
         {
           "libelle": "Avant de déployer un nouveau logiciel ou formulaire qui collecte des données",
@@ -204,7 +204,7 @@
           "correcte": true
         },
         {
-          "libelle": "Uniquement quand la CNIL contrôle la collectivité",
+          "libelle": "Une fois le nouveau traitement en place, pour qu'elle l'inscrive au registre",
           "correcte": false
         }
       ]

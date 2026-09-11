@@ -40,7 +40,7 @@
           "correcte": true
         },
         {
-          "libelle": "Rien, si le message reprend l'historique de nos échanges précédents",
+          "libelle": "Rien de particulier si le message arrive en réponse dans un fil existant, avec tout l'historique des échanges",
           "correcte": false
         }
       ]
@@ -49,22 +49,22 @@
       "enonce": "Comment vérifier correctement un changement de coordonnées bancaires ?",
       "multiple": false,
       "points": 10,
-      "explication": "Tout tient dans le canal. Rappeler au numéro figurant dans le message ou dans sa signature, c'est appeler l'escroc : il a écrit les deux. Le seul numéro fiable est celui du contrat, du marché ou d'une facture ancienne — antérieure au message. Répondre par mail ne vaut rien non plus, puisque la réponse arrivera à celui qui contrôle la conversation. Et l'ancienneté de la relation ne prouve rien : les fraudes les mieux réussies visent des fournisseurs de longue date, précisément parce que la confiance y est installée.",
+      "explication": "Tout tient dans le canal. Rappeler au numéro figurant dans le message ou dans sa signature, c'est appeler l'escroc : il a écrit les deux. Le seul numéro fiable est celui du contrat, du marché ou d'une facture ancienne — antérieure au message. Répondre par mail ne vaut rien non plus, puisque la réponse arrivera à celui qui contrôle la conversation. Et l'ancienneté de la relation ne prouve rien : les fraudes les mieux réussies visent des fournisseurs de longue date, précisément parce que la confiance y est installée. Une attestation ou un RIB à en-tête obtenus par le même canal ne valent pas plus : celui qui tient la conversation fournira les documents qu'on lui demande. Le nom du titulaire et le pays de la banque ne prouvent rien non plus : les escrocs ouvrent des comptes au nom du fournisseur, y compris en France.",
       "reponses": [
         {
           "libelle": "En appelant le fournisseur au numéro figurant au contrat ou sur une facture antérieure",
           "correcte": true
         },
         {
-          "libelle": "En rappelant le numéro indiqué dans le message",
+          "libelle": "En appelant le numéro indiqué dans la signature du message, qui est celui de notre contact habituel",
           "correcte": false
         },
         {
-          "libelle": "En répondant au mail pour demander une confirmation écrite",
+          "libelle": "En demandant par retour de mail une attestation de la banque ou un RIB sur papier à en-tête",
           "correcte": false
         },
         {
-          "libelle": "En vérifiant que le nom du titulaire du compte correspond, cela suffit",
+          "libelle": "En contrôlant que le nom du titulaire du compte et le pays de la banque correspondent bien au fournisseur",
           "correcte": false
         }
       ]
@@ -73,7 +73,7 @@
       "enonce": "Le service Marchés Publics reçoit une facture d'un prestataire pour une prestation « réalisée le mois dernier ». Que vérifier avant paiement ?",
       "multiple": true,
       "points": 10,
-      "explication": "La fausse facture prospère sur les circuits longs : celui qui reçoit ne sait pas si la prestation a eu lieu, celui qui sait ne voit pas passer la facture. Trois vérifications suffisent le plus souvent. La prestation correspond-elle à un marché ou à un bon de commande existant ? Le service concerné confirme-t-il qu'elle a bien été réalisée ? Le RIB est-il celui déjà enregistré ? S'y ajoute un contrôle simple de cohérence des montants. À l'inverse, la qualité du papier à en-tête et l'urgence invoquée n'ont aucune valeur probante — l'urgence est même le levier principal de la fraude.",
+      "explication": "La fausse facture prospère sur les circuits longs : celui qui reçoit ne sait pas si la prestation a eu lieu, celui qui sait ne voit pas passer la facture. Trois vérifications suffisent le plus souvent. La prestation correspond-elle à un marché ou à un bon de commande existant ? Le service concerné confirme-t-il qu'elle a bien été réalisée ? Le RIB est-il celui déjà enregistré ? S'y ajoute un contrôle simple de cohérence des montants. À l'inverse, la qualité du papier à en-tête et l'urgence invoquée n'ont aucune valeur probante — l'urgence est même le levier principal de la fraude. Le SIRET, le logo et l'en-tête sont publics, donc recopiables : ils n'ont aucune valeur probante. Et les relances répétées ne confirment rien : elles font partie du scénario.",
       "reponses": [
         {
           "libelle": "Que la prestation correspond à un marché ou un bon de commande existant",
@@ -88,11 +88,11 @@
           "correcte": true
         },
         {
-          "libelle": "Que le papier à en-tête est de bonne qualité",
+          "libelle": "Que la facture reprend bien le numéro de SIRET et le logo du prestataire",
           "correcte": false
         },
         {
-          "libelle": "Que le fournisseur signale un règlement urgent",
+          "libelle": "Que le prestataire a relancé plusieurs fois, ce qui confirme que la facture est bien attendue",
           "correcte": false
         }
       ]
@@ -101,7 +101,7 @@
       "enonce": "Pourquoi l'urgence est-elle presque toujours présente dans ces fraudes ?",
       "multiple": true,
       "points": 10,
-      "explication": "L'urgence n'est pas un décor, c'est l'outil. Elle empêche l'appel de vérification, qui prendrait trois minutes et ferait tout échouer. Elle sert de prétexte pour sauter une étape du circuit habituel — « exceptionnellement, sans passer par la commission ». Et elle place l'agent devant un dilemme personnel : bloquer une opération présentée comme vitale, ou faire confiance. Les escrocs choisissent d'ailleurs leurs moments — veille de congés, pont de mai, fin d'exercice — quand les valideurs habituels sont absents. La contre-mesure est une règle simple et connue de tous : aucune urgence ne justifie de sauter la vérification, et personne ne sera jamais sanctionné pour avoir pris trois minutes.",
+      "explication": "L'urgence n'est pas un décor, c'est l'outil. Elle empêche l'appel de vérification, qui prendrait trois minutes et ferait tout échouer. Elle sert de prétexte pour sauter une étape du circuit habituel — « exceptionnellement, sans passer par la commission ». Et elle place l'agent devant un dilemme personnel : bloquer une opération présentée comme vitale, ou faire confiance. Les escrocs choisissent d'ailleurs leurs moments — veille de congés, pont de mai, fin d'exercice — quand les valideurs habituels sont absents. La contre-mesure est une règle simple et connue de tous : aucune urgence ne justifie de sauter la vérification, et personne ne sera jamais sanctionné pour avoir pris trois minutes. Le retard de paiement réel des collectivités n'explique rien : un vrai fournisseur relance par les voies habituelles, il ne demande pas de changer de RIB dans l'heure.",
       "reponses": [
         {
           "libelle": "Elle empêche la vérification par un canal indépendant",
@@ -120,7 +120,7 @@
           "correcte": true
         },
         {
-          "libelle": "Elle prouve que la demande vient bien de la hiérarchie",
+          "libelle": "Elle reflète le délai global de paiement de 30 jours, que les collectivités dépassent souvent",
           "correcte": false
         }
       ]
@@ -129,7 +129,7 @@
       "enonce": "Quelles organisations internes rendent la fraude plus difficile ?",
       "multiple": true,
       "points": 10,
-      "explication": "Aucun agent ne devrait pouvoir, seul, créer un tiers et lui payer une facture : la séparation entre celui qui saisit et celui qui valide est la protection la plus efficace, et elle protège aussi l'agent en cas de contestation. Un seuil au-delà duquel une double validation s'impose complète le dispositif. Une procédure écrite pour les changements de RIB évite que chacun improvise, et le fait de l'avoir répétée en équipe compte plus que son existence dans un classeur. Ce qui ne fonctionne pas : compter sur la vigilance individuelle, qui varie avec la fatigue, ou espérer que la trésorerie rattrapera l'erreur — le comptable public vérifie la régularité, pas l'authenticité d'un RIB.",
+      "explication": "Aucun agent ne devrait pouvoir, seul, créer un tiers et lui payer une facture : la séparation entre celui qui saisit et celui qui valide est la protection la plus efficace, et elle protège aussi l'agent en cas de contestation. Un seuil au-delà duquel une double validation s'impose complète le dispositif. Une procédure écrite pour les changements de RIB évite que chacun improvise, et le fait de l'avoir répétée en équipe compte plus que son existence dans un classeur. Ce qui ne fonctionne pas : compter sur la vigilance individuelle, qui varie avec la fatigue, ou espérer que la trésorerie rattrapera l'erreur — le comptable public vérifie la régularité, pas l'authenticité d'un RIB. La formation aide, mais elle ne remplace pas la règle.",
       "reponses": [
         {
           "libelle": "Séparer celui qui saisit le tiers de celui qui valide le paiement",
@@ -144,11 +144,11 @@
           "correcte": true
         },
         {
-          "libelle": "Compter sur la vigilance de chacun, sans formaliser de règle",
+          "libelle": "Former chaque agent à reconnaître les indices d'un mail frauduleux, ce qui rend les contrôles formels superflus",
           "correcte": false
         },
         {
-          "libelle": "S'en remettre au comptable public, qui détectera l'anomalie",
+          "libelle": "Compter sur le contrôle du comptable public, qui vérifie chaque mandat avant paiement",
           "correcte": false
         }
       ]
@@ -157,22 +157,22 @@
       "enonce": "Un appel : « Direction générale des Finances publiques, nous régularisons un trop-perçu, confirmez-nous les coordonnées de la régie ». Que faites-vous ?",
       "multiple": false,
       "points": 10,
-      "explication": "L'administration fiscale et le comptable public ne procèdent pas par appels impromptus pour collecter des coordonnées bancaires ou des identifiants : ils écrivent, par les canaux officiels que la collectivité connaît déjà. L'affichage d'un numéro officiel ne prouve rien, il se falsifie. Le bon réflexe est de raccrocher et de rappeler votre interlocuteur habituel à la trésorerie, au numéro que vous avez, pas à celui qu'on vous donne. Et de le signaler, car ces campagnes visent plusieurs communes à la fois : prévenir les collègues des Finances évite le deuxième appel, celui qui aboutit.",
+      "explication": "L'administration fiscale et le comptable public ne procèdent pas par appels impromptus pour collecter des coordonnées bancaires ou des identifiants : ils écrivent, par les canaux officiels que la collectivité connaît déjà. L'affichage d'un numéro officiel ne prouve rien, il se falsifie. Le bon réflexe est de raccrocher et de rappeler votre interlocuteur habituel à la trésorerie, au numéro que vous avez, pas à celui qu'on vous donne. Et de le signaler, car ces campagnes visent plusieurs communes à la fois : prévenir les collègues des Finances évite le deuxième appel, celui qui aboutit. Confirmer ce que l'appelant annonce est déjà donner une information : c'est ainsi que s'assemble, pièce par pièce, un dossier complet. Même si un RIB figure sur des documents publics, ce n'est jamais le RIB seul que cherche l'appelant : c'est le nom du régisseur, ses habitudes, son numéro direct. Et une adresse d'expédition en @dgfip.finances.gouv.fr se falsifie aussi facilement qu'un numéro affiché.",
       "reponses": [
         {
           "libelle": "Je raccroche et je rappelle mon interlocuteur habituel à la trésorerie",
           "correcte": true
         },
         {
-          "libelle": "Je confirme : un trop-perçu est à l'avantage de la Ville",
+          "libelle": "Je confirme uniquement les informations que l'interlocuteur me cite déjà, sans en donner de nouvelles",
           "correcte": false
         },
         {
-          "libelle": "Je transmets les coordonnées, elles figurent déjà dans des documents publics",
+          "libelle": "Je transmets le RIB de la régie : il figure sur les avis de sommes à payer, ce n'est pas une donnée confidentielle",
           "correcte": false
         },
         {
-          "libelle": "Je demande un mail de confirmation avant de répondre",
+          "libelle": "Je demande que la demande me soit confirmée par un courriel depuis une adresse en @dgfip.finances.gouv.fr",
           "correcte": false
         }
       ]
@@ -181,7 +181,7 @@
       "enonce": "Le virement est parti sur un compte frauduleux. Quelles sont les premières heures ?",
       "multiple": true,
       "points": 10,
-      "explication": "Le temps est le seul allié. La banque doit être prévenue immédiatement : un rappel de fonds a des chances réelles tant que la somme n'a pas été dispersée, ce qui se compte en heures, pas en jours. Prévenir simultanément la direction, la trésorerie et la DSI permet d'ouvrir les trois volets — financier, comptable, technique — car il faut aussi savoir si une boîte a été compromise, sans quoi la fraude recommencera. La plainte suit, et elle est nécessaire à la suite du dossier. Ce qu'il ne faut surtout pas faire, c'est attendre par crainte du reproche : chaque heure perdue réduit à néant les chances de récupération.",
+      "explication": "Le temps est le seul allié. La banque doit être prévenue immédiatement : un rappel de fonds a des chances réelles tant que la somme n'a pas été dispersée, ce qui se compte en heures, pas en jours. Prévenir simultanément la direction, la trésorerie et la DSI permet d'ouvrir les trois volets — financier, comptable, technique — car il faut aussi savoir si une boîte a été compromise, sans quoi la fraude recommencera. La plainte suit, et elle est nécessaire à la suite du dossier. Ce qu'il ne faut surtout pas faire, c'est attendre par crainte du reproche : chaque heure perdue réduit à néant les chances de récupération. Attendre un responsable absent pour agir « proprement » revient au même : le rappel de fonds n'attend pas la coordination.",
       "reponses": [
         {
           "libelle": "Alerter la banque immédiatement pour tenter un rappel de fonds",
@@ -200,7 +200,7 @@
           "correcte": true
         },
         {
-          "libelle": "Attendre le lendemain de peur d'un reproche hiérarchique",
+          "libelle": "Attendre le retour du responsable des Finances pour agir de façon coordonnée",
           "correcte": false
         }
       ]

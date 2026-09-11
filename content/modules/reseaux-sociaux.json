@@ -21,7 +21,7 @@
       "enonce": "Quelles obligations pèsent sur un agent territorial qui s'exprime publiquement ?",
       "multiple": true,
       "points": 10,
-      "explication": "Trois obligations coexistent et se confondent souvent. Le secret professionnel interdit de révéler ce qu'on apprend dans l'exercice de ses fonctions — un dossier, une situation, un nom. La discrétion professionnelle couvre plus largement les faits et documents dont on a connaissance. L'obligation de réserve encadre la manière de s'exprimer, particulièrement pour les agents d'autorité et d'encadrement, sans interdire la critique : elle en interdit l'outrance et l'atteinte à la dignité des fonctions. Ce que ces obligations ne font pas, c'est priver l'agent de sa liberté d'opinion, ni de son droit syndical, ni de sa vie privée. Le principe est celui de la mesure, pas du silence.",
+      "explication": "Trois obligations coexistent et se confondent souvent. Le secret professionnel interdit de révéler ce qu'on apprend dans l'exercice de ses fonctions — un dossier, une situation, un nom. La discrétion professionnelle couvre plus largement les faits et documents dont on a connaissance. L'obligation de réserve encadre la manière de s'exprimer, particulièrement pour les agents d'autorité et d'encadrement, sans interdire la critique : elle en interdit l'outrance et l'atteinte à la dignité des fonctions. Ce que ces obligations ne font pas, c'est priver l'agent de sa liberté d'opinion, ni de son droit syndical, ni de sa vie privée. Le principe est celui de la mesure, pas du silence. La neutralité s'impose dans l'exercice des fonctions, pas sur un compte personnel, et aucune autorisation préalable de la hiérarchie n'est requise pour s'exprimer à titre privé.",
       "reponses": [
         {
           "libelle": "Le secret professionnel sur ce qu'on apprend dans ses fonctions",
@@ -36,11 +36,11 @@
           "correcte": true
         },
         {
-          "libelle": "L'interdiction totale de s'exprimer sur les réseaux sociaux",
+          "libelle": "Le devoir de neutralité, qui interdit d'afficher une appartenance syndicale ou politique sur un compte personnel",
           "correcte": false
         },
         {
-          "libelle": "L'interdiction d'avoir des opinions politiques",
+          "libelle": "L'obligation d'obtenir l'accord de sa hiérarchie avant toute prise de parole publique",
           "correcte": false
         }
       ]
@@ -49,7 +49,7 @@
       "enonce": "Vous êtes agacé par une décision prise dans votre service et vous en parlez sur votre compte personnel. Qu'est-ce qui pose problème ?",
       "multiple": true,
       "points": 10,
-      "explication": "Le fait d'exprimer un désaccord n'est pas en soi fautif : le point de bascule est ailleurs. Citer un dossier ou une personne identifiable rompt le secret et la discrétion, et cela vaut même sans nommer explicitement — dans une commune, « le dossier de la dame du troisième étage » désigne quelqu'un. Publier un document interne est une faute distincte et plus lourde. Mentionner sa qualité d'agent de Châtillon transforme un propos personnel en propos qui engage l'image du service. Et un compte « privé » ne l'est pas : une capture d'écran circule en une seconde, et la jurisprudence retient régulièrement des propos tenus en cercle restreint.",
+      "explication": "Le fait d'exprimer un désaccord n'est pas en soi fautif : le point de bascule est ailleurs. Citer un dossier ou une personne identifiable rompt le secret et la discrétion, et cela vaut même sans nommer explicitement — dans une commune, « le dossier de la dame du troisième étage » désigne quelqu'un. Publier un document interne est une faute distincte et plus lourde. Mentionner sa qualité d'agent de Châtillon transforme un propos personnel en propos qui engage l'image du service. Et un compte « privé » ne l'est pas : une capture d'écran circule en une seconde, et la jurisprudence retient régulièrement des propos tenus en cercle restreint. Le réglage « amis uniquement » ne change rien à l'analyse : ce qui compte, c'est ce que le message permet d'identifier, pas le nombre de personnes qui le voient d'abord.",
       "reponses": [
         {
           "libelle": "Citer un dossier ou une personne identifiable, même sans la nommer",
@@ -64,11 +64,11 @@
           "correcte": true
         },
         {
-          "libelle": "Rien : un compte privé n'engage que moi et mes amis",
+          "libelle": "Rien, tant que le compte est réglé sur « amis uniquement » et que je ne mentionne pas la Ville",
           "correcte": false
         },
         {
-          "libelle": "Rien : je n'ai cité aucun nom",
+          "libelle": "Rien : sans nom ni service cité, personne ne peut être identifié",
           "correcte": false
         }
       ]
@@ -77,7 +77,7 @@
       "enonce": "En quoi vos publications personnelles peuvent-elles servir à attaquer la collectivité ?",
       "multiple": true,
       "points": 10,
-      "explication": "La préparation d'une attaque ciblée commence par une collecte publique, gratuite et parfaitement légale. Une photo de bureau montre l'écran, un post-it, un badge, parfois un plan des locaux. Annoncer ses congés indique quand le service est fragile et qui ne pourra pas vérifier un appel. Un profil professionnel bien renseigné donne l'organigramme réel, les noms et les fonctions — c'est ainsi que l'expéditeur d'une fraude au virement sait à qui écrire et de la part de qui. Et vos réponses aux petits jeux « votre premier animal, votre ville de naissance » sont exactement les questions de récupération de compte. Rien de tout cela n'exige de renoncer à publier ; il suffit de savoir ce qu'on donne.",
+      "explication": "La préparation d'une attaque ciblée commence par une collecte publique, gratuite et parfaitement légale. Une photo de bureau montre l'écran, un post-it, un badge, parfois un plan des locaux. Annoncer ses congés indique quand le service est fragile et qui ne pourra pas vérifier un appel. Un profil professionnel bien renseigné donne l'organigramme réel, les noms et les fonctions — c'est ainsi que l'expéditeur d'une fraude au virement sait à qui écrire et de la part de qui. Et vos réponses aux petits jeux « votre premier animal, votre ville de naissance » sont exactement les questions de récupération de compte. Rien de tout cela n'exige de renoncer à publier ; il suffit de savoir ce qu'on donne. Relayer un article de presse déjà public n'apprend rien à personne : ce qui compte, c'est ce qui n'est visible que de l'intérieur.",
       "reponses": [
         {
           "libelle": "Une photo de bureau où l'on distingue un écran, un badge ou un post-it",
@@ -96,7 +96,7 @@
           "correcte": true
         },
         {
-          "libelle": "Une photo de vacances sans aucun élément professionnel",
+          "libelle": "Le partage d'un article de presse sur les projets de la Ville",
           "correcte": false
         }
       ]
@@ -105,7 +105,7 @@
       "enonce": "Un habitant vous interpelle publiquement sur un réseau social au sujet d'un dossier qu'il suit. Que faites-vous ?",
       "multiple": true,
       "points": 10,
-      "explication": "Répondre publiquement sur le fond, c'est traiter un dossier individuel en place publique : c'est une atteinte au secret, même avec les meilleures intentions, et cela crée un précédent que le service ne pourra pas tenir. La bonne conduite est d'inviter la personne à passer par le canal officiel du service, sans entrer dans le détail, et de signaler l'interpellation à sa hiérarchie et à la communication — qui gèrent ce type de sollicitation et ont parfois déjà une réponse. Répondre en message privé depuis un compte personnel n'est pas non plus la solution : l'échange sort de toute traçabilité et vous laisse seul en cas de contestation.",
+      "explication": "Répondre publiquement sur le fond, c'est traiter un dossier individuel en place publique : c'est une atteinte au secret, même avec les meilleures intentions, et cela crée un précédent que le service ne pourra pas tenir. La bonne conduite est d'inviter la personne à passer par le canal officiel du service, sans entrer dans le détail, et de signaler l'interpellation à sa hiérarchie et à la communication — qui gèrent ce type de sollicitation et ont parfois déjà une réponse. Répondre en message privé depuis un compte personnel n'est pas non plus la solution : l'échange sort de toute traçabilité et vous laisse seul en cas de contestation. Corriger « seulement une erreur factuelle » revient déjà à parler du dossier en public : c'est le service, par son canal, qui rectifie.",
       "reponses": [
         {
           "libelle": "Inviter la personne à passer par le canal officiel du service",
@@ -120,11 +120,11 @@
           "correcte": true
         },
         {
-          "libelle": "Répondre publiquement pour rétablir les faits",
+          "libelle": "Répondre publiquement, mais seulement pour corriger une information factuellement fausse sur le dossier",
           "correcte": false
         },
         {
-          "libelle": "Répondre en message privé depuis mon compte personnel",
+          "libelle": "Basculer en message privé pour lui répondre sur le fond, à l'abri des regards",
           "correcte": false
         }
       ]
@@ -133,7 +133,7 @@
       "enonce": "Vous animez une page officielle d'un équipement de la Ville. Quelles règles s'appliquent aux photos ?",
       "multiple": true,
       "points": 10,
-      "explication": "Publier l'image d'une personne suppose son autorisation, écrite et conservée — et celle des titulaires de l'autorité parentale pour un mineur. Cette autorisation n'est pas éternelle : elle peut être retirée, et il faut alors dépublier. Une vue d'ensemble où personne n'est identifiable échappe à cette contrainte, et c'est souvent la meilleure façon d'illustrer une animation sans monter un dossier. Ce qui n'est jamais acceptable : publier d'abord et retirer si quelqu'un se plaint — le dommage est fait dès la mise en ligne, et les images sont recopiées. Le compte personnel de l'agent, enfin, n'est pas le canal de l'équipement.",
+      "explication": "Publier l'image d'une personne suppose son autorisation, écrite et conservée — et celle des titulaires de l'autorité parentale pour un mineur. Cette autorisation n'est pas éternelle : elle peut être retirée, et il faut alors dépublier. Une vue d'ensemble où personne n'est identifiable échappe à cette contrainte, et c'est souvent la meilleure façon d'illustrer une animation sans monter un dossier. Ce qui n'est jamais acceptable : publier d'abord et retirer si quelqu'un se plaint — le dommage est fait dès la mise en ligne, et les images sont recopiées. Le compte personnel de l'agent, enfin, n'est pas le canal de l'équipement. Un affichage à l'entrée n'est pas une autorisation : elle est individuelle, écrite et conservée.",
       "reponses": [
         {
           "libelle": "Une autorisation écrite est nécessaire pour toute personne identifiable",
@@ -152,7 +152,7 @@
           "correcte": true
         },
         {
-          "libelle": "On peut publier et retirer ensuite si quelqu'un se plaint",
+          "libelle": "Un affichage « des photos pourront être prises » à l'entrée vaut autorisation pour les participants",
           "correcte": false
         }
       ]
@@ -161,7 +161,7 @@
       "enonce": "Un compte se fait passer pour vous et écrit à vos collègues. Que faites-vous ?",
       "multiple": true,
       "points": 10,
-      "explication": "L'usurpation de profil est une infraction, et elle sert le plus souvent à obtenir quelque chose de vos collègues — un virement, un document, un mot de passe — en s'appuyant sur la confiance qu'ils vous accordent. Trois gestes : signaler le compte à la plateforme, prévenir explicitement vos collègues et votre hiérarchie pour couper l'effet de surprise, et conserver des captures d'écran, qui serviront à la plainte. Prévenir la DSI a du sens dès que la collectivité est visée. Ce qui ne sert à rien, c'est de contacter l'usurpateur pour lui demander de cesser : cela le renseigne sur votre réaction et rien d'autre. Et attendre que cela passe laisse le champ libre.",
+      "explication": "L'usurpation de profil est une infraction, et elle sert le plus souvent à obtenir quelque chose de vos collègues — un virement, un document, un mot de passe — en s'appuyant sur la confiance qu'ils vous accordent. Trois gestes : signaler le compte à la plateforme, prévenir explicitement vos collègues et votre hiérarchie pour couper l'effet de surprise, et conserver des captures d'écran, qui serviront à la plainte. Prévenir la DSI a du sens dès que la collectivité est visée. Ce qui ne sert à rien, c'est de contacter l'usurpateur pour lui demander de cesser : cela le renseigne sur votre réaction et rien d'autre. Et attendre que cela passe laisse le champ libre. Cela vaut aussi sous forme de mise en demeure : la preuve, ce sont les captures, pas votre message. Et attendre la réponse de la plateforme avant d'alerter les collègues laisse à l'usurpateur les jours dont il a besoin.",
       "reponses": [
         {
           "libelle": "Signaler le compte à la plateforme",
@@ -176,11 +176,11 @@
           "correcte": true
         },
         {
-          "libelle": "Contacter l'usurpateur pour lui demander d'arrêter",
+          "libelle": "Écrire au compte usurpateur pour le mettre en demeure de cesser, ce qui constituera une preuve pour la plainte",
           "correcte": false
         },
         {
-          "libelle": "Attendre : ce genre de compte disparaît tout seul",
+          "libelle": "Attendre la réponse de la plateforme avant d'alerter les collègues, pour ne pas créer d'inquiétude inutile",
           "correcte": false
         }
       ]
@@ -189,7 +189,7 @@
       "enonce": "Quels réglages de compte valent la peine d'être vérifiés une fois par an ?",
       "multiple": true,
       "points": 10,
-      "explication": "Un compte se configure une fois et se dérègle tout seul : les plateformes changent leurs options, et d'anciens réglages deviennent permissifs. Quatre points méritent une visite annuelle. La double authentification, qui est la seule protection réellement efficace contre le vol de compte. Les applications tierces autorisées, qui s'accumulent au fil des connexions « avec mon compte » et gardent leurs accès des années. La visibilité des publications anciennes, souvent bien plus large qu'on ne le croit. Et la liste des appareils connectés, qui contient parfois un téléphone revendu il y a deux ans. Multiplier les comptes, en revanche, ne protège de rien — cela multiplie simplement les surfaces à surveiller.",
+      "explication": "Un compte se configure une fois et se dérègle tout seul : les plateformes changent leurs options, et d'anciens réglages deviennent permissifs. Quatre points méritent une visite annuelle. La double authentification, qui est la seule protection réellement efficace contre le vol de compte. Les applications tierces autorisées, qui s'accumulent au fil des connexions « avec mon compte » et gardent leurs accès des années. La visibilité des publications anciennes, souvent bien plus large qu'on ne le croit. Et la liste des appareils connectés, qui contient parfois un téléphone revendu il y a deux ans. Multiplier les comptes, en revanche, ne protège de rien — cela multiplie simplement les surfaces à surveiller. Changer le mot de passe chaque année par principe n'apporte rien s'il est long, unique et protégé par la double authentification : on le change en cas de fuite, pas au calendrier.",
       "reponses": [
         {
           "libelle": "L'activation de la double authentification",
@@ -208,7 +208,7 @@
           "correcte": true
         },
         {
-          "libelle": "Le nombre de comptes ouverts : plus il y en a, mieux on se protège",
+          "libelle": "Le mot de passe, à renouveler chaque année par précaution",
           "correcte": false
         }
       ]

@@ -21,7 +21,7 @@
       "enonce": "Vous venez de saisir votre mot de passe sur une page qui imitait le portail de la Ville. Que faites-vous, et dans quel ordre ?",
       "multiple": true,
       "points": 10,
-      "explication": "L'ordre compte. Changer le mot de passe immédiatement ferme la porte avant que l'attaquant ne s'en serve — et il s'en sert vite, souvent dans l'heure. Prévenir la DSI dans la foulée permet de vérifier ce qui a été fait avec le compte, de regarder si des règles de transfert automatique ont été créées dans la boîte, et d'alerter les collègues visés par la même campagne. Si le mot de passe servait ailleurs — et cela arrive à tout le monde — il faut le changer partout où il a été réutilisé. La seule mauvaise réaction est le silence : un compte compromis dont personne n'est prévenu sert de porte d'entrée pendant des semaines.",
+      "explication": "L'ordre compte. Changer le mot de passe immédiatement ferme la porte avant que l'attaquant ne s'en serve — et il s'en sert vite, souvent dans l'heure. Prévenir la DSI dans la foulée permet de vérifier ce qui a été fait avec le compte, de regarder si des règles de transfert automatique ont été créées dans la boîte, et d'alerter les collègues visés par la même campagne. Si le mot de passe servait ailleurs — et cela arrive à tout le monde — il faut le changer partout où il a été réutilisé. La seule mauvaise réaction est le silence : un compte compromis dont personne n'est prévenu sert de porte d'entrée pendant des semaines. Changer le mot de passe ne suffit pas à lui seul : une session déjà ouverte reste active et une règle de transfert créée entre-temps survit au changement. Et vérifier soi-même l'historique du compte avant d'appeler fait perdre l'heure qui compte : c'est le travail de la DSI, pas le vôtre.",
       "reponses": [
         {
           "libelle": "Changer immédiatement le mot de passe concerné",
@@ -36,11 +36,11 @@
           "correcte": true
         },
         {
-          "libelle": "Ne rien dire et surveiller discrètement si quelque chose se produit",
+          "libelle": "Consulter d'abord l'historique de connexion du compte pour vérifier si quelqu'un s'en est servi, avant de déranger la DSI",
           "correcte": false
         },
         {
-          "libelle": "Attendre le lendemain pour ne pas déranger pendant la réunion de direction",
+          "libelle": "Changer le mot de passe suffit : sans lui, l'attaquant n'a plus aucun accès au compte",
           "correcte": false
         }
       ]
@@ -49,7 +49,7 @@
       "enonce": "Un message inhabituel s'affiche : vos fichiers sont chiffrés et une rançon est demandée. Quels gestes sont les bons ?",
       "multiple": true,
       "points": 10,
-      "explication": "Débrancher le câble réseau — ou couper le Wi-Fi — stoppe la propagation vers les serveurs et les autres postes : c'est le geste le plus utile des premières secondes. En revanche, il ne faut surtout pas éteindre l'ordinateur : une partie des traces, et parfois la clé de déchiffrement, ne vivent que dans la mémoire vive et disparaissent à l'extinction. On ne paye jamais : cela finance l'attaque suivante et ne garantit rien, les collectivités qui ont payé n'ont pas toujours récupéré leurs données. Enfin, on prévient la DSI par téléphone, pas par mail : la messagerie fait peut-être déjà partie du problème.",
+      "explication": "Débrancher le câble réseau — ou couper le Wi-Fi — stoppe la propagation vers les serveurs et les autres postes : c'est le geste le plus utile des premières secondes. En revanche, il ne faut surtout pas éteindre l'ordinateur : une partie des traces, et parfois la clé de déchiffrement, ne vivent que dans la mémoire vive et disparaissent à l'extinction. On ne paye jamais : cela finance l'attaque suivante et ne garantit rien, les collectivités qui ont payé n'ont pas toujours récupéré leurs données. Enfin, on prévient la DSI par téléphone, pas par mail : la messagerie fait peut-être déjà partie du problème. Lancer soi-même un antivirus ou un nettoyage n'est pas non plus le bon geste : le chiffrement est déjà fait, et cela brouille les traces dont la DSI a besoin.",
       "reponses": [
         {
           "libelle": "Débrancher le câble réseau ou couper le Wi-Fi du poste",
@@ -64,11 +64,11 @@
           "correcte": true
         },
         {
-          "libelle": "Éteindre l'ordinateur pour arrêter le chiffrement",
+          "libelle": "Éteindre le poste sans attendre : chaque minute de plus chiffre des fichiers supplémentaires",
           "correcte": false
         },
         {
-          "libelle": "Payer la rançon si le montant demandé reste modeste",
+          "libelle": "Lancer soi-même une analyse antivirus complète pour stopper le programme avant d'appeler",
           "correcte": false
         }
       ]
@@ -77,7 +77,7 @@
       "enonce": "À Châtillon, qui prévenir en cas d'incident, et dans quel délai ?",
       "multiple": true,
       "points": 10,
-      "explication": "La DSI est le point d'entrée pour tout ce qui touche aux systèmes : elle est la seule à pouvoir couper un accès, isoler un poste et regarder les journaux. La DPO intervient dès que des données personnelles sont concernées, et son horloge est serrée : une violation de données doit être notifiée à la CNIL dans les 72 heures, ce qui laisse peu de place à l'hésitation. Prévenir sa hiérarchie relève du bon sens et permet d'organiser la continuité du service. Ce qui ne fonctionne pas, c'est d'attendre d'être sûr : c'est justement à la DSI d'établir s'il s'est passé quelque chose.",
+      "explication": "La DSI est le point d'entrée pour tout ce qui touche aux systèmes : elle est la seule à pouvoir couper un accès, isoler un poste et regarder les journaux. La DPO intervient dès que des données personnelles sont concernées, et son horloge est serrée : une violation de données doit être notifiée à la CNIL dans les 72 heures, ce qui laisse peu de place à l'hésitation. Prévenir sa hiérarchie relève du bon sens et permet d'organiser la continuité du service. Ce qui ne fonctionne pas, c'est d'attendre d'être sûr : c'est justement à la DSI d'établir s'il s'est passé quelque chose. Il n'est pas non plus nécessaire de constituer un dossier avant d'appeler : un doute se décrit en deux phrases. Quant au prestataire du logiciel, il a son rôle, mais c'est la DSI qui le sollicite : elle seule a la vue d'ensemble et le contrat pour le faire.",
       "reponses": [
         {
           "libelle": "La DSI, immédiatement, même en cas de simple doute",
@@ -92,11 +92,11 @@
           "correcte": true
         },
         {
-          "libelle": "Personne tant qu'on n'est pas certain qu'il s'est vraiment passé quelque chose",
+          "libelle": "La DSI, une fois qu'on a rassemblé assez d'éléments pour lui décrire précisément le problème",
           "correcte": false
         },
         {
-          "libelle": "Le prestataire du logiciel, directement, avant d'en parler en interne",
+          "libelle": "Le prestataire du logiciel concerné, en premier, puisqu'il connaît l'application mieux que la DSI",
           "correcte": false
         }
       ]
@@ -105,7 +105,7 @@
       "enonce": "Un agent a cliqué sur un lien piégé et le signale de lui-même. Que devrait-il se passer ?",
       "multiple": true,
       "points": 10,
-      "explication": "Une collectivité où l'on craint d'être sanctionné est une collectivité où les incidents se découvrent trois mois trop tard. Un signalement rapide vaut mieux qu'un dossier parfait : il doit être accueilli comme un service rendu, parce que c'en est un. Cela n'empêche ni d'analyser ce qui s'est passé, ni d'en tirer un rappel collectif — au contraire, un incident réel raconté sans nommer personne est le meilleur support de sensibilisation qui soit. Ce qui n'a pas sa place, c'est la sanction pour avoir cliqué, et l'affichage public de l'agent concerné.",
+      "explication": "Une collectivité où l'on craint d'être sanctionné est une collectivité où les incidents se découvrent trois mois trop tard. Un signalement rapide vaut mieux qu'un dossier parfait : il doit être accueilli comme un service rendu, parce que c'en est un. Cela n'empêche ni d'analyser ce qui s'est passé, ni d'en tirer un rappel collectif — au contraire, un incident réel raconté sans nommer personne est le meilleur support de sensibilisation qui soit. Ce qui n'a pas sa place, c'est la sanction pour avoir cliqué, et l'affichage public de l'agent concerné. Un rappel versé au dossier « sans sanction » en est une aux yeux de tous et produit le même silence. À l'inverse, garder l'incident entre l'agent et la DSI pour le protéger prive tout le monde de la leçon : on peut raconter sans nommer.",
       "reponses": [
         {
           "libelle": "Le signalement est accueilli comme utile, sans reproche",
@@ -120,11 +120,11 @@
           "correcte": true
         },
         {
-          "libelle": "Une sanction disciplinaire est engagée pour l'exemple",
+          "libelle": "Un rappel écrit est versé à son dossier, sans sanction, pour garder une trace de l'incident",
           "correcte": false
         },
         {
-          "libelle": "Son nom est cité en réunion de service pour que personne ne recommence",
+          "libelle": "L'incident reste entre l'agent et la DSI, sans rappel collectif, pour ne pas l'exposer",
           "correcte": false
         }
       ]
@@ -148,11 +148,11 @@
           "correcte": true
         },
         {
-          "libelle": "Rien à signaler : l'envoi était une erreur, pas une malveillance",
+          "libelle": "Le destinataire étant un partenaire connu et de confiance, il n'y a pas de violation au sens du RGPD",
           "correcte": false
         },
         {
-          "libelle": "Le rappel de message dans Outlook règle définitivement le problème",
+          "libelle": "Le rappel du message dans Outlook, s'il aboutit, dispense de prévenir la DPO",
           "correcte": false
         }
       ]
@@ -161,7 +161,7 @@
       "enonce": "La boîte d'une collègue en congés envoie depuis ce matin des messages étranges à tout son carnet d'adresses. Que faites-vous ?",
       "multiple": true,
       "points": 10,
-      "explication": "Un compte qui écrit tout seul est un compte compromis, et il envoie ses messages depuis une adresse authentique de la Ville — ce qui les rend redoutablement crédibles auprès des collègues et des partenaires. Il faut prévenir la DSI tout de suite pour qu'elle coupe l'accès, sans attendre le retour de la collègue. Prévenir aussi les destinataires que vous connaissez évite quelques clics de plus. Ce qui ne sert à rien, c'est de répondre au message frauduleux pour demander des explications : personne ne lira, ou pire, quelqu'un lira. Et il n'y a aucune raison d'attendre : chaque heure ajoute des destinataires.",
+      "explication": "Un compte qui écrit tout seul est un compte compromis, et il envoie ses messages depuis une adresse authentique de la Ville — ce qui les rend redoutablement crédibles auprès des collègues et des partenaires. Il faut prévenir la DSI tout de suite pour qu'elle coupe l'accès, sans attendre le retour de la collègue. Prévenir aussi les destinataires que vous connaissez évite quelques clics de plus. Ce qui ne sert à rien, c'est de répondre au message frauduleux pour demander des explications : personne ne lira, ou pire, quelqu'un lira. Et il n'y a aucune raison d'attendre : chaque heure ajoute des destinataires. Écrire ou répondre sur la boîte compromise revient à écrire à l'attaquant, et différer la coupure pour ne pas gêner la collègue ne protège personne : c'est son compte qui est en train de nuire.",
       "reponses": [
         {
           "libelle": "Prévenir la DSI immédiatement pour qu'elle coupe l'accès au compte",
@@ -176,11 +176,11 @@
           "correcte": true
         },
         {
-          "libelle": "Attendre son retour de congés pour lui en parler d'abord",
+          "libelle": "Demander à la DSI d'attendre son retour avant de couper l'accès, pour ne pas bloquer son travail",
           "correcte": false
         },
         {
-          "libelle": "Répondre au message pour demander à quoi il correspond",
+          "libelle": "Répondre au message pour lui demander confirmation : si c'est bien elle, elle le dira",
           "correcte": false
         }
       ]
@@ -189,7 +189,7 @@
       "enonce": "Une clé USB contenant des actes d'état civil a été perdue entre la Mairie et Technosud. Quelle est la bonne réaction ?",
       "multiple": true,
       "points": 10,
-      "explication": "Des actes d'état civil sont des données personnelles, et leur perte est une violation à traiter comme telle : DPO prévenue, incident documenté, notification à la CNIL appréciée par elle. La question du chiffrement est décisive pour la suite : une clé chiffrée perdue reste illisible et le risque pour les personnes est faible, ce qui change l'analyse du bout au bout. C'est d'ailleurs la vraie leçon de l'histoire : le moment de chiffrer, c'était avant. Espérer que quelqu'un la rapporte à l'accueil n'est pas une réaction, et transporter ce type de documents sur une clé quand un espace partagé existe est ce qu'il faut cesser de faire.",
+      "explication": "Des actes d'état civil sont des données personnelles, et leur perte est une violation à traiter comme telle : DPO prévenue, incident documenté, notification à la CNIL appréciée par elle. La question du chiffrement est décisive pour la suite : une clé chiffrée perdue reste illisible et le risque pour les personnes est faible, ce qui change l'analyse du bout au bout. C'est d'ailleurs la vraie leçon de l'histoire : le moment de chiffrer, c'était avant. Espérer que quelqu'un la rapporte à l'accueil n'est pas une réaction, et transporter ce type de documents sur une clé quand un espace partagé existe est ce qu'il faut cesser de faire. Que certains actes soient communicables ne change rien : ce sont des données personnelles, et leur perte non maîtrisée reste une violation à déclarer le jour même, pas en fin de semaine.",
       "reponses": [
         {
           "libelle": "Prévenir la DPO et la DSI le jour même",
@@ -204,11 +204,11 @@
           "correcte": true
         },
         {
-          "libelle": "Attendre quelques jours au cas où on la rapporterait à l'accueil",
+          "libelle": "Refaire le trajet et interroger l'accueil des deux sites, et ne prévenir que si elle n'a pas réapparu en fin de semaine",
           "correcte": false
         },
         {
-          "libelle": "Ne rien dire : la clé est probablement tombée dans un endroit sans risque",
+          "libelle": "Les actes d'état civil étant des documents communicables, leur perte ne constitue pas une violation de données",
           "correcte": false
         }
       ]

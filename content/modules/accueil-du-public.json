@@ -21,7 +21,7 @@
       "enonce": "Une personne se présente à l'état civil et demande une copie intégrale d'un acte de naissance qui n'est pas le sien. Que faites-vous ?",
       "multiple": true,
       "points": 10,
-      "explication": "La copie intégrale d'un acte de naissance de moins de 75 ans n'est pas délivrable à n'importe qui : la loi la réserve à l'intéressé majeur, à ses ascendants et descendants, à son conjoint et à quelques professionnels habilités. C'est le cadre, et il ne se négocie pas au guichet. Il faut donc vérifier la qualité du demandeur et son identité — c'est précisément ce contrôle qui protège les personnes contre l'usurpation, car un acte intégral porte tout ce qu'il faut pour ouvrir un compte au nom d'un autre. Face à l'insistance ou à la pression, la bonne réponse est d'appliquer la règle et d'appeler un responsable ; l'émotion du demandeur, sincère ou jouée, ne modifie pas le droit. Et un extrait sans filiation, lui, se délivre librement.",
+      "explication": "La copie intégrale d'un acte de naissance de moins de 75 ans n'est pas délivrable à n'importe qui : la loi la réserve à l'intéressé majeur, à ses ascendants et descendants, à son conjoint et à quelques professionnels habilités. C'est le cadre, et il ne se négocie pas au guichet. Il faut donc vérifier la qualité du demandeur et son identité — c'est précisément ce contrôle qui protège les personnes contre l'usurpation, car un acte intégral porte tout ce qu'il faut pour ouvrir un compte au nom d'un autre. Face à l'insistance ou à la pression, la bonne réponse est d'appliquer la règle et d'appeler un responsable ; l'émotion du demandeur, sincère ou jouée, ne modifie pas le droit. Et un extrait sans filiation, lui, se délivre librement. Une pièce d'identité valide prouve qui est en face de vous, pas qu'il a le droit d'obtenir l'acte : les deux contrôles sont nécessaires.",
       "reponses": [
         {
           "libelle": "Vérifier la qualité du demandeur : intéressé, ascendant, descendant, conjoint",
@@ -36,11 +36,11 @@
           "correcte": true
         },
         {
-          "libelle": "Délivrer l'acte : le demandeur semble sincère et il est pressé",
+          "libelle": "Délivrer l'acte dès lors qu'il présente une pièce d'identité en cours de validité",
           "correcte": false
         },
         {
-          "libelle": "Délivrer l'acte s'il connaît la date de naissance et le nom des parents",
+          "libelle": "Délivrer l'acte s'il connaît la date de naissance et le nom des parents, preuve du lien",
           "correcte": false
         }
       ]
@@ -49,7 +49,7 @@
       "enonce": "Un homme au téléphone se présente comme agent d'une autre commune et demande des renseignements sur un administré. Comment réagir ?",
       "multiple": true,
       "points": 10,
-      "explication": "Se présenter comme un collègue est la manœuvre la plus économique qui soit : elle ne coûte rien et elle fonctionne, parce qu'entre agents on s'entraide. Rien ne prouve pourtant l'identité de la voix. La bonne pratique est de proposer de rappeler au standard de la commune concernée — un vrai collègue trouvera cela normal, un escroc trouvera une raison de refuser. Il faut aussi se demander à quel titre la demande est faite : entre communes, les échanges de données ont un cadre, et « c'est pour un dossier » n'en est pas un. En cas d'hésitation, la demande écrite via le service compétent règle tout, et la DPO répond vite.",
+      "explication": "Se présenter comme un collègue est la manœuvre la plus économique qui soit : elle ne coûte rien et elle fonctionne, parce qu'entre agents on s'entraide. Rien ne prouve pourtant l'identité de la voix. La bonne pratique est de proposer de rappeler au standard de la commune concernée — un vrai collègue trouvera cela normal, un escroc trouvera une raison de refuser. Il faut aussi se demander à quel titre la demande est faite : entre communes, les échanges de données ont un cadre, et « c'est pour un dossier » n'en est pas un. En cas d'hésitation, la demande écrite via le service compétent règle tout, et la DPO répond vite. Confirmer une information déjà connue, c'est la communiquer ; et un nom, un service, un numéro de poste se donnent en une phrase sans rien prouver.",
       "reponses": [
         {
           "libelle": "Proposer de rappeler au standard de la commune concernée",
@@ -64,11 +64,11 @@
           "correcte": true
         },
         {
-          "libelle": "Répondre : entre collègues de la fonction publique, l'entraide est normale",
+          "libelle": "Répondre s'il donne son nom, son service et son numéro de poste, que je note au dossier",
           "correcte": false
         },
         {
-          "libelle": "Répondre s'il connaît déjà le nom et l'adresse de la personne",
+          "libelle": "Confirmer seulement les informations qu'il possède déjà, sans en donner de nouvelles",
           "correcte": false
         }
       ]
@@ -77,7 +77,7 @@
       "enonce": "Votre poste d'accueil est visible depuis la file d'attente. Quelles précautions prendre ?",
       "multiple": true,
       "points": 10,
-      "explication": "La confidentialité au guichet se joue autant sur l'écran que sur la parole. Orienter l'écran, ou l'équiper d'un filtre de confidentialité, empêche la personne suivante de lire le dossier de la précédente. Verrouiller la session dès qu'on s'éloigne du poste — même trente secondes pour chercher un formulaire — est le geste le plus rentable de la journée. Fermer le dossier en cours avant d'appeler le suivant évite le mélange. Et ce qui vaut pour l'écran vaut pour le comptoir : un document oublié à côté du clavier finit par être lu. Baisser la voix aide, mais ne remplace aucun de ces gestes.",
+      "explication": "La confidentialité au guichet se joue autant sur l'écran que sur la parole. Orienter l'écran, ou l'équiper d'un filtre de confidentialité, empêche la personne suivante de lire le dossier de la précédente. Verrouiller la session dès qu'on s'éloigne du poste — même trente secondes pour chercher un formulaire — est le geste le plus rentable de la journée. Fermer le dossier en cours avant d'appeler le suivant évite le mélange. Et ce qui vaut pour l'écran vaut pour le comptoir : un document oublié à côté du clavier finit par être lu. Baisser la voix aide, mais ne remplace aucun de ces gestes. La mise en veille automatique après quelques minutes est un filet de sécurité, pas une protection : cinq minutes, c'est le temps de lire tout un dossier.",
       "reponses": [
         {
           "libelle": "Orienter l'écran ou poser un filtre de confidentialité",
@@ -96,7 +96,7 @@
           "correcte": true
         },
         {
-          "libelle": "Se contenter de parler moins fort",
+          "libelle": "Activer la mise en veille automatique de l'écran après cinq minutes d'inactivité",
           "correcte": false
         }
       ]
@@ -105,7 +105,7 @@
       "enonce": "Une personne en gilet, badge à la ceinture, se présente pour « intervenir sur le réseau ». Que faites-vous ?",
       "multiple": true,
       "points": 10,
-      "explication": "Le faux technicien est un classique qui marche justement parce que personne n'ose demander à quelqu'un d'équipé de justifier sa présence. Un badge n'est pas une preuve : il s'imprime. Ce qui compte, c'est qu'une intervention soit attendue — donc qu'un service l'ait commandée, et la DSI le sait. Un appel de trente secondes règle la question. Tant que ce n'est pas fait, la personne n'accède pas seule aux locaux techniques et n'est pas laissée sans accompagnement dans les bureaux : ce n'est pas de la suspicion, c'est la règle pour tout intervenant extérieur. Un vrai technicien la connaît et l'attend.",
+      "explication": "Le faux technicien est un classique qui marche justement parce que personne n'ose demander à quelqu'un d'équipé de justifier sa présence. Un badge n'est pas une preuve : il s'imprime. Ce qui compte, c'est qu'une intervention soit attendue — donc qu'un service l'ait commandée, et la DSI le sait. Un appel de trente secondes règle la question. Tant que ce n'est pas fait, la personne n'accède pas seule aux locaux techniques et n'est pas laissée sans accompagnement dans les bureaux : ce n'est pas de la suspicion, c'est la règle pour tout intervenant extérieur. Un vrai technicien la connaît et l'attend. Photocopier une carte professionnelle trace la visite mais ne dit pas si elle est attendue — une carte se fabrique comme un badge, et le nom du prestataire figure sur ses véhicules.",
       "reponses": [
         {
           "libelle": "Appeler la DSI pour vérifier qu'une intervention est bien prévue",
@@ -120,11 +120,11 @@
           "correcte": true
         },
         {
-          "libelle": "Le badge et la tenue suffisent à établir son identité",
+          "libelle": "Lui demander sa carte professionnelle et en garder une copie avant l'intervention",
           "correcte": false
         },
         {
-          "libelle": "Lui ouvrir : il connaît le nom du prestataire habituel",
+          "libelle": "La laisser intervenir : elle cite le nom du prestataire habituel et le numéro du contrat",
           "correcte": false
         }
       ]
@@ -161,7 +161,7 @@
       "enonce": "En fin de journée, que faut-il ranger avant de quitter le poste d'accueil ?",
       "multiple": true,
       "points": 10,
-      "explication": "Les locaux sont fréquentés le soir : entretien, livraisons, réunions associatives. Ce qui reste sur un bureau est lisible par des gens qui n'ont rien demandé, et un vol opportuniste n'a besoin que d'une minute. Les dossiers d'administrés se rangent sous clé, les impressions oubliées se récupèrent — le bac de l'imprimante partagée est un formidable gisement de données —, la session se ferme et les clés des armoires ne restent pas dans la serrure. Éteindre l'écran, en revanche, ne protège de rien : la session reste ouverte derrière, il suffit de bouger la souris.",
+      "explication": "Les locaux sont fréquentés le soir : entretien, livraisons, réunions associatives. Ce qui reste sur un bureau est lisible par des gens qui n'ont rien demandé, et un vol opportuniste n'a besoin que d'une minute. Les dossiers d'administrés se rangent sous clé, les impressions oubliées se récupèrent — le bac de l'imprimante partagée est un formidable gisement de données —, la session se ferme et les clés des armoires ne restent pas dans la serrure. Éteindre l'écran, en revanche, ne protège de rien : la session reste ouverte derrière, il suffit de bouger la souris. Une clause de confidentialité dans le marché d'entretien engage l'entreprise, pas chaque personne qui passe dans le couloir, et elle ne fait rien contre un vol.",
       "reponses": [
         {
           "libelle": "Les dossiers d'administrés, rangés sous clé",
@@ -180,7 +180,7 @@
           "correcte": true
         },
         {
-          "libelle": "Rien : les locaux sont fermés et personne n'y entre",
+          "libelle": "Rien de plus : le marché d'entretien comporte une clause de confidentialité",
           "correcte": false
         }
       ]
@@ -189,18 +189,18 @@
       "enonce": "Un administré vous demande votre adresse mail personnelle pour « aller plus vite ». Que répondez-vous ?",
       "multiple": false,
       "points": 10,
-      "explication": "Un échange qui sort de la messagerie de la Ville sort aussi de son cadre : plus de traçabilité, plus de continuité si vous êtes absent, plus de protection pour vous en cas de litige — et une adresse personnelle qui circule, avec tout ce que cela promet ensuite. Le refus n'a rien de désobligeant et il s'explique en une phrase : l'adresse du service est faite pour cela, et elle garantit que quelqu'un répondra même en votre absence. C'est d'ailleurs un meilleur service rendu à l'administré qu'un canal privé qui s'interrompt au premier congé.",
+      "explication": "Un échange qui sort de la messagerie de la Ville sort aussi de son cadre : plus de traçabilité, plus de continuité si vous êtes absent, plus de protection pour vous en cas de litige — et une adresse personnelle qui circule, avec tout ce que cela promet ensuite. Le refus n'a rien de désobligeant et il s'explique en une phrase : l'adresse du service est faite pour cela, et elle garantit que quelqu'un répondra même en votre absence. C'est d'ailleurs un meilleur service rendu à l'administré qu'un canal privé qui s'interrompt au premier congé. Mettre le service en copie ne change rien : l'adresse personnelle circule et les réponses suivantes ne passeront plus par la copie. Une adresse créée « pour les administrés » chez un fournisseur grand public reste hors du cadre de la Ville : ni sauvegarde, ni continuité, ni protection en cas de litige.",
       "reponses": [
         {
           "libelle": "Que les échanges passent par l'adresse du service, qui reste suivie en mon absence",
           "correcte": true
         },
         {
-          "libelle": "Je la donne : cela simplifie vraiment le traitement du dossier",
+          "libelle": "Je la donne pour ce dossier seulement, en mettant l'adresse du service en copie",
           "correcte": false
         },
         {
-          "libelle": "Je la donne mais je lui demande de ne pas la diffuser",
+          "libelle": "Je crée une adresse dédiée aux administrés, séparée de ma messagerie privée",
           "correcte": false
         },
         {

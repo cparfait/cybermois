@@ -21,22 +21,22 @@
       "enonce": "Vous quittez votre bureau 5 minutes pour aller chercher un café. Que faites-vous ?",
       "multiple": false,
       "points": 10,
-      "explication": "Le verrouillage de session — touche Windows + L, ou Ctrl+Alt+Suppr puis « Verrouiller » — prend une seconde et doit devenir un réflexe, même pour une absence très courte. La mise en veille automatique se déclenche trop tard, et un bureau « avec du monde autour » n'est pas un contrôle d'accès : un agent d'entretien, un prestataire ou un administré de passage peut consulter votre écran. Sur un poste non verrouillé, tout ce qui est fait l'est sous votre identité.",
+      "explication": "Le verrouillage de session — touche Windows + L, ou Ctrl+Alt+Suppr puis « Verrouiller » — prend une seconde et doit devenir un réflexe, même pour une absence très courte. La mise en veille automatique se déclenche trop tard, et un bureau « avec du monde autour » n'est pas un contrôle d'accès : un agent d'entretien, un prestataire ou un administré de passage peut consulter votre écran. Sur un poste non verrouillé, tout ce qui est fait l'est sous votre identité. Fermer les applications ne change rien : la session ouverte donne accès à la messagerie et aux lecteurs réseau. Verrouiller ne ferme rien, votre travail reste tel quel.",
       "reponses": [
         {
           "libelle": "Je verrouille ma session avec Windows + L",
           "correcte": true
         },
         {
-          "libelle": "Rien, la mise en veille s'en chargera",
+          "libelle": "Rien : la mise en veille automatique verrouille le poste au bout de cinq minutes",
           "correcte": false
         },
         {
-          "libelle": "Rien, il y a toujours du monde dans le bureau",
+          "libelle": "Rien : mes collègues sont dans le bureau et personne d'extérieur n'y entre sans badge",
           "correcte": false
         },
         {
-          "libelle": "Je réduis simplement les fenêtres contenant des données sensibles",
+          "libelle": "Je ferme les applications métier et je laisse la session ouverte, pour ne pas perdre mon travail en cours",
           "correcte": false
         }
       ]
@@ -45,18 +45,18 @@
       "enonce": "Vous trouvez une clé USB sur le parking de la mairie. Que faites-vous ?",
       "multiple": true,
       "points": 15,
-      "explication": "La clé USB abandonnée est un grand classique de l'intrusion : elle peut contenir un logiciel malveillant qui s'exécute à l'insertion, ou se faire passer pour un clavier et taper des commandes toute seule. On ne la branche jamais, ni sur un poste professionnel, ni sur son ordinateur personnel, ni « pour voir à qui elle appartient ». La remettre à l'accueil ou à la DSI est la seule bonne réponse — et signaler l'endroit exact où elle a été trouvée aide à qualifier l'incident.",
+      "explication": "La clé USB abandonnée est un grand classique de l'intrusion : elle peut contenir un logiciel malveillant qui s'exécute à l'insertion, ou se faire passer pour un clavier et taper des commandes toute seule. On ne la branche jamais, ni sur un poste professionnel, ni sur son ordinateur personnel, ni « pour voir à qui elle appartient ». La remettre à l'accueil ou à la DSI est la seule bonne réponse — et signaler l'endroit exact où elle a été trouvée aide à qualifier l'incident. Un poste isolé n'est pas une protection : une clé qui se fait passer pour un clavier ne s'analyse pas, elle agit. Et les objets trouvés ne sont pas la bonne adresse : une clé trouvée sur le parking de la mairie est un incident potentiel, pas un parapluie.",
       "reponses": [
         {
           "libelle": "Je la remets à l'accueil ou à la DSI sans la brancher",
           "correcte": true
         },
         {
-          "libelle": "Je la branche sur mon poste pour identifier son propriétaire",
+          "libelle": "Je la branche sur mon poste sans ouvrir aucun fichier, seulement pour lire le nom du propriétaire",
           "correcte": false
         },
         {
-          "libelle": "Je la branche sur mon ordinateur personnel, moins risqué pour la mairie",
+          "libelle": "Je la branche sur un ordinateur isolé du réseau, l'antivirus l'analysera avant tout accès",
           "correcte": false
         },
         {
@@ -64,7 +64,7 @@
           "correcte": true
         },
         {
-          "libelle": "Je la jette à la poubelle",
+          "libelle": "Je la dépose au bureau des objets trouvés, comme n'importe quel objet perdu",
           "correcte": false
         }
       ]
@@ -73,7 +73,7 @@
       "enonce": "Quelles pratiques respectent la protection des données des administrés ?",
       "multiple": true,
       "points": 15,
-      "explication": "Trois bonnes pratiques ici. Le principe de minimisation du RGPD impose de ne consulter que les dossiers nécessaires à votre mission — chaque consultation est tracée. Les documents contenant des données personnelles se détruisent au broyeur, jamais dans la corbeille à papier. Et les échanges passent par les outils validés par la collectivité, pas par une messagerie personnelle ni par un service de stockage grand public qui héberge les données hors de tout cadre contractuel.",
+      "explication": "Trois bonnes pratiques ici. Le principe de minimisation du RGPD impose de ne consulter que les dossiers nécessaires à votre mission — chaque consultation est tracée. Les documents contenant des données personnelles se détruisent au broyeur, jamais dans la corbeille à papier. Et les échanges passent par les outils validés par la collectivité, pas par une messagerie personnelle ni par un service de stockage grand public qui héberge les données hors de tout cadre contractuel. Supprimer le message après coup n'annule rien : le fichier est passé par un serveur étranger à la Ville et y reste en sauvegarde ; un lien à mot de passe sur un service grand public ne change pas davantage l'hébergeur.",
       "reponses": [
         {
           "libelle": "Je ne consulte que les dossiers nécessaires à ma mission",
@@ -84,11 +84,11 @@
           "correcte": true
         },
         {
-          "libelle": "J'envoie un fichier d'administrés sur ma messagerie personnelle pour le finir chez moi",
+          "libelle": "J'envoie le fichier d'administrés sur ma messagerie personnelle, puis je le supprime des deux côtés une fois terminé",
           "correcte": false
         },
         {
-          "libelle": "Je dépose les documents volumineux sur un service de partage grand public",
+          "libelle": "Je dépose les documents volumineux sur un service de partage grand public, avec un lien protégé par mot de passe",
           "correcte": false
         },
         {
@@ -101,7 +101,7 @@
       "enonce": "Vous imprimez une liste nominative d'aides sociales sur l'imprimante partagée du couloir. Quels réflexes ?",
       "multiple": true,
       "points": 10,
-      "explication": "L'impression partagée est un point de fuite très banal et très sous-estimé. Récupérer immédiatement son tirage, utiliser l'impression sécurisée par code si votre parc le permet, et vérifier qu'aucune page n'est restée dans le bac : ce sont trois gestes de dix secondes. Laisser un document nominatif traîner une demi-journée, c'est une violation de données au sens du RGPD, potentiellement notifiable à la CNIL.",
+      "explication": "L'impression partagée est un point de fuite très banal et très sous-estimé. Récupérer immédiatement son tirage, utiliser l'impression sécurisée par code si votre parc le permet, et vérifier qu'aucune page n'est restée dans le bac : ce sont trois gestes de dix secondes. Laisser un document nominatif traîner une demi-journée, c'est une violation de données au sens du RGPD, potentiellement notifiable à la CNIL. Un couloir réservé aux agents reste un couloir : prestataires, stagiaires, élus et collègues d'autres services y passent, et aucun d'eux n'a à connaître ces noms. Imprimer à l'avance, c'est laisser le document attendre dans le bac.",
       "reponses": [
         {
           "libelle": "Je me déplace immédiatement pour récupérer le document",
@@ -112,7 +112,7 @@
           "correcte": true
         },
         {
-          "libelle": "Je récupère le document en fin de journée, personne ne le lira",
+          "libelle": "Je le récupère en fin de journée : l'imprimante est dans un couloir réservé aux agents",
           "correcte": false
         },
         {
@@ -120,7 +120,7 @@
           "correcte": true
         },
         {
-          "libelle": "Je demande à un collègue de le récupérer pour moi si je suis en réunion",
+          "libelle": "Je lance l'impression à l'avance, pour qu'elle soit prête quand je passerai devant l'imprimante",
           "correcte": false
         }
       ]
@@ -129,7 +129,7 @@
       "enonce": "En télétravail ou en déplacement, quelles précautions s'imposent ?",
       "multiple": true,
       "points": 15,
-      "explication": "Le VPN de la collectivité protège vos échanges sur un réseau que vous ne maîtrisez pas. Dans un lieu public — train, café, salle d'attente — un filtre de confidentialité empêche la lecture par-dessus l'épaule, et le poste ne se laisse jamais sans surveillance, même « deux minutes ». En revanche, un wifi public ouvert reste à éviter quand un partage de connexion depuis votre téléphone est possible, et le poste professionnel n'est pas un ordinateur familial : il ne se prête pas.",
+      "explication": "Le VPN de la collectivité protège vos échanges sur un réseau que vous ne maîtrisez pas. Dans un lieu public — train, café, salle d'attente — un filtre de confidentialité empêche la lecture par-dessus l'épaule, et le poste ne se laisse jamais sans surveillance, même « deux minutes ». En revanche, un wifi public ouvert reste à éviter quand un partage de connexion depuis votre téléphone est possible, et le poste professionnel n'est pas un ordinateur familial : il ne se prête pas. Le VPN se lance avant toute chose, y compris pour relever la messagerie : c'est justement sur un wifi public que les mots de passe s'interceptent. Et session invité ou pas, ce qu'un tiers ouvre ou branche sur le poste engage la Ville, et la DSI ne peut plus garantir l'état de la machine.",
       "reponses": [
         {
           "libelle": "Je me connecte via le VPN de la collectivité",
@@ -140,7 +140,7 @@
           "correcte": true
         },
         {
-          "libelle": "Je préfère un wifi public ouvert au partage de connexion de mon téléphone",
+          "libelle": "Je me connecte au wifi public le temps de relever mes mails, le VPN n'étant utile que pour les applications métier",
           "correcte": false
         },
         {
@@ -148,7 +148,7 @@
           "correcte": true
         },
         {
-          "libelle": "Je prête mon poste professionnel à un proche pour un usage ponctuel",
+          "libelle": "Je laisse un proche utiliser le poste sur une session invité, sans accès à mes dossiers",
           "correcte": false
         }
       ]
@@ -157,7 +157,7 @@
       "enonce": "Votre poste devient très lent, des fenêtres s'ouvrent seules et des fichiers portent des noms bizarres. Que faites-vous ?",
       "multiple": true,
       "points": 15,
-      "explication": "Ces signes évoquent une infection en cours, possiblement un rançongiciel. Deux gestes comptent : débrancher le câble réseau ou couper le wifi pour stopper la propagation vers les serveurs, et appeler la DSI immédiatement. En revanche on n'éteint pas le poste — cela détruit des éléments d'analyse — et on ne tente surtout pas de « nettoyer » soi-même. Pour une collectivité, une heure gagnée sur la détection d'un rançongiciel peut représenter la différence entre quelques postes et tout le système d'information.",
+      "explication": "Ces signes évoquent une infection en cours, possiblement un rançongiciel. Deux gestes comptent : débrancher le câble réseau ou couper le wifi pour stopper la propagation vers les serveurs, et appeler la DSI immédiatement. En revanche on n'éteint pas le poste — cela détruit des éléments d'analyse — et on ne tente surtout pas de « nettoyer » soi-même. Pour une collectivité, une heure gagnée sur la détection d'un rançongiciel peut représenter la différence entre quelques postes et tout le système d'information. L'analyse antivirus maison fait perdre du temps et modifie les traces que la DSI cherche.",
       "reponses": [
         {
           "libelle": "Je débranche le câble réseau ou coupe le wifi",
@@ -168,11 +168,11 @@
           "correcte": true
         },
         {
-          "libelle": "J'éteins brutalement le poste",
+          "libelle": "J'éteins le poste pour figer la situation et stopper le chiffrement en cours",
           "correcte": false
         },
         {
-          "libelle": "Je lance moi-même un antivirus téléchargé sur internet",
+          "libelle": "Je lance une analyse complète avec l'antivirus du poste avant de déranger la DSI",
           "correcte": false
         },
         {
@@ -200,11 +200,11 @@
           "correcte": true
         },
         {
-          "libelle": "La CNIL, que je contacte directement moi-même",
+          "libelle": "La CNIL, sans attendre, puisque le délai de 72 heures court dès la découverte",
           "correcte": false
         },
         {
-          "libelle": "Les administrés concernés, que je préviens de ma propre initiative",
+          "libelle": "Les administrés concernés, par un message immédiat pour qu'ils changent leurs mots de passe",
           "correcte": false
         }
       ]

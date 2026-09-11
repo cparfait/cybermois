@@ -21,7 +21,7 @@
       "enonce": "À quoi sert réellement une mise à jour de sécurité ?",
       "multiple": true,
       "points": 10,
-      "explication": "Une mise à jour de sécurité corrige des défauts qui permettent de prendre le contrôle d'un logiciel, de lire ce qu'il manipule ou de contourner une authentification. Le point décisif tient au calendrier : la faille est publiée en même temps que le correctif, et les attaquants s'en emparent aussitôt — parfois en moins d'une semaine. Repousser, c'est donc rester exposé à une faiblesse désormais connue de tous. Une mise à jour apporte souvent aussi des nouveautés fonctionnelles, mais ce n'est pas sa raison d'être ici. Et elle ne remplace ni l'antivirus ni les sauvegardes : ces protections traitent des problèmes différents.",
+      "explication": "Une mise à jour de sécurité corrige des défauts qui permettent de prendre le contrôle d'un logiciel, de lire ce qu'il manipule ou de contourner une authentification. Le point décisif tient au calendrier : la faille est publiée en même temps que le correctif, et les attaquants s'en emparent aussitôt — parfois en moins d'une semaine. Repousser, c'est donc rester exposé à une faiblesse désormais connue de tous. Une mise à jour apporte souvent aussi des nouveautés fonctionnelles, mais ce n'est pas sa raison d'être ici. Et elle ne remplace ni l'antivirus ni les sauvegardes : ces protections traitent des problèmes différents. Elle ne répare pas non plus ce qu'une attaque a déjà abîmé, et elle ne vise pas à alourdir le poste : ce sont les versions majeures qui changent les exigences matérielles, pas les correctifs de sécurité.",
       "reponses": [
         {
           "libelle": "À corriger des défauts permettant de prendre le contrôle d'un logiciel",
@@ -32,15 +32,15 @@
           "correcte": true
         },
         {
-          "libelle": "À remplacer l'antivirus",
+          "libelle": "À dispenser d'antivirus un poste correctement maintenu à jour",
           "correcte": false
         },
         {
-          "libelle": "À remplacer les sauvegardes",
+          "libelle": "À restaurer les fichiers endommagés par une attaque récente",
           "correcte": false
         },
         {
-          "libelle": "À ralentir volontairement les ordinateurs anciens",
+          "libelle": "À pousser au renouvellement du matériel, les correctifs étant calibrés pour les machines récentes",
           "correcte": false
         }
       ]
@@ -49,22 +49,22 @@
       "enonce": "Vous repoussez la mise à jour de votre poste depuis six semaines. Que se passe-t-il ?",
       "multiple": false,
       "points": 10,
-      "explication": "Le report ne suspend pas le risque, il l'accumule : chaque semaine ajoute des failles connues et non corrigées. Six semaines de retard, c'est un poste dont les faiblesses sont documentées publiquement et testées automatiquement par des outils qui balaient les réseaux. Le bon compromis n'est pas de tout accepter en pleine réunion, c'est de programmer l'installation à un moment qui vous arrange — fin de journée, pause déjeuner — et de laisser le redémarrage se faire. Si la mise à jour casse quelque chose dans un logiciel métier, c'est un sujet réel : il se traite avec la DSI, qui sait échelonner, pas en la repoussant indéfiniment tout seul.",
+      "explication": "Le report ne suspend pas le risque, il l'accumule : chaque semaine ajoute des failles connues et non corrigées. Six semaines de retard, c'est un poste dont les faiblesses sont documentées publiquement et testées automatiquement par des outils qui balaient les réseaux. Le bon compromis n'est pas de tout accepter en pleine réunion, c'est de programmer l'installation à un moment qui vous arrange — fin de journée, pause déjeuner — et de laisser le redémarrage se faire. Si la mise à jour casse quelque chose dans un logiciel métier, c'est un sujet réel : il se traite avec la DSI, qui sait échelonner, pas en la repoussant indéfiniment tout seul. Le pare-feu ne protège pas d'une pièce jointe ouverte ou d'un site visité : la faille est exploitée de l'intérieur, et le poste bureautique est la cible principale, c'est là qu'on ouvre des mails.",
       "reponses": [
         {
           "libelle": "Le poste cumule six semaines de failles connues et non corrigées",
           "correcte": true
         },
         {
-          "libelle": "Rien : tant que le poste fonctionne, il est protégé",
+          "libelle": "Rien de grave : le poste est derrière le pare-feu de la Ville, les failles ne sont pas atteignables de l'extérieur",
           "correcte": false
         },
         {
-          "libelle": "Rien : l'antivirus compense les mises à jour manquantes",
+          "libelle": "Rien de grave : l'antivirus, lui, est à jour et bloque les tentatives d'exploitation",
           "correcte": false
         },
         {
-          "libelle": "Le poste s'améliore : les mises à jour introduisent surtout des bugs",
+          "libelle": "Le risque est limité : les failles concernent surtout les serveurs, rarement un poste bureautique",
           "correcte": false
         }
       ]
@@ -73,22 +73,22 @@
       "enonce": "Une fenêtre s'ouvre pendant votre navigation : « Votre lecteur vidéo est obsolète, cliquez pour mettre à jour ». Que faites-vous ?",
       "multiple": false,
       "points": 10,
-      "explication": "Les vraies mises à jour ne se proposent jamais depuis une page web : elles viennent du système, du magasin d'applications, ou de la DSI. Une fenêtre de navigateur qui annonce un composant obsolète est un piège classique, et le fichier proposé installe autre chose que ce qu'il annonce. La bonne réaction est de fermer l'onglet — sans cliquer sur la croix du faux bandeau, qui fait parfois partie du piège — et de signaler si le message revient, car cela peut indiquer une publicité malveillante sur un site que vos collègues visitent aussi. Vérifier la réputation du site ne sert à rien : ces bandeaux apparaissent aussi sur des sites tout à fait légitimes, par le biais des régies publicitaires.",
+      "explication": "Les vraies mises à jour ne se proposent jamais depuis une page web : elles viennent du système, du magasin d'applications, ou de la DSI. Une fenêtre de navigateur qui annonce un composant obsolète est un piège classique, et le fichier proposé installe autre chose que ce qu'il annonce. La bonne réaction est de fermer l'onglet — sans cliquer sur la croix du faux bandeau, qui fait parfois partie du piège — et de signaler si le message revient, car cela peut indiquer une publicité malveillante sur un site que vos collègues visitent aussi. Vérifier la réputation du site ne sert à rien : ces bandeaux apparaissent aussi sur des sites tout à fait légitimes, par le biais des régies publicitaires. Le cadenas ne garantit que le chiffrement de la connexion, pas l'honnêteté de ce qui s'affiche ; et faire analyser le fichier ne suffit pas, ces installeurs sont renouvelés plus vite que les signatures antivirus.",
       "reponses": [
         {
           "libelle": "Je ferme l'onglet et je signale à la DSI si le message revient",
           "correcte": true
         },
         {
-          "libelle": "Je clique : un composant obsolète est un risque de sécurité",
+          "libelle": "Je clique : un composant obsolète est un risque, et le site affiche bien le cadenas HTTPS",
           "correcte": false
         },
         {
-          "libelle": "Je télécharge le fichier et je le fais analyser avant de l'ouvrir",
+          "libelle": "Je télécharge le fichier et je le fais analyser par l'antivirus avant de l'exécuter",
           "correcte": false
         },
         {
-          "libelle": "Je vérifie que le site est réputé, puis j'accepte",
+          "libelle": "Je vérifie que je suis sur un site connu, puis j'accepte : un site sérieux ne diffuse pas de faux bandeau",
           "correcte": false
         }
       ]
@@ -97,7 +97,7 @@
       "enonce": "Quels équipements de la collectivité ont aussi besoin de mises à jour ?",
       "multiple": true,
       "points": 10,
-      "explication": "On pense aux ordinateurs, rarement au reste — et c'est précisément le reste qui est oublié pendant des années. Un copieur multifonction est un serveur avec un disque dur qui conserve les documents numérisés. Les caméras de vidéoprotection sont des ordinateurs connectés, régulièrement enrôlés dans des réseaux d'attaque. Les écrans interactifs des salles de réunion et des écoles embarquent un système complet. Les téléphones IP et les bornes Wi-Fi aussi. Ce ne sont pas des objets passifs : chacun est une porte, et la plupart sont livrés avec un mot de passe d'usine que personne n'a changé. Le mobilier, lui, peut rester en paix.",
+      "explication": "On pense aux ordinateurs, rarement au reste — et c'est précisément le reste qui est oublié pendant des années. Un copieur multifonction est un serveur avec un disque dur qui conserve les documents numérisés. Les caméras de vidéoprotection sont des ordinateurs connectés, régulièrement enrôlés dans des réseaux d'attaque. Les écrans interactifs des salles de réunion et des écoles embarquent un système complet. Les téléphones IP et les bornes Wi-Fi aussi. Ce ne sont pas des objets passifs : chacun est une porte, et la plupart sont livrés avec un mot de passe d'usine que personne n'a changé. Le câblage et les prises murales, eux, ne contiennent aucun logiciel : ils peuvent rester en paix.",
       "reponses": [
         {
           "libelle": "Les copieurs multifonctions, qui stockent les documents numérisés",
@@ -116,7 +116,7 @@
           "correcte": true
         },
         {
-          "libelle": "Les armoires et le mobilier de bureau",
+          "libelle": "Le câblage réseau et les prises murales des bâtiments",
           "correcte": false
         }
       ]
@@ -144,7 +144,7 @@
           "correcte": true
         },
         {
-          "libelle": "L'antivirus compense l'absence de correctifs",
+          "libelle": "Un pare-feu bien configuré isole le poste et compense l'absence de correctifs",
           "correcte": false
         }
       ]
@@ -153,7 +153,7 @@
       "enonce": "Vous voulez installer un utilitaire qui vous ferait gagner du temps. Comment procéder ?",
       "multiple": true,
       "points": 10,
-      "explication": "Passer par la DSI n'est pas une lourdeur administrative : c'est ce qui permet de savoir ce qui tourne sur le parc le jour où l'un de ces logiciels se révèle piégé — et les cas de logiciels gratuits populaires détournés sont réguliers. Le téléchargement depuis le site officiel de l'éditeur évite les sites de téléchargement qui reconditionnent les installeurs avec des extras. La licence compte aussi : beaucoup d'outils gratuits pour un usage personnel ne le sont pas pour une collectivité, et l'écart se règle en contentieux. Ce qui est à proscrire : l'installeur reçu d'un collègue, et la version « portable » qui contourne la demande d'installation — elle contourne le contrôle, pas le risque.",
+      "explication": "Passer par la DSI n'est pas une lourdeur administrative : c'est ce qui permet de savoir ce qui tourne sur le parc le jour où l'un de ces logiciels se révèle piégé — et les cas de logiciels gratuits populaires détournés sont réguliers. Le téléchargement depuis le site officiel de l'éditeur évite les sites de téléchargement qui reconditionnent les installeurs avec des extras. La licence compte aussi : beaucoup d'outils gratuits pour un usage personnel ne le sont pas pour une collectivité, et l'écart se règle en contentieux. Ce qui est à proscrire : l'installeur reçu d'un collègue, et la version « portable » qui contourne la demande d'installation — elle contourne le contrôle, pas le risque. Qu'un installeur fonctionne chez un collègue ne dit rien de son origine ni de sa version.",
       "reponses": [
         {
           "libelle": "Demander à la DSI avant l'installation",
@@ -168,11 +168,11 @@
           "correcte": true
         },
         {
-          "libelle": "Utiliser l'installeur transmis par un collègue qui l'a déjà",
+          "libelle": "Réutiliser l'installeur qu'un collègue a téléchargé il y a quelques mois : il a fait ses preuves sur son poste",
           "correcte": false
         },
         {
-          "libelle": "Prendre une version « portable » pour éviter d'avoir à demander",
+          "libelle": "Prendre une version « portable », qui ne s'installe pas et ne modifie donc rien sur le poste",
           "correcte": false
         }
       ]
@@ -196,11 +196,11 @@
           "correcte": true
         },
         {
-          "libelle": "Fermer la session produit exactement le même effet",
+          "libelle": "Fermer la session chaque soir suffit, puisque tout est rechargé à la prochaine ouverture",
           "correcte": false
         },
         {
-          "libelle": "Le redémarrage n'a aucun effet sur les mises à jour",
+          "libelle": "Un poste qui affiche « à jour » dans les paramètres n'a plus besoin de redémarrer",
           "correcte": false
         }
       ]

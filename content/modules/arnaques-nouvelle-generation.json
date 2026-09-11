@@ -22,7 +22,7 @@
       "contexte": "Le QR code renvoie vers une page aux couleurs de la Ville qui demande une carte bancaire pour régler le stationnement.",
       "multiple": true,
       "points": 10,
-      "explication": "C'est du « quishing » : un faux QR code collé par-dessus le vrai, ou sur un support qui n'en comportait pas. La technique explose sur les horodateurs, les bornes de recharge et les affiches. Un QR code ne se lit pas à l'œil nu : impossible de savoir où il mène avant de l'avoir scanné, ce qui en fait un excellent piège. Deux réflexes : regarder si l'autocollant est collé par-dessus autre chose, et vérifier l'adresse affichée par le téléphone AVANT de valider quoi que ce soit. Un domaine qui n'est pas celui de la Ville ou de son prestataire doit arrêter le geste. Et si vous en croisez un, signalez-le : il piège des administrés toute la journée.",
+      "explication": "C'est du « quishing » : un faux QR code collé par-dessus le vrai, ou sur un support qui n'en comportait pas. La technique explose sur les horodateurs, les bornes de recharge et les affiches. Un QR code ne se lit pas à l'œil nu : impossible de savoir où il mène avant de l'avoir scanné, ce qui en fait un excellent piège. Deux réflexes : regarder si l'autocollant est collé par-dessus autre chose, et vérifier l'adresse affichée par le téléphone AVANT de valider quoi que ce soit. Un domaine qui n'est pas celui de la Ville ou de son prestataire doit arrêter le geste. Et si vous en croisez un, signalez-le : il piège des administrés toute la journée. Le téléphone n'analyse pas la page derrière un QR code : il ouvre l'adresse, rien de plus. Et le cadenas signifie seulement que la connexion est chiffrée — y compris avec un escroc : la plupart des sites frauduleux en ont un.",
       "reponses": [
         {
           "libelle": "Un autocollant ajouté par-dessus le support d'origine est un signal d'alarme",
@@ -33,7 +33,7 @@
           "correcte": true
         },
         {
-          "libelle": "Un QR code ne peut pas être frauduleux, ce n'est qu'une image",
+          "libelle": "Le téléphone bloque de lui-même les QR codes qui mènent vers un site malveillant",
           "correcte": false
         },
         {
@@ -41,7 +41,7 @@
           "correcte": true
         },
         {
-          "libelle": "La page reprend le logo de la Ville, donc elle est authentique",
+          "libelle": "La page est en HTTPS avec un cadenas, donc le paiement est sécurisé",
           "correcte": false
         }
       ]
@@ -79,7 +79,7 @@
       "contexte": "De : Nadège AZZAZ <n.azzaz@chatillon92.fr.eu> — Objet : Discret et urgent. « Je suis en réunion, je ne peux pas être dérangée. Un virement de 24 000 € doit partir aujourd'hui pour finaliser une acquisition. Merci de rester discrète, le dossier n'est pas encore public. »",
       "multiple": true,
       "points": 10,
-      "explication": "C'est la « fraude au président », adaptée aux collectivités — et elle a coûté des centaines de milliers d'euros à plusieurs communes françaises. Tout est là : l'autorité, l'urgence, le secret demandé, et l'impossibilité de vérifier puisque l'expéditrice se dit injoignable. Le domaine trahit l'imposture : chatillon92.fr.eu n'est pas chatillon92.fr, c'est un domaine que n'importe qui peut acheter. Mais la règle ne doit pas dépendre de votre acuité visuelle : un virement exceptionnel se vérifie toujours par un canal indépendant, et la demande de confidentialité est en soi le signal d'alarme le plus fiable. Aucune élue, aucun DGS ne reprochera un appel de vérification.",
+      "explication": "C'est la « fraude au président », adaptée aux collectivités — et elle a coûté des centaines de milliers d'euros à plusieurs communes françaises. Tout est là : l'autorité, l'urgence, le secret demandé, et l'impossibilité de vérifier puisque l'expéditrice se dit injoignable. Le domaine trahit l'imposture : chatillon92.fr.eu n'est pas chatillon92.fr, c'est un domaine que n'importe qui peut acheter. Mais la règle ne doit pas dépendre de votre acuité visuelle : un virement exceptionnel se vérifie toujours par un canal indépendant, et la demande de confidentialité est en soi le signal d'alarme le plus fiable. Aucune élue, aucun DGS ne reprochera un appel de vérification. Vérifier que le RIB appartient à une société qui existe ne prouve rien : les escrocs ouvrent des comptes au nom de sociétés réelles ou éphémères. C'est la demande elle-même qu'il faut vérifier, pas ses pièces jointes.",
       "reponses": [
         {
           "libelle": "Vérifier le domaine : chatillon92.fr.eu n'est pas chatillon92.fr",
@@ -94,11 +94,11 @@
           "correcte": true
         },
         {
-          "libelle": "Exécuter le virement : refuser un ordre de l'autorité territoriale est une faute",
+          "libelle": "Vérifier que le RIB indiqué correspond à une société existante avant d'exécuter",
           "correcte": false
         },
         {
-          "libelle": "Répondre au message pour demander confirmation",
+          "libelle": "Répondre au message pour demander une confirmation écrite avant d'agir",
           "correcte": false
         }
       ]
@@ -135,22 +135,22 @@
       "enonce": "En visioconférence, une personne à l'image et à la voix de votre directeur vous demande un accès urgent. Que faites-vous ?",
       "multiple": false,
       "points": 10,
-      "explication": "Le trucage vidéo en temps réel n'est plus un exercice de laboratoire : une entreprise de Hong Kong a viré 25 millions de dollars après une visio où tous les participants étaient synthétiques. L'image et la voix ne sont plus des preuves d'identité. Ce qui reste vrai, c'est le canal : raccrochez et rappelez sur le numéro que vous connaissez, ou allez frapper à la porte du bureau. Demander à la personne de bouger la tête ou de se lever aide parfois — les trucages tiennent mal les profils — mais c'est un indice, pas une garantie. Le rappel indépendant, si.",
+      "explication": "Le trucage vidéo en temps réel n'est plus un exercice de laboratoire : une entreprise de Hong Kong a viré 25 millions de dollars après une visio où tous les participants étaient synthétiques. L'image et la voix ne sont plus des preuves d'identité. Ce qui reste vrai, c'est le canal : raccrochez et rappelez sur le numéro que vous connaissez, ou allez frapper à la porte du bureau. Demander à la personne de bouger la tête ou de se lever aide parfois — les trucages tiennent mal les profils — mais c'est un indice, pas une garantie. Le rappel indépendant, si. Une question « dont lui seul connaît la réponse » ne vaut rien non plus : si la messagerie du directeur a été piratée, l'escroc a lu les mêmes échanges que vous. Et un accès « provisoire » suffit largement : quelques minutes permettent de copier ce qu'il faut.",
       "reponses": [
         {
           "libelle": "Je raccroche et je rappelle sur le numéro de l'annuaire interne",
           "correcte": true
         },
         {
-          "libelle": "J'accepte : je l'ai vu et entendu, c'était bien lui",
+          "libelle": "J'accepte après lui avoir demandé de tourner la tête et de se lever, ce qui a bien fonctionné",
           "correcte": false
         },
         {
-          "libelle": "Je demande un mot de passe convenu : s'il le donne, c'est bon",
+          "libelle": "Je lui pose une question dont lui seul connaît la réponse, comme le sujet de notre dernière réunion",
           "correcte": false
         },
         {
-          "libelle": "Je fais une capture d'écran et je l'envoie à la DSI en attendant",
+          "libelle": "J'accorde un accès limité à quelques heures, le temps de faire vérifier la demande",
           "correcte": false
         }
       ]
@@ -160,7 +160,7 @@
       "contexte": "Le numéro affiché est bien celui de votre agence, et l'interlocuteur connaît vos dernières opérations.",
       "multiple": false,
       "points": 10,
-      "explication": "L'affichage du numéro se falsifie en quelques secondes — c'est du « spoofing », et cela ne prouve rien. Que l'interlocuteur connaisse vos opérations non plus : ces données circulent après les fuites de fichiers clients. Le point de bascule est le code : ce code autorise l'opération, il ne l'annule pas. Le donner, c'est valider soi-même le virement que l'on croit bloquer. Aucun conseiller bancaire ne le demandera jamais. Raccrochez, et rappelez le numéro figurant au dos de votre carte — jamais celui qui vous a appelé.",
+      "explication": "L'affichage du numéro se falsifie en quelques secondes — c'est du « spoofing », et cela ne prouve rien. Que l'interlocuteur connaisse vos opérations non plus : ces données circulent après les fuites de fichiers clients. Le point de bascule est le code : ce code autorise l'opération, il ne l'annule pas. Le donner, c'est valider soi-même le virement que l'on croit bloquer. Aucun conseiller bancaire ne le demandera jamais. Raccrochez, et rappelez le numéro figurant au dos de votre carte — jamais celui qui vous a appelé. Se faire rappeler ne change rien : c'est vous qui devez composer le numéro, sinon vous retombez sur le même interlocuteur, avec le même numéro falsifié.",
       "reponses": [
         {
           "libelle": "Je raccroche et je rappelle le numéro inscrit au dos de ma carte bancaire",
@@ -175,7 +175,7 @@
           "correcte": false
         },
         {
-          "libelle": "Je donne le code mais je change mon mot de passe juste après",
+          "libelle": "Je lui demande de me rappeler dans cinq minutes, le temps de vérifier le numéro sur le site de la banque",
           "correcte": false
         }
       ]
