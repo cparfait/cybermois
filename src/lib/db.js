@@ -248,6 +248,24 @@ ajouterColonne('agents', 'service_force', 'INTEGER NOT NULL DEFAULT 0');
 // correspondance. Le conserver permet de rejouer un regroupement a tout moment.
 ajouterColonne('agents', 'service_ad', 'TEXT');
 
+// Rattrapage, une seule fois : les directions affectees depuis le formulaire
+// « Modifier » avant que ce geste ne pose le marqueur. Sans lui, la connexion
+// suivante de l'agent rendait la main a l'annuaire et defaisait la decision.
+// Le journal garde la trace de chaque modification de service faite ainsi :
+// c'est lui qui dit quels agents en beneficient.
+if (!db.prepare("SELECT 1 FROM journal WHERE action = 'rattrapage_service_force'").get()) {
+  const logins = db.prepare(`
+    SELECT DISTINCT substr(detail, 1, instr(detail, ' : ') - 1) AS login
+    FROM journal
+    WHERE action = 'agent_modifie' AND detail LIKE '% : %service = ?%'
+  `).all().map((l) => l.login).filter(Boolean);
+  let marques = 0;
+  const forcer = db.prepare('UPDATE agents SET service_force = 1 WHERE login = ? AND service_force = 0 AND exclu = 0');
+  for (const login of logins) marques += forcer.run(login).changes;
+  db.prepare("INSERT INTO journal (login, action, detail) VALUES ('systeme', 'rattrapage_service_force', ?)")
+    .run(`${marques} agent(s) dont la direction choisie a la main est desormais protegee`);
+}
+
 // Le prenom de l'annuaire (givenName). Sans lui, il faut deviner ou couper
 // le nom complet, et « NOM Prenom » donne alors « Bonjour DUPONT ».
 ajouterColonne('agents', 'prenom', 'TEXT');
