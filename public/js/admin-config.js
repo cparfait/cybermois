@@ -206,8 +206,12 @@ export async function chargerConfiguration() {
             <td>${a.provisoire
               ? '<span class="pastille-etat" style="background:var(--alerte-fond);color:var(--alerte)">mot de passe provisoire</span>'
               : '<span class="pastille-etat etat-ok">actif</span>'}</td>
-            <td><button class="btn btn-secondaire" style="padding:.25rem .6rem;font-size:.78rem;border-color:var(--erreur);color:var(--erreur)"
-                        data-supprimer-local="${echapper(a.login)}">Supprimer</button></td>
+            <td class="rang" style="gap:.4rem">
+              <button class="btn btn-secondaire" style="padding:.25rem .6rem;font-size:.78rem"
+                      data-changer-local="${echapper(a.login)}">Changer le mot de passe</button>
+              <button class="btn btn-secondaire" style="padding:.25rem .6rem;font-size:.78rem;border-color:var(--erreur);color:var(--erreur)"
+                      data-supprimer-local="${echapper(a.login)}">Supprimer</button>
+            </td>
           </tr>`).join('')}
         </tbody></table></div>
 
@@ -215,8 +219,9 @@ export async function chargerConfiguration() {
       <div class="grille grille-2">
         <div class="champ-admin">
           <label for="local-login">Identifiant</label>
-          <input type="text" id="local-login" placeholder="admin" autocapitalize="none" spellcheck="false">
-          <p class="discret" style="margin:.3rem 0 0;font-size:.78rem">Un identifiant existant voit son mot de passe remplacé.</p>
+          <input type="text" id="local-login" placeholder="ex. admin" autocapitalize="none" spellcheck="false">
+          <p class="discret" style="margin:.3rem 0 0;font-size:.78rem">Un identifiant existant voit son mot de passe remplacé.
+            Pour un compte du tableau ci-dessus, « Changer le mot de passe » le remplit pour vous.</p>
         </div>
         <div class="champ-admin">
           <label for="local-mdp">Mot de passe</label>
@@ -396,6 +401,28 @@ function brancher() {
       boutonLocal.textContent = libelle;
     }
   });
+
+  /**
+   * « Changer le mot de passe » amene au formulaire, identifiant deja rempli.
+   *
+   * Le formulaire sert a creer un compte ET a changer un mot de passe, mais
+   * rien ne le disait sur la ligne du compte, qui n'offrait que « Supprimer ».
+   * Pire : le champ Identifiant porte « admin » en texte de substitution, ce
+   * qui le fait passer pour deja rempli - l'enregistrement echouait alors sur
+   * un identifiant manquant.
+   */
+  cible.querySelectorAll('[data-changer-local]').forEach((b) =>
+    b.addEventListener('click', () => {
+      const champLogin = document.getElementById('local-login');
+      const champMdp = document.getElementById('local-mdp');
+      champLogin.value = b.dataset.changerLocal;
+      champMdp.value = '';
+      champMdp.scrollIntoView({ block: 'center', behavior: animationsReduites() ? 'auto' : 'smooth' });
+      champMdp.focus();
+      alerte('alerte',
+        `Saisissez le nouveau mot de passe de « ${b.dataset.changerLocal} », `
+        + 'puis « Enregistrer le compte local ».', 'succes');
+    }));
 
   cible.querySelectorAll('[data-supprimer-local]').forEach((b) =>
     b.addEventListener('click', async () => {
