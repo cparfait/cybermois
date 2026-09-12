@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { db, journaliser } from './db.js';
 import { config } from './config.js';
+import cron from 'node-cron';
 import { normaliserUrlLdap } from './url-ldap.js';
 
 /**
@@ -77,14 +78,14 @@ export const DESCRIPTEUR = [
       + 'Un changement de personne se règle ici, sans toucher au code.' },
 
   { cle: 'ldap.url', chemin: ['ldap', 'url'], type: 'ldap-hote', groupe: 'ldap',
-    libelle: "Adresse du controleur de domaine", aide: "L'IP ou le nom : 192.168.2.9, ou dc01.chatillon.lan. "
+    libelle: "Adresse du controleur de domaine", aide: "L'IP ou le nom : 10.0.0.1, ou dc01.exemple.lan. "
       + 'Ni schema ni port : la case ci-contre les determine.' },
   { cle: 'ldap.bindDn', chemin: ['ldap', 'bindDn'], type: 'texte', groupe: 'ldap',
-    libelle: 'DN du compte de service', aide: 'ad.cybermois@chatillon.lan (ou le DN complet)' },
+    libelle: 'DN du compte de service', aide: 'ad.cybermois@exemple.lan (ou le DN complet)' },
   { cle: 'ldap.bindPassword', chemin: ['ldap', 'bindPassword'], type: 'secret', groupe: 'ldap',
     libelle: 'Mot de passe du compte de service', aide: 'Chiffre en base. Jamais renvoye au navigateur.' },
   { cle: 'ldap.baseDn', chemin: ['ldap', 'baseDn'], type: 'texte', groupe: 'ldap',
-    libelle: 'Base de recherche', aide: 'DC=chatillon,DC=lan, ou une OU precise pour restreindre le perimetre.' },
+    libelle: 'Base de recherche', aide: 'DC=exemple,DC=lan, ou une OU precise pour restreindre le perimetre.' },
   { cle: 'ldap.userFilter', chemin: ['ldap', 'userFilter'], type: 'texte', groupe: 'ldap',
     libelle: 'Filtre de recherche',
     aide: '{{login}} est remplace par la saisie de l agent. Le filtre par defaut accepte '
@@ -262,6 +263,63 @@ export function lireParametres() {
  * Un secret dont la valeur est vide ou inchangee n'est pas ecrase :
  * l'interface n'ayant jamais recu l'ancienne valeur, elle ne peut pas la renvoyer.
  */
+/**
+ * Controles de coherence avant enregistrement.
+ *
+ * Ces reglages se saisissent depuis le back-office et prennent effet
+ * immediatement : une valeur absurde n'attend pas un redeploiement pour faire
+ * des degats. Deux cas justifient un refus plutot qu'un avertissement.
+ *
+ * L'adresse du portail commande le drapeau « Secure » du cookie de session :
+ * la repasser en http ferait circuler le cookie en clair sur le reseau.
+ *
+ * Une expression de planification invalide n'arretait rien non plus : elle
+ * etait acceptee, et les relances cessaient simplement d'etre envoyees, sans
+ * que personne ne s'en apercoive avant la fin de la campagne.
+ */
+export function validerParametres(valeurs) {
+  const erreurs = [];
+  const v = (cle) => valeurs[cle];
+
+  if (v('publicUrl') !== undefined) {
+    const url = String(v('publicUrl')).trim();
+    let hote = null;
+    try { hote = new URL(url).hostname; } catch { /* invalide */ }
+    if (!hote) erreurs.push("L'adresse du portail doit etre une URL complete, par exemple https://cybermois.exemple.fr");
+    else if (config.env === 'production' && !url.startsWith('https://')) {
+      erreurs.push("L'adresse du portail doit etre en https en production : le cookie de "
+        + 'session perdrait son drapeau Secure et circulerait en clair.');
+    }
+  }
+
+  for (const cle of ['campagne.debut', 'campagne.fin']) {
+    if (v(cle) !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(String(v(cle)).trim())) {
+      erreurs.push(`${PAR_CLE[cle].libelle} : date attendue au format AAAA-MM-JJ.`);
+    }
+  }
+
+  if (v('campagne.debut') && v('campagne.fin')
+      && String(v('campagne.debut')) > String(v('campagne.fin'))) {
+    erreurs.push('La fin de campagne ne peut pas preceder son debut.');
+  }
+
+  for (const cle of ['cron.relance', 'cron.resultats']) {
+    if (v(cle) !== undefined && !cron.validate(String(v(cle)).trim())) {
+      erreurs.push(`${PAR_CLE[cle].libelle} : expression de planification invalide `
+        + '(exemple : « 0 9 * * 3 » pour le mercredi a 9 h).');
+    }
+  }
+
+  if (v('service.ouDepth') !== undefined) {
+    const n = Number(v('service.ouDepth'));
+    if (!Number.isInteger(n) || n < 1 || n > 10) {
+      erreurs.push("La profondeur d'OU doit etre un entier entre 1 et 10.");
+    }
+  }
+
+  return erreurs;
+}
+
 export function enregistrerParametres(valeurs, login) {
   const inserer = db.prepare(`
     INSERT INTO parametres (cle, valeur, chiffre, maj_le, maj_par)

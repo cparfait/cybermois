@@ -1,6 +1,11 @@
-import { api, echapper, initialiserPage, alerte, medaille } from '/js/commun.js';
+import {
+  api, echapper, initialiserPage, alerte, medaille, animationsReduites,
+} from '/js/commun.js';
 
 const agent = await initialiserPage('/classement');
+
+/** Defilement respectueux du reglage « reduire les animations ». */
+const glisser = () => (animationsReduites() ? 'auto' : 'smooth');
 
 /* ------------------------------------------------------------- Onglets */
 
@@ -42,6 +47,16 @@ function podium(entrees, rendu) {
 // qui se cherche a la 60e place prefere deplier que faire defiler.
 const PREMIERS = 10;
 
+/**
+ * Cellule de rang.
+ * Sur le podium la medaille remplacait le chiffre : un lecteur d'ecran
+ * annoncait « medaille sportive premiere place » ou rien du tout, et les trois
+ * premieres lignes n'avaient plus de rang. L'emoji decore, le chiffre informe.
+ */
+const celluleRang = (rang) => (medaille(rang)
+  ? `<span aria-hidden="true">${medaille(rang)}</span><span class="sr-only">${rang}</span>`
+  : String(rang));
+
 /** Bouton « voir plus » : deplie les lignes au-dela des dix premieres. */
 function brancherVoirPlus(idTable, idBouton, total, libelle) {
   const bouton = document.getElementById(idBouton);
@@ -64,7 +79,7 @@ function brancherVoirPlus(idTable, idBouton, total, libelle) {
     deplie = !deplie;
     document.querySelectorAll(`#${idTable} tr[data-au-dela]`).forEach((l) => { l.hidden = !deplie; });
     majLibelle();
-    if (!deplie) document.getElementById(idTable).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!deplie) document.getElementById(idTable).scrollIntoView({ behavior: glisser(), block: 'start' });
   };
 }
 
@@ -78,6 +93,7 @@ function rendreServices(donnees) {
 
   document.getElementById('podium-services').innerHTML = podium(services, (s, i) => `
     <div class="medaille" aria-hidden="true">${medaille(i + 1)}</div>
+    <div class="sr-only">${i + 1}<sup>${i === 0 ? 're' : 'e'}</sup> place</div>
     <div class="nom">${echapper(s.service)}</div>
     <div class="points">${s.pourcentage_moyen} %</div>
     <div class="sous">${s.score_total} / ${s.points_possibles} pts · ${s.taux_participation} % de participation</div>`);
@@ -93,7 +109,7 @@ function rendreServices(donnees) {
     </tr></thead>
     <tbody>${services.map((s, i) => `
       <tr class="${s.service === maDirection ? 'moi' : ''}"${i >= PREMIERS ? ' data-au-dela hidden' : ''}>
-        <td class="rang-cell">${medaille(i + 1) || i + 1}</td>
+        <td class="rang-cell">${celluleRang(i + 1)}</td>
         <td>${echapper(s.service)}${s.service === maDirection ? ' <span class="discret">(ma direction)</span>' : ''}</td>
         <td class="num"><strong>${s.pourcentage_moyen} %</strong></td>
         <td class="num discret" style="white-space:nowrap">${s.score_total} / ${s.points_possibles}</td>
@@ -118,6 +134,7 @@ function rendreAgents(donnees) {
 
   document.getElementById('podium-agents').innerHTML = podium(agents, (a, i) => `
     <div class="medaille" aria-hidden="true">${medaille(i + 1)}</div>
+    <div class="sr-only">${i + 1}<sup>${i === 0 ? 'er' : 'e'}</sup></div>
     <div class="nom">${echapper(a.nom_complet)}</div>
     <div class="points">${a.pourcentage} %</div>
     <div class="sous">${a.score_total} / ${a.points_possibles} pts · ${echapper(a.service)}</div>`);
@@ -125,14 +142,17 @@ function rendreAgents(donnees) {
   document.getElementById('table-agents').innerHTML = `
     <caption class="sr-only">Classement individuel des agents</caption>
     <thead><tr>
-      <th scope="col">Rang</th><th scope="col">Agent</th><th scope="col">Service</th>
+      <th scope="col">Rang</th><th scope="col">Agent</th><th scope="col">Direction</th>
       <th scope="col" class="num">Réussite</th>
       <th scope="col" class="num">Points</th><th scope="col" class="num">Défis</th>
     </tr></thead>
+    <!-- « Ma ligne » vient du serveur. Comparer les noms surlignait les
+         homonymes, et ne trouvait jamais un agent qui a demande a ne pas
+         figurer nominativement : il paraissait sous « Agent anonyme ». -->
     <tbody>${agents.map((a, i) => `
-      <tr class="${a.nom_complet === agent.nomComplet ? 'moi' : ''}"${i >= PREMIERS ? ' data-au-dela hidden' : ''}>
-        <td class="rang-cell">${medaille(i + 1) || i + 1}</td>
-        <td>${echapper(a.nom_complet)}</td>
+      <tr class="${a.moi ? 'moi' : ''}"${i >= PREMIERS ? ' data-au-dela hidden' : ''}>
+        <td class="rang-cell">${celluleRang(i + 1)}</td>
+        <td>${echapper(a.nom_complet)}${a.moi ? ' <span class="discret">(moi)</span>' : ''}</td>
         <td>${echapper(a.service)}</td>
         <td class="num"><strong>${a.pourcentage} %</strong></td>
         <td class="num discret" style="white-space:nowrap">${a.score_total} / ${a.points_possibles}</td>

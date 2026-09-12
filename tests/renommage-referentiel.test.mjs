@@ -7,9 +7,13 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { db } from '../src/lib/db.js';
-import { enregistrerReferentiel, lireReferentiel } from '../src/lib/referentiel.js';
-import { resoudreService } from '../src/lib/services.js';
+import { baseJetable, nettoyerALaFin } from './base-jetable.mjs';
+
+baseJetable('renommage-referentiel', import.meta.url);
+const { db } = await import('../src/lib/db.js');
+const { enregistrerReferentiel, lireReferentiel } = await import('../src/lib/referentiel.js');
+const { resoudreService } = await import('../src/lib/services.js');
+nettoyerALaFin(db);
 
 const PREFIXE = 'zz-test-renom-';
 const ANCIEN = 'ZZ Finances test';

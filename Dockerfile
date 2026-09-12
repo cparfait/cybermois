@@ -1,4 +1,8 @@
-FROM node:24-alpine
+# Version mineure epinglee : une reconstruction six mois plus tard doit produire
+# la meme image. La balise node:24-alpine suit la branche 24 et peut basculer de
+# version mineure sans prevenir, ce qui change le moteur SQLite embarque.
+# Verifiee sur Docker Hub (library/node) au moment de la redaction.
+FROM node:24.21-alpine
 
 RUN apk add --no-cache tzdata && \
     ln -snf /usr/share/zoneinfo/Europe/Paris /etc/localtime && \
@@ -6,9 +10,12 @@ RUN apk add --no-cache tzdata && \
 
 WORKDIR /app
 
-# Installation des dependances en couche separee pour profiter du cache Docker
-COPY package.json package-lock.json* ./
-RUN npm install --omit=dev --no-audit --no-fund
+# Installation des dependances en couche separee pour profiter du cache Docker.
+# npm ci et non npm install : le package-lock.json est suivi par git, c'est lui
+# qui fait foi. npm install accepterait de le reecrire et l'image ne
+# correspondrait plus a ce qui a ete teste.
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --no-audit --no-fund
 
 COPY src ./src
 COPY public ./public
@@ -29,6 +36,9 @@ USER cyber
 ENV NODE_ENV=production PORT=3000
 EXPOSE 3000
 
+# GET /sante ne renvoie plus que { ok, version } : aucun effectif, rien de
+# nominatif. Le healthcheck ne lit de toute facon que le code HTTP, il reste
+# donc valable tel quel.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:3000/sante').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 

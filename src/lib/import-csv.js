@@ -1,3 +1,4 @@
+import { SERVICE_NON_RATTACHE } from './db.js';
 /**
  * Import d'un effectif depuis un export d'annuaire.
  *
@@ -155,14 +156,14 @@ export function preparerImport(texte, { ouDepth = 1 } = {}) {
     const dn = valeur(ligne, 'dn') || null;
     let service = valeur(ligne, 'service');
     if (!service && dn) service = serviceDepuisDn(dn, ouDepth) || '';
-    service = service.replace(/\s+/g, ' ').trim() || 'Non rattache';
+    service = service.replace(/\s+/g, ' ').trim() || SERVICE_NON_RATTACHE;
 
     const email = valeur(ligne, 'email');
     const emailValide = email && EMAIL_VALIDE.test(email) ? email.toLowerCase() : null;
     const avertissements = [];
     if (email && !emailValide) avertissements.push(`adresse ignorée : « ${email} »`);
     if (!emailValide) avertissements.push('sans adresse : ne recevra pas de relance');
-    if (service === 'Non rattache') avertissements.push('service non déterminé');
+    if (service === SERVICE_NON_RATTACHE) avertissements.push('service non déterminé');
 
     agents.push({ login, nomComplet, email: emailValide, service, dn, avertissements });
   });
@@ -184,7 +185,7 @@ export function preparerImport(texte, { ouDepth = 1 } = {}) {
       retenues: agents.length,
       rejetees: rejets.length,
       sansEmail: agents.filter((a) => !a.email).length,
-      sansService: agents.filter((a) => a.service === 'Non rattache').length,
+      sansService: agents.filter((a) => a.service === SERVICE_NON_RATTACHE).length,
       services: services.length,
     },
   };

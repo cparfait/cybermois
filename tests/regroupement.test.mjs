@@ -3,7 +3,14 @@
  * et retient la bonne OU intermediaire, y compris quand les branches n'ont pas
  * la meme profondeur.
  */
-import { chaineOu } from '../src/lib/services.js';
+import { baseJetable, nettoyerALaFin } from './base-jetable.mjs';
+
+// Ce test ne touche a aucune donnee, mais src/lib/services.js charge db.js :
+// l'importer creait et ouvrait data/cybermois.db, la base de PRODUCTION.
+baseJetable('regroupement', import.meta.url);
+const { db } = await import('../src/lib/db.js');
+const { chaineOu } = await import('../src/lib/services.js');
+nettoyerALaFin(db);
 
 let echecs = 0;
 const verifier = (obtenu, attendu, libelle) => {

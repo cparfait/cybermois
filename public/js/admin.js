@@ -1,12 +1,42 @@
-import { api, echapper, initialiserPage, alerte, formaterDate } from '/js/commun.js';
-import { chargerAgents } from '/js/admin-agents.js';
+import {
+  api, echapper, initialiserPage, alerte, formaterDate,
+  animationsReduites, contactsPublics,
+} from '/js/commun.js';
+import { chargerAgents, filtrerAgents } from '/js/admin-agents.js';
 import { chargerConfiguration } from '/js/admin-config.js';
 import { formulaireRecalcul, chargerRegistre } from '/js/admin-corrections.js';
 import { ecranProgramme } from '/js/admin-programme.js';
-import { filtrerAgents } from '/js/admin-agents.js';
 import { formulaireServices } from '/js/admin-services.js';
+import { reconnaitreVideo } from '/js/video.js';
 
 await initialiserPage('/administration');
+
+/** Defilement respectueux du reglage « reduire les animations ». */
+const glisser = () => (animationsReduites() ? 'auto' : 'smooth');
+const remonter = () => window.scrollTo({ top: 0, behavior: glisser() });
+const amener = (element, block = 'nearest') =>
+  element?.scrollIntoView({ behavior: glisser(), block });
+
+/**
+ * Neutralise un bouton le temps d'un appel, et le retablit quoi qu'il arrive.
+ *
+ * Sans cela, un double clic - ou un clic impatient sur une liaison lente -
+ * envoyait deux fois la meme creation, la meme suppression, le meme
+ * enregistrement. Le `finally` compte autant que le reste : un bouton laisse
+ * desactive apres une erreur oblige a recharger la page.
+ */
+async function pendant(bouton, libelleEnCours, action) {
+  if (!bouton) return action();
+  const libelle = bouton.textContent;
+  bouton.disabled = true;
+  if (libelleEnCours) bouton.textContent = libelleEnCours;
+  try {
+    return await action();
+  } finally {
+    bouton.disabled = false;
+    bouton.textContent = libelle;
+  }
+}
 
 const NOMS = ['suivi', 'defis', 'agents', 'mails', 'exports', 'configuration', 'technique'];
 const onglets = NOMS.map((nom) => ({
@@ -18,16 +48,23 @@ const onglets = NOMS.map((nom) => ({
 const chargeurs = {};
 let dejaCharge = new Set();
 
-onglets.forEach(({ nom, bouton }, index) => {
+// Fleches, Origine et Fin : le motif attendu d'un jeu d'onglets (RGAA 7.3).
+// Sur sept onglets, atteindre « Technique » demandait six appuis sur la
+// fleche droite.
+onglets.forEach(({ bouton }, index) => {
   bouton.addEventListener('click', () => activer(index));
   bouton.addEventListener('keydown', (e) => {
-    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    const dernier = onglets.length - 1;
+    let suivant = null;
+    if (e.key === 'ArrowRight') suivant = (index + 1) % onglets.length;
+    else if (e.key === 'ArrowLeft') suivant = (index + dernier) % onglets.length;
+    else if (e.key === 'Home') suivant = 0;
+    else if (e.key === 'End') suivant = dernier;
+    if (suivant === null) return;
     e.preventDefault();
-    const suivant = (index + (e.key === 'ArrowRight' ? 1 : onglets.length - 1)) % onglets.length;
     activer(suivant);
     onglets[suivant].bouton.focus();
   });
-  void nom;
 });
 
 function activer(actif) {
@@ -65,7 +102,11 @@ chargeurs.suivi = async () => {
         <div class="stat-admin"><div class="v">${s.points_cumules}</div><div class="l">points cumulés</div></div>
       </div>
 
-      ${s.connectes === s.inscrits ? `
+      <!-- L'alerte se declenchait sur « connectes === inscrits », ce qui est
+           vrai dans une petite collectivite ou tout le monde est venu : elle
+           accusait alors a tort la DSI de n'avoir rien importe. Le seul cas ou
+           l'effectif manque vraiment est celui ou il n'y a personne. -->
+      ${s.inscrits === 0 ? `
         <div class="message message-alerte" style="margin-bottom:1.5rem">
           Aucun effectif n'a été importé : les agents n'apparaissent qu'à leur première connexion,
           donc le taux de participation affiché est trompeur. Importez votre export d'annuaire dans
@@ -79,16 +120,23 @@ chargeurs.suivi = async () => {
 
       <h2>Participation par défi</h2>
       <div class="tableau-defilant"><table class="admin">
-        <thead><tr><th>Parution</th><th>Défi</th><th class="num">Participants</th><th class="num">Réussite moyenne</th></tr></thead>
+        <caption class="sr-only">Participation et réussite moyenne, défi par défi</caption>
+        <thead><tr><th scope="col">Parution</th><th scope="col">Défi</th>
+          <th scope="col" class="num">Participants</th>
+          <th scope="col" class="num">Réussite moyenne</th></tr></thead>
         <tbody>${s.parDefi.map((x) => `
           <tr><td>${echapper(x.ouvre_le)}</td><td>${echapper(x.titre)}</td>
           <td class="num">${x.participants}</td>
           <td class="num">${x.reussite_moyenne === null ? '—' : `${x.reussite_moyenne} %`}</td></tr>`).join('')}
         </tbody></table></div>
 
-      <h2 style="margin-top:2rem">Classement des services</h2>
+      <h2 style="margin-top:2rem">Classement des directions</h2>
       <div class="tableau-defilant"><table class="admin">
-        <thead><tr><th>Rang</th><th>Service</th><th class="num">Réussite</th><th class="num">Points</th><th class="num">Participation</th><th class="num">Joueurs / inscrits</th></tr></thead>
+        <caption class="sr-only">Classement des directions par réussite</caption>
+        <thead><tr><th scope="col">Rang</th><th scope="col">Direction</th>
+          <th scope="col" class="num">Réussite</th><th scope="col" class="num">Points</th>
+          <th scope="col" class="num">Participation</th>
+          <th scope="col" class="num">Joueurs / inscrits</th></tr></thead>
         <tbody>${d.services.map((x, i) => `
           <tr><td>${i + 1}</td><td>${echapper(x.service)}</td>
           <td class="num">${x.pourcentage_moyen} %</td>
@@ -97,10 +145,11 @@ chargeurs.suivi = async () => {
           <td class="num">${x.joueurs} / ${x.inscrits}</td></tr>`).join('')}
         </tbody></table></div>
 
-      <h2 style="margin-top:2rem">Services à relancer</h2>
+      <h2 style="margin-top:2rem">Directions à relancer</h2>
       <p class="discret">Agents connectés n'ayant encore terminé aucun défi.</p>
       <div class="tableau-defilant"><table class="admin">
-        <thead><tr><th>Service</th><th class="num">Agents inactifs</th></tr></thead>
+        <caption class="sr-only">Directions comptant des agents connectés mais inactifs</caption>
+        <thead><tr><th scope="col">Direction</th><th scope="col" class="num">Agents inactifs</th></tr></thead>
         <tbody>${d.jamaisJoue.length
           ? d.jamaisJoue.map((x) => `<tr><td>${echapper(x.service)}</td><td class="num">${x.n}</td></tr>`).join('')
           : '<tr><td colspan="2" class="discret">Tout le monde a joué. Beau score.</td></tr>'}
@@ -108,7 +157,10 @@ chargeurs.suivi = async () => {
 
       <h2 style="margin-top:2rem">Derniers envois</h2>
       <div class="tableau-defilant"><table class="admin">
-        <thead><tr><th>Date</th><th>Type</th><th>Défi</th><th class="num">Destinataires</th><th class="num">Succès</th><th>Erreur</th></tr></thead>
+        <caption class="sr-only">Derniers envois de messages, avec leur résultat</caption>
+        <thead><tr><th scope="col">Date</th><th scope="col">Type</th><th scope="col">Défi</th>
+          <th scope="col" class="num">Destinataires</th><th scope="col" class="num">Succès</th>
+          <th scope="col">Erreur</th></tr></thead>
         <tbody>${d.derniersEnvois.length
           ? d.derniersEnvois.map((e) => `<tr>
               <td>${formaterDate(e.horodatage)}</td><td>${echapper(e.type)}</td>
@@ -136,7 +188,7 @@ function allerVers(cible) {
 
   if (onglet === 'agents') filtrerAgents(filtre || '');
   if (onglet === 'services') formulaireServices(() => { dejaCharge.delete('suivi'); });
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  remonter();
 }
 
 /**
@@ -182,7 +234,9 @@ chargeurs.defis = async () => {
       <div id="zone-suppression"></div>
 
       <div class="tableau-defilant"><table class="admin">
-        <thead><tr><th>Parution</th><th>Titre</th><th>État</th><th>Actions</th></tr></thead>
+        <caption class="sr-only">Défis programmés dans la campagne</caption>
+        <thead><tr><th scope="col">Parution</th><th scope="col">Titre</th>
+          <th scope="col">État</th><th scope="col">Actions</th></tr></thead>
         <tbody>${defis.map((d) => `
           <tr>
             <td>${echapper(d.ouvre_le)}</td>
@@ -206,7 +260,10 @@ chargeurs.defis = async () => {
             </td>
             <td>
               <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem" data-editer="${d.id}">Modifier</button>
-              <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem" data-publier="${d.id}" data-etat="${d.publie}">
+              <!-- « data-etat » est lu comme une chaine : ecrire directement
+                   l'entier SQLite faisait dependre le bouton du fait que
+                   l'API renvoie 1 plutot que true. On normalise ici. -->
+              <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem" data-publier="${d.id}" data-etat="${d.publie ? 1 : 0}">
                 ${d.publie ? 'Masquer' : 'Publier'}
               </button>
               <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem"
@@ -229,14 +286,15 @@ chargeurs.defis = async () => {
       dejaCharge.delete('defis'); dejaCharge.delete('suivi'); chargeurs.defis();
     });
 
-    cible.querySelectorAll('[data-publier]').forEach((b) => b.addEventListener('click', async () => {
-      try {
-        await api(`/api/admin/defis/${b.dataset.publier}/publication`, {
-          method: 'POST', body: { publie: b.dataset.etat !== '1' },
-        });
-        dejaCharge.delete('defis'); chargeurs.defis();
-      } catch (e) { alerte('alerte', e.message); }
-    }));
+    cible.querySelectorAll('[data-publier]').forEach((b) => b.addEventListener('click', () =>
+      pendant(b, 'Enregistrement…', async () => {
+        try {
+          await api(`/api/admin/defis/${b.dataset.publier}/publication`, {
+            method: 'POST', body: { publie: b.dataset.etat !== '1' },
+          });
+          dejaCharge.delete('defis'); chargeurs.defis();
+        } catch (e) { alerte('alerte', e.message); }
+      })));
 
     cible.querySelectorAll('[data-editer]').forEach((b) =>
       b.addEventListener('click', () => ouvrirEditeur(Number(b.dataset.editer))));
@@ -255,16 +313,19 @@ chargeurs.defis = async () => {
         () => { dejaCharge.delete('suivi'); }
       )));
 
-    document.getElementById('btn-creer-defi').addEventListener('click', async () => {
+    const boutonCreer = document.getElementById('btn-creer-defi');
+    boutonCreer.addEventListener('click', () => {
       const titre = prompt('Titre du nouveau défi :');
-      if (!titre?.trim()) return;
-      try {
-        const r = await api('/api/admin/defis', { method: 'POST', body: { titre: titre.trim() } });
-        alerte('alerte', r.message, 'succes');
-        dejaCharge.delete('defis');
-        await chargeurs.defis();
-        ouvrirEditeur(r.id);
-      } catch (e) { alerte('alerte', e.message); }
+      if (!titre?.trim()) return undefined;
+      return pendant(boutonCreer, 'Création…', async () => {
+        try {
+          const r = await api('/api/admin/defis', { method: 'POST', body: { titre: titre.trim() } });
+          alerte('alerte', r.message, 'succes');
+          dejaCharge.delete('defis');
+          await chargeurs.defis();
+          ouvrirEditeur(r.id);
+        } catch (e) { alerte('alerte', e.message); }
+      });
     });
 
     cible.querySelectorAll('[data-supprimer-defi]').forEach((b) =>
@@ -325,21 +386,26 @@ function formulaireSuppressionDefi(defi, onTermine) {
       </div>
     </div>`;
 
-  zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  amener(zone);
 
   const fermer = () => { zone.innerHTML = ''; };
   document.getElementById('btn-annuler-suppr').addEventListener('click', fermer);
 
-  document.getElementById('btn-masquer-plutot')?.addEventListener('click', async () => {
+  // Une suppression ne se rattrape pas : un second clic pendant l'appel
+  // partait en double, et la seconde requete echouait sur un defi deja
+  // supprime - avec un message d'erreur apres une suppression reussie.
+  const masquer = document.getElementById('btn-masquer-plutot');
+  masquer?.addEventListener('click', () => pendant(masquer, 'Masquage…', async () => {
     try {
       await api(`/api/admin/defis/${defi.id}/publication`, { method: 'POST', body: { publie: false } });
       fermer();
       alerte('alerte', `« ${defi.titre} » est masqué. Les résultats sont conservés.`, 'succes');
       onTermine();
     } catch (e) { alerte('alerte', e.message); }
-  });
+  }));
 
-  document.getElementById('btn-confirmer-suppr').addEventListener('click', async () => {
+  const confirmer = document.getElementById('btn-confirmer-suppr');
+  confirmer.addEventListener('click', () => pendant(confirmer, 'Suppression…', async () => {
     try {
       const r = await api(`/api/admin/defis/${defi.id}`, {
         method: 'DELETE', body: { confirmerPerteResultats: true },
@@ -348,13 +414,30 @@ function formulaireSuppressionDefi(defi, onTermine) {
       alerte('alerte', r.message, 'succes');
       onTermine();
     } catch (e) { alerte('alerte', e.message); }
-  });
+  }));
 }
 
 async function ouvrirEditeur(id) {
   const zone = document.getElementById('editeur');
   zone.innerHTML = '<p class="discret">Chargement du défi…</p>';
-  const defi = await api(`/api/admin/defis/${id}`);
+
+  // Sans ce filet, une session expiree ou une panne laissait l'ecran sur
+  // « Chargement du défi… » indefiniment : l'exception se perdait dans la
+  // promesse d'un gestionnaire de clic, et rien ne le disait.
+  let defi;
+  let seuilBadge = 80;
+  try {
+    [defi, { seuilBadgeDefi: seuilBadge = 80 } = {}] = await Promise.all([
+      api(`/api/admin/defis/${id}`),
+      contactsPublics(),
+    ]);
+  } catch (e) {
+    zone.innerHTML = `
+      <div class="message message-erreur">
+        Le défi n'a pas pu être chargé : ${echapper(e.message)}
+      </div>`;
+    return;
+  }
 
   const rendreQuestion = (q, i) => `
     <div class="editeur-question" data-question="${i}">
@@ -389,7 +472,8 @@ async function ouvrirEditeur(id) {
             <div class="ligne-reponse">
               <input type="checkbox" ${r.correcte ? 'checked' : ''} aria-label="Bonne réponse">
               <input type="text" value="${echapper(r.libelle)}" aria-label="Libellé de la réponse">
-              <button type="button" class="btn btn-secondaire" style="padding:.3rem .6rem;font-size:.78rem" data-supprimer-reponse>✕</button>
+              <button type="button" class="btn btn-secondaire" style="padding:.3rem .6rem;font-size:.78rem"
+                      data-supprimer-reponse aria-label="Supprimer cette réponse"><span aria-hidden="true">✕</span></button>
             </div>`).join('')}
         </div>
         <button type="button" class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem" data-ajouter-reponse>+ Ajouter une réponse</button>
@@ -427,7 +511,9 @@ async function ouvrirEditeur(id) {
 
       <h3 style="margin-top:1.5rem">Badge de ce défi</h3>
       <p class="discret" style="margin-top:-.3em">
-        Décerné à partir de 80 % de réussite. Chaque défi porte le sien : si vous changez de
+        <!-- Le seuil vient du serveur : ecrit en dur, il continuait d'annoncer
+             80 % apres que la configuration l'eut change. -->
+        Décerné à partir de ${Number(seuilBadge) || 80} % de réussite. Chaque défi porte le sien : si vous changez de
         thème, changez aussi le badge, sinon il ne voudra plus rien dire.
       </p>
       <div class="grille grille-2">
@@ -474,14 +560,27 @@ async function ouvrirEditeur(id) {
             agents</strong> : un second titre sous celui du défi prêtait à confusion.
           </p>
         </div>
+        <div class="champ-admin" style="grid-column:1/-1">
+          <label for="ed-video-transcription">Transcription de la vidéo</label>
+          <textarea id="ed-video-transcription" style="min-height:120px"
+                    placeholder="Ce qui est dit et montré dans la vidéo, dans l'ordre.">${echapper(defi.video?.transcription || '')}</textarea>
+          <p class="discret" style="margin:.3rem 0 0;font-size:.78rem">
+            Affichée sous le lecteur, repliée. <strong>C'est la seule alternative pour un agent
+            qui n'entend pas la vidéo</strong>, ou qui ne peut pas la regarder depuis son poste
+            (RGAA 4.1, critère 4.3). Les retours à la ligne sont conservés.
+          </p>
+        </div>
       </div>
+      <!-- L'input passe avant le label : c'est ce qui permet a la regle CSS
+           « .depot-fichier:focus-visible + label » de rendre le focus visible,
+           un champ fichier invisible ne pouvant pas le montrer lui-meme. -->
       <div class="rang" style="margin-top:.6rem;align-items:center;flex-wrap:wrap">
+        <input type="file" id="ed-video-fichier" class="depot-fichier"
+               accept="video/mp4,video/webm,video/ogg">
         <label for="ed-video-fichier" class="btn btn-secondaire"
                style="padding:.45rem .9rem;font-size:.85rem;cursor:pointer;margin:0">
           Déposer un fichier vidéo
         </label>
-        <input type="file" id="ed-video-fichier" accept="video/mp4,video/webm,video/ogg"
-               style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
         <span class="discret ui" id="etat-envoi-video" style="font-size:.84rem">
           MP4, WebM ou OGV — servi depuis le serveur, sans passer par Internet.
         </span>
@@ -522,7 +621,8 @@ async function ouvrirEditeur(id) {
       ligne.innerHTML = `
         <input type="checkbox" aria-label="Bonne réponse">
         <input type="text" value="" aria-label="Libellé de la réponse">
-        <button type="button" class="btn btn-secondaire" style="padding:.3rem .6rem;font-size:.78rem" data-supprimer-reponse>✕</button>`;
+        <button type="button" class="btn btn-secondaire" style="padding:.3rem .6rem;font-size:.78rem"
+                data-supprimer-reponse aria-label="Supprimer cette réponse"><span aria-hidden="true">✕</span></button>`;
       conteneur.appendChild(ligne);
       ligne.querySelector('input[type="text"]').focus();
     }
@@ -534,14 +634,15 @@ async function ouvrirEditeur(id) {
       enonce: '', contexte: '', multiple: true, points: 10, explication: '',
       reponses: [{ libelle: '', correcte: true }, { libelle: '', correcte: false }],
     }, i));
-    liste.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    amener(liste.lastElementChild, 'center');
   });
 
   document.getElementById('btn-fermer').addEventListener('click', () => { zone.innerHTML = ''; });
 
   brancherApercuVideo();
 
-  document.getElementById('btn-enregistrer').addEventListener('click', async () => {
+  const boutonEnregistrer = document.getElementById('btn-enregistrer');
+  boutonEnregistrer.addEventListener('click', () => pendant(boutonEnregistrer, 'Enregistrement…', async () => {
     const questions = [...liste.querySelectorAll('.editeur-question')].map((bloc) => ({
       enonce: bloc.querySelector('[data-champ="enonce"]').value.trim(),
       contexte: bloc.querySelector('[data-champ="contexte"]').value.trim() || null,
@@ -575,16 +676,17 @@ async function ouvrirEditeur(id) {
           video: {
             url: document.getElementById('ed-video-url').value.trim(),
             titre: document.getElementById('ed-video-titre').value.trim(),
+            transcription: document.getElementById('ed-video-transcription').value.trim(),
           },
           questions,
         },
       });
       alerte('alerte', r.message, 'succes');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      remonter();
     } catch (e) { alerte('alerte', e.message); }
-  });
+  }));
 
-  zone.scrollIntoView({ behavior: 'smooth' });
+  amener(zone, 'start');
 }
 
 /* ============================================================== Agents */
@@ -600,10 +702,21 @@ chargeurs.mails = async () => {
   // La liste des defis remplace le choix d'un numero de semaine : les defis ne
   // sont plus numerotes, et un menu fige a « 1, 2, 3, 4 » designait de toute
   // facon des semaines qui pouvaient ne pas exister.
+  // Un echec de chargement se disait « aucun défi programmé » : on partait
+  // alors relancer une campagne dont on croyait le programme vide, et le
+  // selecteur envoyait un identifiant vide au serveur. Panne et absence sont
+  // deux situations differentes, et une seule appelle un appel a la DSI.
   let defis = [];
-  try { defis = await api('/api/admin/defis'); } catch { defis = []; }
+  let pannePorgramme = null;
+  try { defis = await api('/api/admin/defis'); } catch (e) { pannePorgramme = e.message; }
 
   cible.innerHTML = `
+    ${pannePorgramme ? `
+      <div class="message message-erreur" style="margin-bottom:1rem">
+        <strong>La liste des défis n'a pas pu être chargée</strong> — ${echapper(pannePorgramme)}.
+        Aucun envoi n'est possible tant que ce n'est pas réglé : rechargez la page.
+      </div>` : ''}
+
     <details class="aide-admin">
       <summary>Qui envoie quoi</summary>
       <p><strong>Lancement (lundi)</strong> — à copier-coller par la DPO, pour qu'il parte de sa propre boîte
@@ -621,7 +734,7 @@ chargeurs.mails = async () => {
           <select id="mail-defi">
             ${defis.length
               ? defis.map((d) => `<option value="${d.id}">${echapper(d.ouvre_le)} — ${echapper(d.titre)}</option>`).join('')
-              : '<option value="">aucun défi programmé</option>'}
+              : `<option value="">${pannePorgramme ? 'liste indisponible' : 'aucun défi programmé'}</option>`}
           </select>
         </div>
         <div class="champ-admin" style="width:200px">
@@ -675,8 +788,19 @@ chargeurs.mails = async () => {
 
   let dernierMail = null;
 
+  /** Sans defi choisi, l'URL se terminait par un identifiant vide. */
+  function defiChoisi() {
+    const valeur = document.getElementById('mail-defi').value;
+    if (valeur) return valeur;
+    alerte('alerte', pannePorgramme
+      ? 'La liste des défis n’a pas pu être chargée : rechargez la page.'
+      : 'Aucun défi n’est programmé : ajoutez-en un dans l’onglet Défis.');
+    return null;
+  }
+
   async function apercu() {
-    const defiId = document.getElementById('mail-defi').value;
+    const defiId = defiChoisi();
+    if (!defiId) return;
     const type = document.getElementById('mail-type').value;
     try {
       dernierMail = await api(`/api/admin/mails/${type}/${defiId}`);
@@ -702,7 +826,8 @@ chargeurs.mails = async () => {
   }
 
   async function envoyer(quoi, simulation) {
-    const defiId = document.getElementById('mail-defi').value;
+    const defiId = defiChoisi();
+    if (!defiId) return;
     try {
       const r = await api(`/api/admin/mails/${quoi}/${defiId}`, { method: 'POST', body: { simulation } });
       if (!r.ok) return alerte('alerte', r.message || 'Envoi impossible.');
@@ -774,15 +899,20 @@ chargeurs.technique = async () => {
 
       <div class="carte" style="margin-bottom:1.5rem">
         <h3>Version en service</h3>
-        <div class="tableau-defilant"><table class="admin"><tbody>
-          <tr><td>Application</td><td>${echapper(v.version || '—')} · Node ${echapper(v.node || '—')}</td></tr>
+        <!-- Tableau cle / valeur : l'intitule de chaque ligne est son en-tete,
+             d'ou th scope="row". Sans cela, un lecteur d'ecran enonce deux
+             cellules sans dire laquelle nomme l'autre. -->
+        <div class="tableau-defilant"><table class="admin">
+          <caption class="sr-only">Version de l'application en service</caption>
+          <tbody>
+          <tr><th scope="row">Application</th><td>${echapper(v.version || '—')} · Node ${echapper(v.node || '—')}</td></tr>
           ${v.commit ? `
-            <tr><td>Dernier changement</td><td>
+            <tr><th scope="row">Dernier changement</th><td>
               <code>${echapper(v.commit.court)}</code> — ${echapper(v.commit.sujet)}
               <br><span class="discret" style="font-size:.82rem">${quand(v.commit.date)}</span>
             </td></tr>` : ''}
-          <tr><td>Serveur démarré</td><td>${quand(v.demarreLe)}</td></tr>
-          <tr><td>Code modifié</td><td>${quand(v.codeModifieLe)}</td></tr>
+          <tr><th scope="row">Serveur démarré</th><td>${quand(v.demarreLe)}</td></tr>
+          <tr><th scope="row">Code modifié</th><td>${quand(v.codeModifieLe)}</td></tr>
         </tbody></table></div>
       </div>
 
@@ -799,17 +929,18 @@ chargeurs.technique = async () => {
 
       <h2>Configuration active</h2>
       <div class="tableau-defilant"><table class="admin">
+        <caption class="sr-only">Réglages appliqués par le serveur</caption>
         <tbody>
-          <tr><td>Serveur LDAPS</td><td>${echapper(c.ldapUrl)}</td></tr>
-          <tr><td>Base de recherche</td><td>${echapper(c.baseDn)}</td></tr>
-          <tr><td>Source du service</td><td>${echapper(c.sourceService)}</td></tr>
-          <tr><td>Groupe requis</td><td>${echapper(c.groupeRequis)}</td></tr>
-          <tr><td>Envoi de mails</td><td>${c.envoiMailActif ? 'Actif' : 'Désactivé'}</td></tr>
-          <tr><td>Groupe de diffusion</td><td>${echapper(c.groupeDiffusion)}</td></tr>
-          <tr><td>Planification des relances</td><td><code>${echapper(c.cronRelance)}</code></td></tr>
-          <tr><td>Planification des résultats</td><td><code>${echapper(c.cronResultats)}</code></td></tr>
-          <tr><td>URL publique</td><td>${echapper(c.urlPublique)}</td></tr>
-          <tr><td>Administrateurs</td><td>${echapper(c.administrateurs.join(', ') || '(aucun)')}</td></tr>
+          <tr><th scope="row">Serveur LDAPS</th><td>${echapper(c.ldapUrl)}</td></tr>
+          <tr><th scope="row">Base de recherche</th><td>${echapper(c.baseDn)}</td></tr>
+          <tr><th scope="row">Source du service</th><td>${echapper(c.sourceService)}</td></tr>
+          <tr><th scope="row">Groupe requis</th><td>${echapper(c.groupeRequis)}</td></tr>
+          <tr><th scope="row">Envoi de mails</th><td>${c.envoiMailActif ? 'Actif' : 'Désactivé'}</td></tr>
+          <tr><th scope="row">Groupe de diffusion</th><td>${echapper(c.groupeDiffusion)}</td></tr>
+          <tr><th scope="row">Planification des relances</th><td><code>${echapper(c.cronRelance)}</code></td></tr>
+          <tr><th scope="row">Planification des résultats</th><td><code>${echapper(c.cronResultats)}</code></td></tr>
+          <tr><th scope="row">URL publique</th><td>${echapper(c.urlPublique)}</td></tr>
+          <tr><th scope="row">Administrateurs</th><td>${echapper(c.administrateurs.join(', ') || '(aucun)')}</td></tr>
         </tbody></table></div>
 
       <h2 style="margin-top:2rem">Contenus</h2>
@@ -878,7 +1009,9 @@ chargeurs.technique = async () => {
 
     const journal = await api('/api/admin/journal');
     document.getElementById('table-journal').innerHTML = `
-      <thead><tr><th>Horodatage</th><th>Login</th><th>Action</th><th>Détail</th><th>IP</th></tr></thead>
+      <caption class="sr-only">Soixante dernières entrées du journal des actions</caption>
+      <thead><tr><th scope="col">Horodatage</th><th scope="col">Login</th><th scope="col">Action</th>
+        <th scope="col">Détail</th><th scope="col">IP</th></tr></thead>
       <tbody>${journal.slice(0, 60).map((l) => `
         <tr><td style="white-space:nowrap">${echapper(l.horodatage)}</td><td>${echapper(l.login || '')}</td>
         <td>${echapper(l.action)}</td><td style="word-break:break-word">${echapper(l.detail || '')}</td>
@@ -911,7 +1044,7 @@ dejaCharge.add('suivi');
 async function lienApercu(id, dejaOuvert) {
   const zone = document.getElementById('editeur');
   zone.innerHTML = '<div class="carte"><p class="discret">Génération du lien…</p></div>';
-  zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  amener(zone);
 
   try {
     const r = await api(`/api/admin/defis/${id}/apercu`, { method: 'POST' });
@@ -926,8 +1059,12 @@ async function lienApercu(id, dejaOuvert) {
 
         <div class="champ-admin" style="margin-top:1rem">
           <label for="lien-apercu">Lien à partager</label>
+          <!-- « onclick » en attribut ne s'executait pas : la politique de
+               securite de contenu du portail est « script-src 'self' », qui
+               interdit le script en ligne. Le champ ne se selectionnait donc
+               jamais, sans le moindre message. -->
           <input type="text" id="lien-apercu" readonly value="${echapper(r.lien)}"
-                 onclick="this.select()" style="font-family:var(--police-ui);font-size:.86rem">
+                 style="font-family:var(--police-ui);font-size:.86rem">
         </div>
 
         <div class="rang" style="margin-top:1rem">
@@ -946,6 +1083,13 @@ async function lienApercu(id, dejaOuvert) {
             Un lien existait déjà pour ce défi : il vient d'être remplacé et ne fonctionne plus.
           </p>` : ''}
       </div>`;
+
+    // Le lien se selectionne des qu'on l'atteint, a la souris comme au
+    // clavier : c'est ce qui rend le Ctrl+C possible quand le presse-papier
+    // est refuse hors contexte securise.
+    const champLien = document.getElementById('lien-apercu');
+    champLien.addEventListener('focus', () => champLien.select());
+    champLien.addEventListener('click', () => champLien.select());
 
     document.getElementById('btn-copier-apercu').addEventListener('click', async () => {
       const champ = document.getElementById('lien-apercu');
@@ -1022,30 +1166,11 @@ function brancherApercuVideo() {
   const zone = document.getElementById('apercu-video-editeur');
   if (!champ || !zone) return;
 
-  const reconnaitre = (url) => {
-    const brut = String(url || '');
-    const yt = brut.match(
-      /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
-    );
-    if (yt) {
-      return {
-        hebergeur: 'YouTube', id: yt[1],
-        embed: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(yt[1])}?rel=0`,
-      };
-    }
-    const dm = brut.match(/dailymotion\.com\/(?:embed\/)?video\/([A-Za-z0-9]+)|dai\.ly\/([A-Za-z0-9]+)/);
-    if (dm) {
-      const id = dm[1] || dm[2];
-      return {
-        hebergeur: 'Dailymotion', id,
-        // Adresse du lecteur, sans passer par la redirection depuis
-        // www.dailymotion.com : elle mene a geo.dailymotion.com, et une
-        // redirection vers un autre domaine bute sur la politique de securite.
-        embed: `https://geo.dailymotion.com/player.html?video=${encodeURIComponent(id)}`,
-      };
-    }
-    return null;
-  };
+  // Hebergeurs autorises : ils servent a reconnaitre une adresse qui n'est ni
+  // YouTube ni Dailymotion - l'ANSSI, une autre collectivite. Remplis plus bas,
+  // de facon asynchrone ; leur absence ne bloque rien, la branche
+  // correspondante reste simplement inactive.
+  let domainesAutorises = [];
 
   const majApercu = () => {
     const valeur = champ.value.trim();
@@ -1055,14 +1180,31 @@ function brancherApercuVideo() {
       return;
     }
 
-    const v = reconnaitre(valeur);
+    // Meme fonction que le parcours de l'agent : la copie locale avait perdu
+    // les branches « fichier local » et « domaine autorise », si bien qu'un
+    // fichier tout juste depose s'annoncait « Adresse non reconnue ».
+    const v = reconnaitreVideo(valeur, { domainesAutorises });
     if (!v) {
       zone.innerHTML = `
         <div class="message message-alerte" style="margin:0">
           Adresse non reconnue. Attendu : une adresse YouTube ou Dailymotion —
           <code>watch?v=</code>, <code>youtu.be/</code>, <code>/embed/</code>,
-          <code>/shorts/</code>, <code>dailymotion.com/video/</code> ou <code>dai.ly/</code>.
-          Telle quelle, elle sera présentée comme un simple lien.
+          <code>/shorts/</code>, <code>dailymotion.com/video/</code> ou <code>dai.ly/</code> —
+          ou un fichier déposé ici. Telle quelle, elle sera présentée comme un simple lien.
+        </div>`;
+      return;
+    }
+
+    // Fichier servi par la collectivite : rien a demander a un tiers, le
+    // lecteur du navigateur suffit.
+    if (v.local) {
+      zone.innerHTML = `
+        <div class="message message-succes" style="margin:0">
+          Fichier servi par la Ville — <code>${echapper(v.id)}</code>
+        </div>
+        <div style="margin-top:.6rem;max-width:520px">
+          <video src="${echapper(v.source)}" controls preload="metadata"
+                 style="width:100%;border-radius:var(--rayon)"></video>
         </div>`;
       return;
     }
@@ -1091,6 +1233,16 @@ function brancherApercuVideo() {
   brancherEnvoiVideo(champ, majApercu);
   champ.addEventListener('input', majApercu);
   majApercu();
+
+  api('/api/admin/configuration')
+    .then((c) => {
+      const brut = (c.parametres || []).find((x) => x.cle === 'videoDomaines')?.valeur;
+      domainesAutorises = Array.isArray(brut)
+        ? brut
+        : String(brut || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+      majApercu();
+    })
+    .catch(() => { /* on se contente des deux hebergeurs connus */ });
 }
 
 /**
@@ -1128,6 +1280,15 @@ function brancherEnvoiVideo(champUrl, majApercu) {
     });
 
     requete.addEventListener('load', () => {
+      // Une session expiree pendant l'envoi d'un fichier de trente Mo se
+      // traduisait par « Échec de l'envoi (code 401) » : on restait sur un
+      // ecran d'administration devenu inerte, sans comprendre qu'il suffisait
+      // de se reconnecter. Meme traitement que api() de commun.js.
+      if (requete.status === 401) {
+        window.location.href = '/?expire=1';
+        return;
+      }
+
       let r = {};
       try { r = JSON.parse(requete.responseText); } catch { /* reponse illisible */ }
 

@@ -1,6 +1,7 @@
 import { db } from './db.js';
 import { nomsReferentiel } from './referentiel.js';
 import { cleComparaison } from './services.js';
+import { aujourdhui } from './dates.js';
 
 /**
  * Bareme d'une question a choix multiples.
@@ -22,16 +23,17 @@ export function noterQuestion(question, choixAgent) {
   return { points, parfaite, bonnesCochees, mauvaisesCochees, totalBonnes: bonnes.length };
 }
 
-/** Bonus rapidite : jusqu'a 20 % du score, si l'agent a repondu sans bacler. */
-export function bonusRapidite(score, dureeSecondes, nbQuestions) {
-  const referenceHaute = nbQuestions * 45; // au-dela : pas de bonus
-  const referenceBasse = nbQuestions * 12; // en deca : reponses baclees, pas de bonus
-  if (dureeSecondes < referenceBasse || dureeSecondes > referenceHaute) return 0;
-  const part = 1 - (dureeSecondes - referenceBasse) / (referenceHaute - referenceBasse);
-  return Math.round(score * 0.2 * part);
-}
-
 /* ---------------------------------------------------------------- Badges */
+
+/**
+ * Part de reussite a partir de laquelle le badge d'un defi est decerne.
+ * Exportee parce que l'ecran l'annonce a l'agent : la valeur etait recopiee a
+ * la main dans l'interface, et n'avait aucune raison d'y rester juste.
+ */
+export const SEUIL_BADGE_DEFI = 0.8;
+
+/** Nombre de defis termines qui vaut le badge « Assidu ». */
+export const SEUIL_ASSIDU = 3;
 
 /**
  * Deux familles de badges.
@@ -84,9 +86,52 @@ export function badgesDefis() {
   `).all();
 }
 
-/** Catalogue complet, pour l'affichage du profil. */
-export function tousLesBadges() {
-  return [...BADGES_GENERIQUES, ...badgesDefis()];
+/**
+ * Catalogue des badges, pour l'affichage du profil.
+ *
+ * Le catalogue ne montre QUE des badges atteignables. « Assidu » recompense
+ * trois defis termines : dans une campagne qui n'en compte que deux, il ne
+ * peut pas s'obtenir, et l'afficher grise pour toute la campagne revient a
+ * promettre ce qu'on ne tiendra pas. Un badge impossible est pire que pas de
+ * badge du tout - c'est d'ailleurs ce que verifie tests/badges.test.mjs.
+ *
+ * `agentId` ajoute les badges que cet agent a REELLEMENT obtenus, meme s'ils
+ * ne sont plus atteignables aujourd'hui : depublier un defi ne doit pas effacer
+ * du profil une recompense deja gagnee.
+ */
+export function tousLesBadges({ agentId = null } = {}) {
+  const publies = db.prepare('SELECT COUNT(*) AS n FROM defis WHERE publie = 1').get().n;
+
+  const atteignables = BADGES_GENERIQUES.filter((b) => {
+    if (b.code === 'assidu') return publies >= SEUIL_ASSIDU;
+    // « Tous les defis termines » n'a pas de sens sans defi publie.
+    if (b.code === 'cyber_heros' || b.code === 'ambassadeur') return publies > 0;
+    return true;
+  });
+
+  const catalogue = [...atteignables, ...badgesDefis()];
+  if (!agentId) return catalogue;
+
+  const connus = new Set(catalogue.map((b) => b.code));
+  const obtenus = db.prepare('SELECT code FROM badges_agent WHERE agent_id = ?').all(agentId)
+    .map((l) => l.code).filter((c) => !connus.has(c));
+  if (!obtenus.length) return catalogue;
+
+  // Un badge gagne puis retire du catalogue garde son libelle : on le retrouve
+  // parmi les generiques, ou sur le defi qui le portait, meme depublie.
+  const marques = obtenus.map(() => '?').join(',');
+  const surDefis = db.prepare(`
+    SELECT badge_code AS code, badge_libelle AS libelle,
+           badge_emoji AS emoji, badge_description AS description
+    FROM defis WHERE badge_code IN (${marques})
+  `).all(...obtenus);
+
+  const retrouves = obtenus.map((code) =>
+    BADGES_GENERIQUES.find((b) => b.code === code)
+    || surDefis.find((b) => b.code === code)
+    || { code, libelle: code, emoji: '🏅', description: 'Badge obtenu lors d’une campagne précédente.' });
+
+  return [...catalogue, ...retrouves];
 }
 
 // Conserve pour compatibilite avec le code existant
@@ -117,22 +162,27 @@ export function attribuerBadges(agentId, { defiId, score, scoreMax, erreurs = nu
   if (scoreMax > 0 && score >= scoreMax) donner('sans_faute');
   if (erreurs === 0) donner('oeil_de_lynx');
 
-  // Le badge du defi qui vient d'etre joue, a partir de 80 % de reussite
-  if (scoreMax > 0 && score / scoreMax >= 0.8) {
+  // Le badge du defi qui vient d'etre joue
+  if (scoreMax > 0 && score / scoreMax >= SEUIL_BADGE_DEFI) {
     const badge = db.prepare('SELECT badge_code FROM defis WHERE id = ?').get(defiId);
     donner(badge?.badge_code);
   }
 
   // Les seuils suivent le nombre reel de defis publies : en ajouter un ne doit
   // pas decerner « Cyber-Heros » par anticipation.
-  const defisPublies = db.prepare('SELECT COUNT(*) AS n FROM defis WHERE publie = 1').get().n || 4;
+  const publies = db.prepare('SELECT COUNT(*) AS n FROM defis WHERE publie = 1').get().n;
+  const defisPublies = publies || SEUIL_ASSIDU;
 
-  if (parts.length >= Math.min(3, defisPublies)) donner('assidu');
-  if (parts.length >= defisPublies) {
+  // « Assidu » annonce trois defis termines : il en exige donc trois.
+  // Le seuil suivait auparavant le nombre de defis publies, si bien qu'avec
+  // deux defis au programme le badge tombait au deuxieme - en contradiction
+  // avec sa propre description, que l'agent a sous les yeux.
+  if (parts.length >= SEUIL_ASSIDU) donner('assidu');
+  if (publies > 0 && parts.length >= defisPublies) {
     donner('cyber_heros');
     const total = parts.reduce((s, p) => s + p.score, 0);
     const totalMax = parts.reduce((s, p) => s + p.score_max, 0);
-    if (totalMax > 0 && total / totalMax >= 0.8) donner('ambassadeur');
+    if (totalMax > 0 && total / totalMax >= SEUIL_BADGE_DEFI) donner('ambassadeur');
   }
 
   return nouveaux;
@@ -150,13 +200,16 @@ export function attribuerBadges(agentId, { defiId, score, scoreMax, erreurs = nu
  * Le total est le meme pour tous, ce qui laisse le classement dans l'ordre
  * qu'il avait quand il s'exprimait en points - seule l'unite change.
  */
-export function pointsPossibles() {
+export function pointsPossibles(jour = aujourdhui()) {
+  // La date est passee en parametre, et non lue par date('now') : cette
+  // derniere rend la date UTC, alors que l'ouverture d'un defi se juge en
+  // heure locale. Les deux divergeaient deux heures par nuit.
   const r = db.prepare(`
     SELECT COALESCE(SUM(q.points), 0) AS total
     FROM questions q
     JOIN defis d ON d.id = q.defi_id
-    WHERE d.publie = 1 AND d.ouvre_le <= date('now')
-  `).get();
+    WHERE d.publie = 1 AND d.ouvre_le <= ?
+  `).get(jour);
   return r?.total || 0;
 }
 
@@ -299,7 +352,7 @@ export function rangService(service) {
 }
 
 /** Statistiques globales pour le tableau de bord et les mails. */
-export function statistiquesGlobales() {
+export function statistiquesGlobales({ detailParDefi = true } = {}) {
   const g = db.prepare(`
     SELECT
       (SELECT COUNT(*) FROM agents WHERE exclu = 0)                            AS inscrits,
@@ -307,22 +360,31 @@ export function statistiquesGlobales() {
       (SELECT COUNT(DISTINCT p.agent_id) FROM participations p
          JOIN agents a ON a.id = p.agent_id
         WHERE p.entrainement = 0 AND a.exclu = 0)                              AS joueurs,
-      (SELECT COUNT(*) FROM participations WHERE entrainement = 0)             AS participations,
-      -- Remplace plus bas par le nombre de directions reellement classees :
-      -- compter les libelles distincts annoncait « 86 services en lice » sous
-      -- un tableau qui n'en montrait que cinq.
-      (SELECT COUNT(DISTINCT service) FROM agents WHERE exclu = 0)             AS services_distincts,
-      (SELECT COALESCE(SUM(score), 0) FROM participations WHERE entrainement = 0) AS points_cumules
+      -- Les agents exclus sont ecartes ici aussi : leurs participations
+      -- comptaient dans les totaux affiches alors qu'elles sont hors
+      -- classement, si bien que les deux chiffres ne se recoupaient pas.
+      (SELECT COUNT(*) FROM participations p
+         JOIN agents a ON a.id = p.agent_id
+        WHERE p.entrainement = 0 AND a.exclu = 0)                              AS participations,
+      -- Nombre de libelles distincts arrivant de l'annuaire. Il ne sert qu'a
+      -- mesurer l'ecart avec le referentiel dans le back-office ; le nombre de
+      -- directions reellement classees est rendu a part, sous « services ».
+      (SELECT COUNT(DISTINCT service) FROM agents WHERE exclu = 0)             AS libelles_distincts,
+      (SELECT COALESCE(SUM(p.score), 0) FROM participations p
+         JOIN agents a ON a.id = p.agent_id
+        WHERE p.entrainement = 0 AND a.exclu = 0)                              AS points_cumules
   `).get();
 
-  const parDefi = db.prepare(`
-    SELECT d.id, d.titre, d.ouvre_le,
-           COUNT(p.id) AS participants,
-           ROUND(AVG(CASE WHEN p.score_max > 0 THEN p.score * 100.0 / p.score_max END), 0) AS reussite_moyenne
-    FROM defis d
-    LEFT JOIN participations p ON p.defi_id = d.id AND p.entrainement = 0
-    GROUP BY d.id ORDER BY d.ouvre_le, d.id
-  `).all();
+  const parDefi = detailParDefi
+    ? db.prepare(`
+        SELECT d.id, d.titre, d.ouvre_le,
+               COUNT(p.id) AS participants,
+               ROUND(AVG(CASE WHEN p.score_max > 0 THEN p.score * 100.0 / p.score_max END), 0) AS reussite_moyenne
+        FROM defis d
+        LEFT JOIN participations p ON p.defi_id = d.id AND p.entrainement = 0
+        GROUP BY d.id ORDER BY d.ouvre_le, d.id
+      `).all()
+    : [];
 
   return { ...g, services: classementServices().length, parDefi };
 }

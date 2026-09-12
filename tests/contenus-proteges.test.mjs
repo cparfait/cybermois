@@ -10,19 +10,17 @@
  * Ces tests fixent la regle : le back-office l'emporte sur le fichier, et
  * seul un rechargement force revient en arriere.
  */
-process.env.DB_FILE = new URL('./.contenus-test.db', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
-process.env.SESSION_SECRET = 'test-contenus-0123456789';
-
-import fs from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { baseJetable, nettoyerALaFin } from './base-jetable.mjs';
 
-fs.rmSync(process.env.DB_FILE, { force: true });
+baseJetable('contenus', import.meta.url);
 const { db } = await import('../src/lib/db.js');
 const {
   enregistrerProgramme, lireModule, marquerLesDefisDejaRetouches,
 } = await import('../src/lib/modules.js');
 const { importerContenus } = await import('../src/lib/seed.js');
+nettoyerALaFin(db);
 
 const CORRIGE = 'ÉNONCÉ CORRIGÉ DANS LE BACK-OFFICE';
 const premiereQuestion = (defiId) =>

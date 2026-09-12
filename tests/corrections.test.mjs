@@ -16,8 +16,24 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { db } from '../src/lib/db.js';
-import { participationsAgent, corrigerReponse, recalculerDefi } from '../src/lib/corrections.js';
+import { baseJetable, nettoyerALaFin } from './base-jetable.mjs';
+
+baseJetable('corrections', import.meta.url);
+const { db } = await import('../src/lib/db.js');
+const { participationsAgent, corrigerReponse, recalculerDefi } = await import('../src/lib/corrections.js');
+// Le schema n'est pas tout entier dans db.js : la table « tentatives » est
+// creee par le module qui s'en sert. Sur la base de production elle existait
+// deja ; sur une base neuve, le nettoyage echouait sur « no such table ».
+await import('../src/lib/tentatives.js');
+const { enregistrerProgramme } = await import('../src/lib/modules.js');
+const { importerContenus } = await import('../src/lib/seed.js');
+nettoyerALaFin(db);
+
+// La base jetable est vide : decor() prend « le premier defi » et ses
+// propositions, il faut donc une campagne programmee. Le programme d'abord,
+// les contenus ensuite - importerContenus() seul ne creerait rien.
+enregistrerProgramme([{ module_code: 'mots-de-passe', ouvre_le: '2026-10-05' }], 'test');
+importerContenus();
 
 const PREFIXE = 'zz-test-correction-';
 

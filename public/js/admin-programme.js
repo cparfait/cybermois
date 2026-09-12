@@ -1,4 +1,4 @@
-import { api, echapper, alerte } from '/js/commun.js';
+import { api, echapper, alerte, animationsReduites } from '/js/commun.js';
 
 /**
  * Programmation de la campagne.
@@ -19,6 +19,42 @@ import { api, echapper, alerte } from '/js/commun.js';
 let donnees = null;
 let auTermine = () => {};
 let brouillon = [];
+
+const amener = (element) =>
+  element?.scrollIntoView({ behavior: animationsReduites() ? 'auto' : 'smooth', block: 'nearest' });
+
+/**
+ * Signale la premiere ligne fautive au lieu de ne donner qu'un compte.
+ *
+ * « 3 défi(s) sans date de parution » laissait chercher lesquels dans un
+ * tableau de vingt lignes. Le champ se marque invalide et recoit le focus :
+ * on tombe directement dessus, au clavier comme au lecteur d'ecran.
+ */
+function signalerChamp(champ, message) {
+  alerte('alerte', message);
+  if (!champ) return;
+  const idMessage = 'erreur-programme';
+  document.getElementById(idMessage)?.remove();
+  const bloc = document.createElement('p');
+  bloc.id = idMessage;
+  bloc.className = 'message message-erreur';
+  bloc.style.cssText = 'margin:.3rem 0 0;font-size:.82rem';
+  bloc.textContent = message;
+  champ.insertAdjacentElement('afterend', bloc);
+  champ.setAttribute('aria-invalid', 'true');
+  champ.setAttribute('aria-describedby', idMessage);
+  champ.focus();
+  amener(champ);
+}
+
+/** Remet les marques d'erreur a zero avant chaque tentative. */
+function effacerSignalements(cible) {
+  document.getElementById('erreur-programme')?.remove();
+  cible?.querySelectorAll('[aria-invalid="true"]').forEach((c) => {
+    c.removeAttribute('aria-invalid');
+    c.removeAttribute('aria-describedby');
+  });
+}
 
 export async function ecranProgramme(cible, onTermine) {
   if (onTermine) auTermine = onTermine;
@@ -96,7 +132,9 @@ function rendre(cible) {
 
       <div class="tableau-defilant" style="margin-top:1rem">
         <table class="admin">
-          <thead><tr><th style="width:190px">Parution</th><th>Module</th><th style="width:110px"></th></tr></thead>
+          <caption class="sr-only">Programme de la campagne : date de parution et module</caption>
+          <thead><tr><th scope="col" style="width:190px">Parution</th><th scope="col">Module</th>
+            <th scope="col" style="width:110px"><span class="sr-only">Actions</span></th></tr></thead>
           <tbody id="corps-programme">
             ${brouillon.map((b, i) => ligne(b, i)).join('')}
           </tbody>
@@ -134,10 +172,11 @@ function rendre(cible) {
         ${parTheme().map(([theme, liste]) => `
           <h3 style="margin:1rem 0 .4rem;font-size:.95rem">${echapper(theme)}</h3>
           <div class="tableau-defilant"><table class="admin">
+            <caption class="sr-only">Modules du thème ${echapper(theme)}</caption>
             <tbody>${liste.map((m) => `
               <tr>
                 <td class="ui discret" style="width:34px;text-align:right;font-variant-numeric:tabular-nums">${deuxChiffres(numero(m.code))}</td>
-                <td style="width:34px;font-size:1.3rem">${echapper(m.badge?.emoji || '•')}</td>
+                <td style="width:34px;font-size:1.3rem" aria-hidden="true">${echapper(m.badge?.emoji || '•')}</td>
                 <td>
                   <strong>${echapper(m.titre)}</strong>
                   ${utilises.has(m.code) ? '<span class="pastille-etat etat-ok" style="margin-left:.5rem">programmé</span>' : ''}
@@ -297,18 +336,31 @@ function dansSeptJours(iso) {
  * jamais evident. La recette, elle, vient de le confirmer.
  */
 async function enregistrer(prevenirImmediats) {
+  const corps = document.getElementById('corps-programme');
+  effacerSignalements(corps);
+
   const retenus = brouillon.filter((b) => b.module_code);
-  if (!retenus.length) return alerte('alerte', 'Choisissez au moins un module.');
+  if (!retenus.length) {
+    const premierModule = corps?.querySelector('.module-defi:not([disabled])');
+    return signalerChamp(premierModule, 'Choisissez au moins un module.');
+  }
 
   const sansDate = retenus.filter((b) => !/^\d{4}-\d{2}-\d{2}$/.test(b.ouvre_le || ''));
   if (sansDate.length) {
-    return alerte('alerte', `${sansDate.length} défi(s) sans date de parution. `
+    const rang = brouillon.indexOf(sansDate[0]);
+    const champ = corps?.querySelector(`tr[data-index="${rang}"] .date-defi`);
+    return signalerChamp(champ, `${sansDate.length} défi(s) sans date de parution. `
       + "La date est ce qui fait paraître le défi : sans elle, il n'existe pas.");
   }
 
   const codes = retenus.map((p) => p.module_code);
   if (new Set(codes).size !== codes.length) {
-    return alerte('alerte', 'Un même module est programmé deux fois.');
+    const doublon = codes.find((c, i) => codes.indexOf(c) !== i);
+    // La seconde occurrence dans le brouillon : c'est celle qu'on vient de
+    // poser, donc celle qu'on veut corriger.
+    const rangs = brouillon.reduce((acc, b, i) => (b.module_code === doublon ? [...acc, i] : acc), []);
+    const champ = corps?.querySelector(`tr[data-index="${rangs[1] ?? rangs[0]}"] .module-defi`);
+    return signalerChamp(champ, 'Un même module est programmé deux fois.');
   }
 
   // Un defi parait a sa date. Programme sur une date passee, il parait donc
@@ -322,7 +374,7 @@ async function enregistrer(prevenirImmediats) {
       .map((b) => `  ${b.ouvre_le} — ${titre(b.module_code)}`)
       .join(saut);
     const message = [
-      `${immediats.length} defi(s) ont une date deja passee et paraitront immediatement aux agents :`,
+      `${immediats.length} défi(s) ont une date déjà passée et paraîtront immédiatement aux agents :`,
       liste,
       'Continuer ?',
     ].join(saut + saut);
@@ -341,7 +393,7 @@ async function enregistrer(prevenirImmediats) {
 async function apercu(code) {
   const zone = document.getElementById('apercu-module');
   zone.innerHTML = '<div class="carte"><p class="discret">Chargement…</p></div>';
-  zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  amener(zone);
 
   let m;
   try {
@@ -355,7 +407,7 @@ async function apercu(code) {
     <div class="carte">
       <div class="rang" style="justify-content:space-between;align-items:flex-start">
         <div>
-          <h2 style="margin-bottom:.2em">${echapper(m.badge?.emoji || '')} ${echapper(m.titre)}</h2>
+          <h2 style="margin-bottom:.2em"><span aria-hidden="true">${echapper(m.badge?.emoji || '')}</span> ${echapper(m.titre)}</h2>
           <p class="discret" style="margin:0">${echapper(m.accroche)}</p>
         </div>
         <button class="btn btn-secondaire" id="btn-fermer-apercu" style="padding:.35rem .8rem;font-size:.8rem">Fermer</button>

@@ -93,6 +93,10 @@ export default async function routesAuth(app) {
     // Administrateur soit par appartenance au groupe AD dedie, soit par la
     // liste d'identifiants - qui reste utile pour un depannage ponctuel.
     const estAdmin = (a.adminParGroupe || config.adminLogins.includes(a.login)) ? 1 : 0;
+    // On retient d'ou vient le droit : la configuration doit pouvoir revoquer
+    // un identifiant retire de la liste sans toucher aux membres du groupe.
+    const sourceAdmin = a.adminParGroupe ? 'groupe'
+      : (config.adminLogins.includes(a.login) ? 'liste' : null);
 
     // Creation ou mise a jour de la fiche agent : le service est resynchronise a chaque connexion
     // Le libelle lu dans l'annuaire est conserve tel quel dans service_ad ;
@@ -100,8 +104,9 @@ export default async function routesAuth(app) {
     const serviceAffiche = resoudreService(a.service);
 
     db.prepare(`
-      INSERT INTO agents (login, nom_complet, prenom, email, service, service_ad, service_brut, est_admin, vu_le)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      INSERT INTO agents (login, nom_complet, prenom, email, service, service_ad, service_brut,
+                          est_admin, admin_source, vu_le)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
       ON CONFLICT(login) DO UPDATE SET
         nom_complet = excluded.nom_complet,
         -- COALESCE : un annuaire sans givenName ne doit pas effacer un
@@ -114,8 +119,11 @@ export default async function routesAuth(app) {
         service_ad  = CASE WHEN agents.service_force = 1 THEN agents.service_ad ELSE excluded.service_ad END,
         service_brut= excluded.service_brut,
         est_admin   = excluded.est_admin,
+        -- D'ou vient le droit : la configuration peut ainsi revoquer un
+        -- identifiant retire de la liste sans toucher aux membres du groupe.
+        admin_source= excluded.admin_source,
         vu_le       = datetime('now')
-    `).run(a.login, a.nomComplet, a.prenom || null, a.email, serviceAffiche, a.service, a.serviceBrut, estAdmin);
+    `).run(a.login, a.nomComplet, a.prenom || null, a.email, serviceAffiche, a.service, a.serviceBrut, estAdmin, sourceAdmin);
 
     const agent = db.prepare('SELECT * FROM agents WHERE login = ?').get(a.login);
     const token = creerSession(agent.id);

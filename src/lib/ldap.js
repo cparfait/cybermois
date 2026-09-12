@@ -1,3 +1,4 @@
+import { SERVICE_NON_RATTACHE } from './db.js';
 import fs from 'node:fs';
 import { Client } from 'ldapts';
 import { config } from './config.js';
@@ -92,7 +93,7 @@ export function appartientAuGroupe(groupesDn, attendu) {
 }
 
 export function normaliserService(nom) {
-  if (!nom) return 'Non rattache';
+  if (!nom) return SERVICE_NON_RATTACHE;
   return String(nom).replace(/\s+/g, ' ').trim();
 }
 

@@ -1,4 +1,4 @@
-import { api, echapper, alerte, formaterDate } from '/js/commun.js';
+import { api, echapper, alerte, formaterDate, animationsReduites } from '/js/commun.js';
 
 /**
  * Correction des resultats apres coup.
@@ -14,6 +14,43 @@ import { api, echapper, alerte, formaterDate } from '/js/commun.js';
 
 let auTermine = () => {};
 
+const amener = (element) =>
+  element?.scrollIntoView({ behavior: animationsReduites() ? 'auto' : 'smooth', block: 'nearest' });
+
+/**
+ * Signale le champ fautif plutot que de poser le message ailleurs sur l'ecran.
+ *
+ * « Indiquez le motif du recalcul » s'affichait tout en haut de la page, sans
+ * rien designer : au clavier comme au lecteur d'ecran, on ne savait pas quel
+ * champ reprendre. Le champ se marque invalide, pointe vers le message, et
+ * recoit le focus.
+ */
+function signaler(champ, message) {
+  if (!champ) return alerte('alerte', message);
+  const idMessage = `erreur-${champ.id}`;
+  let bloc = document.getElementById(idMessage);
+  if (!bloc) {
+    bloc = document.createElement('p');
+    bloc.id = idMessage;
+    bloc.className = 'message message-erreur';
+    bloc.style.cssText = 'margin:.4rem 0 0;font-size:.85rem';
+    champ.insertAdjacentElement('afterend', bloc);
+  }
+  bloc.textContent = message;
+  champ.setAttribute('aria-invalid', 'true');
+  champ.setAttribute('aria-describedby', idMessage);
+  champ.focus();
+  return undefined;
+}
+
+/** Efface le signalement des qu'une nouvelle tentative est lancee. */
+function effacerSignalement(champ) {
+  if (!champ) return;
+  champ.removeAttribute('aria-invalid');
+  champ.removeAttribute('aria-describedby');
+  document.getElementById(`erreur-${champ.id}`)?.remove();
+}
+
 /* ------------------------------------------------------------- Recalcul */
 
 export async function formulaireRecalcul(defiId, titre, onTermine) {
@@ -25,7 +62,7 @@ export async function formulaireRecalcul(defiId, titre, onTermine) {
       <h2>Recalculer « ${echapper(titre)} »</h2>
       <p class="discret">Analyse en cours…</p>
     </div>`;
-  zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  amener(zone);
 
   let d;
   try {
@@ -57,7 +94,10 @@ export async function formulaireRecalcul(defiId, titre, onTermine) {
       ${d.modifies ? `
         <div class="tableau-defilant" style="max-height:340px;overflow-y:auto">
           <table class="admin">
-            <thead><tr><th>Agent</th><th>Service</th><th class="num">Avant</th><th class="num">Après</th><th class="num">Écart</th></tr></thead>
+            <caption class="sr-only">Scores qui changeraient si le recalcul était appliqué</caption>
+            <thead><tr><th scope="col">Agent</th><th scope="col">Service</th>
+              <th scope="col" class="num">Avant</th><th scope="col" class="num">Après</th>
+              <th scope="col" class="num">Écart</th></tr></thead>
             <tbody>${d.changements.map((c) => `
               <tr>
                 <td>${echapper(c.nom)}</td>
@@ -91,8 +131,12 @@ export async function formulaireRecalcul(defiId, titre, onTermine) {
   document.getElementById('btn-fermer-recalcul').addEventListener('click', () => { zone.innerHTML = ''; });
 
   document.getElementById('btn-appliquer-recalcul')?.addEventListener('click', async () => {
-    const motif = document.getElementById('motif-recalcul').value.trim();
-    if (motif.length < 5) return alerte('alerte', 'Indiquez le motif du recalcul.');
+    const champMotif = document.getElementById('motif-recalcul');
+    effacerSignalement(champMotif);
+    const motif = champMotif.value.trim();
+    if (motif.length < 5) {
+      return signaler(champMotif, 'Indiquez le motif du recalcul (5 caractères au moins).');
+    }
 
     const bouton = document.getElementById('btn-appliquer-recalcul');
     bouton.disabled = true;
@@ -118,7 +162,7 @@ export async function formulaireResultatsAgent(agentId, onTermine) {
   if (onTermine) auTermine = onTermine;
   const zone = document.getElementById('zone-formulaire');
   zone.innerHTML = '<div class="carte"><p class="discret">Chargement des résultats…</p></div>';
-  zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  amener(zone);
 
   let d;
   try {
@@ -197,11 +241,24 @@ export async function formulaireResultatsAgent(agentId, onTermine) {
   zone.querySelectorAll('[data-corriger]').forEach((b) => b.addEventListener('click', async () => {
     const id = b.dataset.corriger;
     const bloc = zone.querySelector(`[data-reponse="${id}"]`);
-    const choix = [...bloc.querySelectorAll('[data-propositions] input:checked')].map((c) => Number(c.value));
-    const motif = document.getElementById(`motif-${id}`).value.trim();
+    const champMotif = document.getElementById(`motif-${id}`);
+    effacerSignalement(champMotif);
 
-    if (!choix.length) return alerte('alerte', 'Sélectionnez au moins une proposition.');
-    if (motif.length < 5) return alerte('alerte', 'Le motif est obligatoire : il justifie la correction.');
+    const choix = [...bloc.querySelectorAll('[data-propositions] input:checked')].map((c) => Number(c.value));
+    const motif = champMotif.value.trim();
+
+    // Le message se posait en haut de page, loin de la question concernee :
+    // sur un agent qui a joué six defis, on ne savait pas laquelle reprendre.
+    if (!choix.length) {
+      const premiere = bloc.querySelector('[data-propositions] input');
+      alerte('alerte', 'Sélectionnez au moins une proposition.');
+      premiere?.focus();
+      return;
+    }
+    if (motif.length < 5) {
+      signaler(champMotif, 'Le motif est obligatoire : il justifie la correction.');
+      return;
+    }
 
     b.disabled = true;
     b.textContent = 'Enregistrement…';
@@ -239,9 +296,11 @@ export async function chargerRegistre(cible) {
       <a href="/api/admin/export/corrections.csv">Exporter en CSV</a>
     </p>
     <div class="tableau-defilant"><table class="admin">
+      <caption class="sr-only">Registre des corrections de résultats</caption>
       <thead><tr>
-        <th>Date</th><th>Par</th><th>Type</th><th>Agent</th>
-        <th>Question</th><th>Avant</th><th>Après</th><th>Motif</th>
+        <th scope="col">Date</th><th scope="col">Par</th><th scope="col">Type</th><th scope="col">Agent</th>
+        <th scope="col">Question</th><th scope="col">Avant</th><th scope="col">Après</th>
+        <th scope="col">Motif</th>
       </tr></thead>
       <tbody>${d.corrections.length ? d.corrections.map((c) => `
         <tr>

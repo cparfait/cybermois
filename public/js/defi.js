@@ -1,9 +1,42 @@
 import { api, echapper, initialiserPage, alerte, confettis, animationsReduites } from '/js/commun.js';
+import { reconnaitreVideo, lienVideoSur } from '/js/video.js';
 
 await initialiserPage('/accueil');
 
 const defiId = Number(location.pathname.split('/').pop());
 const zone = document.getElementById('zone');
+
+/**
+ * Region vocale permanente.
+ *
+ * Un `role="status"` cree en meme temps que son contenu n'est pas annonce :
+ * le lecteur d'ecran ne surveille que les regions deja presentes. Celle-ci vit
+ * dans le gabarit, hors de la zone reecrite a chaque etape.
+ */
+const annonce = document.getElementById('annonce');
+const annoncer = (texte) => { if (annonce) annonce.textContent = texte; };
+
+/** Defilement respectueux du reglage « reduire les animations ». */
+const glisser = () => (animationsReduites() ? 'auto' : 'smooth');
+const remonter = () => window.scrollTo({ top: 0, behavior: glisser() });
+
+/**
+ * Porte le focus sur le titre de l'etape qui vient de s'afficher.
+ *
+ * Remplacer le contenu de la zone laissait le focus sur un bouton disparu,
+ * donc sur <body> : au clavier il fallait retraverser tout l'en-tete, et le
+ * lecteur d'ecran ne disait rien de la nouvelle question.
+ */
+function porterFocus(selecteur = '[data-etape]') {
+  const cible = zone.querySelector(selecteur);
+  if (cible) cible.focus({ preventScroll: true });
+}
+
+/** Titre de l'onglet : le meme pour les vingt defis ne repere rien. */
+function majTitrePage(defiCourant) {
+  if (!defiCourant?.titre) return;
+  document.title = `Défi n°${defiCourant.numero} — ${defiCourant.titre} — Cybermois — Ville de Châtillon`;
+}
 
 // Le jeton d'apercu vit dans l'URL du navigateur, mais c'est l'API qui decide
 // d'ouvrir un defi scelle : il doit donc accompagner chaque appel. Sans cela le
@@ -22,18 +55,26 @@ let choix = new Set();  // selection en cours
 
 try {
   defi = await api(avecApercu(`/api/defis/${defiId}`));
+  majTitrePage(defi);
   // On reprend la ou l'agent s'etait arrete : une session perdue ne doit pas
   // l'obliger a tout refaire.
   const repondues = new Set(defi.dejaRepondu || []);
   index = defi.questions.findIndex((q) => !repondues.has(q.id));
-  if (index === -1) index = defi.questions.length - 1;
+  const toutRepondu = index === -1;
+  if (toutRepondu) index = defi.questions.length - 1;
 
   if (defi.close) afficherCloture();
+  // Toutes les questions sont validees mais le defi n'a jamais ete cloture :
+  // l'onglet a ete ferme entre la derniere correction et « Voir mon
+  // resultat ». Reafficher la derniere question menait a un 409 au clic sur
+  // « Valider », sans autre issue que d'abandonner le defi. On propose donc
+  // directement la cloture, qui est la seule action qui reste a faire.
+  else if (toutRepondu) afficherDefiComplet();
   // Une reprise va droit a la question suivante : reafficher l'introduction et
   // la video a quelqu'un qui a deja repondu a six questions lui redemande de
   // cliquer pour retrouver ou il en etait.
   else if (repondues.size > 0) afficherQuestion();
-  else afficherIntro(0);
+  else afficherIntro();
 } catch (erreur) {
   alerte('alerte', erreur.message);
   zone.innerHTML = '<p><a class="btn btn-secondaire" href="/accueil">Retour aux défis</a></p>';
@@ -44,7 +85,7 @@ try {
 function afficherCloture() {
   zone.innerHTML = `
     <p class="numero-question">Défi n°${defi.numero}</p>
-    <h1 style="margin-bottom:.15em">${echapper(defi.titre)}</h1>
+    <h1 style="margin-bottom:.15em" tabindex="-1" data-etape>${echapper(defi.titre)}</h1>
     <div class="message message-info" style="margin:1.5rem 0">
       <strong>La campagne est terminée.</strong> Le classement est définitif et les défis ne
       sont plus jouables. Vous pouvez toujours relire les questions et vos résultats depuis
@@ -56,14 +97,45 @@ function afficherCloture() {
     </div>`;
 }
 
-function afficherIntro(dejaFaites) {
+/**
+ * Toutes les questions sont repondues, le defi n'est pas cloture.
+ *
+ * Cet ecran n'a qu'une action, et c'est precisement celle qui manquait : le
+ * calcul du resultat. Il ferme la seule impasse du parcours.
+ */
+function afficherDefiComplet() {
   const total = defi.questions.length;
 
   zone.innerHTML = `
     <p class="numero-question">Défi n°${defi.numero}</p>
-    <h1 style="margin-bottom:.15em">${echapper(defi.titre)}</h1>
+    <h1 style="margin-bottom:.15em" tabindex="-1" data-etape>Défi complet</h1>
+    <div class="message message-succes" style="margin:1.5rem 0">
+      Vous avez répondu aux ${total} questions de ce défi. Il ne reste qu'à en établir le
+      résultat : votre session s'était interrompue juste avant.
+    </div>
+    <div class="zone-validation">
+      <button type="button" class="btn btn-principal btn-bloc" id="btn-suivant">Voir mon résultat</button>
+    </div>
+    <p class="centre" style="margin-top:1rem">
+      <a class="lien-discret" href="/accueil">Retour aux défis</a>
+    </p>`;
+
+  const bouton = document.getElementById('btn-suivant');
+  bouton.addEventListener('click', () => terminer(bouton));
+  annoncer(`Défi complet : ${total} questions répondues. Voir mon résultat.`);
+  porterFocus();
+}
+
+function afficherIntro() {
+  const total = defi.questions.length;
+
+  zone.innerHTML = `
+    <p class="numero-question">Défi n°${defi.numero}</p>
+    <h1 style="margin-bottom:.15em" tabindex="-1" data-etape>${echapper(defi.titre)}</h1>
     <p style="font-style:italic;color:var(--encre-douce);margin-top:0">${echapper(defi.accroche)}</p>
-    <div class="carte" style="margin:1.5rem 0">${echapper(defi.intro)}</div>
+    <!-- L'introduction se saisit dans un textarea : ses paragraphes doivent
+         survivre a l'echappement, sinon tout se retrouve sur une seule ligne. -->
+    <div class="carte" style="margin:1.5rem 0;white-space:pre-line">${echapper(defi.intro)}</div>
 
     ${defi.video ? blocVideo(defi.video) : ''}
 
@@ -79,12 +151,6 @@ function afficherIntro(dejaFaites) {
         Vous pouvez le refaire librement, en mode entraînement.
       </div>` : ''}
 
-    ${dejaFaites ? `
-      <div class="message message-succes" style="margin-bottom:1.5rem">
-        Vous aviez déjà répondu à ${dejaFaites} question${dejaFaites > 1 ? 's' : ''} :
-        vous reprenez à la question ${index + 1}.
-      </div>` : ''}
-
     <div class="carte" style="margin-bottom:1.5rem">
       <h2 style="margin-bottom:.4em">Comment ça marche</h2>
       <p style="margin:0">
@@ -98,69 +164,27 @@ function afficherIntro(dejaFaites) {
       </p>
     </div>
 
-    <button class="btn btn-principal btn-bloc" id="btn-commencer">
-      ${dejaFaites ? 'Reprendre le défi' : 'Commencer'}
-    </button>`;
+    <button class="btn btn-principal btn-bloc" id="btn-commencer">Commencer</button>`;
 
   document.getElementById('btn-commencer').addEventListener('click', afficherQuestion);
   brancherVideo();
 }
 
 /**
- * Reconnait l'hebergeur et compose l'adresse du lecteur.
+ * Alternative textuelle a la video.
  *
- * YouTube pour la plupart des contenus, Dailymotion parce que c'est la que
- * Cybermalveillance.gouv.fr publie son kit de sensibilisation - la source la
- * plus legitime pour une collectivite, et il aurait ete absurde de l'exclure.
- *
- * On accepte watch?v=, youtu.be, /embed/, /shorts/ et /video/ : personne ne
- * retient laquelle de ces adresses est la bonne.
+ * Une video sans transcription n'a aucun equivalent pour qui ne l'entend pas,
+ * ou pour qui ne peut pas la regarder depuis son poste. Elle est repliee : le
+ * parcours reste celui de la video, l'alternative est la pour qui la cherche.
  */
-function reconnaitreVideo(url) {
-  const brut = String(url || '');
-
-  // Fichier depose par la collectivite : servi par ce serveur, sur le reseau
-  // interne. Aucun tiers n'est appele, donc rien a consentir - la video se
-  // lance directement, sans vignette intermediaire.
-  if (/^\/videos\/[A-Za-z0-9._-]+$/.test(brut)) {
-    return { hebergeur: 'la Ville', local: true, source: brut };
-  }
-
-  const yt = brut.match(
-    /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
-  );
-  if (yt) {
-    return {
-      hebergeur: 'YouTube',
-      // Domaine sans cookie : le strict minimum une fois le consentement donne.
-      embed: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(yt[1])}?rel=0&autoplay=1`,
-    };
-  }
-
-  const dm = brut.match(/dailymotion\.com\/(?:embed\/)?video\/([A-Za-z0-9]+)|dai\.ly\/([A-Za-z0-9]+)/);
-  if (dm) {
-    return {
-      hebergeur: 'Dailymotion',
-      // Adresse du lecteur, sans passer par la redirection depuis
-      // www.dailymotion.com : une redirection vers un autre domaine se heurte
-      // a la politique de securite, et le lecteur reste vide sans rien dire.
-      embed: `https://geo.dailymotion.com/player.html?video=${encodeURIComponent(dm[1] || dm[2])}&autoplay=1`,
-    };
-  }
-
-  // Plateforme dont on ne connait pas le format d'insertion - l'ANSSI, une
-  // autre collectivite. On insere l'adresse telle quelle, a condition que son
-  // domaine soit autorise : sinon le navigateur la bloquerait sans rien dire,
-  // et mieux vaut un lien qui fonctionne qu'un cadre vide.
-  try {
-    const u = new URL(brut);
-    const autorises = defi?.videoDomaines || [];
-    if (u.protocol === 'https:' && autorises.includes(u.hostname)) {
-      return { hebergeur: u.hostname, embed: u.href };
-    }
-  } catch { /* adresse illisible : traitee comme un simple lien */ }
-
-  return null;
+function blocTranscription(video) {
+  const texte = String(video?.transcription || '').trim();
+  if (!texte) return '';
+  return `
+    <details class="carte" style="margin:.8rem 0 1.5rem">
+      <summary class="ui" style="cursor:pointer;font-weight:700">Transcription</summary>
+      <div style="white-space:pre-line;margin-top:.7rem">${echapper(texte)}</div>
+    </details>`;
 }
 
 /**
@@ -178,14 +202,26 @@ function blocVideo(video) {
   // savait plus lequel designait quoi. Le titre saisi sert a l'administration,
   // pour reconnaitre le fichier ; ici, la place de la video suffit a dire ce
   // qu'elle est.
-  const v = reconnaitreVideo(video.url);
+  const v = reconnaitreVideo(video.url, {
+    domainesAutorises: defi?.videoDomaines || [],
+    autoplay: true,
+  });
+
   if (!v) {
+    // L'adresse part dans un href : on ne lui fait pas confiance sur parole.
+    // Seuls https et un fichier servi par ce serveur sont admis ; le reste -
+    // « javascript: », « data: » - s'affiche en texte, ou il ne peut rien.
+    const lien = lienVideoSur(video.url);
     return `
       <div class="carte" style="margin:1.5rem 0">
-        <a href="${echapper(video.url)}" target="_blank" rel="noopener noreferrer">
-          Voir la vidéo d’introduction
-        </a>
-      </div>`;
+        ${lien
+          ? `<a href="${echapper(lien)}" target="_blank" rel="noopener noreferrer">
+               Voir la vidéo d’introduction
+             </a>`
+          : `<p style="margin:0">Vidéo d’introduction — adresse inutilisable :
+               <span style="word-break:break-all">${echapper(video.url)}</span></p>`}
+      </div>
+      ${blocTranscription(video)}`;
   }
 
   // Fichier local : rien a consentir, donc rien a cliquer avant de voir.
@@ -196,7 +232,8 @@ function blocVideo(video) {
           <video src="${echapper(v.source)}" controls preload="metadata"
                  style="width:100%;height:100%"></video>
         </div>
-      </section>`;
+      </section>
+      ${blocTranscription(video)}`;
   }
 
   return `
@@ -204,14 +241,15 @@ function blocVideo(video) {
       <div id="lecteur-video" class="vignette-video"
            data-embed="${echapper(v.embed)}">
         <button type="button" class="btn btn-principal" id="btn-lire-video">
-          ▶ Regarder la vidéo
+          <span aria-hidden="true">▶</span> Regarder la vidéo
         </button>
         <p class="discret" style="margin:.7rem 0 0;font-size:.82rem;max-width:46ch">
           La vidéo est hébergée par ${echapper(v.hebergeur)}. Rien n'est chargé tant que vous
           ne cliquez pas : en lançant la lecture, vous acceptez le dépôt de cookies par ce service.
         </p>
       </div>
-    </section>`;
+    </section>
+    ${blocTranscription(video)}`;
 }
 
 function brancherVideo() {
@@ -247,9 +285,10 @@ function afficherQuestion() {
 
     <fieldset class="carte bloc-question" style="border:1px solid var(--bordure)">
       <legend class="sr-only">Question ${index + 1} sur ${total}</legend>
-      <h2 style="font-size:1.25rem;margin:.2em 0 .6em">${echapper(q.enonce)}</h2>
+      <h2 style="font-size:1.25rem;margin:.2em 0 .6em" tabindex="-1" data-etape>${echapper(q.enonce)}</h2>
       ${q.contexte ? `<div class="contexte">${echapper(q.contexte)}</div>` : ''}
-      <p class="consigne">${q.multiple ? '☑ Plusieurs réponses possibles' : '◉ Une seule réponse'}</p>
+      <p class="consigne"><span aria-hidden="true">${q.multiple ? '☑' : '◉'}</span>
+        ${q.multiple ? 'Plusieurs réponses possibles' : 'Une seule réponse'}</p>
       <ul class="liste-choix">
         ${q.reponses.map((r) => `
           <li class="choix">
@@ -265,14 +304,24 @@ function afficherQuestion() {
     </fieldset>
 
     <div class="zone-validation">
-      <div id="avertissement" aria-live="polite"></div>
-      <button type="button" class="btn btn-principal btn-bloc" id="btn-valider" disabled>
-        Sélectionnez une réponse
+      <div id="avertissement"></div>
+      <!-- La consigne etait le libelle d'un bouton desactive, affiche a 45 %
+           d'opacite : la seule instruction de l'ecran etait aussi son texte le
+           moins lisible. Elle vit maintenant dans un paragraphe normal, et le
+           bouton garde un libelle stable. -->
+      <p class="discret centre" id="consigne-validation" style="margin:0 0 .6rem">
+        Sélectionnez une réponse pour continuer.
+      </p>
+      <button type="button" class="btn btn-principal btn-bloc" id="btn-valider"
+              aria-describedby="consigne-validation" disabled>
+        Valider ma réponse
       </button>
       <p class="discret centre" style="margin:.7rem 0 0">
         Une fois validée, la réponse ne peut plus être modifiée.
       </p>
     </div>`;
+
+  const consigne = document.getElementById('consigne-validation');
 
   zone.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach((entree) =>
     entree.addEventListener('change', () => {
@@ -281,13 +330,14 @@ function afficherQuestion() {
       } else {
         choix = new Set([Number(entree.value)]);
       }
-      const bouton = document.getElementById('btn-valider');
-      bouton.disabled = choix.size === 0;
-      bouton.textContent = choix.size === 0 ? 'Sélectionnez une réponse' : 'Valider ma réponse';
+      document.getElementById('btn-valider').disabled = choix.size === 0;
+      consigne.hidden = choix.size > 0;
     }));
 
   document.getElementById('btn-valider').addEventListener('click', validerQuestion);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  remonter();
+  annoncer(`Question ${index + 1} sur ${total}. ${q.enonce}`);
+  porterFocus();
 }
 
 async function validerQuestion() {
@@ -303,6 +353,8 @@ async function validerQuestion() {
     afficherCorrection(q, r);
   } catch (erreur) {
     alerte('avertissement', erreur.message);
+    // Le bloc d'avertissement nait avec son message : il ne serait pas annonce.
+    annoncer(erreur.message);
     bouton.disabled = false;
     bouton.textContent = 'Valider ma réponse';
   }
@@ -358,17 +410,19 @@ function afficherCorrection(q, r) {
         <span>${r.scoreCourant} point${r.scoreCourant > 1 ? 's' : ''} au total</span>
       </div>
       <div class="piste" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+           aria-label="Progression dans le défi"
            aria-valuenow="${Math.round((r.progression.repondues / total) * 100)}">
         <span style="width:${Math.round((r.progression.repondues / total) * 100)}%"></span>
       </div>
     </div>
 
-    <div class="carte bloc-question bloc-correction correction-animee" style="border:1px solid var(--bordure)" role="status">
+    <div class="carte bloc-question bloc-correction correction-animee" style="border:1px solid var(--bordure)">
       ${r.points > 0 ? `<span class="points-gagnes" aria-hidden="true">+${r.points}</span>` : ''}
       <p class="bandeau-note" style="color:${couleur}">
-        ${r.parfaite ? '✅' : r.points > 0 ? '⚠️' : '❌'} ${verdict} — ${r.points} / ${r.pointsMax} points
+        <span aria-hidden="true">${r.parfaite ? '✅' : r.points > 0 ? '⚠️' : '❌'}</span>
+        ${verdict} — ${r.points} / ${r.pointsMax} points
       </p>
-      <h2 style="font-size:1.2rem;margin:.2em 0 .8em">${echapper(q.enonce)}</h2>
+      <h2 style="font-size:1.2rem;margin:.2em 0 .8em" tabindex="-1" data-etape>${echapper(q.enonce)}</h2>
       <ul class="liste-choix">${items}</ul>
 
       ${details.length ? `<div class="explication explication-bilan" style="border-left-color:${couleur}">${details.join('')}</div>` : ''}
@@ -385,10 +439,11 @@ function afficherCorrection(q, r) {
       </button>
     </div>`;
 
-  document.getElementById('btn-suivant').addEventListener('click', async () => {
-    if (r.derniere) return terminer();
+  const suivant = document.getElementById('btn-suivant');
+  suivant.addEventListener('click', () => {
+    if (r.derniere) return terminer(suivant);
     index++;
-    afficherQuestion();
+    return afficherQuestion();
   });
 
   // Une salve discrete sur une reponse parfaite : elle recompense sans envahir
@@ -398,22 +453,33 @@ function afficherCorrection(q, r) {
     setTimeout(() => confettis({ nombre: 26, duree: 1100, depuis: premiere }), 420);
   }
 
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  remonter();
+  // Le verdict passe par la region permanente : cree en meme temps que son
+  // contenu, un role="status" resterait muet.
+  annoncer(`${verdict} — ${r.points} sur ${r.pointsMax} points.`);
+  porterFocus();
 }
 
 /* ------------------------------------------------------------- Fin du defi */
 
-async function terminer() {
-  const bouton = document.getElementById('btn-suivant');
-  bouton.disabled = true;
-  bouton.textContent = 'Calcul du résultat…';
+async function terminer(declencheur) {
+  const bouton = declencheur || document.getElementById('btn-suivant');
+  const libelle = bouton?.textContent;
+  if (bouton) {
+    bouton.disabled = true;
+    bouton.textContent = 'Calcul du résultat…';
+  }
 
   let r;
   try {
     r = await api(avecApercu(`/api/defis/${defiId}/terminer`), { method: 'POST' });
   } catch (erreur) {
     alerte('alerte', erreur.message);
-    bouton.disabled = false;
+    annoncer(erreur.message);
+    if (bouton) {
+      bouton.disabled = false;
+      bouton.textContent = libelle;
+    }
     return;
   }
 
@@ -430,7 +496,7 @@ async function terminer() {
           <div class="sur">${r.score} / ${r.scoreMax} points</div>
         </div>
       </div>
-      <h1 style="margin-bottom:.2em">${felicitations}</h1>
+      <h1 style="margin-bottom:.2em" tabindex="-1" data-etape>${felicitations}</h1>
       <p class="discret" style="margin-top:0">
         ${r.bonnes} réponse${r.bonnes > 1 ? 's' : ''} parfaite${r.bonnes > 1 ? 's' : ''} sur ${r.total}
       </p>
@@ -443,14 +509,14 @@ async function terminer() {
       ${r.nouveauxBadges?.length ? `
         <p class="ui" style="font-weight:700;margin-top:1.6rem;margin-bottom:0">Nouveaux badges débloqués</p>
         <div class="liste-badges">
-          ${r.nouveauxBadges.map((b) => `<span class="badge-gagne">${b.emoji} ${echapper(b.libelle)}</span>`).join('')}
+          ${r.nouveauxBadges.map((b) => `<span class="badge-gagne"><span aria-hidden="true">${echapper(b.emoji)}</span> ${echapper(b.libelle)}</span>`).join('')}
         </div>` : ''}
 
       ${!r.entrainement && r.rangService?.rang ? `
         <div class="encart-rang">
           <strong>${echapper(r.rangService.detail?.service || '')}</strong> occupe la
           <strong>${r.rangService.rang}<sup>${r.rangService.rang === 1 ? 're' : 'e'}</sup> place</strong>
-          sur ${r.rangService.total} services${r.rangAgent?.rang
+          sur ${r.rangService.total} directions${r.rangAgent?.rang
             ? ` · vous êtes ${r.rangAgent.rang}<sup>${r.rangAgent.rang === 1 ? 'er' : 'e'}</sup> au classement individuel` : ''}.
         </div>` : ''}
 
@@ -460,6 +526,8 @@ async function terminer() {
       </div>
     </section>`;
 
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  remonter();
+  annoncer(`${felicitations} ${r.score} sur ${r.scoreMax} points, ${r.pourcentage} %.`);
+  porterFocus();
   if (!r.entrainement && r.pourcentage >= 70) confettis({ nombre: 80, duree: 2400 });
 }

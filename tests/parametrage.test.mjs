@@ -12,8 +12,15 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { db } from '../src/lib/db.js';
-import { exporterParametrage, importerParametrage } from '../src/lib/parametrage.js';
+import { baseJetable, nettoyerALaFin } from './base-jetable.mjs';
+
+baseJetable('parametrage', import.meta.url);
+const { db } = await import('../src/lib/db.js');
+const { exporterParametrage, importerParametrage } = await import('../src/lib/parametrage.js');
+// Le schema n'est pas tout entier dans db.js : la table « tentatives » est
+// creee par le module qui s'en sert, et le nettoyage des fixtures y passe.
+await import('../src/lib/tentatives.js');
+nettoyerALaFin(db);
 
 const PREFIXE = 'zz-test-param-';
 

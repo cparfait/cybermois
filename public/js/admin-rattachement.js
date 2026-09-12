@@ -1,4 +1,7 @@
-import { api, echapper, alerte } from '/js/commun.js';
+import { api, echapper, alerte, animationsReduites } from '/js/commun.js';
+
+/** Defilement respectueux du reglage « reduire les animations ». */
+const glisser = () => (animationsReduites() ? 'auto' : 'smooth');
 
 /**
  * Rattachement des agents sans service.
@@ -24,7 +27,7 @@ export async function formulaireRattachement(onTermine) {
   if (onTermine) auTermine = onTermine;
   const zone = document.getElementById('zone-formulaire');
   zone.innerHTML = '<div class="carte"><p class="discret">Analyse des agents sans service…</p></div>';
-  zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  zone.scrollIntoView({ behavior: glisser(), block: 'nearest' });
 
   try {
     donnees = await api('/api/admin/agents/non-rattaches');
@@ -203,7 +206,7 @@ function brancher() {
       alerte('alerte', r.message, 'succes');
       zone.innerHTML = '';
       auTermine();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: glisser() });
     } catch (e) {
       alerte('alerte', e.message);
       bouton.disabled = false;

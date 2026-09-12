@@ -1,15 +1,17 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
-import formbody from '@fastify/formbody';
 import statique from '@fastify/static';
 import rateLimit from '@fastify/rate-limit';
 import multipart from '@fastify/multipart';
 import cron from 'node-cron';
 
-import { config } from './lib/config.js';
+import { config, SECRET_DEFAUT, SECRET_LONGUEUR_MIN } from './lib/config.js';
 import { db } from './lib/db.js';
-import { purgerSessions, exigerAdmin } from './lib/session.js';
+import { purgerSessions, exigerAdmin, DUREE_HEURES } from './lib/session.js';
+import { appliquerRetention } from './lib/retention.js';
+import { SEUIL_BADGE_DEFI } from './lib/scoring.js';
 import { importerContenus } from './lib/seed.js';
 import { envoyerRelances, envoyerResultats } from './lib/mail.js';
 import { verifierModeDemo, estModeDemo, motDePasseDemo } from './lib/annuaire-demo.js';
@@ -26,18 +28,58 @@ import routesUtilisateurs from './routes/utilisateurs.js';
 import routesConfiguration from './routes/configuration.js';
 import routesCorrections from './routes/corrections.js';
 
+/**
+ * Sans secret propre a l'installation, les cookies de session se forgent et
+ * les mots de passe enregistres - compte de service Active Directory, relais
+ * SMTP - se dechiffrent avec une cle publiee dans le depot. On refuse de
+ * demarrer plutot que de servir une campagne dans cet etat.
+ *
+ * Le refus ne vaut qu'en production : un poste de developpement doit pouvoir
+ * demarrer sans ceremonie.
+ */
+if (config.env === 'production') {
+  const secret = config.sessionSecret;
+  const probleme = secret === SECRET_DEFAUT
+    ? 'SESSION_SECRET n\'est pas renseigne : la valeur de developpement, publique, serait utilisee.'
+    : (secret.length < SECRET_LONGUEUR_MIN
+      ? `SESSION_SECRET ne fait que ${secret.length} caracteres, ${SECRET_LONGUEUR_MIN} au minimum.`
+      : null);
+
+  if (probleme) {
+    console.error(`[cybermois] DEMARRAGE REFUSE : ${probleme}`);
+    console.error('[cybermois] Cette cle signe les cookies de session et chiffre les mots de passe');
+    console.error('[cybermois] Active Directory et SMTP enregistres depuis le back-office.');
+    console.error('[cybermois] Generez-la une fois, puis conservez-la :');
+    console.error('[cybermois]   node -e "console.log(require(\'crypto\').randomBytes(48).toString(\'base64url\'))"');
+    process.exit(1);
+  }
+}
+
 const app = Fastify({
   logger: {
     level: config.env === 'production' ? 'info' : 'debug',
     // Ne jamais journaliser un mot de passe, meme en cas d'erreur
     redact: ['req.body.motDePasse', 'req.headers.cookie', 'req.headers.authorization'],
   },
-  trustProxy: true, // Nginx Proxy Manager en frontal
+  // Les en-tetes X-Forwarded-* ne sont crus que s'ils viennent du reverse
+  // proxy declare. « true » les acceptait de n'importe qui : il suffisait
+  // d'atteindre le conteneur sans passer par le proxy pour se choisir une
+  // adresse IP, donc pour echapper a la limitation de tentatives et falsifier
+  // la trace laissee dans le journal.
+  trustProxy: config.proxyDeConfiance.length ? config.proxyDeConfiance : false,
   bodyLimit: 4 * 1024 * 1024, // marge pour l'import d'un effectif complet en CSV
 });
 
 await app.register(cookie, { secret: config.sessionSecret });
-await app.register(formbody);
+// @fastify/formbody n'est volontairement PAS enregistre.
+//
+// Le portail ne parle que JSON. Analyser en plus les corps de formulaire
+// ouvrait la seule breche que « SameSite=lax » ne ferme pas : un formulaire
+// pose sur un site tiers - ou sur un sous-domaine voisin, que « lax » considere
+// comme le meme site - pouvait declencher une action d'administration sans
+// requete preparatoire, donc sans que le navigateur demande la permission.
+// Sans ce greffon, une telle requete est refusee avant d'atteindre la route.
+//
 // hook 'preHandler' : indispensable pour que la limitation par compte puisse lire
 // le login dans le corps de la requete, qui n'est pas encore analyse en 'onRequest'.
 await app.register(rateLimit, { global: false, hook: 'preHandler' });
@@ -60,10 +102,79 @@ function domainesVideo() {
   return propres.length ? propres.map((d) => `https://${d}`).join(' ') : "'none'";
 }
 
+/**
+ * Verrou d'origine sur toute requete qui modifie quelque chose.
+ *
+ * « SameSite=lax » empeche un autre SITE de poster ici, mais traite
+ * cybermois.chatillon92.fr et n'importe quel autre sous-domaine de
+ * chatillon92.fr comme un meme site : une application voisine compromise
+ * pouvait donc agir au nom d'un administrateur connecte.
+ *
+ * Sec-Fetch-Site est envoye par tous les navigateurs a jour et n'est pas
+ * falsifiable depuis une page : il dit d'ou part la requete. Quand il manque -
+ * client en ligne de commande, script de recette - on se rabat sur Origin. Une
+ * requete qui ne porte ni l'un ni l'autre ne vient pas d'un navigateur, et ne
+ * peut donc pas etre une requete forgee a l'insu d'un agent.
+ */
+const METHODES_SURES = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+app.addHook('onRequest', async (requete, reponse) => {
+  if (METHODES_SURES.has(requete.method)) return;
+
+  const provenance = requete.headers['sec-fetch-site'];
+  if (provenance) {
+    if (provenance === 'same-origin' || provenance === 'none') return;
+    requete.log.warn({ url: requete.url, provenance }, 'requete refusee : origine croisee');
+    return reponse.code(403).send({
+      erreur: "Requête refusée : elle ne provient pas du portail.",
+      code: 'ORIGINE_REFUSEE',
+    });
+  }
+
+  const origine = requete.headers.origin;
+  if (!origine) return; // ni navigateur, ni victime possible
+
+  const attendues = new Set([config.publicUrl.replace(/\/+$/, '')]);
+  if (requete.headers.host) {
+    attendues.add(`https://${requete.headers.host}`);
+    attendues.add(`http://${requete.headers.host}`);
+  }
+  if (attendues.has(origine.replace(/\/+$/, ''))) return;
+
+  requete.log.warn({ url: requete.url, origine }, 'requete refusee : origine inattendue');
+  return reponse.code(403).send({
+    erreur: "Requête refusée : elle ne provient pas du portail.",
+    code: 'ORIGINE_REFUSEE',
+  });
+});
+
+/**
+ * Les pages HTML ne se servent que par leurs adresses propres.
+ *
+ * Le greffon de fichiers statiques publiait aussi public/admin.html : l'ecran
+ * d'administration s'ouvrait donc pour tout agent connecte - et meme pour un
+ * visiteur - des lors qu'il demandait le fichier par son nom. Ses appels d'API
+ * echouaient bien en 403, mais un ecran d'administration qui s'affiche ne se
+ * distingue pas, vu de l'utilisateur, d'un droit accorde. Les adresses
+ * publiques (/administration, /accueil...) restent servies par
+ * enregistrerStatiques, avec leur garde.
+ */
+app.addHook('onRequest', async (requete, reponse) => {
+  if (/\.html?($|\?)/i.test(requete.url)) {
+    return reponse.code(404).type('text/html; charset=utf-8').send('<p>Page introuvable.</p>');
+  }
+});
+
 // En-tetes de securite
 app.addHook('onSend', async (requete, reponse) => {
   reponse.header('X-Content-Type-Options', 'nosniff');
   reponse.header('X-Frame-Options', 'DENY');
+  // Le portail n'est joignable qu'en HTTPS : l'annoncer evite qu'une premiere
+  // requete en clair, tapee a la main ou suivie depuis un lien ancien, ne
+  // transporte le cookie de session avant la redirection.
+  if (config.publicUrl.startsWith('https://')) {
+    reponse.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
   // « same-origin » n'envoyait aucun referent a un tiers : les lecteurs video
   // ne pouvaient donc pas verifier d'ou venait l'insertion, et YouTube la
   // refusait - erreur 153. « strict-origin-when-cross-origin » ne transmet que
@@ -77,8 +188,12 @@ app.addHook('onSend', async (requete, reponse) => {
     [
       "default-src 'self'",
       "script-src 'self'",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' https://fonts.gstatic.com",
+      // Les polices sont servies par le portail. Elles venaient de Google, ce
+      // qui transmettait l'adresse IP de chaque agent a un tiers a chaque page
+      // - en contradiction avec les mentions legales - et bloquait le rendu
+      // sur un reseau interne sans acces Internet.
+      "style-src 'self' 'unsafe-inline'",
+      "font-src 'self'",
       "img-src 'self' data:",
       "connect-src 'self'",
       "form-action 'self'",
@@ -102,8 +217,10 @@ await app.register(statique, {
   // Ne sert plus que les images et ressources annexes : elles changent rarement,
   // d'ou un cache long. Le HTML, le JavaScript et les styles passent par
   // enregistrerStatiques, qui fait figurer une empreinte du code dans leur URL.
+  // @fastify/static v10 passe la reponse Fastify, et non la reponse HTTP
+  // brute : « setHeader » n'existe plus dessus, c'est « header ».
   setHeaders: (reponse) => {
-    reponse.setHeader('Cache-Control', 'public, max-age=604800');
+    reponse.header('Cache-Control', 'public, max-age=604800');
   },
 });
 
@@ -119,7 +236,7 @@ await app.register(statique, {
   // Le nom du fichier derive de son contenu : une video ne change jamais sous
   // la meme adresse, on peut donc la mettre en cache sans reserve.
   setHeaders: (reponse) => {
-    reponse.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    reponse.header('Cache-Control', 'public, max-age=31536000, immutable');
   },
 });
 
@@ -153,26 +270,49 @@ enregistrerStatiques(app, {
 // Les mentions legales se consultent sans etre connecte : l'adresse de la DPO
 // doit donc etre accessible librement. Elle est de toute facon publique - c'est
 // meme son objet.
-app.get('/api/public/contacts', async () => ({ dpo: config.contactDpo || null }));
-
-app.get('/sante', async () => ({
-  ok: true,
-  version: '1.0.0',
-  agents: db.prepare('SELECT COUNT(*) AS n FROM agents').get().n,
-  participations: db.prepare('SELECT COUNT(*) AS n FROM participations').get().n,
+app.get('/api/public/contacts', async () => ({
+  dpo: config.contactDpo || null,
+  // Reprises par les mentions legales et l'attestation, qui affichaient
+  // jusqu'ici des valeurs recopiees a la main - fausses des qu'un reglage
+  // changeait.
+  dureeSessionHeures: DUREE_HEURES,
+  campagne: config.campagne,
+  seuilBadgeDefi: Math.round(SEUIL_BADGE_DEFI * 100),
 }));
+
+/**
+ * Sonde de vie, interrogee par Docker.
+ *
+ * Elle ne renvoie plus l'effectif ni le nombre de participations : cette route
+ * n'exige aucune authentification, et l'etat de mobilisation d'une collectivite
+ * n'a pas a se lire depuis le reseau. Le nombre repondait de toute facon a une
+ * question que la sonde ne pose pas.
+ */
+const VERSION = JSON.parse(
+  fs.readFileSync(path.resolve(process.cwd(), 'package.json'), 'utf8')
+).version;
+
+app.get('/sante', async () => ({ ok: true, version: VERSION }));
 
 app.setNotFoundHandler(async (requete, reponse) => {
   if (requete.url.startsWith('/api/')) return reponse.code(404).send({ erreur: 'Route inconnue.' });
   return reponse.code(404).sendFile('404.html');
 });
 
+const echapperHtml = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+));
+
 app.setErrorHandler((erreur, requete, reponse) => {
   requete.log.error(erreur);
   const code = erreur.statusCode && erreur.statusCode < 500 ? erreur.statusCode : 500;
   const message = code < 500 ? erreur.message : 'Une erreur interne est survenue.';
   if (requete.url.startsWith('/api/')) return reponse.code(code).send({ erreur: message });
-  return reponse.code(code).type('text/html; charset=utf-8').send(`<p>${message}</p>`);
+  // Le message est echappe : il peut contenir un fragment de l'URL demandee,
+  // et une page d'erreur qui renvoie la saisie telle quelle est un script
+  // qui s'execute dans le portail.
+  return reponse.code(code).type('text/html; charset=utf-8')
+    .send(`<p>${echapperHtml(message)}</p>`);
 });
 
 /* ---------------------------------------------------------- Planification */
@@ -228,6 +368,22 @@ app.decorate('replanifier', planifier);
 // Purge des sessions expirees toutes les heures
 cron.schedule('0 * * * *', () => purgerSessions(), { timezone: config.cron.timezone });
 
+/**
+ * Durees de conservation annoncees dans les mentions legales.
+ * Elles n'etaient appliquees nulle part : la page promettait un effacement qui
+ * ne se produisait jamais. Une fois par nuit suffit largement.
+ */
+cron.schedule('30 3 * * *', () => {
+  try {
+    const rapport = appliquerRetention();
+    if (rapport.journal || rapport.participations || rapport.preuves) {
+      app.log.info(rapport, 'durees de conservation appliquees');
+    }
+  } catch (err) {
+    app.log.error(err, 'purge des donnees echouee');
+  }
+}, { timezone: config.cron.timezone });
+
 /* ------------------------------------------------------------- Demarrage */
 
 try {
@@ -256,6 +412,20 @@ try {
 
   const avertissement = verifierChiffrement();
   if (avertissement) app.log.warn(avertissement);
+
+  // Le drapeau « Secure » du cookie de session se deduit de cette adresse :
+  // en http, le cookie voyage en clair et se lit sur le reseau.
+  if (config.env === 'production' && !config.publicUrl.startsWith('https://')) {
+    app.log.warn(`PUBLIC_URL=${config.publicUrl} n'est pas en https : le cookie de session `
+      + "circulera sans le drapeau Secure, et l'en-tete HSTS n'est pas emis. "
+      + 'Corrigez-le dans Administration > Configuration.');
+  }
+
+  if (!config.proxyDeConfiance.length) {
+    app.log.info("Aucun PROXY_DE_CONFIANCE declare : les en-tetes X-Forwarded-* sont ignores "
+      + "et l'adresse vue est celle de la connexion. Derriere un reverse proxy, declarez son "
+      + 'adresse, sans quoi toutes les connexions paraissent venir de lui.');
+  }
 
   const etat = configurationUtilisable();
   if (!etat.ok) {

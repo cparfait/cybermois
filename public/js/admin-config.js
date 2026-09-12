@@ -1,10 +1,12 @@
-import { api, echapper, alerte } from '/js/commun.js';
+import { api, echapper, alerte, animationsReduites } from '/js/commun.js';
 import { decomposerUrlLdap } from '/js/url-ldap.js';
 
 let descripteur = [];
 let groupes = [];
 
-/** Valeurs saisies dans le formulaire, prêtes à être testées ou enregistrées. */
+const remonter = () =>
+  window.scrollTo({ top: 0, behavior: animationsReduites() ? 'auto' : 'smooth' });
+
 /**
  * Etat de l'autorite de certification.
  *
@@ -28,6 +30,7 @@ function certificat(etat) {
     </div>`;
 }
 
+/** Valeurs saisies dans le formulaire, prêtes à être testées ou enregistrées. */
 function valeursSaisies() {
   const valeurs = {};
   for (const champ of document.querySelectorAll('[data-parametre]')) {
@@ -76,7 +79,7 @@ function champ(d) {
       <div class="champ-admin">
         <label for="${id}">${echapper(d.libelle)} ${origine}</label>
         <input type="text" id="${id}" data-parametre="${d.cle}" value="${echapper(u.hote || '')}"
-               placeholder="192.168.2.9 ou dc01.chatillon.lan">
+               placeholder="10.0.0.1 ou dc01.exemple.lan">
         ${d.aide ? `<p class="discret" style="margin:.3rem 0 0;font-size:.78rem">${echapper(d.aide)}</p>` : ''}
       </div>
       <div class="champ-admin">
@@ -190,7 +193,10 @@ export async function chargerConfiguration() {
       </p>
 
       <div class="tableau-defilant"><table class="admin">
-        <thead><tr><th>Identifiant</th><th>Créé le</th><th>Modifié le</th><th>Dernière connexion</th><th>État</th><th></th></tr></thead>
+        <caption class="sr-only">Comptes administrateurs locaux</caption>
+        <thead><tr><th scope="col">Identifiant</th><th scope="col">Créé le</th>
+          <th scope="col">Modifié le</th><th scope="col">Dernière connexion</th>
+          <th scope="col">État</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
         <tbody>${d.adminsLocaux.map((a) => `
           <tr>
             <td><strong>${echapper(a.login)}</strong></td>
@@ -226,10 +232,12 @@ export async function chargerConfiguration() {
       <p class="discret" style="margin-top:-.3em">
         Ils viennent du fichier d'environnement ou de la pile Docker, et exigent un redémarrage.
       </p>
-      <div class="tableau-defilant"><table class="admin"><tbody>
-        <tr><td>Environnement</td><td>${echapper(d.environnement.env)}</td></tr>
-        <tr><td>Base de données</td><td>${echapper(d.environnement.dbFile)}</td></tr>
-        <tr><td>Secret de session</td><td>${d.environnement.sessionSecretDefini
+      <div class="tableau-defilant"><table class="admin">
+        <caption class="sr-only">Réglages issus de l'environnement, non modifiables ici</caption>
+        <tbody>
+        <tr><th scope="row">Environnement</th><td>${echapper(d.environnement.env)}</td></tr>
+        <tr><th scope="row">Base de données</th><td>${echapper(d.environnement.dbFile)}</td></tr>
+        <tr><th scope="row">Secret de session</th><td>${d.environnement.sessionSecretDefini
           ? '<span class="pastille-etat etat-ok">défini</span>'
           : '<span class="pastille-etat etat-ko">valeur par défaut — à changer avant la mise en service</span>'}</td></tr>
       </tbody></table></div>
@@ -266,7 +274,7 @@ function brancher() {
       const r = await api('/api/admin/configuration', { method: 'PUT', body: { valeurs: valeursAEnregistrer() } });
       alerte('alerte', r.message, r.etat?.ok ? 'succes' : 'alerte');
       await chargerConfiguration();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      remonter();
     } catch (e) {
       alerte('alerte', e.message);
       bouton.disabled = false;
@@ -299,7 +307,13 @@ function brancher() {
         <div class="message message-${r.ok ? 'succes' : 'erreur'}" style="margin-bottom:1rem">
           <strong>${r.ok ? 'Connexion opérationnelle' : 'La connexion a échoué'}</strong>
           <ul style="margin:.6rem 0 0;padding-left:1.2rem">
-            ${r.etapes.map((e) => `<li>${e.ok ? '✅' : '❌'} <strong>${echapper(e.libelle)}</strong> — ${echapper(e.detail || '')}</li>`).join('')}
+            <!-- La coche et la croix portent le verdict de chaque etape : sans
+                 texte a cote, un lecteur d'ecran lit huit lignes sans dire
+                 laquelle a echoue. -->
+            ${r.etapes.map((e) => `<li>
+              <span aria-hidden="true">${e.ok ? '✅' : '❌'}</span>
+              <span class="sr-only">${e.ok ? 'Réussi :' : 'Échec :'}</span>
+              <strong>${echapper(e.libelle)}</strong> — ${echapper(e.detail || '')}</li>`).join('')}
           </ul>
           ${repartition ? `<div style="margin-top:.8rem"><strong>Répartition des services selon la profondeur d'OU :</strong>${repartition}</div>` : ''}
         </div>`;
@@ -325,15 +339,17 @@ function brancher() {
       zone.innerHTML = `
         <div class="message message-succes">
           <strong>Compte trouvé</strong>
-          <table class="admin" style="margin-top:.6rem;background:transparent"><tbody>
-            <tr><td>DN</td><td style="word-break:break-all">${echapper(a.dn)}</td></tr>
-            <tr><td>Identifiant</td><td>${echapper(a.login || '')}</td></tr>
-            <tr><td>Nom affiché</td><td>${echapper(a.nomComplet || '(vide)')}</td></tr>
-            <tr><td>Adresse</td><td>${echapper(a.email || '(vide)')}</td></tr>
-            <tr><td>department</td><td>${echapper(a.department || '(vide)')}</td></tr>
-            <tr><td>Arborescence OU</td><td>${echapper(a.chaineOu.join(' ← ') || '(aucune)')}</td></tr>
-            <tr><td><strong>Service retenu</strong></td><td><strong>${echapper(a.serviceRetenu)}</strong></td></tr>
-            <tr><td>Groupes</td><td>${a.nbGroupes}</td></tr>
+          <table class="admin" style="margin-top:.6rem;background:transparent">
+            <caption class="sr-only">Attributs lus dans l'annuaire pour ce compte</caption>
+            <tbody>
+            <tr><th scope="row">DN</th><td style="word-break:break-all">${echapper(a.dn)}</td></tr>
+            <tr><th scope="row">Identifiant</th><td>${echapper(a.login || '')}</td></tr>
+            <tr><th scope="row">Nom affiché</th><td>${echapper(a.nomComplet || '(vide)')}</td></tr>
+            <tr><th scope="row">Adresse</th><td>${echapper(a.email || '(vide)')}</td></tr>
+            <tr><th scope="row">department</th><td>${echapper(a.department || '(vide)')}</td></tr>
+            <tr><th scope="row">Arborescence OU</th><td>${echapper(a.chaineOu.join(' ← ') || '(aucune)')}</td></tr>
+            <tr><th scope="row">Service retenu</th><td><strong>${echapper(a.serviceRetenu)}</strong></td></tr>
+            <tr><th scope="row">Groupes</th><td>${a.nbGroupes}</td></tr>
           </tbody></table>
         </div>`;
     } catch (e) {
@@ -359,14 +375,26 @@ function brancher() {
 
   /* -------------------------------------------------------- Comptes locaux */
 
-  document.getElementById('btn-creer-local').addEventListener('click', async () => {
+  // Un double clic creait deux fois le compte - ou, plus exactement, ecrasait
+  // le mot de passe qui venait d'etre pose. Le bouton se neutralise le temps
+  // de l'appel, et se retablit dans tous les cas.
+  const boutonLocal = document.getElementById('btn-creer-local');
+  boutonLocal.addEventListener('click', async () => {
     const login = document.getElementById('local-login').value.trim();
     const motDePasse = document.getElementById('local-mdp').value;
+    const libelle = boutonLocal.textContent;
+    boutonLocal.disabled = true;
+    boutonLocal.textContent = 'Enregistrement…';
     try {
       const r = await api('/api/admin/configuration/admin-local', { method: 'POST', body: { login, motDePasse } });
       alerte('alerte', r.message, 'succes');
       await chargerConfiguration();
-    } catch (e) { alerte('alerte', e.message); }
+    } catch (e) {
+      alerte('alerte', e.message);
+    } finally {
+      boutonLocal.disabled = false;
+      boutonLocal.textContent = libelle;
+    }
   });
 
   cible.querySelectorAll('[data-supprimer-local]').forEach((b) =>

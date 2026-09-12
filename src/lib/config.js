@@ -17,11 +17,47 @@ const bool = (v, defaut = false) => (v === undefined || v === '' ? defaut : /^(t
 const num = (v, defaut) => (v === undefined || v === '' ? defaut : Number(v));
 const liste = (v) => (v || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
 
+/**
+ * Valeur de repli du secret de session.
+ *
+ * Elle n'existe que pour qu'un poste de developpement demarre sans ceremonie.
+ * En production, le serveur REFUSE de demarrer tant qu'elle n'a pas ete
+ * remplacee : cette cle signe les cookies de session ET derive la cle qui
+ * chiffre les mots de passe du compte de service Active Directory et du relais
+ * SMTP. La laisser en place reviendrait a publier ces deux mots de passe avec
+ * la premiere sauvegarde de la base.
+ */
+export const SECRET_DEFAUT = 'secret-de-developpement-a-remplacer-absolument';
+
+/** Longueur minimale exigee en production. */
+export const SECRET_LONGUEUR_MIN = 32;
+
 export const config = {
   port: num(process.env.PORT, 3000),
   env: process.env.NODE_ENV || 'development',
-  sessionSecret: process.env.SESSION_SECRET || 'secret-de-developpement-a-remplacer-absolument',
+  sessionSecret: process.env.SESSION_SECRET || SECRET_DEFAUT,
   publicUrl: process.env.PUBLIC_URL || 'http://localhost:3000',
+
+  /**
+   * Reverse proxy autorise a renseigner X-Forwarded-For et X-Forwarded-Proto.
+   *
+   * Avant, ces en-tetes etaient acceptes de n'importe qui : il suffisait
+   * d'atteindre le conteneur sans passer par le proxy pour se choisir une
+   * adresse IP, donc pour contourner la limitation de tentatives indexee sur
+   * l'IP et pour falsifier la trace laissee dans le journal.
+   *
+   * Vide = aucune confiance, l'adresse vue est celle de la connexion. Sinon,
+   * une liste d'adresses ou de reseaux CIDR separes par des virgules.
+   */
+  proxyDeConfiance: (process.env.PROXY_DE_CONFIANCE || '')
+    .split(',').map((s) => s.trim()).filter(Boolean),
+
+  /** Durees de conservation, en jours. Voir src/lib/retention.js. */
+  retention: {
+    journalJours: num(process.env.RETENTION_JOURNAL_JOURS, 180),
+    resultatsJours: num(process.env.RETENTION_RESULTATS_JOURS, 456),
+    preuvesJours: num(process.env.RETENTION_PREUVES_JOURS, 1095),
+  },
 
   ldap: {
     url: process.env.LDAP_URL || 'ldap://localhost:389',

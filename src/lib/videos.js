@@ -103,9 +103,33 @@ export function listerVideos() {
  * Le controle appartient a l'appelant, qui seul connait la base.
  */
 export function supprimerVideo(nom) {
-  if (!/^[A-Za-z0-9._-]+$/.test(nom)) throw new Error('Nom de fichier invalide.');
-  const complet = path.join(dossierVideos(), nom);
+  // « . » et « .. » passaient ce filtre : fs.rmSync levait alors une erreur
+  // dont le message contenait le chemin absolu du volume de donnees, renvoye
+  // tel quel au navigateur. On exige un nom de fichier veritable, portant une
+  // des extensions que l'application sait servir.
+  const extensions = Object.values(FORMATS).map((e) => e.slice(1)).join('|');
+  const attendu = new RegExp(`^[A-Za-z0-9_-]+\\.(${extensions})$`, 'i');
+  if (!attendu.test(String(nom || ''))) throw new Error('Nom de fichier invalide.');
+
+  const dossier = dossierVideos();
+  const complet = path.join(dossier, nom);
+  // Ceinture et bretelles : le chemin resolu doit rester dans le dossier.
+  if (path.dirname(path.resolve(complet)) !== path.resolve(dossier)) {
+    throw new Error('Nom de fichier invalide.');
+  }
   if (!fs.existsSync(complet)) return false;
   fs.rmSync(complet);
   return true;
+}
+
+/**
+ * Place occupee par les videos deposees.
+ * Elles partagent le volume de la base : sans plafond, un depot repete
+ * saturait le disque et bloquait toute ecriture SQLite - donc toute
+ * participation.
+ */
+export const QUOTA_TOTAL = 5 * 1024 * 1024 * 1024;
+
+export function placeOccupee() {
+  return listerVideos().reduce((total, v) => total + v.octets, 0);
 }

@@ -1,4 +1,4 @@
-import { api, echapper, alerte } from '/js/commun.js';
+import { api, echapper, alerte, animationsReduites } from '/js/commun.js';
 
 /**
  * Vue d'ensemble des services.
@@ -15,11 +15,43 @@ let auTermine = () => {};
 let recherche = '';
 let etat = 'tous';
 
+/**
+ * Retient ou se trouvait le focus avant un re-rendu, pour l'y remettre apres.
+ *
+ * `rendre()` reecrit tout le formulaire : a chaque frappe dans la recherche,
+ * le champ etait remplace sous les doigts, le focus retombait sur <body>, et
+ * il fallait recliquer entre chaque lettre. Les boutons de filtre par etat
+ * subissaient le meme sort.
+ */
+function memoriserFocus() {
+  const actif = document.activeElement;
+  if (!actif) return null;
+  if (actif.id === 'rech-service') {
+    return { id: 'rech-service', debut: actif.selectionStart, fin: actif.selectionEnd };
+  }
+  if (actif.dataset?.etat) return { selecteur: `[data-etat="${actif.dataset.etat}"]` };
+  return null;
+}
+
+function restaurerFocus(memoire) {
+  if (!memoire) return;
+  const zone = document.getElementById('zone-formulaire');
+  const champ = memoire.id
+    ? document.getElementById(memoire.id)
+    : zone?.querySelector(memoire.selecteur);
+  if (!champ) return;
+  champ.focus({ preventScroll: true });
+  if (memoire.debut === undefined) return;
+  try {
+    champ.setSelectionRange(memoire.debut, memoire.fin);
+  } catch { /* certains types de champ refusent setSelectionRange */ }
+}
+
 export async function formulaireServices(onTermine) {
   if (onTermine) auTermine = onTermine;
   const zone = document.getElementById('zone-formulaire');
   zone.innerHTML = '<div class="carte"><p class="discret">Chargement des services…</p></div>';
-  zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  zone.scrollIntoView({ behavior: animationsReduites() ? 'auto' : 'smooth', block: 'nearest' });
 
   let d;
   try {
@@ -32,6 +64,7 @@ export async function formulaireServices(onTermine) {
 }
 
 function rendre(donnees) {
+  const saisie = memoriserFocus();
   const services = donnees.services;
   const filtre = recherche.toLowerCase();
   const correspond = (s) => {
@@ -101,14 +134,15 @@ function rendre(donnees) {
 
       <div class="tableau-defilant" style="max-height:520px;overflow-y:auto">
         <table class="admin">
+          <caption class="sr-only">Services participant à la campagne et leurs effectifs</caption>
           <thead><tr>
-            <th style="width:32px"></th>
-            <th>Service</th>
-            <th class="num">Agents</th>
-            <th class="num">Sans adresse</th>
-            <th class="num">Connectés</th>
-            <th class="num">Ont joué</th>
-            <th>État</th>
+            <th scope="col" style="width:32px"><span class="sr-only">Sélection</span></th>
+            <th scope="col">Service</th>
+            <th scope="col" class="num">Agents</th>
+            <th scope="col" class="num">Sans adresse</th>
+            <th scope="col" class="num">Connectés</th>
+            <th scope="col" class="num">Ont joué</th>
+            <th scope="col">État</th>
           </tr></thead>
           <tbody>${visibles.length ? visibles.map((s) => `
             <tr${s.exclus
@@ -157,6 +191,7 @@ function rendre(donnees) {
     </div>`;
 
   brancher(donnees);
+  restaurerFocus(saisie);
 }
 
 function brancher(donnees) {

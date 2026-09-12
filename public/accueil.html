@@ -112,10 +112,13 @@
 
 <main id="contenu">
   <div class="conteneur">
-    <div id="alerte"></div>
+    <div id="alerte" role="status" aria-live="polite"></div>
     <div id="heros"></div>
     <h2>Les défis de la campagne</h2>
-    <div id="defis" class="grille grille-2" aria-live="polite">
+    <!-- Pas d'aria-live ici : la grille se remplit au chargement, et une region
+         vivante ferait lire les quatre cartes d'affilee avant que l'agent
+         n'ait rien demande. Les messages passent par #alerte. -->
+    <div id="defis" class="grille grille-2">
       <p class="discret">Chargement des défis…</p>
     </div>
   </div>

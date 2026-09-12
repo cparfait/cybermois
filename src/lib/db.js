@@ -3,6 +3,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { config } from './config.js';
 
+/**
+ * Libelle porte par un agent dont la direction n'a pas pu etre determinee.
+ *
+ * Une seule graphie, exportee : elle s'ecrivait en clair dans dix fichiers,
+ * sans accent parce qu'elle vient du code, alors que l'ecran l'affiche a des
+ * agents. Les deux orthographes ont fini par coexister dans la meme page.
+ */
+export const SERVICE_NON_RATTACHE = 'Non rattaché';
+
 fs.mkdirSync(path.dirname(config.dbFile), { recursive: true });
 export const db = new DatabaseSync(config.dbFile);
 
@@ -22,7 +31,7 @@ CREATE TABLE IF NOT EXISTS agents (
   login          TEXT NOT NULL UNIQUE,
   nom_complet    TEXT NOT NULL,
   email          TEXT,
-  service        TEXT NOT NULL DEFAULT 'Non rattache',
+  service        TEXT NOT NULL DEFAULT 'Non rattaché',
   service_brut   TEXT,
   est_admin      INTEGER NOT NULL DEFAULT 0,
   cree_le        TEXT NOT NULL DEFAULT (datetime('now')),
@@ -265,6 +274,33 @@ if (!db.prepare("SELECT 1 FROM journal WHERE action = 'rattrapage_service_force'
   db.prepare("INSERT INTO journal (login, action, detail) VALUES ('systeme', 'rattrapage_service_force', ?)")
     .run(`${marques} agent(s) dont la direction choisie a la main est desormais protegee`);
 }
+
+// D'ou vient le droit d'administration : « groupe » (appartenance au groupe
+// Active Directory), « liste » (identifiant enumere dans la configuration) ou
+// « local » (compte d'amorcage). Sans cette distinction, retirer un
+// identifiant de la liste obligeait soit a ne rien revoquer, soit a revoquer
+// aussi les administrateurs du groupe, qui ne se verifient pas sans annuaire.
+ajouterColonne('agents', 'admin_source', 'TEXT');
+
+/**
+ * Une seule graphie pour le libelle « non rattache ».
+ *
+ * Il s'ecrivait sans accent - il vient du code - mais il s'affiche a des
+ * agents, et l'ecran a fini par montrer les deux orthographes cote a cote.
+ * Les fiches deja enregistrees sont reprises ici, sans quoi les anciennes
+ * garderaient l'ancienne graphie et formeraient une direction distincte au
+ * regroupement.
+ */
+for (const colonne of ['service', 'service_ad']) {
+  db.prepare(`UPDATE agents SET ${colonne} = ? WHERE ${colonne} = ?`)
+    .run(SERVICE_NON_RATTACHE, 'Non rattache');
+}
+db.prepare('UPDATE regroupements_service SET cible = ? WHERE cible = ?')
+  .run(SERVICE_NON_RATTACHE, 'Non rattache');
+
+// Alternative textuelle de la video d'introduction. Le RGAA l'exige pour tout
+// contenu video, et l'editeur n'offrait aucun endroit ou la saisir.
+ajouterColonne('defis', 'video_transcription', 'TEXT');
 
 // Le prenom de l'annuaire (givenName). Sans lui, il faut deviner ou couper
 // le nom complet, et « NOM Prenom » donne alors « Bonjour DUPONT ».

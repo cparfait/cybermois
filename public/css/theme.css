@@ -2,16 +2,20 @@
    Cybermois - Ville de Chatillon
    Palette issue de la charte graphique officielle (Direction de la communication,
    decembre 2020) : vert fonce #006e46 dominant, vert clair #aec80c secondaire.
-   Typographie : Montserrat pour les titres (charte), Georgia/Times pour les
-   textes - la charte autorise explicitement Times en substitution de
-   Mrs Eaves XL Serif quand celle-ci n'est pas disponible.
+   Typographie : pile systeme sans serif pour les titres et l'interface,
+   Georgia/Times pour les textes - la charte autorise explicitement Times en
+   substitution de Mrs Eaves XL Serif quand celle-ci n'est pas disponible.
+
+   Montserrat etait charge depuis fonts.googleapis.com : chaque affichage de
+   page communiquait l'adresse IP de l'agent a un tiers, ce que les mentions
+   legales dementent, et le rendu restait bloque le temps d'un appel qui
+   n'aboutit pas sur un intranet coupe d'Internet. On s'appuie desormais sur
+   les polices deja installees sur le poste.
 
    Accessibilite RGAA 4.1 : le vert clair #aec80c ne fait que 1,90:1 sur blanc.
    Il est donc reserve aux aplats decoratifs (avec texte noir dessus : 9,95:1)
    et remplace par --vert-clair-texte #5f6d00 (5,72:1) des qu'il faut ecrire.
    ========================================================================== */
-
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap');
 
 :root {
   /* Couleurs institutionnelles - ne pas modifier sans accord de la com */
@@ -28,12 +32,21 @@
   --encre: #14211c;
   --encre-douce: #4a5a53;
   --fond: #f7faf8;
+  /* Aplat doux des zones en attente : sceau d'un defi scelle, vignette video,
+     survol d'une ligne. Utilise par plusieurs pages, il n'etait defini nulle
+     part et retombait donc sur « transparent ». */
+  --fond-doux: #eef4f1;
   --surface: #ffffff;
   --bordure: #d9e4de;
   --bordure-forte: #b6c8bf;
 
-  /* Etats */
-  --succes: #1a7f4b;
+  /* Etats.
+     Chaque couleur est lue sur son propre fond : c'est ainsi qu'elle sert dans
+     les blocs .message. #1a7f4b sur #e4f4ea ne faisait que 4,40:1, sous le
+     seuil de 4,5:1 exige pour du texte normal ; #166d40 monte a 5,59:1 sur ce
+     fond et 6,37:1 sur blanc. Les autres couples tiennent : erreur 5,59,
+     alerte 5,38, info 6,09. */
+  --succes: #166d40;
   --succes-fond: #e4f4ea;
   --erreur: #b3261e;
   --erreur-fond: #fce9e7;
@@ -42,15 +55,16 @@
   --info: #0b5f8a;
   --info-fond: #e5f2f8;
 
-  /* Podium */
+  /* Podium - filets decoratifs uniquement, jamais du texte : le rang est
+     ecrit en toutes lettres a cote. */
   --or: #b8860b;
   --argent: #6e7b85;
   --bronze: #9c5a2d;
 
-  /* Typographie */
-  --police-titre: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+  /* Typographie - pile systeme, aucune requete vers un tiers */
+  --police-titre: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
   --police-texte: Georgia, 'Times New Roman', Times, serif;
-  --police-ui: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+  --police-ui: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
 
   /* Mesures */
   --rayon: 12px;

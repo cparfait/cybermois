@@ -9,8 +9,15 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { db } from '../src/lib/db.js';
-import { enregistrerParametres, lireParametres } from '../src/lib/parametres.js';
+import { baseJetable, nettoyerALaFin } from './base-jetable.mjs';
+
+// Base dediee : ce test ecrit dans « parametres », comme parametrage.test.mjs.
+// Sur une base commune les deux fichiers, lances en parallele par node --test,
+// se defaisaient mutuellement leurs reglages.
+baseJetable('configuration-ldap', import.meta.url);
+const { db } = await import('../src/lib/db.js');
+const { enregistrerParametres, lireParametres } = await import('../src/lib/parametres.js');
+nettoyerALaFin(db);
 
 const valeurStockee = (cle) =>
   db.prepare('SELECT valeur FROM parametres WHERE cle = ?').get(cle)?.valeur ?? null;
@@ -23,38 +30,38 @@ const restaurer = () => {
 
 test("un hote nu et la case cochee composent une URL chiffree", () => {
   try {
-    enregistrerParametres({ 'ldap.url': 'srv-dc01.chatillon.lan', 'ldap.chiffre': true }, 'test');
-    assert.equal(valeurStockee('ldap.url'), 'ldaps://srv-dc01.chatillon.lan:636');
+    enregistrerParametres({ 'ldap.url': 'srv-dc01.exemple.lan', 'ldap.chiffre': true }, 'test');
+    assert.equal(valeurStockee('ldap.url'), 'ldaps://srv-dc01.exemple.lan:636');
   } finally { restaurer(); }
 });
 
 test('la case decochee bascule en clair, sur le port correspondant', () => {
   try {
-    enregistrerParametres({ 'ldap.url': 'srv-dc01.chatillon.lan', 'ldap.chiffre': false }, 'test');
-    assert.equal(valeurStockee('ldap.url'), 'ldap://srv-dc01.chatillon.lan:389');
+    enregistrerParametres({ 'ldap.url': 'srv-dc01.exemple.lan', 'ldap.chiffre': false }, 'test');
+    assert.equal(valeurStockee('ldap.url'), 'ldap://srv-dc01.exemple.lan:389');
   } finally { restaurer(); }
 });
 
 test("la case l'emporte sur un schema saisi a la main", () => {
   try {
     // Le cas de production : le port etait bon, le schema non.
-    enregistrerParametres({ 'ldap.url': 'ldap://192.168.2.9:636', 'ldap.chiffre': true }, 'test');
-    assert.equal(valeurStockee('ldap.url'), 'ldaps://192.168.2.9:636');
+    enregistrerParametres({ 'ldap.url': 'ldap://10.0.0.1:636', 'ldap.chiffre': true }, 'test');
+    assert.equal(valeurStockee('ldap.url'), 'ldaps://10.0.0.1:636');
   } finally { restaurer(); }
 });
 
 test("la case absente laisse le schema de la saisie decider", () => {
   try {
-    enregistrerParametres({ 'ldap.url': 'ldaps://srv-dc01.chatillon.lan' }, 'test');
-    assert.equal(valeurStockee('ldap.url'), 'ldaps://srv-dc01.chatillon.lan:636');
+    enregistrerParametres({ 'ldap.url': 'ldaps://srv-dc01.exemple.lan' }, 'test');
+    assert.equal(valeurStockee('ldap.url'), 'ldaps://srv-dc01.exemple.lan:636');
   } finally { restaurer(); }
 });
 
 test("l'ecran relit ce qu'il a enregistre", () => {
   try {
-    enregistrerParametres({ 'ldap.url': 'srv-dc01.chatillon.lan', 'ldap.chiffre': true }, 'test');
+    enregistrerParametres({ 'ldap.url': 'srv-dc01.exemple.lan', 'ldap.chiffre': true }, 'test');
     const d = lireParametres().find((x) => x.cle === 'ldap.url');
-    assert.equal(d.valeur, 'ldaps://srv-dc01.chatillon.lan:636');
+    assert.equal(d.valeur, 'ldaps://srv-dc01.exemple.lan:636');
     assert.equal(d.type, 'ldap-hote', "le type pilote l'affichage hote + case");
   } finally { restaurer(); }
 });

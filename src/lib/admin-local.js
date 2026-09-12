@@ -61,6 +61,25 @@ export function definirAdminLocal(login, motDePasse, { nomComplet, provisoire = 
   }
 
   let agent = db.prepare('SELECT * FROM agents WHERE login = ?').get(identifiant);
+
+  /**
+   * Un identifiant d'annuaire ne se convertit pas en compte local.
+   *
+   * La conversion marquait la fiche « exclu », ce qui empechait l'agent
+   * concerne de se connecter, et donnait a qui l'avait faite un mot de passe
+   * permettant d'entrer SOUS SON NOM : le journal, et jusqu'au registre des
+   * corrections, portaient alors le nom de l'agent et non celui de
+   * l'administrateur. La regle interdisant de corriger sa propre copie
+   * tombait par la meme occasion.
+   */
+  if (agent && agent.origine !== 'local') {
+    throw new Error(
+      `« ${identifiant} » est un compte issu de l'annuaire. Un compte local doit porter un `
+      + "identifiant qui n'existe pas dans l'annuaire, sans quoi l'agent concerné ne pourrait "
+      + 'plus se connecter et ses actions seraient attribuées à quelqu’un d’autre.'
+    );
+  }
+
   if (!agent) {
     db.prepare(`
       INSERT INTO agents (login, nom_complet, service, service_ad, origine, est_admin, exclu, note)

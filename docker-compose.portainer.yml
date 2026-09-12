@@ -3,14 +3,14 @@
 #
 #  Conventions reprises des piles bolt et oxidized :
 #    - réseau partagé « containers-lan », rejoint par Nginx Proxy Manager
-#    - données montées depuis /home/sysadmin/docker/<app>, sauvegardées avec
+#    - données montées depuis /srv/docker/<app>, sauvegardées avec
 #      le reste sans passer par docker volume
 #    - aucun port publié : NPM joint le conteneur par http://cybermois:3000
 #
 #  Avant le premier déploiement, sur l'hôte :
 #
-#    mkdir -p /home/sysadmin/docker/cybermois/data
-#    chown -R 10001:10001 /home/sysadmin/docker/cybermois/data
+#    mkdir -p /srv/docker/cybermois/data
+#    chown -R 10001:10001 /srv/docker/cybermois/data
 #
 #  Le chown n'est pas une précaution de style : le conteneur tourne en
 #  utilisateur non privilégié (UID 10001), et un dossier appartenant à root
@@ -18,7 +18,7 @@
 #
 #  L'image se construit sur le serveur depuis le clone git, comme pour bolt :
 #
-#    cd /home/sysadmin/docker/cybermois/app && git pull
+#    cd /srv/docker/cybermois/app && git pull
 #    docker build -t cybermois:local .
 #
 #  puis coller ce fichier dans Portainer → Stacks → Web editor.
@@ -28,7 +28,9 @@
 #  chercherait l'image dans un registre où elle n'est pas.
 #
 #  ---------------------------------------------------------------------------
-#  UNE SEULE variable à renseigner dans Portainer : SESSION_SECRET.
+#  UNE SEULE variable est OBLIGATOIRE dans Portainer : SESSION_SECRET.
+#  Sans elle, le conteneur refuse de démarrer et boucle en redémarrage.
+#  PROXY_DE_CONFIANCE est fortement recommandée derrière Nginx Proxy Manager.
 #
 #  Tout le reste — annuaire, mot de passe du compte de service, messagerie,
 #  dates de campagne, administrateurs — se règle dans l'application, à
@@ -61,6 +63,12 @@ services:
       # signe les cookies de session. À générer UNE FOIS (openssl rand -base64 48)
       # puis à ne plus changer : la modifier déconnecte tout le monde et rend
       # les mots de passe enregistrés illisibles.
+      #
+      # En NODE_ENV=production, l'application REFUSE DE DÉMARRER si ce secret
+      # est absent, s'il vaut la valeur de développement par défaut, ou s'il
+      # fait moins de 32 caractères. Ne jamais le commiter, ni le recopier dans
+      # un ticket : il donne accès, avec une copie de la base, au mot de passe
+      # du compte de service Active Directory.
       SESSION_SECRET: ${SESSION_SECRET:?definir SESSION_SECRET (32 caracteres minimum)}
 
       # Adresse publique du portail. Elle alimente les liens des mails et
@@ -78,14 +86,43 @@ services:
 
       # Certificat de l'autorité interne. Ce chemin dépend du montage ci-dessous,
       # pas de la campagne : il reste ici plutôt qu'en base.
+      # ATTENTION : la valeur diffère selon la pile. Ici le dossier d'AC de
+      # l'hôte est monté sur /certs, d'où /certs/ca.pem ; docker-compose.yml
+      # monte ./certs sur /app/certs, d'où /app/certs/ca-interne.crt.
       LDAP_CA_FILE: ${LDAP_CA_FILE:-/certs/ca.pem}
+
+      # Adresses IP ou plages CIDR du reverse proxy, séparées par des virgules.
+      # VIDE (défaut) = les en-têtes X-Forwarded-For et X-Forwarded-Proto sont
+      # IGNORÉS, d'où qu'ils viennent : le journal porte alors l'adresse de
+      # Nginx Proxy Manager pour tous les agents. Renseigner la plage du réseau
+      # containers-lan pour retrouver l'adresse réelle des agents :
+      #   docker network inspect containers-lan --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}'
+      # N'y déclarer que des adresses maîtrisées : une plage trop large permet à
+      # n'importe quel client de choisir l'adresse qui figurera au journal.
+      PROXY_DE_CONFIANCE: ${PROXY_DE_CONFIANCE:-}
+
+      # Durées de conservation appliquées par la purge automatique, en jours.
+      # Elles correspondent aux durées annoncées dans les mentions légales :
+      # journaux 6 mois, résultats nominatifs jusqu'à la fin de l'année civile
+      # suivant la campagne, preuves de participation agrégées 3 ans.
+      # Ne les modifier qu'avec l'accord de la DPO, et en mettant à jour la
+      # notice d'information.
+      RETENTION_JOURNAL_JOURS: ${RETENTION_JOURNAL_JOURS:-180}
+      RETENTION_RESULTATS_JOURS: ${RETENTION_RESULTATS_JOURS:-456}
+      RETENTION_PREUVES_JOURS: ${RETENTION_PREUVES_JOURS:-1095}
 
     volumes:
       # Base SQLite. C'est la SEULE donnée à sauvegarder : le paramétrage du
       # classement se rejoue depuis parametrage/, embarqué dans l'image.
-      - /home/sysadmin/docker/cybermois/data:/app/data
+      #
+      # ATTENTION : SQLite tourne en mode WAL. Une archive de ce dossier prise
+      # pendant que le conteneur tourne peut être incohérente (une partie des
+      # écritures validées est encore dans cybermois.db-wal). La sauvegarde de
+      # référence se fait par VACUUM INTO, vers data/sauvegardes/ :
+      # voir docs/exploitation.md.
+      - /srv/docker/cybermois/data:/app/data
       # Autorité de certification interne, partagée avec bolt
-      - /home/sysadmin/docker/ca_chatillon:/certs:ro
+      - /srv/docker/ca-interne:/certs:ro
 
     networks:
       - containers-lan

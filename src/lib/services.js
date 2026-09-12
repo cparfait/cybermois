@@ -1,4 +1,4 @@
-import { db } from './db.js';
+import { db, SERVICE_NON_RATTACHE } from './db.js';
 import { config } from './config.js';
 
 /**
@@ -55,7 +55,7 @@ export function chaineOu(dn) {
 /** Applique la table de correspondance. Sans regle, le libelle brut est conserve. */
 export function resoudreService(brut) {
   const source = normaliser(brut);
-  if (!source) return 'Non rattache';
+  if (!source) return SERVICE_NON_RATTACHE;
   const regle = db.prepare('SELECT cible FROM regroupements_service WHERE source = ?').get(source);
   return regle ? regle.cible : source;
 }

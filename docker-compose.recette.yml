@@ -1,5 +1,17 @@
 # Environnement de recette : annuaire OpenLDAP de test, sans toucher a l'AD de production.
 #   docker compose -f docker-compose.yml -f docker-compose.recette.yml up -d
+#
+# Cette pile se superpose a docker-compose.yml, qui exige un SESSION_SECRET :
+# il faut donc qu'un SESSION_SECRET existe dans .env (ou dans l'environnement du
+# shell) pour que la commande ci-dessus soit seulement analysable. Peu importe sa
+# valeur, celle definie plus bas la remplace pour le conteneur.
+#
+# ATTENTION - la configuration enregistree en base prime sur les variables
+# d'environnement. Si l'application a deja servi et qu'un annuaire a ete saisi
+# dans Administration > Configuration, les LDAP_* de cette pile sont ignores et
+# la recette parle en realite a l'AD de production. La recette exige donc une
+# base VIERGE : c'est le role de DB_FILE ci-dessous, et il faut effacer
+# data/recette.db entre deux campagnes de recette.
 services:
   annuaire-test:
     image: bitnami/openldap:2.6
@@ -7,6 +19,8 @@ services:
     environment:
       LDAP_ROOT: "dc=ville,dc=local"
       LDAP_ADMIN_USERNAME: "admin"
+      # Mot de passe d'un annuaire jetable, joignable seulement depuis la boucle
+      # locale. Ce n'est pas un secret : ne pas reprendre ce schema ailleurs.
       LDAP_ADMIN_PASSWORD: "recette"
       LDAP_CUSTOM_LDIF_DIR: "/ldifs"
       LDAP_SKIP_DEFAULT_TREE: "yes"
@@ -17,12 +31,35 @@ services:
 
   cybermois:
     environment:
+      # NODE_ENV reste a "production" (valeur heritee de docker-compose.yml et de
+      # l'image) : une recette qui tournerait en mode developpement ne testerait
+      # pas le code reellement deploye - drapeau secure du cookie, controle du
+      # secret de session, traitement des erreurs. On leve donc explicitement le
+      # seul verrou qui gene ici, plutot que de basculer tout l'environnement.
+      #
+      # Sans cette ligne, la liaison ldap:// non chiffree fait REFUSER toutes les
+      # authentifications d'agents et la recette ne teste plus rien.
+      LDAP_AUTORISER_NON_CHIFFRE: "true"
+
+      # Secret JETABLE, propre a la recette. Il doit faire 32 caracteres minimum
+      # sans quoi l'application refuse de demarrer en production. Le fixer ici
+      # isole aussi la recette de la production : les mots de passe AD et SMTP
+      # chiffres avec le secret de production resteraient illisibles.
+      # NE JAMAIS REUTILISER CETTE VALEUR AILLEURS.
+      SESSION_SECRET: "recette-jetable-non-secrete-a-ne-pas-deployer"
+
+      # Base distincte de celle de production, dans le meme volume ./data.
+      # L'effacer remet la recette a zero.
+      DB_FILE: "/app/data/recette.db"
+
       LDAP_URL: "ldap://annuaire-test:1389"
       LDAP_BIND_DN: "cn=admin,dc=ville,dc=local"
       LDAP_BIND_PASSWORD: "recette"
       LDAP_BASE_DN: "dc=ville,dc=local"
       LDAP_USER_FILTER: "(&(objectClass=inetOrgPerson)(uid={{login}}))"
-      LDAP_TLS_REJECT_UNAUTHORIZED: "false"
+      # LDAP_TLS_REJECT_UNAUTHORIZED n'a aucun effet en ldap:// : il n'y a pas de
+      # certificat a valider. Le laisser a "false" laissait croire que la recette
+      # avait besoin d'assouplir la validation TLS, ce qui n'est pas le cas.
       SERVICE_SOURCE: "ou"
       SERVICE_OU_DEPTH: "1"
       ADMIN_LOGINS: "c.parfait"

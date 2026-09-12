@@ -10,17 +10,15 @@
  *     participations : essayer un defi avant l'ouverture le rendait
  *     indeprogrammable a jamais.
  */
-process.env.DB_FILE = new URL('./.suppression-defi-test.db', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
-process.env.SESSION_SECRET = 'test-suppression-defi-0123456789';
-
-import fs from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { baseJetable, nettoyerALaFin } from './base-jetable.mjs';
 
-fs.rmSync(process.env.DB_FILE, { force: true });
+baseJetable('suppression-defi', import.meta.url);
 const { db } = await import('../src/lib/db.js');
 const { enregistrerProgramme, lireProgramme } = await import('../src/lib/modules.js');
 const { importerContenus } = await import('../src/lib/seed.js');
+nettoyerALaFin(db);
 
 const MODULE = 'hameconnage';
 const AUTRE = 'mots-de-passe';

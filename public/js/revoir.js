@@ -1,4 +1,4 @@
-import { api, echapper, initialiserPage, alerte } from '/js/commun.js';
+import { api, echapper, initialiserPage, alerte, formaterDate } from '/js/commun.js';
 
 /**
  * Relecture d'un defi termine.
@@ -32,11 +32,14 @@ const ligne = (r, classe, marqueur, lecture) => `
 try {
   const d = await api(`/api/defis/${defiId}/relecture`);
   const pourcentage = d.scoreMax ? Math.round((d.score / d.scoreMax) * 100) : 0;
-  const date = d.termineLe
-    ? new Date(`${d.termineLe.replace(' ', 'T')}Z`).toLocaleDateString('fr-FR', {
-      day: 'numeric', month: 'long', year: 'numeric',
-    })
-    : null;
+  // formaterDate de commun.js fait deja ce travail, et le faisait deja ici a
+  // l'identique : deux ecritures d'une meme date finissent toujours par
+  // diverger.
+  const date = formaterDate(d.termineLe);
+
+  // Le titre de l'onglet etait « Mes réponses » pour les vingt defis : dans un
+  // historique de navigation ou un jeu d'onglets, rien ne les distinguait.
+  document.title = `Défi n°${d.numero} — ${d.titre} — mes réponses — Cybermois — Ville de Châtillon`;
 
   zone.innerHTML = `
     <p class="numero-question">Défi n°${d.numero}</p>
@@ -84,7 +87,9 @@ function bloc(q, i) {
         <strong style="font-size:1.05rem">${i + 1}. ${echapper(q.enonce)}</strong>
         <span class="note-question">${q.pointsObtenus} / ${q.points} pts</span>
       </div>
-      ${q.contexte ? `<p class="discret" style="margin:.4rem 0 0">${echapper(q.contexte)}</p>` : ''}
+      <!-- Le contexte est saisi dans un textarea : sans pre-line, la mise en
+           situation et le mail a analyser se retrouvaient sur une ligne. -->
+      ${q.contexte ? `<p class="discret" style="margin:.4rem 0 0;white-space:pre-line">${echapper(q.contexte)}</p>` : ''}
       <ul class="liste-relecture">${items}</ul>
       ${q.explication ? `<p style="margin:0">${echapper(q.explication)}</p>` : ''}
     </section>`;

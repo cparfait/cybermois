@@ -340,6 +340,13 @@ export async function appliquerSynchronisation({
         if (parLogin.has(login) || existant.origine === 'local') continue;
         if (choisis && !choisis.has(login)) continue;
 
+        // Sans selection explicite, on s'en tient a ce que l'analyse a
+        // annonce : elle ne liste comme « disparus » que les comptes NON
+        // exclus. Sans ce filtre, une suppression demandee sans liste
+        // emportait aussi des agents ecartes a la main, que l'ecran n'avait
+        // jamais montres - et dont les resultats partaient avec eux.
+        if (!choisis && existant.exclu) continue;
+
         if (supprimerDisparus) {
           effaces.push(login);
           supprimerAgent(existant.id);

@@ -7,16 +7,14 @@
  * changement d'unite ne bouscule pas l'ordre du classement, qui reposait
  * jusqu'ici sur la moyenne par agent inscrit.
  */
-process.env.DB_FILE = new URL('./.classement-test.db', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
-process.env.SESSION_SECRET = 'test-classement-0123456789';
-
-import fs from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { baseJetable, nettoyerALaFin } from './base-jetable.mjs';
 
-fs.rmSync(process.env.DB_FILE, { force: true });
+baseJetable('classement', import.meta.url);
 const { db } = await import('../src/lib/db.js');
 const { classementServices, classementAgents, pointsPossibles } = await import('../src/lib/scoring.js');
+nettoyerALaFin(db);
 
 const defi = (id, jours, points) => {
   db.prepare(`INSERT INTO defis (id, titre, accroche, intro, duree_minutes, ouvre_le, publie)

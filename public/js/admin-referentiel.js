@@ -1,4 +1,4 @@
-import { api, echapper, alerte } from '/js/commun.js';
+import { api, echapper, alerte, animationsReduites } from '/js/commun.js';
 
 /**
  * Referentiel des services.
@@ -13,11 +13,30 @@ import { api, echapper, alerte } from '/js/commun.js';
 let auTermine = () => {};
 let donnees = null;
 
+/**
+ * Neutralise un bouton le temps d'un appel, et le retablit dans tous les cas.
+ * Deux clics sur « Enregistrer le référentiel » envoyaient deux fois la meme
+ * liste : le second appel arrivait sur des identifiants que le premier venait
+ * de renumeroter.
+ */
+async function pendant(bouton, libelleEnCours, action) {
+  if (!bouton) return action();
+  const libelle = bouton.textContent;
+  bouton.disabled = true;
+  if (libelleEnCours) bouton.textContent = libelleEnCours;
+  try {
+    return await action();
+  } finally {
+    bouton.disabled = false;
+    bouton.textContent = libelle;
+  }
+}
+
 export async function formulaireReferentiel(onTermine) {
   if (onTermine) auTermine = onTermine;
   const zone = document.getElementById('zone-formulaire');
   zone.innerHTML = '<div class="carte"><p class="discret">Chargement du référentiel…</p></div>';
-  zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  zone.scrollIntoView({ behavior: animationsReduites() ? 'auto' : 'smooth', block: 'nearest' });
 
   try {
     donnees = await api('/api/admin/referentiel');
@@ -103,7 +122,10 @@ function rendre() {
 
       <div class="tableau-defilant" style="max-height:420px;overflow-y:auto">
         <table class="admin">
-          <thead><tr><th style="width:48px">Ordre</th><th>Nom du service</th><th class="num">Agents</th><th></th></tr></thead>
+          <caption class="sr-only">Services inscrits au référentiel</caption>
+          <thead><tr><th scope="col" style="width:48px">Ordre</th><th scope="col">Nom du service</th>
+            <th scope="col" class="num">Agents</th>
+            <th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
           <tbody id="corps-referentiel">${d.services.map((s, i) => ligne(s, i)).join('')
             || '<tr><td colspan="4" class="discret">Référentiel vide.</td></tr>'}</tbody>
         </table>
@@ -131,8 +153,8 @@ const ligne = (s, i) => `
                aria-label="Nom du service ${i + 1}"></td>
     <td class="num">${s.effectif ?? 0}</td>
     <td><button type="button" class="btn btn-secondaire" data-supprimer-ligne
-                aria-label="Supprimer ${echapper(s.nom || '')}"
-                style="padding:.3rem .6rem;font-size:.8rem;border-color:var(--erreur);color:var(--erreur)">✕</button></td>
+                aria-label="Supprimer ${echapper(s.nom || `le service ${i + 1}`)}"
+                style="padding:.3rem .6rem;font-size:.8rem;border-color:var(--erreur);color:var(--erreur)"><span aria-hidden="true">✕</span></button></td>
   </tr>`;
 
 function brancher() {
@@ -193,28 +215,37 @@ function brancher() {
     auTermine();
   };
 
-  document.getElementById('btn-enregistrer-ref').addEventListener('click', async () => {
+  const boutonEnregistrer = document.getElementById('btn-enregistrer-ref');
+  boutonEnregistrer.addEventListener('click', () => pendant(boutonEnregistrer, 'Enregistrement…', async () => {
     try {
       const r = await api('/api/admin/referentiel', { method: 'PUT', body: { services: noms() } });
       await recharger(r.message);
     } catch (e) { alerte('alerte', e.message); }
+  }));
+
+  boutonColler.addEventListener('click', () => {
+    const champ = document.getElementById('collage-services');
+    const texte = champ.value;
+    if (!texte.trim()) {
+      alerte('alerte', 'Collez la liste des services.');
+      champ.focus();
+      return undefined;
+    }
+    if (modificationsPerdues('Coller une liste')) return undefined;
+    return pendant(boutonColler, 'Enregistrement…', async () => {
+      try {
+        const r = await api('/api/admin/referentiel/coller', {
+          method: 'POST',
+          body: { texte, remplacer: remplacer.checked },
+        });
+        await recharger(r.message);
+      } catch (e) { alerte('alerte', e.message); }
+    });
   });
 
-  boutonColler.addEventListener('click', async () => {
-    const texte = document.getElementById('collage-services').value;
-    if (!texte.trim()) return alerte('alerte', 'Collez la liste des services.');
-    if (modificationsPerdues('Coller une liste')) return;
-    try {
-      const r = await api('/api/admin/referentiel/coller', {
-        method: 'POST',
-        body: { texte, remplacer: remplacer.checked },
-      });
-      await recharger(r.message);
-    } catch (e) { alerte('alerte', e.message); }
-  });
-
-  document.getElementById('btn-initialiser').addEventListener('click', async () => {
-    if (modificationsPerdues('Amorcer depuis les données')) return;
+  const boutonInitialiser = document.getElementById('btn-initialiser');
+  boutonInitialiser.addEventListener('click', () => {
+    if (modificationsPerdues('Amorcer depuis les données')) return undefined;
     // Ce bouton verse TOUS les libelles d'annuaire au referentiel : sur un
     // annuaire reel cela en fait des dizaines, soit l'inverse d'une liste de
     // directions. Il ne rend service que sur un referentiel vide.
@@ -222,23 +253,28 @@ function brancher() {
       'Ajouter au référentiel tous les services trouvés dans les données ?\n\n'
       + 'Il y en a souvent plusieurs dizaines, un par libellé d’annuaire. '
       + 'À réserver à un référentiel vide : pour une liste de directions, collez-la vous-même.'
-    )) return;
-    try {
-      const r = await api('/api/admin/referentiel/initialiser', { method: 'POST' });
-      await recharger(r.message);
-    } catch (e) { alerte('alerte', e.message); }
+    )) return undefined;
+    return pendant(boutonInitialiser, 'Amorçage…', async () => {
+      try {
+        const r = await api('/api/admin/referentiel/initialiser', { method: 'POST' });
+        await recharger(r.message);
+      } catch (e) { alerte('alerte', e.message); }
+    });
   });
 
-  document.getElementById('btn-appliquer-ref').addEventListener('click', async () => {
-    if (modificationsPerdues('Rattacher les libellés')) return;
+  const boutonAppliquer = document.getElementById('btn-appliquer-ref');
+  boutonAppliquer.addEventListener('click', () => {
+    if (modificationsPerdues('Rattacher les libellés')) return undefined;
     if (!confirm(
       'Rattacher chaque libellé d\'annuaire au service du référentiel qui lui correspond ?\n\n'
       + 'Le rapprochement se fait sur le nom, en ignorant la casse et les accents, et par préfixe : '
       + '« Jeunesse - Kid Club » rejoint « Jeunesse » si ce service figure au référentiel.'
-    )) return;
-    try {
-      const r = await api('/api/admin/referentiel/appliquer', { method: 'POST' });
-      await recharger(r.message);
-    } catch (e) { alerte('alerte', e.message); }
+    )) return undefined;
+    return pendant(boutonAppliquer, 'Rattachement…', async () => {
+      try {
+        const r = await api('/api/admin/referentiel/appliquer', { method: 'POST' });
+        await recharger(r.message);
+      } catch (e) { alerte('alerte', e.message); }
+    });
   });
 }

@@ -12,13 +12,28 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { db } from '../src/lib/db.js';
-import { creerJetonApercu, revoquerJetonApercu, jetonValide, lienApercu } from '../src/lib/apercu.js';
-import { repondre, progression, effacerTentatives } from '../src/lib/tentatives.js';
+import { baseJetable, nettoyerALaFin } from './base-jetable.mjs';
+
+baseJetable('apercu', import.meta.url);
+const { db } = await import('../src/lib/db.js');
+const { creerJetonApercu, revoquerJetonApercu, jetonValide, lienApercu } = await import('../src/lib/apercu.js');
+const { repondre, progression, effacerTentatives } = await import('../src/lib/tentatives.js');
+const { enregistrerProgramme } = await import('../src/lib/modules.js');
+const { importerContenus } = await import('../src/lib/seed.js');
+nettoyerALaFin(db);
+
+// La base jetable est vide. Ces tests supposent une campagne programmee - ils
+// prennent « le premier defi » - et tournaient jusqu'ici sur la base de
+// production, ou un defi finissait toujours par exister. On monte donc le
+// decor comme le fait le demarrage du serveur : le programme d'abord, les
+// contenus ensuite. importerContenus() seul ne creerait rien.
+enregistrerProgramme([{ module_code: 'mots-de-passe', ouvre_le: '2026-10-05' }], 'test');
+importerContenus();
 
 const PREFIXE = 'zz-test-apercu-';
 const defiDe = (id) => db.prepare('SELECT * FROM defis WHERE id = ?').get(id);
 const premierDefi = db.prepare('SELECT id FROM defis ORDER BY ouvre_le, id LIMIT 1').get()?.id;
+assert.ok(premierDefi, 'le decor doit avoir cree un defi : sans lui ces tests ne verifient rien');
 
 function agent(suffixe) {
   const login = PREFIXE + suffixe;

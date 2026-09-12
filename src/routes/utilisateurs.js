@@ -1,6 +1,6 @@
-import { db, journaliser } from '../lib/db.js';
+import { db, journaliser, SERVICE_NON_RATTACHE } from '../lib/db.js';
 import { config } from '../lib/config.js';
-import { exigerAdmin } from '../lib/session.js';
+import { exigerAdmin, detruireSessionsAgent, detruireSessionsAgents } from '../lib/session.js';
 import { preparerImport } from '../lib/import-csv.js';
 import {
   resoudreService, inventaireServices, lireRegroupements,
@@ -162,7 +162,7 @@ export default async function routesUtilisateurs(app) {
     }
 
     const nomComplet = String(c.nom_complet || '').trim() || login;
-    const service = String(c.service || '').replace(/\s+/g, ' ').trim() || 'Non rattache';
+    const service = String(c.service || '').replace(/\s+/g, ' ').trim() || SERVICE_NON_RATTACHE;
     const email = String(c.email || '').trim().toLowerCase() || null;
 
     db.prepare(`
@@ -194,7 +194,7 @@ export default async function routesUtilisateurs(app) {
     if (c.service !== undefined) {
       // On force aussi le libelle d'origine : sans cela, un recalcul des
       // regroupements ecraserait la correction saisie a la main.
-      const service = String(c.service).replace(/\s+/g, ' ').trim() || 'Non rattache';
+      const service = String(c.service).replace(/\s+/g, ' ').trim() || SERVICE_NON_RATTACHE;
       if (service !== agent.service) {
         champs.push('service = ?'); valeurs.push(service);
         champs.push('service_ad = ?'); valeurs.push(service);
@@ -216,8 +216,17 @@ export default async function routesUtilisateurs(app) {
     valeurs.push(agent.id);
     db.prepare(`UPDATE agents SET ${champs.join(', ')} WHERE id = ?`).run(...valeurs);
 
+    // Exclure quelqu'un doit prendre effet a l'instant ou on le decide : la
+    // fiche seule ne suffisait pas, l'agent deja connecte continuait de jouer
+    // jusqu'a l'expiration de son cookie, huit heures plus tard.
+    const coupees = c.exclu ? detruireSessionsAgent(agent.id) : 0;
+
     journaliser(requete.agent.login, 'agent_modifie', `${agent.login} : ${champs.join(', ')}`, requete.ip);
-    return { ok: true, message: `Agent « ${agent.login} » mis à jour.` };
+    return {
+      ok: true,
+      message: `Agent « ${agent.login} » mis à jour.`
+        + (coupees ? ` ${coupees} session(s) en cours interrompue(s).` : ''),
+    };
   });
 
   /* ------------------------------------------------------------ Suppression */
@@ -228,6 +237,17 @@ export default async function routesUtilisateurs(app) {
 
     if (agent.login === requete.agent.login) {
       return reponse.code(400).send({ erreur: 'Vous ne pouvez pas supprimer votre propre compte.' });
+    }
+
+    // Un compte local se supprime depuis la configuration, qui refuse d'effacer
+    // le dernier : sans cette garde, on perdait ici le seul moyen de reprendre
+    // la main quand l'annuaire devient injoignable.
+    if (agent.origine === 'local') {
+      return reponse.code(409).send({
+        erreur: `« ${agent.login} » est un compte d'administration locale. Il se supprime depuis `
+          + 'Administration > Configuration, qui vérifie qu’il en reste au moins un.',
+        code: 'COMPTE_LOCAL',
+      });
     }
 
     const participations = db.prepare(
@@ -243,6 +263,10 @@ export default async function routesUtilisateurs(app) {
           + "Préférez l'exclusion, qui conserve l'historique.",
         participations,
         confirmationRequise: true,
+        // Un code, et non le libelle : l'ecran detectait ce refus par une
+        // expression reguliere sur le texte du message, que la moindre
+        // reformulation cassait.
+        code: 'CONFIRMATION_REQUISE',
       });
     }
 
@@ -269,18 +293,55 @@ export default async function routesUtilisateurs(app) {
 
     if (action === 'exclure' || action === 'reintegrer') {
       const exclu = action === 'exclure' ? 1 : 0;
-      // On ne s'exclut jamais soi-meme par megarde
+      // On ne s'exclut jamais soi-meme par megarde. Les comptes locaux non
+      // plus : ils sont « exclus » par construction, et les reintegrer les
+      // ferait entrer dans les effectifs et le taux de participation.
       const res = db.prepare(`
-        UPDATE agents SET exclu = ?, exclu_motif = ? WHERE id IN (${marques}) AND login <> ?
+        UPDATE agents SET exclu = ?, exclu_motif = ?
+        WHERE id IN (${marques}) AND login <> ? AND origine <> 'local'
       `).run(exclu, exclu ? 'manuel' : null, ...ids, requete.agent.login);
-      message = `${res.changes} agent(s) ${exclu ? 'exclus de' : 'réintégrés dans'} la campagne.`;
+      // L'exclusion prend effet tout de suite : sans cela l'agent continuait
+      // de jouer jusqu'a l'expiration de son cookie, huit heures plus tard.
+      const coupees = exclu ? detruireSessionsAgents(ids) : 0;
+      message = `${res.changes} agent(s) ${exclu ? 'exclus de' : 'réintégrés dans'} la campagne.`
+        + (coupees ? ` ${coupees} session(s) en cours interrompue(s).` : '');
     } else if (action === 'anonymiser' || action === 'nommer') {
       const anonyme = action === 'anonymiser' ? 1 : 0;
       const res = db.prepare(`UPDATE agents SET anonyme = ? WHERE id IN (${marques})`).run(anonyme, ...ids);
       message = `${res.changes} agent(s) ${anonyme ? 'masqués du' : 'réaffichés au'} classement individuel.`;
     } else if (action === 'supprimer') {
-      const res = db.prepare(`DELETE FROM agents WHERE id IN (${marques}) AND login <> ?`).run(...ids, requete.agent.login);
-      message = `${res.changes} agent(s) supprimés, ainsi que leurs résultats.`;
+      /**
+       * La suppression groupee contournait deux garde-fous que la suppression
+       * unitaire impose : la confirmation quand des resultats existent, et la
+       * protection des comptes locaux. On pouvait donc effacer d'un clic les
+       * resultats de la campagne, et le dernier compte permettant de reprendre
+       * la main si l'annuaire devenait injoignable.
+       */
+      const locaux = db.prepare(
+        `SELECT COUNT(*) AS n FROM agents WHERE id IN (${marques}) AND origine = 'local'`
+      ).get(...ids).n;
+
+      const avecResultats = db.prepare(`
+        SELECT COUNT(DISTINCT p.agent_id) AS n FROM participations p
+        WHERE p.agent_id IN (${marques}) AND p.entrainement = 0
+      `).get(...ids).n;
+
+      if (avecResultats > 0 && !requete.body?.confirmerPerteResultats) {
+        return reponse.code(409).send({
+          erreur: `${avecResultats} des agents sélectionnés ont des résultats enregistrés. `
+            + 'Les supprimer effacera définitivement ces résultats et modifiera les classements. '
+            + "Préférez l'exclusion, qui conserve l'historique.",
+          agentsAvecResultats: avecResultats,
+          confirmationRequise: true,
+          code: 'CONFIRMATION_REQUISE',
+        });
+      }
+
+      const res = db.prepare(
+        `DELETE FROM agents WHERE id IN (${marques}) AND login <> ? AND origine <> 'local'`
+      ).run(...ids, requete.agent.login);
+      message = `${res.changes} agent(s) supprimés, ainsi que leurs résultats.`
+        + (locaux ? ` ${locaux} compte(s) local(aux) ignoré(s) : ils se gèrent depuis la configuration.` : '');
     } else {
       return reponse.code(400).send({ erreur: 'Action inconnue.' });
     }
@@ -409,7 +470,8 @@ export default async function routesUtilisateurs(app) {
       };
     } catch (err) {
       db.exec('ROLLBACK');
-      return reponse.code(500).send({ erreur: `Import interrompu, aucune modification enregistrée : ${err.message}` });
+      requete.log.error(err, 'import interrompu');
+      return reponse.code(500).send({ erreur: 'Import interrompu : aucune modification n’a été enregistrée.', code: 'IMPORT_ECHOUE' });
     }
   });
 
@@ -451,7 +513,8 @@ export default async function routesUtilisateurs(app) {
       journaliser(requete.agent.login, 'exclusions_sync', `${exclusions.length} regle(s)`, requete.ip);
       return { ok: true, exclusions, message: `${exclusions.length} règle(s) d'exclusion enregistrée(s).` };
     } catch (err) {
-      return reponse.code(500).send({ erreur: err.message });
+      requete.log.error(err, 'operation interrompue');
+      return reponse.code(500).send({ erreur: 'Opération interrompue : rien n’a été modifié.', code: 'OPERATION_ECHOUEE' });
     }
   });
 
@@ -466,7 +529,8 @@ export default async function routesUtilisateurs(app) {
       const n = enregistrerReferentiel(noms, requete.agent.login);
       return { ok: true, total: n, message: `Référentiel enregistré : ${n} service(s).` };
     } catch (err) {
-      return reponse.code(500).send({ erreur: err.message });
+      requete.log.error(err, 'operation interrompue');
+      return reponse.code(500).send({ erreur: 'Opération interrompue : rien n’a été modifié.', code: 'OPERATION_ECHOUEE' });
     }
   });
 
@@ -484,7 +548,8 @@ export default async function routesUtilisateurs(app) {
         message: `${noms.length} service(s) reconnu(s) dans le texte. Référentiel : ${n} service(s).`,
       };
     } catch (err) {
-      return reponse.code(500).send({ erreur: err.message });
+      requete.log.error(err, 'operation interrompue');
+      return reponse.code(500).send({ erreur: 'Opération interrompue : rien n’a été modifié.', code: 'OPERATION_ECHOUEE' });
     }
   });
 
@@ -543,7 +608,8 @@ export default async function routesUtilisateurs(app) {
           : 'Aucun rapprochement possible : les libellés ne correspondent à aucun service du référentiel.',
       };
     } catch (err) {
-      return reponse.code(500).send({ erreur: err.message });
+      requete.log.error(err, 'operation interrompue');
+      return reponse.code(500).send({ erreur: 'Opération interrompue : rien n’a été modifié.', code: 'OPERATION_ECHOUEE' });
     }
   });
 
@@ -551,7 +617,7 @@ export default async function routesUtilisateurs(app) {
 
   /**
    * Les agents dont l'attribut « department » est vide tombent dans
-   * « Non rattache ». Leur DN porte pourtant presque toujours l'information :
+   * « Non rattaché ». Leur DN porte pourtant presque toujours l'information :
    * on la propose, en la rapprochant d'un service deja existant quand la
    * graphie differe.
    */
@@ -559,13 +625,13 @@ export default async function routesUtilisateurs(app) {
     const agents = db.prepare(`
       SELECT id, login, nom_complet, email, service_brut, vu_le
       FROM agents
-      WHERE service = 'Non rattache' AND exclu = 0 AND origine <> 'local'
+      WHERE service = SERVICE_NON_RATTACHE AND exclu = 0 AND origine <> 'local'
       ORDER BY nom_complet
     `).all();
 
     const existants = db.prepare(`
       SELECT service, COUNT(*) AS n FROM agents
-      WHERE exclu = 0 AND service <> 'Non rattache'
+      WHERE exclu = 0 AND service <> SERVICE_NON_RATTACHE
       GROUP BY service ORDER BY service COLLATE NOCASE
     `).all();
 
@@ -610,12 +676,12 @@ export default async function routesUtilisateurs(app) {
     const agents = db.prepare(`
       SELECT login, nom_complet, email, service_brut
       FROM agents
-      WHERE service = 'Non rattache' AND exclu = 0 AND origine <> 'local'
+      WHERE service = SERVICE_NON_RATTACHE AND exclu = 0 AND origine <> 'local'
       ORDER BY nom_complet
     `).all();
 
     const existants = db.prepare(`
-      SELECT DISTINCT service FROM agents WHERE exclu = 0 AND service <> 'Non rattache'
+      SELECT DISTINCT service FROM agents WHERE exclu = 0 AND service <> SERVICE_NON_RATTACHE
     `).all().map((s) => s.service);
     const parCle = new Map(existants.map((e) => [cleComparaison(e), e]));
 
@@ -690,7 +756,8 @@ export default async function routesUtilisateurs(app) {
       db.exec('COMMIT');
     } catch (err) {
       db.exec('ROLLBACK');
-      return reponse.code(500).send({ erreur: `Rattachement interrompu : ${err.message}` });
+      requete.log.error(err, 'rattachement interrompu');
+      return reponse.code(500).send({ erreur: 'Rattachement interrompu : rien n’a été modifié.', code: 'RATTACHEMENT_ECHOUE' });
     }
 
     journaliser(requete.agent.login, 'agents_rattaches',
@@ -905,7 +972,8 @@ export default async function routesUtilisateurs(app) {
         resume: resumeRegroupements().filter((s) => s.sources.length > 1),
       };
     } catch (err) {
-      return reponse.code(500).send({ erreur: `Enregistrement impossible : ${err.message}` });
+      requete.log.error(err, 'enregistrement impossible');
+      return reponse.code(500).send({ erreur: 'Enregistrement impossible : rien n’a été modifié.', code: 'ENREGISTREMENT_ECHOUE' });
     }
   });
 

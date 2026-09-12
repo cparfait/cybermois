@@ -1,4 +1,7 @@
-import { api, echapper, alerte } from '/js/commun.js';
+import { api, echapper, alerte, animationsReduites } from '/js/commun.js';
+
+/** Defilement respectueux du reglage « reduire les animations ». */
+const glisser = () => (animationsReduites() ? 'auto' : 'smooth');
 
 /**
  * Sas de validation de la synchronisation annuaire.
@@ -19,7 +22,7 @@ export async function formulaireSynchronisation(onTermine) {
       <h2>Synchroniser depuis l'annuaire</h2>
       <p class="discret">Interrogation de l'Active Directory en cours…</p>
     </div>`;
-  zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  zone.scrollIntoView({ behavior: glisser(), block: 'nearest' });
 
   try {
     analyse = await api('/api/admin/synchronisation/analyse', { method: 'POST' });
@@ -218,9 +221,11 @@ function rendre() {
   brancher();
 }
 
-const bloc = (liste, titre, rendu, couleur) => (liste && liste.length ? `
+// Le parametre « couleur » n'a jamais ete fourni par aucun appelant : il ne
+// servait qu'a faire croire que ces blocs pouvaient se teinter.
+const bloc = (liste, titre, rendu) => (liste && liste.length ? `
   <details style="margin-top:.6rem">
-    <summary class="ui" style="cursor:pointer;font-weight:700${couleur ? `;color:${couleur}` : ''}">${echapper(titre)}</summary>
+    <summary class="ui" style="cursor:pointer;font-weight:700">${echapper(titre)}</summary>
     <ul class="ui" style="font-size:.84rem">${liste.slice(0, 80).map((x) => `<li>${rendu(x)}</li>`).join('')}</ul>
     ${liste.length > 80 ? `<p class="discret">… ${liste.length - 80} autre(s)</p>` : ''}
   </details>` : '');
@@ -345,7 +350,7 @@ function brancher() {
       alerte('alerte', r.message, 'succes');
       zone.innerHTML = '';
       auTermine();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: glisser() });
     } catch (e) {
       alerte('alerte', e.message);
       bouton.disabled = false;

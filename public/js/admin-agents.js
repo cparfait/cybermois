@@ -1,4 +1,4 @@
-import { api, echapper, alerte, formaterDate } from '/js/commun.js';
+import { api, echapper, alerte, formaterDate, animationsReduites } from '/js/commun.js';
 import { formulaireSynchronisation } from '/js/admin-sync.js';
 import { formulaireResultatsAgent } from '/js/admin-corrections.js';
 import { formulaireServices as formulaireEffectifsServices } from '/js/admin-services.js';
@@ -8,6 +8,55 @@ import { formulaireNonReferences } from '/js/admin-non-references.js';
 
 let etatFiltres = { recherche: '', service: '', etat: '', page: 1, parPage: 50 };
 let dernierImport = null;
+
+/** Defilement respectueux du reglage « reduire les animations ». */
+const glisser = () => (animationsReduites() ? 'auto' : 'smooth');
+const amener = (element, block = 'nearest') =>
+  element?.scrollIntoView({ behavior: glisser(), block });
+const remonter = () => window.scrollTo({ top: 0, behavior: glisser() });
+
+/**
+ * Neutralise un bouton le temps d'un appel, et le retablit dans tous les cas.
+ * Un double clic sur « Ajouter » creait deux agents ; sur une action groupee,
+ * il exclut deux fois - la seconde echouant avec un message d'erreur apres une
+ * operation pourtant reussie.
+ */
+async function pendant(bouton, libelleEnCours, action) {
+  if (!bouton) return action();
+  const libelle = bouton.textContent;
+  bouton.disabled = true;
+  if (libelleEnCours) bouton.textContent = libelleEnCours;
+  try {
+    return await action();
+  } finally {
+    bouton.disabled = false;
+    bouton.textContent = libelle;
+  }
+}
+
+/**
+ * Restaure le focus et la position du curseur apres un re-rendu.
+ *
+ * Chaque frappe dans le champ de recherche relance chargerAgents(), qui
+ * remplace tout le panneau : le champ disparaissait sous les doigts, le focus
+ * retombait sur <body>, et il fallait recliquer entre chaque lettre. On note
+ * ou on en etait avant, on y revient apres.
+ */
+function memoriserSaisie(id) {
+  const champ = document.getElementById(id);
+  if (!champ || document.activeElement !== champ) return null;
+  return { id, debut: champ.selectionStart, fin: champ.selectionEnd };
+}
+
+function restaurerSaisie(memoire) {
+  if (!memoire) return;
+  const champ = document.getElementById(memoire.id);
+  if (!champ) return;
+  champ.focus({ preventScroll: true });
+  try {
+    champ.setSelectionRange(memoire.debut, memoire.fin);
+  } catch { /* certains types de champ refusent setSelectionRange */ }
+}
 
 /**
  * Lit un fichier CSV en gerant l'encodage.
@@ -60,6 +109,9 @@ function navigation(p) {
 
 export async function chargerAgents() {
   const cible = document.getElementById('panneau-agents');
+  // Note prise avant l'appel : le champ existe encore, et c'est lui qui porte
+  // le focus quand la recherche est en cours de frappe.
+  const saisie = memoriserSaisie('f-recherche');
 
   const parametres = new URLSearchParams();
   if (etatFiltres.recherche) parametres.set('recherche', etatFiltres.recherche);
@@ -223,10 +275,15 @@ export async function chargerAgents() {
     </div>
 
     <div class="tableau-defilant"><table class="admin agents">
+      <caption class="sr-only">Liste des agents de la campagne</caption>
       <thead><tr>
-        <th style="width:32px"><input type="checkbox" id="tout-selectionner" aria-label="Tout sélectionner" style="width:18px;height:18px;accent-color:var(--vert-fonce)"></th>
-        <th>Agent</th><th>Direction</th><th>Adresse</th>
-        <th class="num">Défis</th><th class="num">Points</th><th>État</th><th>Actions</th>
+        <th scope="col" style="width:32px">
+          <input type="checkbox" id="tout-selectionner" aria-label="Tout sélectionner" style="width:18px;height:18px;accent-color:var(--vert-fonce)">
+          <span class="sr-only">Sélection</span>
+        </th>
+        <th scope="col">Agent</th><th scope="col">Direction</th><th scope="col">Adresse</th>
+        <th scope="col" class="num">Défis</th><th scope="col" class="num">Points</th>
+        <th scope="col">État</th><th scope="col">Actions</th>
       </tr></thead>
       <tbody>${d.agents.length ? d.agents.map(ligneAgent).join('')
         : '<tr><td colspan="8" class="discret">Aucun agent ne correspond à ces critères.</td></tr>'}</tbody>
@@ -235,6 +292,7 @@ export async function chargerAgents() {
     ${navigation(d.pagination)}`;
 
   brancher(d);
+  restaurerSaisie(saisie);
 }
 
 function ligneAgent(a) {
@@ -339,7 +397,7 @@ function brancher(d) {
   cible.querySelectorAll('[data-page]').forEach((b) => b.addEventListener('click', () => {
     etatFiltres.page = Number(b.dataset.page);
     chargerAgents();
-    document.getElementById('panneau-agents').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    amener(document.getElementById('panneau-agents'), 'start');
   }));
 
   // Recliquer sur la tuile active retire le filtre : pas besoin d'un bouton dedie
@@ -366,20 +424,22 @@ function brancher(d) {
   });
   cible.addEventListener('change', (e) => { if (e.target.matches('.case-agent')) majSelection(); });
 
-  cible.querySelectorAll('[data-groupe]').forEach((b) => b.addEventListener('click', async () => {
+  cible.querySelectorAll('[data-groupe]').forEach((b) => b.addEventListener('click', () => {
     const ids = sel();
     const action = b.dataset.groupe;
-    if (!ids.length) return;
+    if (!ids.length) return undefined;
     if (action === 'supprimer' && !confirm(
       `Supprimer définitivement ${ids.length} agent(s) et tous leurs résultats ?\n\n`
       + "L'exclusion est préférable : elle les écarte de la campagne en conservant l'historique."
-    )) return;
+    )) return undefined;
 
-    try {
-      const r = await api('/api/admin/agents/action-groupee', { method: 'POST', body: { ids, action } });
-      alerte('alerte', r.message, 'succes');
-      chargerAgents();
-    } catch (e) { alerte('alerte', e.message); }
+    return pendant(b, 'En cours…', async () => {
+      try {
+        const r = await api('/api/admin/agents/action-groupee', { method: 'POST', body: { ids, action } });
+        alerte('alerte', r.message, 'succes');
+        await chargerAgents();
+      } catch (e) { alerte('alerte', e.message); }
+    });
   }));
 
   // --- Actions unitaires
@@ -479,7 +539,7 @@ async function formulaireAgent(agent, services) {
         </div>
         <div class="champ-admin">
           <label for="a-email">Adresse mail</label>
-          <input type="email" id="a-email" value="${creation || !agent.email ? '' : echapper(agent.email)}" placeholder="p.dupont@ville-chatillon.fr">
+          <input type="email" id="a-email" value="${creation || !agent.email ? '' : echapper(agent.email)}" placeholder="p.dupont@chatillon92.fr">
           <p class="discret" style="margin:.3rem 0 0;font-size:.8rem">Sans adresse, l'agent ne recevra aucune relance.</p>
         </div>
         <div class="champ-admin">
@@ -514,11 +574,12 @@ async function formulaireAgent(agent, services) {
       </div>
     </div>`;
 
-  zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  amener(zone);
   document.getElementById(creation ? 'a-login' : 'a-nom').focus();
   document.getElementById('btn-annuler-agent').addEventListener('click', () => { zone.innerHTML = ''; });
 
-  document.getElementById('btn-enregistrer-agent').addEventListener('click', async () => {
+  const boutonEnregistrer = document.getElementById('btn-enregistrer-agent');
+  boutonEnregistrer.addEventListener('click', () => pendant(boutonEnregistrer, 'Enregistrement…', async () => {
     const corps = {
       nom_complet: document.getElementById('a-nom').value,
       email: document.getElementById('a-email').value,
@@ -538,9 +599,9 @@ async function formulaireAgent(agent, services) {
       }
       alerte('alerte', r.message, 'succes');
       zone.innerHTML = '';
-      chargerAgents();
+      await chargerAgents();
     } catch (e) { alerte('alerte', e.message); }
-  });
+  }));
 }
 
 /* --------------------------------------------------------- Suppression */
@@ -552,8 +613,10 @@ async function supprimer(agent) {
     alerte('alerte', r.message, 'succes');
     chargerAgents();
   } catch (e) {
-    // Le serveur refuse tant que la perte des resultats n'est pas confirmee
-    if (/défi\(s\)/.test(e.message)) {
+    // Le serveur refuse tant que la perte des resultats n'est pas confirmee.
+    // Il le dit par un code ; la lecture du message reste en repli, le temps
+    // que toutes les instances servent une version qui l'envoie.
+    if (e.code === 'CONFIRMATION_REQUISE' || /défi\(s\)/.test(e.message)) {
       if (!confirm(`${e.message}\n\nConfirmer la suppression définitive ?`)) return;
       try {
         const r = await api(`/api/admin/agents/${agent.id}`, {
@@ -600,7 +663,7 @@ function formulaireImport() {
       <p class="discret" style="margin-top:-.3rem">Ou collez directement le contenu :</p>
       <div class="champ-admin">
         <label for="colle-import" class="sr-only">Contenu du fichier</label>
-        <textarea id="colle-import" style="min-height:110px;font-family:monospace;font-size:.82rem" placeholder="login;nom_complet;email;service&#10;p.dupont;Paul DUPONT;p.dupont@ville-chatillon.fr;Etat civil"></textarea>
+        <textarea id="colle-import" style="min-height:110px;font-family:monospace;font-size:.82rem" placeholder="login;nom_complet;email;service&#10;p.dupont;Paul DUPONT;p.dupont@chatillon92.fr;Etat civil"></textarea>
       </div>
 
       <div class="rang">
@@ -611,7 +674,7 @@ function formulaireImport() {
       <div id="apercu-import" style="margin-top:1.5rem"></div>
     </div>`;
 
-  zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  amener(zone);
   document.getElementById('btn-annuler-import').addEventListener('click', () => { zone.innerHTML = ''; });
 
   document.getElementById('fichier-import').addEventListener('change', async (e) => {
@@ -659,7 +722,7 @@ async function analyser() {
     </p>
 
     ${d.resume.sansService ? `<div class="message message-alerte" style="margin:1rem 0">
-      ${d.resume.sansService} agent(s) sans service identifiable seront rattachés à « Non rattache ».
+      ${d.resume.sansService} agent(s) sans service identifiable seront rattachés à « Non rattaché ».
       Vérifiez la colonne service de votre fichier.</div>` : ''}
 
     ${d.rejets.length ? `
@@ -682,7 +745,9 @@ async function analyser() {
 
     <h3 style="margin-top:1.5rem">Aperçu des ${Math.min(d.agents.length, 50)} premières lignes</h3>
     <div class="tableau-defilant" style="max-height:320px;overflow-y:auto"><table class="admin">
-      <thead><tr><th>Identifiant</th><th>Nom</th><th>Adresse</th><th>Service</th><th>Remarques</th></tr></thead>
+      <caption class="sr-only">Aperçu des lignes lues dans le fichier</caption>
+      <thead><tr><th scope="col">Identifiant</th><th scope="col">Nom</th><th scope="col">Adresse</th>
+        <th scope="col">Service</th><th scope="col">Remarques</th></tr></thead>
       <tbody>${d.agents.map((a) => `
         <tr>
           <td>${echapper(a.login)}</td><td>${echapper(a.nomComplet)}</td>
@@ -717,7 +782,7 @@ async function analyser() {
       alerte('alerte', r.message, 'succes');
       document.getElementById('zone-formulaire').innerHTML = '';
       chargerAgents();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      remonter();
     } catch (e) {
       alerte('alerte', e.message);
       bouton.disabled = false;
@@ -849,11 +914,12 @@ async function formulaireServices(filtreInitial = '') {
       </div>
 
       <div class="tableau-defilant"><table class="admin" id="table-regroupement">
+        <caption class="sr-only">Libellés d'annuaire et nom affiché dans la campagne</caption>
         <thead><tr>
-          <th style="width:32px"></th>
-          <th>Libellé dans l'annuaire</th>
-          <th class="num">Agents</th>
-          <th>Nom affiché dans la campagne</th>
+          <th scope="col" style="width:32px"><span class="sr-only">Sélection</span></th>
+          <th scope="col">Libellé dans l'annuaire</th>
+          <th scope="col" class="num">Agents</th>
+          <th scope="col">Nom affiché dans la campagne</th>
         </tr></thead>
         <tbody>${d.inventaire.map((i) => `
           <tr data-libelle="${echapper(i.source.toLowerCase())}"
@@ -897,7 +963,7 @@ async function formulaireServices(filtreInitial = '') {
       </div>
     </div>`;
 
-  zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  amener(zone);
 
   const champs = () => [...zone.querySelectorAll('.cible-service')];
 
@@ -1183,7 +1249,7 @@ async function formulaireServices(filtreInitial = '') {
       alerte('alerte', r.message, 'succes');
       zone.innerHTML = '';
       chargerAgents();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      remonter();
     } catch (e) { alerte('alerte', e.message); }
   });
 }
@@ -1217,12 +1283,16 @@ async function agentsDuLibelle(libelle) {
 
   const modale = document.createElement('dialog');
   modale.id = 'modale-libelle';
+  // Sans nom accessible, la boite s'annonce « boîte de dialogue » et rien de
+  // plus : on ne sait pas de quel libelle on consulte les agents. Son titre
+  // fait office de nom.
+  modale.setAttribute('aria-labelledby', 'titre-modale-libelle');
   modale.style.cssText = 'max-width:min(680px,92vw);width:100%;border:0;border-radius:var(--rayon);'
     + 'padding:0;box-shadow:0 12px 40px rgba(0,0,0,.22)';
   modale.innerHTML = `
     <div style="padding:1.4rem 1.6rem">
       <div class="rang" style="justify-content:space-between;align-items:flex-start;margin-bottom:.6rem">
-        <h2 style="margin:0;font-size:1.15rem">${echapper(libelle)}</h2>
+        <h2 id="titre-modale-libelle" style="margin:0;font-size:1.15rem">${echapper(libelle)}</h2>
         <button type="button" class="btn btn-secondaire" data-fermer-modale
                 style="padding:.3rem .7rem;font-size:.8rem">Fermer</button>
       </div>
@@ -1251,7 +1321,8 @@ async function agentsDuLibelle(libelle) {
       </p>
       <div class="tableau-defilant" style="max-height:52vh;overflow-y:auto">
         <table class="admin">
-          <thead><tr><th>Agent</th><th>Adresse</th><th>Service</th></tr></thead>
+          <caption class="sr-only">Agents portant ce libellé d'annuaire</caption>
+          <thead><tr><th scope="col">Agent</th><th scope="col">Adresse</th><th scope="col">Service</th></tr></thead>
           <tbody>${agents.map((a) => `
             <tr${a.exclu ? ' style="opacity:.55"' : ''}>
               <td><strong>${echapper(a.nom_complet)}</strong>

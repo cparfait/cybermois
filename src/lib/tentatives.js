@@ -37,10 +37,22 @@ ajouterColonne('tentatives', 'a_tort', 'INTEGER NOT NULL DEFAULT 0');
 // on la marque, et le parcours reel efface ces lignes avant de commencer.
 ajouterColonne('tentatives', 'apercu', 'INTEGER NOT NULL DEFAULT 0');
 
-export function progression(agentId, defiId) {
+/**
+ * Questions deja repondues dans la tentative en cours.
+ * `apercu` omis : toutes les lignes, quel que soit leur mode. Precise, il
+ * restreint au mode demande - ce qui evite qu'une reponse d'apercu ne fasse
+ * croire qu'une question du parcours reel est deja traitee, et l'inverse.
+ */
+export function progression(agentId, defiId, { apercu } = {}) {
+  if (apercu === undefined) {
+    return db.prepare(
+      'SELECT question_id, points, points_max, parfaite FROM tentatives WHERE agent_id = ? AND defi_id = ?'
+    ).all(agentId, defiId);
+  }
   return db.prepare(
-    'SELECT question_id, points, points_max, parfaite FROM tentatives WHERE agent_id = ? AND defi_id = ?'
-  ).all(agentId, defiId);
+    'SELECT question_id, points, points_max, parfaite FROM tentatives '
+    + 'WHERE agent_id = ? AND defi_id = ? AND apercu = ?'
+  ).all(agentId, defiId, apercu ? 1 : 0);
 }
 
 /** Corrige une question, enregistre la reponse, et renvoie de quoi l'expliquer. */
@@ -89,16 +101,31 @@ export function repondre(agentId, defiId, question, choix, { apercu = false } = 
   };
 }
 
-/** Totaux de la tentative en cours. */
-export function totaux(agentId, defiId) {
+/**
+ * Totaux de la tentative en cours.
+ *
+ * `apercu` selectionne la nature des lignes retenues, et ce n'est pas un
+ * detail : sans ce filtre, une partie jouee en apercu alimentait le total
+ * d'une participation reelle. Il suffisait de jouer avec le lien d'apercu,
+ * puis d'appeler la cloture SANS le jeton pour que le score soit enregistre
+ * au classement - sur un defi encore scelle, voire jamais publie.
+ */
+export function totaux(agentId, defiId, { apercu = false } = {}) {
   return db.prepare(`
     SELECT COUNT(*) AS repondues,
            COALESCE(SUM(points), 0)     AS score,
            COALESCE(SUM(points_max), 0) AS scoreMax,
            COALESCE(SUM(parfaite), 0)   AS parfaites,
            COALESCE(SUM(a_tort), 0)     AS erreurs
-    FROM tentatives WHERE agent_id = ? AND defi_id = ?
-  `).get(agentId, defiId);
+    FROM tentatives WHERE agent_id = ? AND defi_id = ? AND apercu = ?
+  `).get(agentId, defiId, apercu ? 1 : 0);
+}
+
+/** Combien de reponses d'apercu trainent encore sur ce defi. */
+export function compterApercu(agentId, defiId) {
+  return db.prepare(
+    'SELECT COUNT(*) AS n FROM tentatives WHERE agent_id = ? AND defi_id = ? AND apercu = 1'
+  ).get(agentId, defiId).n;
 }
 
 export function effacerTentative(agentId, defiId) {
@@ -106,10 +133,11 @@ export function effacerTentative(agentId, defiId) {
 }
 
 /** Detail des reponses, pour l'archivage dans reponses_agent. */
-export function detailTentative(agentId, defiId) {
+export function detailTentative(agentId, defiId, { apercu = false } = {}) {
   return db.prepare(
-    'SELECT question_id, choix, points, parfaite FROM tentatives WHERE agent_id = ? AND defi_id = ?'
-  ).all(agentId, defiId);
+    'SELECT question_id, choix, points, parfaite FROM tentatives '
+    + 'WHERE agent_id = ? AND defi_id = ? AND apercu = ?'
+  ).all(agentId, defiId, apercu ? 1 : 0);
 }
 
 /**

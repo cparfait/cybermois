@@ -9,6 +9,17 @@ public/img/logo-chatillon-source.png
 .recette-tmp/
 cybermois-a-corriger-dans-ad.csv
 
+# Aucune base SQLite ne doit entrer dans le depot, ou qu'elle se trouve :
+# elle contient des donnees nominatives d'agents. Le mode WAL laisse deux
+# fichiers compagnons a cote du .db, qui comptent autant que lui.
+*.db
+*.db-wal
+*.db-shm
+
+# Un chemin de base mal resolu (DB_FILE vide ou variable non definie) cree un
+# dossier litteralement nomme "undefined". C'est deja arrive une fois.
+undefined/
+
 # Bases jetables laissees par les tests isoles
 tests/.*.db
 tests/.*.db-*

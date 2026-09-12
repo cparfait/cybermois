@@ -66,7 +66,7 @@ tourné, ou que la base de recherche LDAP est trop étroite.
 
 **Ce qu'il ne contient pas** : participations, scores, badges, sessions. Un paramétrage
 n'est pas une sauvegarde — un test le vérifie explicitement. Pour sauvegarder les
-résultats, c'est `/home/sysadmin/docker/cybermois/data` qu'il faut copier.
+résultats, c'est `/srv/docker/cybermois/data` qu'il faut copier.
 
 Les agents sont désignés par leur identifiant, jamais par leur clé primaire : une base
 neuve leur en donnera d'autres.

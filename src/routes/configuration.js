@@ -4,34 +4,61 @@ import tls from 'node:tls';
 import { Client } from 'ldapts';
 import nodemailer from 'nodemailer';
 
-import { config } from '../lib/config.js';
-import { journaliser } from '../lib/db.js';
+import { config, SECRET_DEFAUT } from '../lib/config.js';
+import { db, journaliser, SERVICE_NON_RATTACHE } from '../lib/db.js';
 import { exigerAdmin } from '../lib/session.js';
 import {
-  DESCRIPTEUR, lireParametres, enregistrerParametres,
+  DESCRIPTEUR, lireParametres, enregistrerParametres, validerParametres,
   reinitialiserParametre, configurationUtilisable,
 } from '../lib/parametres.js';
 import {
   listerAdminsLocaux, definirAdminLocal, supprimerAdminLocal,
 } from '../lib/admin-local.js';
 import { chaineOu } from '../lib/services.js';
+import { construireFiltre } from '../lib/ldap.js';
 import { normaliserUrlLdap } from '../lib/url-ldap.js';
+
+/** Un booleen lu depuis un formulaire arrive souvent sous forme de chaine. */
+const booleen = (v, defaut) => {
+  if (v === undefined || v === null || v === '') return defaut;
+  if (typeof v === 'boolean') return v;
+  // « !!'false' » vaut vrai : le test validait alors le certificat alors que
+  // l'enregistrement, lui, allait desactiver la validation. Le test rassurait
+  // sur une configuration differente de celle qui serait appliquee.
+  return /^(true|1|oui|yes)$/i.test(String(v));
+};
+
+/** L'hote vise par une URL d'annuaire, sans le schema ni le chemin. */
+function hoteLdap(url) {
+  try {
+    const u = new URL(String(url).replace(/^ldaps?:/, 'http:'));
+    return `${u.hostname}:${u.port || (String(url).startsWith('ldaps://') ? '636' : '389')}`;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Les tests utilisent les valeurs SOUMISES, pas celles enregistrees :
  * on veut pouvoir verifier une configuration avant de l'appliquer, et donc
  * avant de risquer de se couper l'acces a l'annuaire.
+ *
+ * MAIS le mot de passe enregistre n'est repris que si l'hote vise est bien
+ * celui deja enregistre.
+ *
+ * Sans cette condition, un champ « mot de passe » laisse vide - ce qui est le
+ * cas normal, l'interface ne le recoit jamais - suffisait a faire partir le
+ * mot de passe du compte de service Active Directory vers l'adresse de son
+ * choix : il suffisait de soumettre « ldap://mon-serveur » et de le lire en
+ * clair a l'arrivee. Un administrateur pouvait ainsi extraire un secret qu'il
+ * n'avait pas, et rien n'en gardait trace.
+ *
+ * Viser un autre serveur exige donc de ressaisir le mot de passe.
  */
 function fusionner(propositions) {
-  const secretsConnus = {
-    'ldap.bindPassword': config.ldap.bindPassword,
-    'ldap.caBase64': config.ldap.caBase64,
-    'smtp.password': config.smtp.password,
-  };
   const v = (cle, defaut) => {
     const p = propositions?.[cle];
-    // Un secret laisse vide signifie « ne pas changer » : on reprend l'existant
-    if (p === undefined || p === null || p === '') return secretsConnus[cle] ?? defaut;
+    if (p === undefined || p === null || p === '') return defaut;
     return p;
   };
 
@@ -41,20 +68,43 @@ function fusionner(propositions) {
   const chiffre = propositions?.['ldap.chiffre'];
   const url = normaliserUrlLdap(
     v('ldap.url', config.ldap.url),
-    chiffre === undefined ? null : chiffre === true || chiffre === 'true'
+    chiffre === undefined ? null : booleen(chiffre, false)
   );
+
+  const memeHote = hoteLdap(url) !== null && hoteLdap(url) === hoteLdap(config.ldap.url);
+  const motDePasseSoumis = propositions?.['ldap.bindPassword'];
+  const secretFourni = motDePasseSoumis !== undefined && motDePasseSoumis !== null && motDePasseSoumis !== '';
 
   return {
     url,
     bindDn: v('ldap.bindDn', config.ldap.bindDn),
-    bindPassword: v('ldap.bindPassword', config.ldap.bindPassword),
+    // Secret repris seulement si l'hote ne change pas.
+    bindPassword: secretFourni
+      ? motDePasseSoumis
+      : (memeHote ? config.ldap.bindPassword : ''),
+    secretManquant: !secretFourni && !memeHote,
+    memeHote,
     baseDn: v('ldap.baseDn', config.ldap.baseDn),
     userFilter: v('ldap.userFilter', config.ldap.userFilter),
+    // Le certificat de l'AC n'est pas un secret d'authentification : il se
+    // reprend sans condition, il ne fuit rien.
     caBase64: v('ldap.caBase64', config.ldap.caBase64),
-    rejectUnauthorized: propositions?.['ldap.rejectUnauthorized'] ?? config.ldap.rejectUnauthorized,
+    rejectUnauthorized: booleen(propositions?.['ldap.rejectUnauthorized'], config.ldap.rejectUnauthorized),
     ouDepth: Number(propositions?.['service.ouDepth'] ?? config.service.ouDepth),
   };
 }
+
+/** Refus commun aux deux tests d'annuaire quand le mot de passe manque. */
+const REFUS_SECRET = {
+  ok: false,
+  code: 'SECRET_REQUIS',
+  etapes: [{
+    libelle: 'Mot de passe du compte de service',
+    ok: false,
+    detail: "Vous visez un autre serveur que celui enregistré : le mot de passe déjà "
+      + 'enregistré ne lui sera pas transmis. Ressaisissez-le pour tester cette adresse.',
+  }],
+};
 
 function clientLdap(p) {
   const tlsOptions = p.url.startsWith('ldaps://')
@@ -100,6 +150,29 @@ function etatCertificat() {
   };
 }
 
+/**
+ * Limitation appliquee aux tests de connexion.
+ *
+ * Chacun ouvre une connexion reseau vers un hote choisi dans la requete, avec
+ * cinq a dix secondes d'attente : enchaines, ils font de la page de
+ * configuration un scanner de ports du reseau interne, et un moyen de
+ * pilonner un service tiers depuis l'adresse du serveur. Un administrateur
+ * qui met au point sa configuration en lance quelques-uns par minute, pas
+ * plusieurs par seconde.
+ */
+const LIMITE_TESTS = {
+  rateLimit: {
+    max: 12,
+    timeWindow: '1 minute',
+    keyGenerator: (requete) => `test:${requete.agent?.login || requete.ip}`,
+    errorResponseBuilder: () => ({
+      statusCode: 429,
+      erreur: 'Trop de tests de connexion en peu de temps. Patientez une minute.',
+      code: 'TROP_DE_TESTS',
+    }),
+  },
+};
+
 export default async function routesConfiguration(app) {
   app.addHook('preHandler', exigerAdmin);
 
@@ -118,7 +191,7 @@ export default async function routesConfiguration(app) {
     adminsLocaux: listerAdminsLocaux(),
     // Rappel de ce qui vient du fichier d'environnement et ne peut pas etre change ici
     environnement: {
-      sessionSecretDefini: config.sessionSecret !== 'secret-de-developpement-a-remplacer-absolument',
+      sessionSecretDefini: config.sessionSecret !== SECRET_DEFAUT,
       dbFile: config.dbFile,
       env: config.env,
       // Un certificat monte dans le conteneur ne se voit nulle part : le champ
@@ -159,8 +232,49 @@ export default async function routesConfiguration(app) {
       }
     }
 
+    // Coherence des valeurs elles-memes. Ces reglages prennent effet
+    // immediatement : une adresse en http, une date absurde ou une expression
+    // de planification invalide n'attendaient aucun redeploiement pour agir,
+    // et la planification invalide se contentait d'arreter silencieusement
+    // les relances.
+    const problemes = validerParametres(valeurs);
+    if (problemes.length) {
+      return reponse.code(400).send({ erreur: problemes.join(' '), problemes, code: 'VALEURS_INVALIDES' });
+    }
+
     try {
       const n = enregistrerParametres(valeurs, requete.agent.login);
+
+      /**
+       * La liste des administrateurs ne se relisait qu'a la connexion : un
+       * identifiant retire gardait ses droits jusqu'a huit heures.
+       *
+       * Seuls les droits VENANT DE CETTE LISTE sont revoques. Ceux qui
+       * viennent du groupe Active Directory ne se verifient pas sans
+       * interroger l'annuaire : les remettre a zero ici priverait de l'acces
+       * tous les administrateurs du groupe jusqu'a leur reconnexion.
+       */
+      if (valeurs.adminLogins !== undefined) {
+        const listes = config.adminLogins;
+        const marques = listes.length ? listes.map(() => '?').join(',') : "''";
+        const retires = db.prepare(`
+          UPDATE agents SET est_admin = 0, admin_source = NULL
+          WHERE admin_source = 'liste' AND login NOT IN (${marques})
+        `).run(...listes).changes;
+
+        for (const login of listes) {
+          db.prepare(`
+            UPDATE agents SET est_admin = 1,
+              admin_source = COALESCE(NULLIF(admin_source, ''), 'liste')
+            WHERE login = ? AND origine <> 'local'
+          `).run(login);
+        }
+        if (retires) {
+          journaliser(requete.agent.login, 'admins_revoques',
+            `${retires} identifiant(s) retire(s) de la liste`, requete.ip);
+        }
+      }
+
       const etat = configurationUtilisable();
 
       // Les horaires et l'activation des envois changent la planification :
@@ -176,7 +290,8 @@ export default async function routesConfiguration(app) {
         replanifier: Object.keys(valeurs).some((c) => c.startsWith('cron.') || c === 'smtp.actif'),
       };
     } catch (err) {
-      return reponse.code(500).send({ erreur: `Enregistrement impossible : ${err.message}` });
+      requete.log.error(err, 'enregistrement de configuration impossible');
+      return reponse.code(500).send({ erreur: 'Enregistrement impossible : la configuration est restée inchangée.', code: 'ENREGISTREMENT_ECHOUE' });
     }
   });
 
@@ -191,7 +306,7 @@ export default async function routesConfiguration(app) {
 
   /* --------------------------------------------------------- Test LDAP */
 
-  app.post('/api/admin/configuration/test-ldap', async (requete) => {
+  app.post('/api/admin/configuration/test-ldap', { config: LIMITE_TESTS }, async (requete) => {
     const p = fusionner(requete.body?.valeurs);
     const etapes = [];
     const ajouter = (libelle, ok, detail) => etapes.push({ libelle, ok, detail });
@@ -199,9 +314,22 @@ export default async function routesConfiguration(app) {
     if (p.url === 'demo') {
       return { ok: true, etapes: [{ libelle: 'Mode démonstration', ok: true, detail: 'Annuaire simulé, aucun serveur interrogé.' }] };
     }
+    if (p.secretManquant) {
+      journaliser(requete.agent.login, 'test_ldap_refuse',
+        `hote vise ${hoteLdap(p.url)} : mot de passe non ressaisi`, requete.ip);
+      return REFUS_SECRET;
+    }
     if (!p.url || !p.bindDn || !p.bindPassword || !p.baseDn) {
       return { ok: false, etapes: [{ libelle: 'Configuration', ok: false, detail: 'Serveur, compte de service, mot de passe et base de recherche sont tous nécessaires.' }] };
     }
+
+    // L'hote vise est journalise a CHAQUE test, et pas seulement en cas de
+    // succes : c'est la seule trace qui dirait qu'un compte d'administration
+    // a fait pointer l'application ailleurs que sur l'annuaire de la
+    // collectivite.
+    journaliser(requete.agent.login, 'test_ldap',
+      `hote vise ${hoteLdap(p.url)}${p.memeHote ? '' : ' (different de la configuration enregistree)'}`,
+      requete.ip);
 
     // 1. Joignabilite
     let hote; let port; let chiffre;
@@ -216,7 +344,7 @@ export default async function routesConfiguration(app) {
         etapes: [{
           libelle: 'Adresse du serveur', ok: false,
           detail: `« ${p.url} » n'est pas exploitable. Indiquez une IP ou un nom `
-            + '(192.168.2.9, dc01.chatillon.lan), sans schéma ni port.',
+            + '(10.0.0.1, dc01.exemple.lan), sans schéma ni port.',
         }],
       };
     }
@@ -329,19 +457,33 @@ export default async function routesConfiguration(app) {
 
   /* ----------------------------------------- Test d'authentification d'un agent */
 
-  app.post('/api/admin/configuration/test-agent', async (requete) => {
+  app.post('/api/admin/configuration/test-agent', { config: LIMITE_TESTS }, async (requete) => {
     const p = fusionner(requete.body?.valeurs);
     const login = String(requete.body?.login || '').trim();
     if (!login) return { ok: false, message: 'Indiquez un identifiant à rechercher.' };
     if (p.url === 'demo') return { ok: false, message: 'Indisponible en mode démonstration.' };
+    if (p.secretManquant) {
+      journaliser(requete.agent.login, 'test_agent_refuse',
+        `hote vise ${hoteLdap(p.url)} : mot de passe non ressaisi`, requete.ip);
+      return {
+        ok: false,
+        code: 'SECRET_REQUIS',
+        message: "Vous visez un autre serveur que celui enregistré : ressaisissez le mot de "
+          + 'passe du compte de service pour tester cette adresse.',
+      };
+    }
+
+    journaliser(requete.agent.login, 'test_agent',
+      `hote vise ${hoteLdap(p.url)}, identifiant ${login.slice(0, 64)}`, requete.ip);
 
     const client = clientLdap(p);
     try {
       await client.bind(p.bindDn, p.bindPassword);
-      // Meme substitution qu'a l'authentification : le test doit echouer et
-      // reussir aux memes endroits, sans quoi il rassure a tort.
-      const saisie = login.replace(/[\\*()\0]/g, '');
-      const filtre = (p.userFilter || '').replaceAll('{{login}}', () => saisie);
+      // Le filtre est construit par la MEME fonction que l'authentification.
+      // Le test echappait les caracteres speciaux quand l'authentification,
+      // elle, les protege selon la RFC 4515 : un identifiant contenant une
+      // barre oblique inverse reussissait ici et echouait en vrai.
+      const filtre = construireFiltre(p.userFilter, login);
       const { searchEntries } = await client.search(p.baseDn, {
         scope: 'sub', filter: filtre,
         attributes: ['dn', 'sAMAccountName', 'displayName', 'mail', 'department', 'memberOf'],
@@ -367,7 +509,7 @@ export default async function routesConfiguration(app) {
           email: e.mail || null,
           department: e.department || null,
           chaineOu: ous,
-          serviceRetenu: service || 'Non rattache',
+          serviceRetenu: service || SERVICE_NON_RATTACHE,
           nbGroupes: [].concat(e.memberOf || []).length,
         },
       };
@@ -380,22 +522,45 @@ export default async function routesConfiguration(app) {
 
   /* --------------------------------------------------------- Test SMTP */
 
-  app.post('/api/admin/configuration/test-smtp', async (requete) => {
+  app.post('/api/admin/configuration/test-smtp', { config: LIMITE_TESTS }, async (requete) => {
     const v = requete.body?.valeurs || {};
     const hote = v['smtp.host'] ?? config.smtp.host;
     const port = Number(v['smtp.port'] ?? config.smtp.port);
-    const secure = v['smtp.secure'] ?? config.smtp.secure;
+    const secure = booleen(v['smtp.secure'], config.smtp.secure);
     const utilisateur = v['smtp.user'] ?? config.smtp.user;
-    const motDePasse = v['smtp.password'] || config.smtp.password;
     const destinataire = String(requete.body?.destinataire || '').trim();
 
     if (!hote) return { ok: false, message: 'Aucun serveur SMTP renseigné.' };
+
+    // Meme regle que pour l'annuaire : le mot de passe enregistre ne part que
+    // vers le relais deja enregistre. Sinon il faut le ressaisir.
+    const memeRelais = String(hote) === String(config.smtp.host);
+    const secretFourni = !!v['smtp.password'];
+    const motDePasse = secretFourni ? v['smtp.password'] : (memeRelais ? config.smtp.password : '');
+
+    if (utilisateur && !secretFourni && !memeRelais) {
+      journaliser(requete.agent.login, 'test_smtp_refuse',
+        `relais vise ${hote}:${port} : mot de passe non ressaisi`, requete.ip);
+      return {
+        ok: false,
+        code: 'SECRET_REQUIS',
+        message: "Vous visez un autre relais que celui enregistré : ressaisissez le mot de "
+          + 'passe pour tester cette adresse.',
+      };
+    }
+
+    journaliser(requete.agent.login, 'test_smtp',
+      `relais vise ${hote}:${port}${memeRelais ? '' : ' (different de la configuration enregistree)'}`,
+      requete.ip);
 
     const transport = nodemailer.createTransport({
       host: hote, port, secure,
       auth: utilisateur ? { user: utilisateur, pass: motDePasse } : undefined,
       requireTLS: !secure,
-      tls: { rejectUnauthorized: false },
+      // La validation reste active : un test qui accepte n'importe quel
+      // certificat ne verifie pas la configuration qui sera reellement
+      // utilisee, et invite a mettre en service une liaison non authentifiee.
+      tls: { rejectUnauthorized: true },
       connectionTimeout: 10000,
     });
 

@@ -1,6 +1,9 @@
 import { pathToFileURL } from 'node:url';
 import { db } from './db.js';
 import { lireModule, lireProgramme } from './modules.js';
+// La table des tentatives est creee par ce module : sans l'importer, le
+// rechargement lance en ligne de commande echouerait sur une table absente.
+import './tentatives.js';
 
 /**
  * Verse dans les defis le contenu des modules programmes.
@@ -45,9 +48,16 @@ export function importerContenus({ force = false } = {}) {
 
     if (existant) {
       const joue = db.prepare('SELECT COUNT(*) AS n FROM participations WHERE defi_id = ?').get(existant.id).n;
+      // Une tentative en cours compte autant qu'une participation terminee.
+      // Sans elle, un simple redemarrage du conteneur - donc chaque
+      // deploiement - reecrivait les questions du defi ouvert le matin meme,
+      // et la cascade emportait les reponses des agents en train de jouer :
+      // ils repartaient de zero, apres avoir vu les corrections.
+      const enCours = db.prepare('SELECT COUNT(*) AS n FROM tentatives WHERE defi_id = ?').get(existant.id).n;
       const motif = existant.contenu_modifie
         ? 'modifie dans le back-office'
-        : joue > 0 ? `${joue} participation(s) enregistree(s)` : null;
+        : joue > 0 ? `${joue} participation(s) enregistree(s)`
+          : enCours > 0 ? `${enCours} reponse(s) en cours de saisie` : null;
 
       if (motif && !force) {
         // La date, elle, reste modifiable : la repousser ou l'avancer ne
@@ -132,7 +142,15 @@ export function exporterDefi(id) {
     } : null,
     // La video se modifie defi par defi : celle du module n'est qu'une valeur
     // de depart, et une campagne peut vouloir la sienne.
-    video: defi.video_url ? { url: defi.video_url, titre: defi.video_titre } : null,
+    video: defi.video_url
+      ? {
+          url: defi.video_url,
+          titre: defi.video_titre,
+          // L'editeur doit la retrouver pour la modifier : sans elle, chaque
+          // enregistrement effacerait l'alternative textuelle deja saisie.
+          transcription: defi.video_transcription || null,
+        }
+      : null,
     questions: questions.map((q) => ({
       enonce: q.enonce, contexte: q.contexte, multiple: !!q.multiple, points: q.points, explication: q.explication,
       reponses: db.prepare('SELECT libelle, correcte FROM reponses WHERE question_id = ? ORDER BY ordre').all(q.id)

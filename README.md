@@ -32,12 +32,17 @@ cp .env.example .env
 Dans `.env`, renseignez :
 
 ```
-NODE_ENV=development
 LDAP_URL=demo
 ADMIN_LOGINS=votre.login
 MAIL_ENVOI_ACTIF=false
 CAMPAGNE_DEBUT=2026-10-05
 ```
+
+`NODE_ENV` n'a pas à être touché : il est **volontairement absent** de `.env.example`, et
+sans lui l'application démarre en mode développement, qui est celui de la démonstration.
+C'est en production que la valeur est imposée — par l'image Docker et par les piles
+`docker-compose`. Si vous lancez le serveur à la main hors conteneur pour un déploiement
+réel, ajoutez alors `NODE_ENV=production` et un vrai `SESSION_SECRET`.
 
 Puis :
 
@@ -47,7 +52,8 @@ npm start
 
 Le portail est disponible sur http://localhost:3000. Quinze comptes fictifs répartis sur
 six services sont fournis (`s.leroy`, `p.martin`, `f.lambert`…), tous avec le mot de passe
-`demo2026`. Le compte administrateur de la démonstration est `c.parfait`.
+`demo2026` — modifiable par `DEMO_MOT_DE_PASSE` si la démonstration doit être montrée sur
+un réseau partagé. Le compte administrateur de la démonstration est `c.parfait`.
 
 Le mode démonstration **refuse de démarrer si `NODE_ENV=production`** : il est impossible
 de le mettre en service par inadvertance.
@@ -62,14 +68,16 @@ node tests/simulation.mjs
 
 ## Déploiement
 
-Trois documents selon votre besoin :
+Six documents selon votre besoin :
 
 | Document | Contenu |
 |---|---|
 | [`docs/deploiement-portainer.md`](docs/deploiement-portainer.md) | Pile Portainer + Nginx Proxy Manager, pas à pas |
 | [`docs/configuration.md`](docs/configuration.md) | Réglages depuis le back-office, compte local, tests intégrés |
 | [`docs/effectif-et-services.md`](docs/effectif-et-services.md) | Import de l'effectif, regroupement des sous-OU |
-| [`docs/exploitation.md`](docs/exploitation.md) | Incidents fréquents, sauvegarde, dépannage |
+| [`docs/parametrage-classement.md`](docs/parametrage-classement.md) | Transporter le référentiel des services de la recette vers la production |
+| [`docs/exploitation.md`](docs/exploitation.md) | Incidents fréquents, sauvegarde, purge, compromission, dépannage |
+| [`docs/planning.md`](docs/planning.md) | Rétroplanning de la campagne, avant / pendant / après |
 
 ### Compte administrateur local
 
@@ -87,12 +95,24 @@ En conteneur : `docker compose exec cybermois npm run admin -- definir admin "�
 Avant toute chose, vérifiez la configuration sans rien modifier :
 
 ```bash
-node tests/diagnostic-ad.mjs
+npm run diagnostic
 ```
 
 Il contrôle la joignabilité du contrôleur de domaine, le certificat, le compte de service,
 puis analyse l'annuaire et vous indique **quelle valeur de `SERVICE_OU_DEPTH` retenir** au vu
 de la répartition réelle de vos OU. Aucun mot de passe n'est affiché.
+
+> **Il se lance depuis le dépôt, pas depuis le conteneur.** `tests/diagnostic-ad.mjs` est un
+> outil d'exploitation malgré son emplacement, mais il **lit sa configuration dans `.env`**
+> et jamais dans la base : le lancer dans le conteneur d'une pile Portainer ne verrait que
+> des variables vides. Il est d'ailleurs exclu de l'image par `.dockerignore`, volontairement
+> — l'image de production n'a pas à embarquer les tests.
+>
+> Le mode d'emploi est donc : sur le serveur (ou un poste d'administration) où se trouve le
+> clone git, renseigner un `.env` avec les valeurs AD, puis `npm install && npm run
+> diagnostic`. Une fois l'application configurée depuis le back-office, l'équivalent en
+> ligne est **Administration → Configuration → Tester la connexion**, qui, lui, travaille
+> sur la configuration réellement enregistrée.
 
 ## Mise en service
 
@@ -125,10 +145,15 @@ En `ldaps://` (port 636), la liaison est chiffrée : c'est la configuration atte
 production. En `ldap://` (port 389), **le mot de passe de chaque agent circule en clair**
 sur le réseau.
 
-L'application accepte `ldap://` en développement, pour faciliter une première mise au point,
-mais **refuse de démarrer en production** sans la variable `LDAP_AUTORISER_NON_CHIFFRE=true`.
-Ce n'est pas un caprice : un portail de sensibilisation à la cybersécurité qui diffuserait
-les mots de passe en clair serait difficile à défendre.
+L'application accepte `ldap://` en développement, pour faciliter une première mise au point.
+En production, elle **démarre quand même** — mais avec un avertissement dans les journaux,
+et surtout **l'authentification des agents est refusée** tant que la liaison est en clair.
+Le compte administrateur local, lui, continue de fonctionner : c'est ce qui permet de
+corriger la configuration depuis le back-office.
+
+La variable `LDAP_AUTORISER_NON_CHIFFRE=true` lève ce refus. Elle n'a sa place qu'en
+recette, et temporairement : un portail de sensibilisation à la cybersécurité qui
+diffuserait les mots de passe en clair serait difficile à défendre.
 
 ### 3. Certificat LDAPS
 
@@ -137,8 +162,10 @@ Deux façons de fournir l'autorité de certification interne :
 - **`LDAP_CA_BASE64`** — le certificat encodé en base64 sur une ligne. À privilégier :
   aucune manipulation de fichier, ce qui simplifie beaucoup un déploiement via Portainer.
   `[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\temp\ca.cer"))`
-- **`LDAP_CA_FILE`** — le chemin d'un fichier monté dans le conteneur, par exemple
-  `certs/ca-interne.crt`.
+- **`LDAP_CA_FILE`** — le chemin d'un fichier monté dans le conteneur. **Il dépend de la
+  pile** : `/app/certs/ca-interne.crt` avec `docker-compose.yml`, qui monte `./certs` sur
+  `/app/certs` ; `/certs/ca.pem` avec `docker-compose.portainer.yml`, qui monte le dossier
+  d'AC de l'hôte sur `/certs`.
 
 Laissez `LDAP_TLS_REJECT_UNAUTHORIZED=true`. Ne passez cette valeur à `false` qu'en
 recette, jamais en production : la validation du certificat est ce qui garantit que vous
@@ -150,11 +177,18 @@ Reportez-vous à `.env.example`, qui documente chaque variable. Les points d'att
 
 | Variable | Remarque |
 |---|---|
-| `SESSION_SECRET` | 32 caractères aléatoires minimum, propre à l'installation |
-| `PUBLIC_URL` | URL réellement vue par les agents — elle alimente les liens des mails |
+| `SESSION_SECRET` | 32 caractères aléatoires minimum, propre à l'installation. **En production, l'application refuse de démarrer** s'il est absent, s'il vaut la valeur de développement par défaut, ou s'il est trop court. Il chiffre aussi les mots de passe AD et SMTP enregistrés : le changer oblige à les ressaisir. Ne jamais le commiter. |
+| `PUBLIC_URL` | URL réellement vue par les agents — elle alimente les liens des mails, conditionne le drapeau `secure` du cookie et l'émission de `Strict-Transport-Security` en `https` |
+| `PROXY_DE_CONFIANCE` | IP ou CIDR du reverse proxy. **Vide, les en-têtes `X-Forwarded-*` sont ignorés** et le journal porte l'adresse du proxy pour tous les agents |
 | `ADMIN_LOGINS` | Logins AD autorisés au back-office, séparés par des virgules |
 | `CAMPAGNE_DEBUT` | Date de référence de la campagne ; chaque défi porte sa propre date de parution |
 | `MAIL_ENVOI_ACTIF` | Laisser à `false` tant que la recette n'est pas terminée |
+| `RETENTION_JOURNAL_JOURS`, `RETENTION_RESULTATS_JOURS`, `RETENTION_PREUVES_JOURS` | Durées de conservation appliquées par la purge automatique (180 / 456 / 1095 jours). Elles correspondent aux mentions légales : ne les changer qu'avec la DPO |
+
+Le chemin du certificat de l'AC dépend de la pile : `docker-compose.yml` monte `./certs`
+sur `/app/certs` (`LDAP_CA_FILE=/app/certs/ca-interne.crt`), la pile Portainer monte le
+dossier d'AC de l'hôte sur `/certs` (`LDAP_CA_FILE=/certs/ca.pem`). `LDAP_CA_BASE64` évite
+la question en se passant de fichier.
 
 ### 5. Déploiement
 
@@ -163,8 +197,14 @@ docker compose up -d --build
 docker compose logs -f cybermois
 ```
 
-Le conteneur écoute sur `127.0.0.1:3000` uniquement. Publiez-le via Nginx Proxy Manager
+Le service n'est joignable que sur `127.0.0.1:3000`. Publiez-le via Nginx Proxy Manager
 en HTTPS.
+
+> **Précision utile en cas de doute.** Le serveur, lui, écoute sur `0.0.0.0` à l'intérieur
+> du conteneur. Ce qui restreint l'accès à la boucle locale, c'est la publication de port
+> `127.0.0.1:3000:3000` dans `docker-compose.yml` — pas l'application. La pile Portainer,
+> elle, ne publie **aucun** port : le conteneur n'est joignable que depuis le réseau Docker
+> partagé, par Nginx Proxy Manager.
 
 > **Important — configuration du reverse proxy.** Nginx Proxy Manager doit transmettre
 > l'adresse réelle du client :
@@ -175,7 +215,12 @@ en HTTPS.
 > proxy_set_header X-Real-IP $remote_addr;
 > ```
 >
-> Sans cela, la journalisation enregistrera l'IP du proxy pour tous les agents.
+> **Et l'application doit être autorisée à les croire.** Sans `PROXY_DE_CONFIANCE`, les
+> en-têtes `X-Forwarded-*` sont ignorés d'où qu'ils viennent, et la journalisation
+> enregistrera l'IP du proxy pour tous les agents. Renseignez-y l'adresse ou la plage CIDR
+> du proxy — et rien d'autre : une plage trop large permettrait à n'importe qui de choisir
+> l'adresse qui figure au journal.
+>
 > La limitation des tentatives de connexion, elle, est indexée sur le **compte** et non
 > sur l'IP : elle reste correcte même derrière un NAT, et 500 agents peuvent se connecter
 > le même matin sans se bloquer mutuellement.
@@ -184,6 +229,12 @@ en HTTPS.
 
 Connectez-vous, ouvrez **Administration → Technique** : le diagnostic teste en direct
 la liaison LDAPS et le relais SMTP, et affiche la configuration effectivement chargée.
+
+Un détail qui surprend la première fois : laisser le champ mot de passe vide lors d'un test
+ne reprend le mot de passe enregistré **que si l'hôte testé est celui qui est enregistré**.
+Changer d'adresse de serveur impose de ressaisir le mot de passe, et chaque test est
+journalisé avec l'hôte visé. Voir
+[`docs/configuration.md`](docs/configuration.md).
 
 ---
 
@@ -205,6 +256,11 @@ ou HTML, avec l'objet suggéré.
 Les horaires d'envoi automatique se règlent par `CRON_RELANCE` et `CRON_RESULTATS`.
 Chaque envoi peut aussi être déclenché manuellement, et **simulé** au préalable pour
 compter les destinataires sans rien envoyer.
+
+Un verrou empêche deux envois simultanés de relances, ou de résultats, sur le même défi :
+le double-clic sur « Envoyer », ou l'envoi manuel lancé à la minute où la tâche planifiée
+démarre, ne produit plus de message en double. Le second envoi est refusé avec un message
+explicite.
 
 ### Modifier les questions
 
@@ -267,18 +323,27 @@ correction est calculée côté serveur.
 - Le mot de passe de l'agent n'est **jamais** stocké, ni en clair ni sous forme dérivée.
 - Un unique cookie technique de session, sans traceur ni mesure d'audience — donc aucun
   bandeau de consentement.
+- **Aucune ressource externe** : les polices sont celles du système, plus rien n'est
+  chargé depuis `fonts.googleapis.com`. Aucune requête ne part vers un tiers à l'ouverture
+  d'une page, et la CSP n'a plus à les autoriser.
 - Les journaux applicatifs masquent explicitement les mots de passe et les cookies.
+- **Les durées de conservation annoncées sont appliquées** par une purge automatique :
+  journaux à 6 mois, participations et réponses nominatives jusqu'à la fin de l'année
+  civile suivant la campagne, preuves de participation agrégées à 3 ans. Voir
+  [`docs/exploitation.md`](docs/exploitation.md).
 - La page `/mentions` porte la notice d'information complète, à faire valider par la DPO
-  avant l'ouverture.
+  avant l'ouverture. Les durées qu'elle annonce et les variables `RETENTION_*` doivent
+  rester cohérentes.
 
 **Point à arbitrer avec la DPO avant la mise en service.** Le classement individuel est
 nominatif. C'est un choix assumé, mais dans le secteur public un classement nominatif de
 performance peut être perçu comme une évaluation individuelle. Deux atténuations sont
 prévues et documentées dans les mentions légales : le classement n'a aucune incidence
 professionnelle, et un agent peut demander à ne pas y figurer tout en continuant à
-alimenter le score de son service. Cette exclusion se fait aujourd'hui par suppression
-manuelle en base ; si la DPO le demande, elle peut être exposée comme une case à cocher
-dans le profil de l'agent.
+alimenter le score de son service. Cette exclusion se fait dans le back-office, par la case
+**« Masquer du classement individuel »** de la fiche de l'agent (Administration → Agents),
+sans aucune manipulation en base ; si la DPO le demande, elle peut aussi être exposée
+directement dans le profil de l'agent.
 
 ---
 
@@ -300,6 +365,7 @@ src/
     parametres.js        Reglages en base, secrets chiffres
     admin-local.js       Compte administrateur independant de l'annuaire
     import-csv.js        Analyse tolérante des exports d'annuaire
+    retention.js         Purge des donnees au-dela de leur duree de conservation
   routes/
     auth.js              Connexion, déconnexion
     jeu.js               Défis, validation, classements, profil
@@ -308,8 +374,23 @@ src/
     configuration.js     Reglages, tests LDAP et SMTP, comptes locaux
 content/modules/          Catalogue des questionnaires, éditables
 public/                  Interface (HTML, CSS, modules ES — aucun outil de build)
-tests/                   Tests d'extraction de DN, de contenus, simulation de campagne
+tests/                   Tests unitaires (*.test.mjs), plus deux outils :
+                         simulation.mjs et diagnostic-ad.mjs
 ```
+
+*(Vue d'ensemble, non exhaustive : `src/lib/` comporte d'autres modules de moindre portée.)*
+
+Le dossier `tests/` ne contient pas que des tests. Deux fichiers y sont des **outils
+d'exploitation**, lancés à la main depuis le dépôt :
+
+| Fichier | Commande | Rôle |
+|---|---|---|
+| `tests/diagnostic-ad.mjs` | `npm run diagnostic` | Diagnostic AD et SMTP sur la configuration lue dans `.env` |
+| `tests/simulation.mjs` | `node tests/simulation.mjs` | Remplit une base de démonstration de résultats fictifs |
+
+Ils vivent là pour ne pas être embarqués dans l'image de production : `.dockerignore`
+exclut `tests`. Corollaire à retenir — **ils ne se lancent pas dans le conteneur**, mais
+depuis le clone git, avec `npm install` fait.
 
 **Choix techniques.** Node.js 24 avec le module natif `node:sqlite` : pas de dépendance
 native à compiler, donc pas de surprise à la reconstruction de l'image. Front en modules ES
@@ -319,17 +400,37 @@ un tiers.
 ## Tests
 
 ```bash
-node tests/dn.test.mjs            # extraction du service depuis le DN
-node tests/import.test.mjs        # analyse des exports CSV, cas dégradés
-node tests/regroupement.test.mjs  # proposition de regroupement des sous-OU
-node tests/groupes.test.mjs       # appartenance a un groupe AD (nom court ou DN)
-node tests/parametres.test.mjs    # configuration en base, chiffrement, remise a zero
-node tests/simulation.mjs         # campagne complète (serveur démarré requis)
-node tests/diagnostic-ad.mjs      # diagnostic AD et SMTP sur configuration réelle
+npm test
 ```
+
+C'est la commande de référence : elle lance la vingtaine de fichiers `tests/*.test.mjs`,
+sans dépendance externe ni serveur démarré. En repli, ou pour la lancer à la main :
+
+```bash
+node --test "tests/*.test.mjs"
+```
+
+**Les guillemets ne sont pas décoratifs.** `node --test tests/` échoue sous Windows, où le
+chemin de dossier est pris pour un fichier ; les guillemets confient le motif à Node plutôt
+qu'au shell, ce qui donne le même comportement sous Windows, macOS et Linux.
+
+Un fichier isolé se lance directement, par exemple `node --test tests/dn.test.mjs`. Le
+détail de ce que chacun couvre est en tête de fichier.
+
+Les deux autres fichiers de `tests/` ne sont pas des tests mais des outils, décrits plus
+haut : `npm run diagnostic` (AD et SMTP sur configuration réelle) et
+`node tests/simulation.mjs` (campagne fictive complète, serveur démarré requis).
 
 ## Après la campagne
 
 Conservez la base `data/cybermois.db` : elle porte la preuve de participation.
+Sauvegardez-la avec `VACUUM INTO` et non par une simple copie de fichier — la base est en
+mode WAL, voir [`docs/exploitation.md`](docs/exploitation.md).
+
 Pour rejouer une campagne l'année suivante, mettez à jour `CAMPAGNE_DEBUT`, adaptez les
 contenus, puis utilisez Administration → Technique → Réinitialiser les participations.
+
+Ne comptez pas sur la base pour un archivage long : la purge automatique efface les
+résultats nominatifs au-delà de la fin de l'année civile suivant la campagne, en n'en
+conservant que la trace agrégée pendant trois ans. Un bilan à conserver plus longtemps se
+sort par les exports CSV, avant l'échéance.

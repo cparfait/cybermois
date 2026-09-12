@@ -9,7 +9,14 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { listerModules, lireModule } from '../src/lib/modules.js';
+import { baseJetable, nettoyerALaFin } from './base-jetable.mjs';
+
+// Le catalogue se lit sur disque, mais src/lib/modules.js charge db.js :
+// l'importer creait et ouvrait data/cybermois.db, la base de PRODUCTION.
+baseJetable('modules', import.meta.url);
+const { db } = await import('../src/lib/db.js');
+const { listerModules, lireModule } = await import('../src/lib/modules.js');
+nettoyerALaFin(db);
 
 const modules = listerModules();
 

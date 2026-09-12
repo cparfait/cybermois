@@ -4,8 +4,22 @@ services:
     container_name: cybermois
     restart: unless-stopped
     env_file: .env
+    environment:
+      # Rendu obligatoire, comme dans la pile Portainer. En NODE_ENV=production
+      # l'application refuse desormais de demarrer si ce secret est absent, s'il
+      # vaut la valeur de developpement par defaut, ou s'il fait moins de
+      # 32 caracteres. Autant echouer ici, avec un message clair, plutot que sur
+      # une boucle de redemarrage du conteneur.
+      #   node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+      SESSION_SECRET: ${SESSION_SECRET:?definir SESSION_SECRET (32 caracteres minimum) dans le fichier .env}
+      # La pile est un deploiement, pas une demonstration. La valeur est fixee
+      # ici plutot que dans .env pour que "cp .env.example .env" reste utilisable
+      # pour le mode demonstration lance par npm start.
+      NODE_ENV: ${NODE_ENV:-production}
     ports:
-      # Exposition sur la boucle locale uniquement : Nginx Proxy Manager assure le HTTPS
+      # Exposition sur la boucle locale uniquement : Nginx Proxy Manager assure le HTTPS.
+      # Le serveur, lui, ecoute sur 0.0.0.0 dans le conteneur : c'est cette
+      # publication de port qui restreint l'acces, pas l'application.
       - "127.0.0.1:3000:3000"
     volumes:
       - ./data:/app/data
@@ -17,6 +31,9 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      # Aligne sur la pile Portainer : sans ce delai, le premier demarrage
+      # (creation du schema, import des contenus) est compte comme un echec.
+      start_period: 20s
     logging:
       driver: json-file
       options:

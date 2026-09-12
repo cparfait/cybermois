@@ -41,8 +41,12 @@ try {
   // resultat.
   const reussite = profil.pointsPossibles
     ? Math.round((profil.scoreTotal * 100) / profil.pointsPossibles) : 0;
-  const ouverts = defis.filter((d) => d.ouvert).length;
-  const progression = ouverts ? Math.round((faits / defis.length) * 100) : 0;
+  // « Ouvert » dit ce qui se joue, « paru » ce qui est sorti. Apres la cloture
+  // de la campagne plus rien n'est ouvert, mais tout ce qui a paru reste
+  // consultable : compter les ouverts faisait retomber la progression a zero
+  // le lendemain de la fin de campagne.
+  const parus = defis.filter((d) => d.paru).length;
+  const progression = parus ? Math.round((faits / defis.length) * 100) : 0;
 
   // Le titre suit l'avancement plutot que de repeter le nom du service, qui
   // tenait sur deux lignes des qu'il etait long et ecrasait tout le bandeau.
@@ -50,9 +54,9 @@ try {
     ? 'À vous de jouer'
     : faits >= defis.length
       ? 'Vous avez tout relevé'
-      : faits >= ouverts
+      : faits >= parus
         ? 'Vous êtes à jour'
-        : `Il vous reste ${ouverts - faits} défi${ouverts - faits > 1 ? 's' : ''} à relever`;
+        : `Il vous reste ${parus - faits} défi${parus - faits > 1 ? 's' : ''} à relever`;
 
   document.getElementById('heros').innerHTML = `
     <section class="heros">
@@ -73,7 +77,7 @@ try {
         </div>
         <div>
           <div class="compteur-valeur">${profil.rangService.rang ? `${profil.rangService.rang}<span style="font-size:1.1rem;opacity:.75">e</span>` : '—'}</div>
-          <div class="compteur-libelle">rang de mon service</div>
+          <div class="compteur-libelle">rang de ma direction</div>
         </div>
         <div>
           <div class="compteur-valeur">${profil.badges.filter((b) => b.obtenu).length}</div>
@@ -96,7 +100,13 @@ try {
 
     // Un defi a venir ne dit rien de lui-meme : le serveur ne renvoie ni son
     // titre ni son accroche. On affiche une carte scellee plutot qu'un trou.
-    if (!defi.ouvert) {
+    //
+    // La participation se regarde en premier. Testee apres l'ouverture, elle
+    // ne se voyait plus une fois la campagne close : un defi termine affichait
+    // « Descellement le … », et « Revoir mes reponses » disparaissait avec
+    // l'unique chemin vers ses propres corrections. C'est « paru » qui dit si
+    // le contenu est sorti, « ouvert » s'il se joue encore.
+    if (!p && !defi.paru) {
       const t = TEASERS[defi.id % TEASERS.length];
       return `
         <article class="carte carte-defi verrouille carte-scellee">
@@ -105,7 +115,7 @@ try {
           <h3 style="margin-bottom:.2em">${echapper(t.titre)}</h3>
           <p class="accroche" style="margin-top:0">${echapper(t.texte)}</p>
           <div class="pied-carte">
-            <p class="discret" style="margin:0">🔒 Descellement le ${date}</p>
+            <p class="discret" style="margin:0"><span aria-hidden="true">🔒</span> Descellement le ${date}</p>
           </div>
         </article>`;
     }
@@ -114,12 +124,22 @@ try {
     if (p) {
       // Relire, pas rejouer : le lien menait au questionnaire, qui repartait
       // en entrainement et effacait de l'ecran ce qu'on venait chercher.
+      // L'entrainement ne se propose qu'une campagne ouverte : apres la
+      // cloture, le defi refuse de se rejouer.
       action = `
         <a class="btn btn-secondaire btn-bloc" href="/revoir/${defi.id}">Revoir mes réponses</a>
-        <a class="lien-discret" href="/defi/${defi.id}"
-           style="display:block;text-align:center;margin-top:.5rem;font-size:.84rem">
-          Refaire pour m'entraîner
-        </a>`;
+        ${defi.ouvert ? `
+          <a class="lien-discret" href="/defi/${defi.id}"
+             style="display:block;text-align:center;margin-top:.5rem;font-size:.84rem">
+            Refaire pour m'entraîner
+          </a>` : ''}`;
+    } else if (!defi.ouvert) {
+      // Paru mais plus jouable : la campagne est close. Le dire vaut mieux
+      // qu'un bouton qui menerait a un refus du serveur.
+      action = `
+        <p class="discret" style="text-align:center;margin:0;font-size:.86rem">
+          Campagne terminée : ce défi n'est plus jouable.
+        </p>`;
     } else if (defi.repondues > 0) {
       // Reprendre plutot que recommencer : la page du defi rouvre d'elle-meme
       // a la premiere question sans reponse, encore faut-il que l'accueil le
@@ -135,17 +155,21 @@ try {
       action = `<a class="btn btn-principal btn-bloc" href="/defi/${defi.id}">Je relève le défi</a>`;
     }
 
+    // Un defi joue puis depublie n'est plus « paru » : le serveur ne renvoie
+    // alors ni titre ni accroche, et la carte affichait « null ». On retombe
+    // sur le numero, qui suffit a retrouver ses reponses.
     return `
       <article class="carte carte-defi ${classe}">
         ${aJouer ? '<span class="halo" aria-hidden="true"></span>' : ''}
         <p class="etiquette-defi">Défi n°${defi.numero}${aJouer ? ' · à relever' : ''}</p>
-        <h3 style="margin-bottom:.2em">${echapper(defi.titre)}</h3>
-        <p class="accroche" style="margin-top:0">${echapper(defi.accroche)}</p>
-        <p class="meta-defi">
-          <span>⏱️ ${defi.dureeMinutes} min</span>
-          <span>❓ ${defi.nbQuestions} questions</span>
-        </p>
-        ${p ? `<p class="resultat-defi">✅ Terminé — ${p.score} / ${p.scoreMax} points (${pourcentage} %)</p>` : ''}
+        <h3 style="margin-bottom:.2em">${echapper(defi.titre || `Défi n°${defi.numero}`)}</h3>
+        ${defi.accroche ? `<p class="accroche" style="margin-top:0">${echapper(defi.accroche)}</p>` : ''}
+        ${defi.nbQuestions ? `
+          <p class="meta-defi">
+            <span><span aria-hidden="true">⏱️</span> ${defi.dureeMinutes} min</span>
+            <span><span aria-hidden="true">❓</span> ${defi.nbQuestions} questions</span>
+          </p>` : ''}
+        ${p ? `<p class="resultat-defi"><span aria-hidden="true">✅</span> Terminé — ${p.score} / ${p.scoreMax} points (${pourcentage} %)</p>` : ''}
         <div class="pied-carte">${action}</div>
       </article>`;
   }).join('');

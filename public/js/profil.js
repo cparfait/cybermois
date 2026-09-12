@@ -40,7 +40,7 @@ try {
 
     ${p.complet ? `
       <div class="carte" style="border-left:5px solid var(--vert-clair);margin-bottom:2rem">
-        <h2 style="margin-bottom:.3em">🏆 Cybermois terminé</h2>
+        <h2 style="margin-bottom:.3em"><span aria-hidden="true">🏆</span> Cybermois terminé</h2>
         <p style="margin-top:0">Vous avez relevé les ${p.totalDefis} défis de la campagne. Votre attestation de participation est prête.</p>
         <a class="btn btn-principal" href="/attestation">Voir mon attestation</a>
       </div>` : `
@@ -71,7 +71,9 @@ try {
       <div class="grille-badges" style="margin-top:1rem">
         ${p.badges.map((b) => `
           <div class="badge ${b.obtenu ? 'obtenu' : ''}">
-            <div class="emoji" aria-hidden="true">${b.emoji}</div>
+            <!-- L'emoji du badge se saisit dans l'editeur d'administration :
+                 il passe par echapper() comme tout le reste. -->
+            <div class="emoji" aria-hidden="true">${echapper(b.emoji)}</div>
             <div class="nom">${echapper(b.libelle)}</div>
             <div class="desc">${echapper(b.description)}</div>
             ${b.obtenu ? `<div class="desc" style="margin-top:.4rem;color:var(--vert-clair-texte);font-weight:700">Obtenu</div>` : ''}

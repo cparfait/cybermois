@@ -19,7 +19,7 @@ const PORT_CLAIR = 389;
 
 /**
  * Decompose une URL en ses trois elements utiles.
- * Accepte aussi bien « 192.168.2.9 » que « ldaps://dc01.chatillon.lan:636 ».
+ * Accepte aussi bien « 10.0.0.1 » que « ldaps://dc01.exemple.lan:636 ».
  */
 export function decomposerUrlLdap(url) {
   const brut = String(url || '').trim();

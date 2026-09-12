@@ -3,7 +3,14 @@
  * de la collectivite : tiret separateur, prefixe partage, orthographes
  * divergentes du meme prefixe.
  */
-import { detecterFamilles, cleComparaison } from '../src/lib/services.js';
+import { baseJetable, nettoyerALaFin } from './base-jetable.mjs';
+
+// Ce test ne touche a aucune donnee, mais src/lib/services.js charge db.js :
+// l'importer creait et ouvrait data/cybermois.db, la base de PRODUCTION.
+baseJetable('familles', import.meta.url);
+const { db } = await import('../src/lib/db.js');
+const { detecterFamilles, cleComparaison } = await import('../src/lib/services.js');
+nettoyerALaFin(db);
 
 const SOURCES = [
   'Services Techniques - Parcs et Jardins',

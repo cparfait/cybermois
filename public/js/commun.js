@@ -19,8 +19,46 @@ export async function api(chemin, options = {}) {
 
   const type = reponse.headers.get('content-type') || '';
   const donnees = type.includes('application/json') ? await reponse.json() : await reponse.text();
-  if (!reponse.ok) throw new Error(donnees?.erreur || `Erreur ${reponse.status}`);
+  if (!reponse.ok) {
+    // Le code du serveur accompagne l'erreur : reconnaitre un refus a la
+    // forme de son message oblige a reecrire l'appelant des qu'on corrige une
+    // faute de frappe dans ce message.
+    const erreur = new Error(donnees?.erreur || `Erreur ${reponse.status}`);
+    erreur.statut = reponse.status;
+    if (donnees?.code) erreur.code = donnees.code;
+    throw erreur;
+  }
   return donnees;
+}
+
+/**
+ * Reglages publics : DPO, duree de session, dates de campagne, seuil de badge.
+ *
+ * Ces valeurs etaient recopiees en dur dans les pages - « 2026 » dans
+ * l'en-tete, « 8 heures » dans les mentions legales, « 80 % » dans l'editeur.
+ * Un changement de configuration les laissait derriere lui, et le portail
+ * annoncait alors autre chose que ce que le serveur applique.
+ *
+ * La reponse est mise en cache pour la duree de la page : cinq appelants ne
+ * doivent pas produire cinq requetes.
+ */
+let contacts = null;
+export async function contactsPublics() {
+  if (contacts) return contacts;
+  try {
+    const reponse = await fetch('/api/public/contacts', { credentials: 'same-origin' });
+    const type = reponse.headers.get('content-type') || '';
+    contacts = type.includes('application/json') ? await reponse.json() : {};
+  } catch {
+    contacts = {};
+  }
+  return contacts;
+}
+
+/** Annee de la campagne, ou l'annee courante a defaut de configuration. */
+export function anneeDeCampagne(campagne) {
+  const annee = String(campagne?.debut || campagne?.fin || '').slice(0, 4);
+  return /^\d{4}$/.test(annee) ? annee : String(new Date().getFullYear());
 }
 
 export function alerte(conteneur, message, variante = 'erreur') {
@@ -32,7 +70,7 @@ export function alerte(conteneur, message, variante = 'erreur') {
 }
 
 /** Entete commun : logo, navigation, deconnexion. */
-export function construireEntete(agent, pageActive) {
+export function construireEntete(agent, pageActive, annee = String(new Date().getFullYear())) {
   const liens = [
     { href: '/accueil', libelle: 'Les défis' },
     { href: '/classement', libelle: 'Classement' },
@@ -44,7 +82,7 @@ export function construireEntete(agent, pageActive) {
   <header class="entete-site">
     <div class="conteneur entete-interne">
       <img src="/img/Logo_Chatillon.png" alt="Ville de Châtillon" class="logo-ville">
-      <p class="marque">Cybermois 2026</p>
+      <p class="marque">Cybermois ${echapper(annee)}</p>
       <nav class="nav-principale" aria-label="Navigation principale">
         ${liens.map((l) => `<a href="${l.href}"${l.href === pageActive ? ' aria-current="page"' : ''}>${l.libelle}</a>`).join('')}
         <button type="button" class="btn btn-secondaire" id="btn-deconnexion"
@@ -54,11 +92,11 @@ export function construireEntete(agent, pageActive) {
   </header>`;
 }
 
-export function construirePied() {
+export function construirePied(annee = String(new Date().getFullYear())) {
   return `
   <footer class="pied-site">
     <div class="conteneur">
-      <p style="margin:0 0 .4rem">Cybermois 2026 — Ville de Châtillon, Direction des systèmes d'information.</p>
+      <p style="margin:0 0 .4rem">Cybermois ${echapper(annee)} — Ville de Châtillon, Direction des systèmes d'information.</p>
       <p style="margin:0"><a href="/mentions">Mentions légales et protection des données</a> · <a href="/mentions#accessibilite">Accessibilité : partiellement conforme</a></p>
     </div>
   </footer>`;
@@ -83,9 +121,10 @@ export async function exigerSession() {
 
 /** Prepare la page : entete + pied + deconnexion. */
 export async function initialiserPage(pageActive) {
-  const agent = await exigerSession();
-  document.getElementById('entete').innerHTML = construireEntete(agent, pageActive);
-  document.getElementById('pied').innerHTML = construirePied();
+  const [agent, reglages] = await Promise.all([exigerSession(), contactsPublics()]);
+  const annee = anneeDeCampagne(reglages.campagne);
+  document.getElementById('entete').innerHTML = construireEntete(agent, pageActive, annee);
+  document.getElementById('pied').innerHTML = construirePied(annee);
   brancherDeconnexion();
   return agent;
 }

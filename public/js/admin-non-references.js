@@ -1,4 +1,7 @@
-import { api, echapper, alerte } from '/js/commun.js';
+import { api, echapper, alerte, animationsReduites } from '/js/commun.js';
+
+/** Defilement respectueux du reglage « reduire les animations ». */
+const glisser = () => (animationsReduites() ? 'auto' : 'smooth');
 
 /**
  * Services non référencés.
@@ -31,7 +34,7 @@ export async function formulaireNonReferences(onTermine) {
   if (onTermine) auTermine = onTermine;
   const zone = document.getElementById('zone-formulaire');
   zone.innerHTML = '<div class="carte"><p class="discret">Comparaison avec le référentiel…</p></div>';
-  zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  zone.scrollIntoView({ behavior: glisser(), block: 'nearest' });
 
   try {
     donnees = await api('/api/admin/services/non-references');
@@ -43,6 +46,9 @@ export async function formulaireNonReferences(onTermine) {
 }
 
 function rendre() {
+  // Le filtre re-rend tout le formulaire : le bouton clique disparaissait avec
+  // lui, et le focus retombait sur <body>. On le retrouve apres rendu.
+  const filtreActif = document.activeElement?.dataset?.filtre || null;
   const d = donnees;
   const visibles = filtre === 'tous' ? d.services : d.services.filter((s) => s.confiance === filtre);
   const parRang = (cle) => d.services.filter((s) => s.confiance === cle).length;
@@ -92,11 +98,12 @@ function rendre() {
 
         <div class="tableau-defilant" style="max-height:520px;overflow-y:auto">
           <table class="admin">
+            <caption class="sr-only">Libellés d'annuaire absents du référentiel</caption>
             <thead><tr>
-              <th>Libellé d'annuaire</th>
-              <th class="num">Agents</th>
-              <th>Rapprochement proposé</th>
-              <th style="min-width:260px">Décision</th>
+              <th scope="col">Libellé d'annuaire</th>
+              <th scope="col" class="num">Agents</th>
+              <th scope="col">Rapprochement proposé</th>
+              <th scope="col" style="min-width:260px">Décision</th>
             </tr></thead>
             <tbody>${visibles.length
               ? visibles.map((s) => ligne(s, d.referentiel)).join('')
@@ -117,6 +124,11 @@ function rendre() {
     </div>`;
 
   brancher();
+  if (filtreActif) {
+    document.getElementById('zone-formulaire')
+      ?.querySelector(`[data-filtre="${filtreActif}"]`)
+      ?.focus({ preventScroll: true });
+  }
 }
 
 const ligne = (s, referentiel) => {

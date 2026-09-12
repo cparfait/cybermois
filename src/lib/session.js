@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import { db } from './db.js';
 import { config } from './config.js';
 
-const DUREE_HEURES = 8;
+export const DUREE_HEURES = 8;
 export const COOKIE = 'cybermois_session';
 
 export function creerSession(agentId) {
@@ -21,6 +21,25 @@ export function lireSession(token) {
 
 export function detruireSession(token) {
   if (token) db.prepare('DELETE FROM sessions WHERE token = ?').run(token);
+}
+
+/**
+ * Coupe toutes les sessions ouvertes d'un agent.
+ *
+ * Exclure un agent ne faisait que l'empecher de se reconnecter : celui qui
+ * etait deja connecte continuait de jouer pendant huit heures, et ses
+ * participations continuaient d'etre ecrites. Une exclusion doit prendre effet
+ * quand elle est prononcee, pas a l'expiration du cookie.
+ */
+export function detruireSessionsAgent(agentId) {
+  return db.prepare('DELETE FROM sessions WHERE agent_id = ?').run(agentId).changes;
+}
+
+/** Variante par identifiants multiples, pour les actions groupees. */
+export function detruireSessionsAgents(ids) {
+  if (!ids?.length) return 0;
+  const marques = ids.map(() => '?').join(',');
+  return db.prepare(`DELETE FROM sessions WHERE agent_id IN (${marques})`).run(...ids).changes;
 }
 
 export function purgerSessions() {
@@ -43,6 +62,24 @@ export async function exigerAuth(requete, reponse) {
   if (!agent) {
     if (requete.url.startsWith('/api/')) return reponse.code(401).send({ erreur: 'Session expirée, reconnectez-vous.' });
     return reponse.redirect('/?expire=1');
+  }
+  // Un agent exclu en cours de session ne doit pas continuer a jouer jusqu'a
+  // l'expiration de son cookie : ses participations entreraient au classement
+  // apres la decision de l'en ecarter.
+  //
+  // Le compte d'administration locale est exclu par construction - il ne
+  // compte ni dans l'effectif ni au classement - sans etre pour autant ecarte
+  // de la campagne. L'exempter est indispensable : c'est lui qui permet de
+  // reprendre la main quand l'annuaire est injoignable.
+  if (agent.exclu && agent.origine !== 'local') {
+    detruireSession(requete.cookies?.[COOKIE]);
+    if (requete.url.startsWith('/api/')) {
+      return reponse.code(403).send({
+        erreur: "Votre compte n'est plus inclus dans la campagne. Contactez la DSI si c'est une erreur.",
+        code: 'EXCLU',
+      });
+    }
+    return reponse.redirect('/?exclu=1');
   }
   requete.agent = agent;
 }

@@ -83,8 +83,8 @@
     30%, 60%, 90% { transform: translateX(7px); }
   }
   @keyframes eclat-bonne {
-    0%   { box-shadow: 0 0 0 0 rgba(26, 127, 75, .45); }
-    100% { box-shadow: 0 0 0 14px rgba(26, 127, 75, 0); }
+    0%   { box-shadow: 0 0 0 0 rgba(22, 109, 64, .45); }
+    100% { box-shadow: 0 0 0 14px rgba(22, 109, 64, 0); }
   }
   @keyframes battement {
     0%, 100% { transform: scale(1); }
@@ -176,7 +176,11 @@
 
 <main id="contenu">
   <div class="conteneur" style="max-width:800px">
-    <div id="alerte"></div>
+    <div id="alerte" role="status" aria-live="polite"></div>
+    <!-- Region vocale permanente : elle doit exister avant qu'on y ecrive,
+         sinon le lecteur d'ecran ne la surveille pas et le verdict passe
+         inapercu. Le contenu de #zone, lui, est remplace a chaque etape. -->
+    <div id="annonce" class="sr-only" role="status" aria-live="polite"></div>
     <div id="zone"><p class="discret">Chargement du défi…</p></div>
   </div>
 </main>

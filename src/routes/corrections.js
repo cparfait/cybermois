@@ -2,6 +2,7 @@ import { exigerAdmin } from '../lib/session.js';
 import {
   recalculerDefi, participationsAgent, corrigerReponse, lireCorrections,
 } from '../lib/corrections.js';
+import { csv } from '../lib/csv.js';
 
 export default async function routesCorrections(app) {
   app.addHook('preHandler', exigerAdmin);
@@ -14,11 +15,24 @@ export default async function routesCorrections(app) {
    */
   app.post('/api/admin/defis/:id/recalculer', async (requete, reponse) => {
     const simulation = requete.body?.simulation !== false;
+    const motif = String(requete.body?.motif || '').trim();
+
+    // Le motif est exige des que l'on ecrit, comme pour une correction
+    // unitaire : un recalcul deplace des scores et des rangs, il doit pouvoir
+    // s'expliquer. En simulation rien n'est ecrit, on n'exige rien.
+    if (!simulation && motif.length < 5) {
+      return reponse.code(400).send({
+        erreur: 'Indiquez le motif du recalcul : il est enregistré au registre des '
+          + "corrections, c'est ce qui rend la modification défendable.",
+        code: 'MOTIF_REQUIS',
+      });
+    }
+
     const resultat = recalculerDefi(requete.params.id, {
       simulation,
       parQui: requete.agent.login,
       ip: requete.ip,
-      motif: requete.body?.motif,
+      motif,
     });
     if (!resultat.ok) return reponse.code(400).send({ erreur: resultat.message });
     return resultat;
@@ -61,16 +75,14 @@ export default async function routesCorrections(app) {
 
   app.get('/api/admin/export/corrections.csv', async (requete, reponse) => {
     const lignes = lireCorrections(100000);
-    const echapper = (v) => {
-      const s = v === null || v === undefined ? '' : String(v);
-      return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-    };
     const entetes = ['horodatage', 'par_qui', 'type', 'agent_login', 'agent_nom',
       'defi_id', 'question', 'avant', 'apres', 'motif', 'ip'];
 
+    // Echappement commun : celui qui vivait ici ne neutralisait pas les
+    // cellules que le tableur lit comme des formules. Le motif d'une
+    // correction est une saisie libre, il pouvait en porter une.
     return reponse.type('text/csv; charset=utf-8')
       .header('Content-Disposition', 'attachment; filename="cybermois-corrections.csv"')
-      .send('﻿' + [entetes.join(';'),
-        ...lignes.map((l) => entetes.map((e) => echapper(l[e])).join(';'))].join('\r\n'));
+      .send(csv(lignes, entetes));
   });
 }

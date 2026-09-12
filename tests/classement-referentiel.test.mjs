@@ -9,17 +9,15 @@
  * Deux graphies d'une meme direction doivent aussi se rejoindre sous
  * l'orthographe du referentiel, qui fait foi.
  */
-process.env.DB_FILE = new URL('./.classement-ref-test.db', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
-process.env.SESSION_SECRET = 'test-classement-ref-0123456789';
-
-import fs from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { baseJetable, nettoyerALaFin } from './base-jetable.mjs';
 
-fs.rmSync(process.env.DB_FILE, { force: true });
+baseJetable('classement-ref', import.meta.url);
 const { db } = await import('../src/lib/db.js');
 const { classementServices, rangService, statistiquesGlobales } = await import('../src/lib/scoring.js');
 const { enregistrerReferentiel } = await import('../src/lib/referentiel.js');
+nettoyerALaFin(db);
 
 db.prepare(`INSERT INTO defis (id, titre, accroche, intro, duree_minutes, ouvre_le, publie)
             VALUES (1, 'Defi', 'a', 'i', 5, date('now', '-1 day'), 1)`).run();

@@ -24,7 +24,7 @@ L'import règle les trois. C'est l'opération la plus utile de la phase de prép
 Sur un contrôleur de domaine, ou un poste doté des outils RSAT :
 
 ```bash
-Get-ADUser -Filter "Enabled -eq 'True'" -SearchBase "OU=Utilisateurs,OU=CHATILLON,DC=chatillon,DC=lan" -Properties DisplayName, Mail, Department | Select-Object SamAccountName, DisplayName, Mail, Department, DistinguishedName | Export-Csv -Path C:\temp\agents.csv -NoTypeInformation -Encoding UTF8 -Delimiter ";"
+Get-ADUser -Filter "Enabled -eq 'True'" -SearchBase "OU=Utilisateurs,OU=AGENTS,DC=exemple,DC=lan" -Properties DisplayName, Mail, Department | Select-Object SamAccountName, DisplayName, Mail, Department, DistinguishedName | Export-Csv -Path C:\temp\agents.csv -NoTypeInformation -Encoding UTF8 -Delimiter ";"
 ```
 
 Quelques précisions utiles :
@@ -150,7 +150,8 @@ voir son nom affiché. Il apparaît alors comme « Agent anonyme » mais continu
 score de son service, et conserve l'accès à ses propres résultats.
 
 C'est l'atténuation annoncée dans les mentions légales. Si la DPO préfère que les agents
-puissent l'activer eux-mêmes depuis leur profil, dites-le-moi : c'est une petite évolution.
+puissent l'activer eux-mêmes depuis leur profil, c'est une évolution à demander : la case
+existe déjà côté données, il ne manque que son exposition dans le profil de l'agent.
 
 ---
 
@@ -160,8 +161,15 @@ Un outil de diagnostic lit votre configuration et contrôle tout ce qui peut coi
 rien modifier ni afficher aucun mot de passe :
 
 ```bash
-node tests/diagnostic-ad.mjs
+npm run diagnostic
 ```
+
+> **Depuis le dépôt, pas depuis le conteneur.** L'outil lit sa configuration dans `.env`,
+> jamais dans la base, et il est volontairement exclu de l'image par `.dockerignore`.
+> Lancez-le sur la machine où se trouve le clone git, avec un `.env` renseigné et
+> `npm install` fait. Une fois l'annuaire réglé dans le back-office, l'équivalent en ligne
+> est **Administration → Configuration → Tester la connexion**, qui travaille sur la
+> configuration réellement enregistrée.
 
 Il vérifie la joignabilité du contrôleur de domaine, le certificat présenté, le compte de
 service, puis analyse l'annuaire : nombre de comptes actifs, couverture des adresses mail
@@ -170,13 +178,13 @@ de `SERVICE_OU_DEPTH`** — ce qui vous permet de choisir la bonne profondeur en
 de cause.
 
 ```bash
-node tests/diagnostic-ad.mjs --ou
+npm run diagnostic -- --ou
 ```
 
 affiche la répartition complète, et
 
 ```bash
-node tests/diagnostic-ad.mjs --agent p.dupont
+npm run diagnostic -- --agent p.dupont
 ```
 
 montre exactement à quel service un agent donné serait rattaché.

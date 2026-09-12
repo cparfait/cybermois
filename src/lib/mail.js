@@ -282,6 +282,23 @@ async function envoyer({ to, objet, html, texte, bcc }) {
   });
 }
 
+/**
+ * Un envoi en masse a la fois.
+ *
+ * Rien n'empechait deux envois simultanes sur le meme defi : un double clic,
+ * ou la tache planifiee qui tombe pendant un envoi manuel, et cinq cents
+ * agents recevaient la relance en double. La trace dans « envois » n'etant
+ * ecrite qu'a la fin de la boucle, le second appel ne pouvait meme pas
+ * s'apercevoir que le premier etait en cours.
+ */
+const envoisEnCours = new Set();
+
+function verrouiller(cle) {
+  if (envoisEnCours.has(cle)) return false;
+  envoisEnCours.add(cle);
+  return true;
+}
+
 /** Relance des agents n'ayant pas encore joue le defi donne. */
 export async function envoyerRelances(defiId, { simulation = false } = {}) {
   const defi = db.prepare('SELECT id FROM defis WHERE id = ? AND publie = 1').get(Number(defiId));
@@ -296,17 +313,30 @@ export async function envoyerRelances(defiId, { simulation = false } = {}) {
 
   if (simulation) return { ok: true, simulation: true, destinataires: cibles.length, apercu: cibles.slice(0, 5).map((a) => a.email) };
 
-  let succes = 0; let derniereErreur = null;
-  for (const agent of cibles) {
-    try {
-      const m = mailRelance(agent, defi.id);
-      await envoyer({ to: agent.email, ...m });
-      succes++;
-    } catch (err) { derniereErreur = err.message; }
+  const cle = `relance:${defi.id}`;
+  if (!verrouiller(cle)) {
+    return {
+      ok: false,
+      code: 'ENVOI_EN_COURS',
+      message: 'Une relance est deja en cours d\'envoi pour ce defi. Attendez qu\'elle se termine.',
+    };
   }
 
-  db.prepare('INSERT INTO envois (type, defi_id, destinataires, succes, erreur) VALUES (?, ?, ?, ?, ?)')
-    .run('relance', defi.id, cibles.length, succes, derniereErreur);
+  let succes = 0; let derniereErreur = null;
+  try {
+    for (const agent of cibles) {
+      try {
+        const m = mailRelance(agent, defi.id);
+        await envoyer({ to: agent.email, ...m });
+        succes++;
+      } catch (err) { derniereErreur = err.message; }
+    }
+
+    db.prepare('INSERT INTO envois (type, defi_id, destinataires, succes, erreur) VALUES (?, ?, ?, ?, ?)')
+      .run('relance', defi.id, cibles.length, succes, derniereErreur);
+  } finally {
+    envoisEnCours.delete(cle);
+  }
 
   return { ok: true, destinataires: cibles.length, succes, erreur: derniereErreur };
 }
@@ -318,6 +348,15 @@ export async function envoyerResultats(defiId, { simulation = false } = {}) {
   if (simulation) return { ok: true, simulation: true, destinataires: config.smtp.groupeDiffusion, apercu: m.objet };
   if (!config.smtp.groupeDiffusion) return { ok: false, message: 'MAIL_GROUPE_DIFFUSION non renseigne.' };
 
+  const cle = `resultats:${id}`;
+  if (!verrouiller(cle)) {
+    return {
+      ok: false,
+      code: 'ENVOI_EN_COURS',
+      message: 'Un envoi de resultats est deja en cours pour ce defi.',
+    };
+  }
+
   try {
     await envoyer({ to: config.smtp.groupeDiffusion, ...m });
     db.prepare('INSERT INTO envois (type, defi_id, destinataires, succes) VALUES (?, ?, 1, 1)').run('resultats', id);
@@ -325,5 +364,7 @@ export async function envoyerResultats(defiId, { simulation = false } = {}) {
   } catch (err) {
     db.prepare('INSERT INTO envois (type, defi_id, destinataires, succes, erreur) VALUES (?, ?, 1, 0, ?)').run('resultats', id, err.message);
     return { ok: false, message: err.message };
+  } finally {
+    envoisEnCours.delete(cle);
   }
 }

@@ -71,14 +71,58 @@ async function jouer(cookie, defiId, niveau) {
   return res;
 }
 
+/**
+ * Se retirer, en le disant.
+ *
+ * Sans serveur ni agents de demonstration, cette simulation ne verifie rien.
+ * Elle s'arretait alors sans expliquer pourquoi : on ne distinguait pas un
+ * scoring valide d'un scenario qui n'avait jamais demarre.
+ */
+function ignorer(raison, remede) {
+  console.log("IGNORE - tests/simulation.mjs n'a RIEN verifie.");
+  console.log(`         Motif  : ${raison}`);
+  console.log(`         Remede : ${remede}`);
+  process.exit(0);
+}
+
+let serveurEnMarche = false;
+try {
+  const r = await fetch(`${BASE}/sante`, { signal: AbortSignal.timeout(3000) });
+  serveurEnMarche = r.ok;
+} catch { /* aucun serveur a cette adresse */ }
+
+if (!serveurEnMarche) {
+  ignorer(
+    `aucun serveur Cybermois ne repond sur ${BASE}.`,
+    'Lancez « npm start », puis « node tests/simulation.mjs [url] ».'
+  );
+}
+
 console.log(`Simulation sur ${BASE}\n`);
 let erreurs = 0;
 
 // Les defis n'ont plus de numero d'ordre : chaque agent joue les N premiers
 // deja parus, dans l'ordre des dates de parution.
+let cookieAmorce;
+try {
+  cookieAmorce = await connecter(AGENTS[0].login);
+} catch (e) {
+  ignorer(
+    `impossible de connecter l'agent de demonstration « ${AGENTS[0].login} » (${e.message}).`,
+    'Peuplez la base de demonstration, ou visez une instance qui la contient.'
+  );
+}
+
 const ouverts = (await (await fetch(`${BASE}/api/defis`, {
-  headers: { cookie: await connecter(AGENTS[0].login) },
+  headers: { cookie: cookieAmorce },
 })).json()).filter((d) => d.ouvert);
+
+if (!ouverts.length) {
+  ignorer(
+    'aucun defi n\'est ouvert sur cette instance : personne ne peut jouer.',
+    'Programmez au moins un defi dont la date de parution est atteinte.'
+  );
+}
 
 for (const agent of AGENTS) {
   try {

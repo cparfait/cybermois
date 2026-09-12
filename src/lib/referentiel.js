@@ -1,4 +1,4 @@
-import { db, journaliser } from './db.js';
+import { db, journaliser, SERVICE_NON_RATTACHE } from './db.js';
 import { cleComparaison, normaliser, resoudreService } from './services.js';
 
 /**
@@ -122,9 +122,9 @@ function propagerRenommage(ancien, nouveau) {
 export function initialiserDepuisDonnees(parQui) {
   const utilises = db.prepare(`
     SELECT service, COUNT(*) AS n FROM agents
-    WHERE exclu = 0 AND origine <> 'local' AND service <> 'Non rattache'
+    WHERE exclu = 0 AND origine <> 'local' AND service <> ?
     GROUP BY service ORDER BY n DESC
-  `).all().map((s) => s.service);
+  `).all(SERVICE_NON_RATTACHE).map((s) => s.service);
 
   const existants = nomsReferentiel();
   const cles = new Set(existants.map(cleComparaison));
