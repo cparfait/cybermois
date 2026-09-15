@@ -20,7 +20,7 @@
     {
       "enonce": "Quelles obligations pèsent sur un agent territorial qui s'exprime publiquement ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Trois obligations coexistent et se confondent souvent. Le secret professionnel interdit de révéler ce qu'on apprend dans l'exercice de ses fonctions — un dossier, une situation, un nom. La discrétion professionnelle couvre plus largement les faits et documents dont on a connaissance. L'obligation de réserve encadre la manière de s'exprimer, particulièrement pour les agents d'autorité et d'encadrement, sans interdire la critique : elle en interdit l'outrance et l'atteinte à la dignité des fonctions. Ce que ces obligations ne font pas, c'est priver l'agent de sa liberté d'opinion, ni de son droit syndical, ni de sa vie privée. Le principe est celui de la mesure, pas du silence. La neutralité s'impose dans l'exercice des fonctions, pas sur un compte personnel, et aucune autorisation préalable de la hiérarchie n'est requise pour s'exprimer à titre privé.",
       "reponses": [
         {
@@ -48,7 +48,7 @@
     {
       "enonce": "Vous êtes agacé par une décision prise dans votre service et vous en parlez sur votre compte personnel. Qu'est-ce qui pose problème ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Le fait d'exprimer un désaccord n'est pas en soi fautif : le point de bascule est ailleurs. Citer un dossier ou une personne identifiable rompt le secret et la discrétion, et cela vaut même sans nommer explicitement — dans une commune, « le dossier de la dame du troisième étage » désigne quelqu'un. Publier un document interne est une faute distincte et plus lourde. Mentionner sa qualité d'agent de Châtillon transforme un propos personnel en propos qui engage l'image du service. Et un compte « privé » ne l'est pas : une capture d'écran circule en une seconde, et la jurisprudence retient régulièrement des propos tenus en cercle restreint. Le réglage « amis uniquement » ne change rien à l'analyse : ce qui compte, c'est ce que le message permet d'identifier, pas le nombre de personnes qui le voient d'abord.",
       "reponses": [
         {
@@ -76,7 +76,7 @@
     {
       "enonce": "En quoi vos publications personnelles peuvent-elles servir à attaquer la collectivité ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "difficile",
       "explication": "La préparation d'une attaque ciblée commence par une collecte publique, gratuite et parfaitement légale. Une photo de bureau montre l'écran, un post-it, un badge, parfois un plan des locaux. Annoncer ses congés indique quand le service est fragile et qui ne pourra pas vérifier un appel. Un profil professionnel bien renseigné donne l'organigramme réel, les noms et les fonctions — c'est ainsi que l'expéditeur d'une fraude au virement sait à qui écrire et de la part de qui. Et vos réponses aux petits jeux « votre premier animal, votre ville de naissance » sont exactement les questions de récupération de compte. Rien de tout cela n'exige de renoncer à publier ; il suffit de savoir ce qu'on donne. Relayer un article de presse déjà public n'apprend rien à personne : ce qui compte, c'est ce qui n'est visible que de l'intérieur.",
       "reponses": [
         {
@@ -104,7 +104,7 @@
     {
       "enonce": "Un habitant vous interpelle publiquement sur un réseau social au sujet d'un dossier qu'il suit. Que faites-vous ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Répondre publiquement sur le fond, c'est traiter un dossier individuel en place publique : c'est une atteinte au secret, même avec les meilleures intentions, et cela crée un précédent que le service ne pourra pas tenir. La bonne conduite est d'inviter la personne à passer par le canal officiel du service, sans entrer dans le détail, et de signaler l'interpellation à sa hiérarchie et à la communication — qui gèrent ce type de sollicitation et ont parfois déjà une réponse. Répondre en message privé depuis un compte personnel n'est pas non plus la solution : l'échange sort de toute traçabilité et vous laisse seul en cas de contestation. Corriger « seulement une erreur factuelle » revient déjà à parler du dossier en public : c'est le service, par son canal, qui rectifie.",
       "reponses": [
         {
@@ -132,7 +132,7 @@
     {
       "enonce": "Vous animez une page officielle d'un équipement de la Ville. Quelles règles s'appliquent aux photos ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "difficile",
       "explication": "Publier l'image d'une personne suppose son autorisation, écrite et conservée — et celle des titulaires de l'autorité parentale pour un mineur. Cette autorisation n'est pas éternelle : elle peut être retirée, et il faut alors dépublier. Une vue d'ensemble où personne n'est identifiable échappe à cette contrainte, et c'est souvent la meilleure façon d'illustrer une animation sans monter un dossier. Ce qui n'est jamais acceptable : publier d'abord et retirer si quelqu'un se plaint — le dommage est fait dès la mise en ligne, et les images sont recopiées. Le compte personnel de l'agent, enfin, n'est pas le canal de l'équipement. Un affichage à l'entrée n'est pas une autorisation : elle est individuelle, écrite et conservée.",
       "reponses": [
         {
@@ -160,7 +160,7 @@
     {
       "enonce": "Un compte se fait passer pour vous et écrit à vos collègues. Que faites-vous ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "L'usurpation de profil est une infraction, et elle sert le plus souvent à obtenir quelque chose de vos collègues — un virement, un document, un mot de passe — en s'appuyant sur la confiance qu'ils vous accordent. Trois gestes : signaler le compte à la plateforme, prévenir explicitement vos collègues et votre hiérarchie pour couper l'effet de surprise, et conserver des captures d'écran, qui serviront à la plainte. Prévenir la DSI a du sens dès que la collectivité est visée. Ce qui ne sert à rien, c'est de contacter l'usurpateur pour lui demander de cesser : cela le renseigne sur votre réaction et rien d'autre. Et attendre que cela passe laisse le champ libre. Cela vaut aussi sous forme de mise en demeure : la preuve, ce sont les captures, pas votre message. Et attendre la réponse de la plateforme avant d'alerter les collègues laisse à l'usurpateur les jours dont il a besoin.",
       "reponses": [
         {
@@ -188,7 +188,7 @@
     {
       "enonce": "Quels réglages de compte valent la peine d'être vérifiés une fois par an ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "Un compte se configure une fois et se dérègle tout seul : les plateformes changent leurs options, et d'anciens réglages deviennent permissifs. Quatre points méritent une visite annuelle. La double authentification, qui est la seule protection réellement efficace contre le vol de compte. Les applications tierces autorisées, qui s'accumulent au fil des connexions « avec mon compte » et gardent leurs accès des années. La visibilité des publications anciennes, souvent bien plus large qu'on ne le croit. Et la liste des appareils connectés, qui contient parfois un téléphone revendu il y a deux ans. Multiplier les comptes, en revanche, ne protège de rien — cela multiplie simplement les surfaces à surveiller. Changer le mot de passe chaque année par principe n'apporte rien s'il est long, unique et protégé par la double authentification : on le change en cas de fuite, pas au calendrier.",
       "reponses": [
         {
@@ -210,6 +210,90 @@
         {
           "libelle": "Le mot de passe, à renouveler chaque année par précaution",
           "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Vous publiez une photo prise au bureau, entre collègues. Que peut-elle révéler sans que vous y pensiez ?",
+      "multiple": true,
+      "difficulte": "facile",
+      "explication": "Ce que l'on regarde sur une photo et ce qu'un attaquant y cherche sont deux choses différentes. Un écran resté allumé en arrière-plan affiche parfois un dossier nominatif ou une application métier. Un badge photographié se reproduit, et son apparence exacte suffit à en fabriquer un faux crédible. Un tableau blanc, un plan d'évacuation ou une note affichée au mur livrent une organisation interne qui n'a aucune raison d'être publique. Le réflexe est simple : regarder l'arrière-plan avant de publier, et demander l'accord des collègues qui figurent sur l'image — leur image leur appartient, y compris au travail. En revanche, la couleur des murs ou le modèle de la machine à café n'intéressent personne : il ne s'agit pas de ne plus rien publier, mais de savoir ce qui se trouve dans le cadre.",
+      "reponses": [
+        {
+          "libelle": "Un écran allumé affichant un dossier ou une application métier",
+          "correcte": true
+        },
+        {
+          "libelle": "Un badge d'accès, reproductible à partir de sa photo",
+          "correcte": true
+        },
+        {
+          "libelle": "Un tableau ou une note affichée au mur, révélant l'organisation interne",
+          "correcte": true
+        },
+        {
+          "libelle": "La couleur des murs du bureau",
+          "correcte": false
+        },
+        {
+          "libelle": "Le modèle de la machine à café du service",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Un groupe de messagerie « collègues du service » s'est créé sur une application personnelle, et des informations de travail y circulent. Qu'en pensez-vous ?",
+      "multiple": true,
+      "difficulte": "moyen",
+      "explication": "Ces groupes naissent d'un besoin réel — se joindre vite, en particulier pour les agents de terrain — et ils rendent service ; le problème n'est pas le groupe, c'est ce qu'on y met. Dès qu'un nom d'usager, une photo d'intervention ou une pièce de dossier y circulent, des données de la collectivité se retrouvent hébergées sur un service personnel, hors de tout cadre, sans sauvegarde ni possibilité d'effacement maîtrisé. Deux règles suffisent à assainir la pratique : y limiter les échanges à l'organisation pratique — horaires, absences, lieu de rendez-vous —, et faire passer tout ce qui touche à un dossier par les outils de la Ville. Il faut aussi penser aux départs : un agent qui quitte le service doit sortir du groupe, ce que personne ne fait jamais spontanément. L'argument « c'est privé, donc cela ne regarde que nous » ne tient pas : le caractère privé de l'outil ne change rien à la nature professionnelle des données.",
+      "reponses": [
+        {
+          "libelle": "Les échanges doivent se limiter à l'organisation pratique",
+          "correcte": true
+        },
+        {
+          "libelle": "Tout ce qui touche à un dossier passe par les outils de la Ville",
+          "correcte": true
+        },
+        {
+          "libelle": "Un agent qui quitte le service doit être retiré du groupe",
+          "correcte": true
+        },
+        {
+          "libelle": "C'est un groupe privé : ce qui s'y échange ne regarde que ses membres",
+          "correcte": false
+        },
+        {
+          "libelle": "Les photos d'intervention peuvent y circuler, elles ne montrent pas de noms",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "En message privé, une personne se présentant comme journaliste vous interroge sur un dossier sensible de votre service. Que faites-vous ?",
+      "multiple": true,
+      "difficulte": "difficile",
+      "explication": "Un agent territorial n'est pas le porte-parole de sa collectivité : la parole publique relève des élus et du service communication, et cette règle protège autant l'agent que l'institution. Répondre, même de bonne foi, même « à titre personnel », engage la Ville aux yeux du lecteur et expose l'agent au devoir de réserve et au secret professionnel. La conduite à tenir est donc d'orienter vers le service communication, d'informer sa hiérarchie de la sollicitation, et de conserver l'échange sans y répondre sur le fond. Il faut aussi garder à l'esprit que l'identité annoncée n'est pas vérifiée : se présenter comme journaliste est un prétexte commode, employé pour obtenir des informations internes. Répondre « en off » n'existe pas dans un message écrit qui se capture, et donner « juste les éléments publics » revient à valider implicitement le reste du récit.",
+      "reponses": [
+        {
+          "libelle": "J'oriente vers le service communication",
+          "correcte": true
+        },
+        {
+          "libelle": "J'informe ma hiérarchie de la sollicitation",
+          "correcte": true
+        },
+        {
+          "libelle": "Je réponds « en off », à titre personnel",
+          "correcte": false
+        },
+        {
+          "libelle": "Je donne seulement les éléments déjà publics, pour montrer ma bonne volonté",
+          "correcte": false
+        },
+        {
+          "libelle": "Je conserve l'échange sans répondre sur le fond : l'identité n'est pas vérifiée",
+          "correcte": true
         }
       ]
     }

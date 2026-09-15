@@ -8,6 +8,7 @@ relèvent les défis au fil de leurs parutions, et font gagner des points à leu
 - **Rattachement au service déduit de l'annuaire** (OU du DN) : aucune liste à maintenir
 - **Double classement** : par service (moyenne par agent + taux de participation) et individuel nominatif
 - **Questions à choix multiples** avec validation explicite et notation partielle
+- **Barème unique** : dix questions par défi, cent points, la difficulté fixant les points
 - **Badges, podium, attestation imprimable**
 - **Relances et résultats hebdomadaires** envoyés automatiquement par SMTP
 - **Import de l'effectif** depuis un export d'annuaire, avec prévisualisation
@@ -267,13 +268,36 @@ explicite.
 Deux méthodes, au choix :
 
 - **Par le back-office** — Administration → Défis → Modifier. Édition complète des énoncés,
-  contextes, réponses, bonnes réponses, points et explications. C'est la méthode à privilégier
-  pendant la campagne.
+  contextes, réponses, bonnes réponses, difficulté et explications. C'est la méthode à
+  privilégier pendant la campagne.
 - **Par les fichiers** — `content/modules/<code>.json`, puis Administration → Technique →
   Recharger les contenus. Pratique pour préparer une édition suivante ou versionner les
   contenus dans Git.
 
 Un défi déjà joué n'est jamais écrasé par un rechargement, sauf en forçant explicitement.
+
+### Le barème : dix questions, cent points
+
+Chaque défi compte **dix questions pour cent points**, répartis ainsi :
+
+| Difficulté | Points | Par défi |
+|---|---|---|
+| Facile — un réflexe, une définition | 5 | 3 questions |
+| Moyenne — choisir entre des conduites plausibles | 10 | 4 questions |
+| Difficile — cas limite, piège, procédure | 15 | 3 questions |
+
+Les points **ne se saisissent pas** : ils découlent de la difficulté, et l'enregistrement
+d'un défi qui s'écarte de cette répartition est refusé, en disant ce qui manque.
+
+Les deux exigences derrière cette règle sont également fortes. Une question difficile doit
+rapporter davantage qu'une question de réflexe — sans quoi reconnaître une signature de
+domaine vaut autant que reconnaître une pièce jointe suspecte. Et deux défis doivent peser
+le même poids au classement : quand un questionnaire valait 115 points et un autre 70,
+c'était la semaine, et non l'agent, qui décidait du classement — celui qui avait manqué la
+semaine lourde ne rattrapait plus, quoi qu'il fasse ensuite.
+
+Le catalogue est vérifié par `node --test tests/modules.test.mjs`, et l'écran de
+programmation signale tout module qui ne tiendrait pas le barème.
 
 ### Suivre la participation
 

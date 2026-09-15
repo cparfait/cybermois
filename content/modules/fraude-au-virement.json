@@ -20,7 +20,7 @@
     {
       "enonce": "Un fournisseur habituel écrit : « Suite à un changement de banque, merci d'utiliser ce nouveau RIB pour les prochaines factures ». Quels éléments doivent alerter ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Ce message est le grand classique, et il est souvent authentique dans la forme : les escrocs ont parfois lu de vrais échanges, parce qu'ils ont accès à la boîte du fournisseur. D'où l'inutilité de se fier au ton, à la signature ou à l'historique de la conversation. Ce qui alerte : un changement de RIB non sollicité, l'insistance sur une facture en cours, un domaine d'expéditeur légèrement différent, et une banque étrangère alors que le fournisseur est local. Mais la règle ne doit pas reposer sur ces indices : tout changement de coordonnées bancaires se vérifie par téléphone, au numéro du contrat, quels que soient les indices.",
       "reponses": [
         {
@@ -48,7 +48,7 @@
     {
       "enonce": "Comment vérifier correctement un changement de coordonnées bancaires ?",
       "multiple": false,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "Tout tient dans le canal. Rappeler au numéro figurant dans le message ou dans sa signature, c'est appeler l'escroc : il a écrit les deux. Le seul numéro fiable est celui du contrat, du marché ou d'une facture ancienne — antérieure au message. Répondre par mail ne vaut rien non plus, puisque la réponse arrivera à celui qui contrôle la conversation. Et l'ancienneté de la relation ne prouve rien : les fraudes les mieux réussies visent des fournisseurs de longue date, précisément parce que la confiance y est installée. Une attestation ou un RIB à en-tête obtenus par le même canal ne valent pas plus : celui qui tient la conversation fournira les documents qu'on lui demande. Le nom du titulaire et le pays de la banque ne prouvent rien non plus : les escrocs ouvrent des comptes au nom du fournisseur, y compris en France.",
       "reponses": [
         {
@@ -72,7 +72,7 @@
     {
       "enonce": "Le service Marchés Publics reçoit une facture d'un prestataire pour une prestation « réalisée le mois dernier ». Que vérifier avant paiement ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "difficile",
       "explication": "La fausse facture prospère sur les circuits longs : celui qui reçoit ne sait pas si la prestation a eu lieu, celui qui sait ne voit pas passer la facture. Trois vérifications suffisent le plus souvent. La prestation correspond-elle à un marché ou à un bon de commande existant ? Le service concerné confirme-t-il qu'elle a bien été réalisée ? Le RIB est-il celui déjà enregistré ? S'y ajoute un contrôle simple de cohérence des montants. À l'inverse, la qualité du papier à en-tête et l'urgence invoquée n'ont aucune valeur probante — l'urgence est même le levier principal de la fraude. Le SIRET, le logo et l'en-tête sont publics, donc recopiables : ils n'ont aucune valeur probante. Et les relances répétées ne confirment rien : elles font partie du scénario.",
       "reponses": [
         {
@@ -100,7 +100,7 @@
     {
       "enonce": "Pourquoi l'urgence est-elle presque toujours présente dans ces fraudes ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "L'urgence n'est pas un décor, c'est l'outil. Elle empêche l'appel de vérification, qui prendrait trois minutes et ferait tout échouer. Elle sert de prétexte pour sauter une étape du circuit habituel — « exceptionnellement, sans passer par la commission ». Et elle place l'agent devant un dilemme personnel : bloquer une opération présentée comme vitale, ou faire confiance. Les escrocs choisissent d'ailleurs leurs moments — veille de congés, pont de mai, fin d'exercice — quand les valideurs habituels sont absents. La contre-mesure est une règle simple et connue de tous : aucune urgence ne justifie de sauter la vérification, et personne ne sera jamais sanctionné pour avoir pris trois minutes. Le retard de paiement réel des collectivités n'explique rien : un vrai fournisseur relance par les voies habituelles, il ne demande pas de changer de RIB dans l'heure.",
       "reponses": [
         {
@@ -128,7 +128,7 @@
     {
       "enonce": "Quelles organisations internes rendent la fraude plus difficile ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "difficile",
       "explication": "Aucun agent ne devrait pouvoir, seul, créer un tiers et lui payer une facture : la séparation entre celui qui saisit et celui qui valide est la protection la plus efficace, et elle protège aussi l'agent en cas de contestation. Un seuil au-delà duquel une double validation s'impose complète le dispositif. Une procédure écrite pour les changements de RIB évite que chacun improvise, et le fait de l'avoir répétée en équipe compte plus que son existence dans un classeur. Ce qui ne fonctionne pas : compter sur la vigilance individuelle, qui varie avec la fatigue, ou espérer que la trésorerie rattrapera l'erreur — le comptable public vérifie la régularité, pas l'authenticité d'un RIB. La formation aide, mais elle ne remplace pas la règle.",
       "reponses": [
         {
@@ -156,7 +156,7 @@
     {
       "enonce": "Un appel : « Direction générale des Finances publiques, nous régularisons un trop-perçu, confirmez-nous les coordonnées de la régie ». Que faites-vous ?",
       "multiple": false,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "L'administration fiscale et le comptable public ne procèdent pas par appels impromptus pour collecter des coordonnées bancaires ou des identifiants : ils écrivent, par les canaux officiels que la collectivité connaît déjà. L'affichage d'un numéro officiel ne prouve rien, il se falsifie. Le bon réflexe est de raccrocher et de rappeler votre interlocuteur habituel à la trésorerie, au numéro que vous avez, pas à celui qu'on vous donne. Et de le signaler, car ces campagnes visent plusieurs communes à la fois : prévenir les collègues des Finances évite le deuxième appel, celui qui aboutit. Confirmer ce que l'appelant annonce est déjà donner une information : c'est ainsi que s'assemble, pièce par pièce, un dossier complet. Même si un RIB figure sur des documents publics, ce n'est jamais le RIB seul que cherche l'appelant : c'est le nom du régisseur, ses habitudes, son numéro direct. Et une adresse d'expédition en @dgfip.finances.gouv.fr se falsifie aussi facilement qu'un numéro affiché.",
       "reponses": [
         {
@@ -180,7 +180,7 @@
     {
       "enonce": "Le virement est parti sur un compte frauduleux. Quelles sont les premières heures ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "difficile",
       "explication": "Le temps est le seul allié. La banque doit être prévenue immédiatement : un rappel de fonds a des chances réelles tant que la somme n'a pas été dispersée, ce qui se compte en heures, pas en jours. Prévenir simultanément la direction, la trésorerie et la DSI permet d'ouvrir les trois volets — financier, comptable, technique — car il faut aussi savoir si une boîte a été compromise, sans quoi la fraude recommencera. La plainte suit, et elle est nécessaire à la suite du dossier. Ce qu'il ne faut surtout pas faire, c'est attendre par crainte du reproche : chaque heure perdue réduit à néant les chances de récupération. Attendre un responsable absent pour agir « proprement » revient au même : le rappel de fonds n'attend pas la coordination.",
       "reponses": [
         {
@@ -201,6 +201,90 @@
         },
         {
           "libelle": "Attendre le retour du responsable des Finances pour agir de façon coordonnée",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Un message signé du Directeur général demande un virement urgent et confidentiel, « à ne surtout pas évoquer autour de vous ». Que faites-vous ?",
+      "multiple": true,
+      "difficulte": "facile",
+      "explication": "C'est la fraude dite au président, et elle repose entièrement sur deux ressorts : l'autorité, qui décourage la question, et le secret, qui empêche la vérification. Un ordre légitime ne craint jamais d'être vérifié, et aucune procédure de la collectivité ne prévoit qu'un virement échappe au circuit habituel parce qu'il serait confidentiel. Le bon geste est donc de rappeler la personne sur son numéro connu — celui de l'annuaire interne, jamais celui du message — et d'en parler à sa hiérarchie ou à la DSI, précisément parce qu'on vous demande de ne pas le faire. Répondre au message pour demander confirmation ne prouve rien : c'est l'escroc qui répondra. Et exécuter maintenant en se disant qu'on régularisera après revient à faire partir l'argent avant toute vérification, au moment même où il est encore récupérable.",
+      "reponses": [
+        {
+          "libelle": "J'appelle la personne sur son numéro connu de l'annuaire interne",
+          "correcte": true
+        },
+        {
+          "libelle": "J'en parle à ma hiérarchie, malgré la demande de confidentialité",
+          "correcte": true
+        },
+        {
+          "libelle": "Je réponds au message pour demander confirmation par écrit",
+          "correcte": false
+        },
+        {
+          "libelle": "J'exécute maintenant et je régularise ensuite : c'est le DG qui demande",
+          "correcte": false
+        },
+        {
+          "libelle": "Je conserve le message pour le signalement, sans y répondre",
+          "correcte": true
+        }
+      ]
+    },
+    {
+      "enonce": "Vous recevez un mail de changement de RIB. Dix minutes plus tard, un appel « du fournisseur » confirme le changement. Que concluez-vous ?",
+      "multiple": true,
+      "difficulte": "moyen",
+      "explication": "La double vérification ne vaut que si le second canal est choisi par vous, et non fourni par le message. Un appel qui arrive juste après le mail n'est pas une confirmation : c'est la suite du scénario, et sa promptitude devrait au contraire augmenter la méfiance. La seule vérification qui a du sens consiste à rappeler le fournisseur au numéro figurant au contrat ou dans la base fournisseurs — pas celui du mail, pas celui de la signature, pas celui que l'appelant vous dicte —, et à parler à l'interlocuteur habituel, celui dont vous connaissez la voix et le dossier. Il faut aussi accepter de faire attendre : un vrai fournisseur comprend qu'un changement de coordonnées bancaires prenne quelques jours. Considérer que deux canaux concordants suffisent est exactement l'erreur que la fraude exploite, puisque c'est elle qui a fabriqué les deux.",
+      "reponses": [
+        {
+          "libelle": "Je rappelle le fournisseur au numéro du contrat, pas à celui reçu",
+          "correcte": true
+        },
+        {
+          "libelle": "Je parle à l'interlocuteur habituel, dont je connais la voix et le dossier",
+          "correcte": true
+        },
+        {
+          "libelle": "Deux canaux concordants, mail et téléphone : la demande est validée",
+          "correcte": false
+        },
+        {
+          "libelle": "L'appel si rapproché du mail est un signal d'alerte supplémentaire",
+          "correcte": true
+        },
+        {
+          "libelle": "J'assume de faire attendre le fournisseur le temps de la vérification",
+          "correcte": true
+        }
+      ]
+    },
+    {
+      "enonce": "La facture habituelle arrive cette fois d'une adresse légèrement différente : « @groupe-durand-tp.fr » au lieu de « @durand-tp.fr ». Que faites-vous ?",
+      "multiple": true,
+      "difficulte": "moyen",
+      "explication": "L'enregistrement d'un domaine ressemblant coûte une dizaine d'euros et constitue la préparation la plus courante d'une fraude au virement : le message est ensuite parfaitement crédible, puisqu'il reprend l'historique, le ton et les références du vrai fournisseur. Comparer l'adresse caractère par caractère avec les échanges précédents est le geste qui révèle la supercherie, parce que l'œil, lui, lit le nom de l'entreprise et saute le reste. Le doute se lève en appelant le fournisseur par un canal connu, et le service comptable comme la DSI doivent être prévenus : d'autres services reçoivent probablement les mêmes messages. Répondre au message pour demander une explication revient à dialoguer avec l'escroc, et se rassurer parce que la facture est conforme à la commande ne prouve rien — l'attaquant a lu la vraie facture avant de la renvoyer.",
+      "reponses": [
+        {
+          "libelle": "Je compare l'adresse caractère par caractère avec les échanges précédents",
+          "correcte": true
+        },
+        {
+          "libelle": "J'appelle le fournisseur sur un numéro connu avant tout traitement",
+          "correcte": true
+        },
+        {
+          "libelle": "Je préviens la comptabilité et la DSI : d'autres services sont peut-être visés",
+          "correcte": true
+        },
+        {
+          "libelle": "Je réponds au message pour demander pourquoi l'adresse a changé",
+          "correcte": false
+        },
+        {
+          "libelle": "La facture correspond à la commande : elle est donc authentique",
           "correcte": false
         }
       ]

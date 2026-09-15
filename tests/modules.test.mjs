@@ -10,6 +10,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { baseJetable, nettoyerALaFin } from './base-jetable.mjs';
+import { verifierBareme, QUESTIONS_PAR_DEFI, TOTAL_DEFI, NIVEAUX } from '../src/lib/bareme.js';
 
 // Le catalogue se lit sur disque, mais src/lib/modules.js charge db.js :
 // l'importer creait et ouvrait data/cybermois.db, la base de PRODUCTION.
@@ -39,7 +40,19 @@ for (const meta of modules) {
     const m = lireModule(meta.code);
     assert.ok(m.titre && m.accroche && m.intro, 'titre, accroche et intro sont attendus');
     assert.ok(m.badge?.code && m.badge.libelle && m.badge.emoji, 'badge incomplet');
-    assert.ok(m.questions.length >= 5, `${m.questions.length} question(s)`);
+
+    // Le bareme n'est pas negociable module par module : deux defis de poids
+    // differents faussent le classement de toute la campagne.
+    const bareme = verifierBareme(m.questions);
+    assert.ok(bareme.ok,
+      `${m.questions.length} question(s) pour ${bareme.total} points, attendu `
+      + `${QUESTIONS_PAR_DEFI} pour ${TOTAL_DEFI} — ${bareme.ecarts.join(', ')}`);
+
+    const niveaux = new Set(NIVEAUX.map((n) => n.cle));
+    m.questions.forEach((q, i) => {
+      assert.ok(niveaux.has(String(q.difficulte)),
+        `Q${i + 1} : difficulté « ${q.difficulte} » inconnue`);
+    });
 
     m.questions.forEach((q, i) => {
       const ou = `Q${i + 1}`;

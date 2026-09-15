@@ -1,4 +1,5 @@
 import { db, journaliser } from '../lib/db.js';
+import { niveauDe, verifierBareme, QUESTIONS_PAR_DEFI, TOTAL_DEFI } from '../lib/bareme.js';
 import { config } from '../lib/config.js';
 import { exigerAdmin } from '../lib/session.js';
 import { testerConnexion } from '../lib/ldap.js';
@@ -178,7 +179,8 @@ export default async function routesAdmin(app) {
 
       // Une question d'amorce, pour que l'editeur ne s'ouvre pas sur un ecran vide
       const q = db.prepare(
-        'INSERT INTO questions (defi_id, ordre, enonce, contexte, multiple, points, explication) VALUES (?, 1, ?, NULL, 1, 10, ?)'
+        'INSERT INTO questions (defi_id, ordre, enonce, contexte, multiple, difficulte, points, explication) '
+        + "VALUES (?, 1, ?, NULL, 1, 'moyen', 10, ?)"
       ).run(nouveauId, 'Nouvelle question — remplacez cet énoncé', '');
       const r = db.prepare('INSERT INTO reponses (question_id, ordre, libelle, correcte) VALUES (?, ?, ?, ?)');
       r.run(q.lastInsertRowid, 1, 'Première réponse (bonne)', 1);
@@ -292,6 +294,19 @@ export default async function routesAdmin(app) {
       if (!q.reponses.some((r) => r.correcte)) {
         return reponse.code(400).send({ erreur: `Question ${i + 1} : au moins une bonne réponse doit être cochée.` });
       }
+    }
+
+    // Le bareme n'est pas une preference d'affichage : deux defis de poids
+    // differents faussent le classement, et l'ecart ne se rattrape plus une
+    // fois la semaine passee. On refuse donc l'enregistrement, en disant quoi
+    // corriger.
+    const bareme = verifierBareme(questions);
+    if (!bareme.ok) {
+      return reponse.code(400).send({
+        erreur: `Le défi doit compter ${QUESTIONS_PAR_DEFI} questions pour ${TOTAL_DEFI} points `
+          + `(3 faciles, 4 moyennes, 3 difficiles). Actuellement : ${bareme.total} points — `
+          + `${bareme.ecarts.join(', ')}.`,
+      });
     }
 
     /**
@@ -419,12 +434,15 @@ export default async function routesAdmin(app) {
         // sont conserves, donc les reponses archivees des agents restent
         // rattachees a ce qu'elles designent.
         const majQ = db.prepare(`UPDATE questions SET ordre = ?, enonce = ?, contexte = ?,
-                                   multiple = ?, points = ?, explication = ? WHERE id = ?`);
+                                   multiple = ?, difficulte = ?, points = ?, explication = ?
+                                 WHERE id = ?`);
         const majR = db.prepare('UPDATE reponses SET ordre = ?, libelle = ?, correcte = ? WHERE id = ?');
         questions.forEach((q, i) => {
           const qid = existantes[i].id;
+          // Les points ne viennent pas du formulaire : ils decoulent du niveau.
+          const niveau = niveauDe(q);
           majQ.run(i + 1, q.enonce, q.contexte || null, q.multiple ? 1 : 0,
-            Math.max(1, Number(q.points) || 10), q.explication || '', qid);
+            niveau.cle, niveau.points, q.explication || '', qid);
           const rExistantes = db.prepare(
             'SELECT id FROM reponses WHERE question_id = ? ORDER BY ordre, id'
           ).all(qid);
@@ -432,13 +450,14 @@ export default async function routesAdmin(app) {
         });
       } else {
         db.prepare('DELETE FROM questions WHERE defi_id = ?').run(defi.id);
-        const insQ = db.prepare('INSERT INTO questions (defi_id, ordre, enonce, contexte, multiple, points, explication) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        const insQ = db.prepare('INSERT INTO questions (defi_id, ordre, enonce, contexte, multiple, difficulte, points, explication) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
         const insR = db.prepare('INSERT INTO reponses (question_id, ordre, libelle, correcte) VALUES (?, ?, ?, ?)');
         questions.forEach((q, i) => {
-          // Des points negatifs ou nuls etaient acceptes : une question sans
-          // valeur cassait le calcul du pourcentage.
+          // Les points ne se saisissent plus : le niveau les fixe, et le
+          // bareme verifie plus haut garantit qu'ils totalisent cent.
+          const niveau = niveauDe(q);
           const res = insQ.run(defi.id, i + 1, q.enonce, q.contexte || null, q.multiple ? 1 : 0,
-            Math.max(1, Number(q.points) || 10), q.explication || '');
+            niveau.cle, niveau.points, q.explication || '');
           q.reponses.forEach((r, j) => insR.run(res.lastInsertRowid, j + 1, r.libelle, r.correcte ? 1 : 0));
         });
       }
@@ -457,7 +476,7 @@ export default async function routesAdmin(app) {
       requete.ip);
     return {
       ok: true,
-      message: `Défi « ${corps.titre ?? defi.titre} » enregistré (${questions.length} questions). `
+      message: `Défi « ${corps.titre ?? defi.titre} » enregistré (${questions.length} questions, ${bareme.total} points). `
         + 'Vos modifications sont désormais protégées : le rechargement des contenus ne les '
         + 'remplacera plus par le module d’origine.'
         + (reelles

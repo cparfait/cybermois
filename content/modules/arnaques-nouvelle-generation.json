@@ -21,7 +21,7 @@
       "enonce": "Un autocollant portant un QR code a été collé sur un horodateur de l'avenue de Paris. Que faut-il en penser ?",
       "contexte": "Le QR code renvoie vers une page aux couleurs de la Ville qui demande une carte bancaire pour régler le stationnement.",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "C'est du « quishing » : un faux QR code collé par-dessus le vrai, ou sur un support qui n'en comportait pas. La technique explose sur les horodateurs, les bornes de recharge et les affiches. Un QR code ne se lit pas à l'œil nu : impossible de savoir où il mène avant de l'avoir scanné, ce qui en fait un excellent piège. Deux réflexes : regarder si l'autocollant est collé par-dessus autre chose, et vérifier l'adresse affichée par le téléphone AVANT de valider quoi que ce soit. Un domaine qui n'est pas celui de la Ville ou de son prestataire doit arrêter le geste. Et si vous en croisez un, signalez-le : il piège des administrés toute la journée. Le téléphone n'analyse pas la page derrière un QR code : il ouvre l'adresse, rien de plus. Et le cadenas signifie seulement que la connexion est chiffrée — y compris avec un escroc : la plupart des sites frauduleux en ont un.",
       "reponses": [
         {
@@ -49,7 +49,7 @@
     {
       "enonce": "SMS reçu sur votre portable : « Votre colis est bloqué, 2,99 € de frais de douane à régler sous 48 h ». Quels éléments trahissent l'arnaque ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "Le petit montant est l'astuce centrale : 2,99 €, on paye sans réfléchir. Ce que veut l'escroc n'est pas la somme, c'est votre numéro de carte, sa date d'expiration et son cryptogramme — de quoi débiter bien davantage ensuite. Le compte à rebours sert à empêcher la réflexion. Quant au lien, il pointe vers un domaine qui imite le transporteur sans être le sien. Le bon réflexe est toujours le même : n'utilisez jamais le lien du message. Ouvrez vous-même le site du transporteur, avec votre numéro de suivi.",
       "reponses": [
         {
@@ -78,7 +78,7 @@
       "enonce": "Le service Finances reçoit ce message. Que doit faire l'agent ?",
       "contexte": "De : Nadège AZZAZ <n.azzaz@chatillon92.fr.eu> — Objet : Discret et urgent. « Je suis en réunion, je ne peux pas être dérangée. Un virement de 24 000 € doit partir aujourd'hui pour finaliser une acquisition. Merci de rester discrète, le dossier n'est pas encore public. »",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "C'est la « fraude au président », adaptée aux collectivités — et elle a coûté des centaines de milliers d'euros à plusieurs communes françaises. Tout est là : l'autorité, l'urgence, le secret demandé, et l'impossibilité de vérifier puisque l'expéditrice se dit injoignable. Le domaine trahit l'imposture : chatillon92.fr.eu n'est pas chatillon92.fr, c'est un domaine que n'importe qui peut acheter. Mais la règle ne doit pas dépendre de votre acuité visuelle : un virement exceptionnel se vérifie toujours par un canal indépendant, et la demande de confidentialité est en soi le signal d'alarme le plus fiable. Aucune élue, aucun DGS ne reprochera un appel de vérification. Vérifier que le RIB appartient à une société qui existe ne prouve rien : les escrocs ouvrent des comptes au nom de sociétés réelles ou éphémères. C'est la demande elle-même qu'il faut vérifier, pas ses pièces jointes.",
       "reponses": [
         {
@@ -106,7 +106,7 @@
     {
       "enonce": "Le téléphone sonne : « Bonjour, service informatique de la Ville, on a détecté un virus sur votre poste, je vous guide pour le nettoyer ». Quelles demandes doivent vous arrêter net ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "Le faux support technique se présente comme un secours et obtient tout parce qu'on est soulagé. Trois demandes sont rédhibitoires : installer un logiciel de prise en main à distance sur instruction téléphonique, dicter un mot de passe ou un code reçu par SMS, et désactiver l'antivirus. La DSI de Châtillon n'a besoin d'aucune des trois : elle intervient avec ses propres outils, sur des postes qu'elle administre déjà. En cas de doute, la seule bonne réponse est de raccrocher et de rappeler la DSI au numéro de l'annuaire interne. Un vrai technicien ne se vexera pas ; un escroc, lui, insistera pour rester en ligne.",
       "reponses": [
         {
@@ -134,7 +134,7 @@
     {
       "enonce": "En visioconférence, une personne à l'image et à la voix de votre directeur vous demande un accès urgent. Que faites-vous ?",
       "multiple": false,
-      "points": 10,
+      "difficulte": "difficile",
       "explication": "Le trucage vidéo en temps réel n'est plus un exercice de laboratoire : une entreprise de Hong Kong a viré 25 millions de dollars après une visio où tous les participants étaient synthétiques. L'image et la voix ne sont plus des preuves d'identité. Ce qui reste vrai, c'est le canal : raccrochez et rappelez sur le numéro que vous connaissez, ou allez frapper à la porte du bureau. Demander à la personne de bouger la tête ou de se lever aide parfois — les trucages tiennent mal les profils — mais c'est un indice, pas une garantie. Le rappel indépendant, si. Une question « dont lui seul connaît la réponse » ne vaut rien non plus : si la messagerie du directeur a été piratée, l'escroc a lu les mêmes échanges que vous. Et un accès « provisoire » suffit largement : quelques minutes permettent de copier ce qu'il faut.",
       "reponses": [
         {
@@ -159,7 +159,7 @@
       "enonce": "Votre banque vous appelle : « Nous avons bloqué un virement suspect, confirmez-nous le code que vous venez de recevoir ». Que faites-vous ?",
       "contexte": "Le numéro affiché est bien celui de votre agence, et l'interlocuteur connaît vos dernières opérations.",
       "multiple": false,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "L'affichage du numéro se falsifie en quelques secondes — c'est du « spoofing », et cela ne prouve rien. Que l'interlocuteur connaisse vos opérations non plus : ces données circulent après les fuites de fichiers clients. Le point de bascule est le code : ce code autorise l'opération, il ne l'annule pas. Le donner, c'est valider soi-même le virement que l'on croit bloquer. Aucun conseiller bancaire ne le demandera jamais. Raccrochez, et rappelez le numéro figurant au dos de votre carte — jamais celui qui vous a appelé. Se faire rappeler ne change rien : c'est vous qui devez composer le numéro, sinon vous retombez sur le même interlocuteur, avec le même numéro falsifié.",
       "reponses": [
         {
@@ -183,7 +183,7 @@
     {
       "enonce": "Parmi ces messages reçus sur la boîte de la Ville, lesquels sont des arnaques classiques du secteur public ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "difficile",
       "explication": "Ces trois-là tournent en permanence dans les collectivités. La fausse mise en demeure RGPD joue sur la peur de la sanction et facture une « mise en conformité » inutile. Le faux annuaire professionnel envoie un formulaire présenté comme gratuit dont les petites lignes engagent sur trois ans — et les tribunaux donnent rarement raison à celui qui a signé. Le faux fournisseur qui change de RIB est le plus coûteux des trois. À l'inverse, une facture d'un marché en cours et une invitation d'un syndicat intercommunal sont du quotidien : le but n'est pas de tout suspecter, mais de reconnaître les scénarios qui reviennent.",
       "reponses": [
         {
@@ -204,6 +204,90 @@
         },
         {
           "libelle": "Une invitation à une réunion du syndicat intercommunal, envoyée par son domaine habituel",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Une publicité sur un réseau social propose une formation « financée par votre CPF, il ne reste que 2 places ». Que faites-vous ?",
+      "multiple": true,
+      "difficulte": "facile",
+      "explication": "Le démarchage pour le compte personnel de formation est interdit depuis 2022, précisément parce qu'il servait à siphonner massivement les droits des salariés et des agents. Toute sollicitation de ce genre — publicité, SMS, appel — est donc déjà, en elle-même, une anomalie. Les droits se consultent et s'utilisent uniquement sur moncompteformation.gouv.fr, où l'on se rend soi-même, sans passer par un lien reçu. Communiquer son numéro de sécurité sociale ou ses identifiants FranceConnect à un « conseiller » revient à lui donner les clés du compte. Et la rareté annoncée — deux places, aujourd'hui seulement — n'est pas une information : c'est le mécanisme même de l'arnaque, qui vise à empêcher la vérification.",
+      "reponses": [
+        {
+          "libelle": "Je ne clique pas : le démarchage CPF est interdit, c'est donc une arnaque",
+          "correcte": true
+        },
+        {
+          "libelle": "Je passe par moncompteformation.gouv.fr si le sujet m'intéresse",
+          "correcte": true
+        },
+        {
+          "libelle": "Je donne mon numéro de sécurité sociale au conseiller pour vérifier mes droits",
+          "correcte": false
+        },
+        {
+          "libelle": "Je me dépêche : il ne reste que deux places",
+          "correcte": false
+        },
+        {
+          "libelle": "Je signale la publicité et je passe mon chemin",
+          "correcte": true
+        }
+      ]
+    },
+    {
+      "enonce": "En cherchant « mairie de Châtillon » sur un moteur de recherche, le premier résultat est une annonce sponsorisée menant à un site aux couleurs de la Ville qui propose de payer une amende en ligne. Qu'en pensez-vous ?",
+      "multiple": true,
+      "difficulte": "moyen",
+      "explication": "Acheter un mot-clé pour apparaître au-dessus du site officiel coûte quelques euros et ne demande aucune compétence technique : c'est l'une des voies d'entrée les plus rentables, parce que l'usager a fait la démarche lui-même et ne se méfie pas de ce qu'il a cherché. La position dans les résultats ne dit rien de la légitimité d'un site, surtout quand elle est achetée. Ce qui protège tient en deux gestes : lire le nom de domaine en entier avant de cliquer, et savoir qu'une collectivité n'encaisse pas d'amende sur son propre site — les amendes se paient sur amendes.gouv.fr. Un site bien fait, avec le bon logo et un cadenas HTTPS, ne prouve rien : le certificat est gratuit et le logo se copie d'un clic droit. Signaler l'annonce permet de la faire retirer, et évite que d'autres administrés y laissent leur carte bancaire.",
+      "reponses": [
+        {
+          "libelle": "Une annonce sponsorisée peut être achetée par n'importe qui, y compris un escroc",
+          "correcte": true
+        },
+        {
+          "libelle": "Je vérifie le nom de domaine complet avant de cliquer",
+          "correcte": true
+        },
+        {
+          "libelle": "Je le signale à la DSI et au service communication",
+          "correcte": true
+        },
+        {
+          "libelle": "Le cadenas HTTPS et le logo de la Ville prouvent qu'il s'agit du site officiel",
+          "correcte": false
+        },
+        {
+          "libelle": "Le premier résultat d'un moteur de recherche est forcément le site officiel",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Le téléphone affiche le numéro du centre des impôts. L'interlocuteur annonce que votre compte fiscal a été piraté et propose de vous guider pour « sécuriser » un virement. Que faites-vous ?",
+      "multiple": true,
+      "difficulte": "difficile",
+      "explication": "Le numéro affiché n'est pas une preuve d'identité : l'usurpation du numéro appelant est triviale, et c'est ce qui rend la fraude au faux conseiller si efficace. Le scénario est toujours le même : on vous met en état d'alerte, puis on vous propose de vous sauver, et c'est ce sauvetage qui vous dépouille. Aucune administration ne demande de déplacer de l'argent « en sécurité », de communiquer un code reçu par SMS, ni d'installer un outil de prise en main à distance. Le seul geste sûr est de raccrocher et de rappeler soi-même le numéro figurant sur un avis officiel ou sur impots.gouv.fr. Le fait que l'interlocuteur cite votre adresse ou votre numéro fiscal ne prouve rien : ces données ont fuité en masse, et les réciter fait partie du script. Rester en ligne « pour en savoir plus » joue contre vous : la technique repose sur la durée de l'appel, qui empêche de réfléchir et de vérifier.",
+      "reponses": [
+        {
+          "libelle": "Je raccroche et je rappelle le numéro officiel figurant sur mon avis d'imposition",
+          "correcte": true
+        },
+        {
+          "libelle": "Je ne communique aucun code reçu par SMS et je n'installe aucun logiciel",
+          "correcte": true
+        },
+        {
+          "libelle": "Le numéro affiché prouve qu'il s'agit bien du centre des impôts",
+          "correcte": false
+        },
+        {
+          "libelle": "Il connaît mon numéro fiscal : c'est donc un agent habilité",
+          "correcte": false
+        },
+        {
+          "libelle": "Je reste en ligne pour comprendre précisément ce qu'il veut",
           "correcte": false
         }
       ]

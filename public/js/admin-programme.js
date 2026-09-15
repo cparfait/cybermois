@@ -182,7 +182,8 @@ function rendre(cible) {
                   ${utilises.has(m.code) ? '<span class="pastille-etat etat-ok" style="margin-left:.5rem">programmé</span>' : ''}
                   <br><span class="discret" style="font-size:.84rem">${echapper(m.accroche)}</span>
                 </td>
-                <td class="num discret" style="white-space:nowrap">${m.questions} q · ${m.points} pts · ${m.duree_minutes} min</td>
+                <td class="num discret" style="white-space:nowrap">${m.questions} q · ${m.points} pts · ${m.duree_minutes} min
+                  ${m.bareme && !m.bareme.ok ? `<br><span style="color:var(--alerte);font-weight:700">⚠️ ${echapper(m.bareme.ecarts.join(', '))}</span>` : ''}</td>
                 <td style="width:90px"><button class="btn btn-secondaire" data-apercu="${echapper(m.code)}"
                         style="padding:.3rem .6rem;font-size:.8rem">Aperçu</button></td>
               </tr>`).join('')}

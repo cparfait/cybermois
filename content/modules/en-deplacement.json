@@ -20,7 +20,7 @@
     {
       "enonce": "Dans le train, vous préparez une note pour la direction générale. Quels risques réels ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "Le risque le plus banal est aussi le plus fréquent : la personne assise derrière vous lit tout. Un filtre de confidentialité règle la question pour quelques euros, et se choisir une place adossée aide autant. La conversation téléphonique est le second point : un dossier sensible discuté à voix haute dans un wagon est un dossier public, et l'anecdote circule ensuite. Le troisième est l'oubli, sur la tablette ou dans le porte-bagages, au moment de descendre. En revanche, le Wi-Fi du train n'est pas dangereux en soi tant que vous passez par le tunnel sécurisé, et une clé 4G personnelle est plutôt une bonne solution.",
       "reponses": [
         {
@@ -48,7 +48,7 @@
     {
       "enonce": "Le Wi-Fi gratuit d'un hôtel ou d'un centre de congrès : que faut-il en penser ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Un réseau ouvert n'est pas maudit, il est simplement partagé avec des inconnus. Deux précautions le rendent acceptable : passer par le tunnel sécurisé de la Ville, qui chiffre tout ce qui sort du poste, et se méfier des réseaux au nom crédible mais inconnu — un faux point d'accès nommé « Hotel_Wifi_Gratuit » se monte en dix minutes et capte tout ce qui passe. Demander le nom exact du réseau à l'accueil coûte une question. Ce qui doit alerter, c'est un avertissement de certificat au moment de se connecter : c'est le signe qu'on s'interpose. Et un portail qui demande un compte de messagerie pour « s'authentifier » n'a besoin de rien d'autre que de vos identifiants. HTTPS protège chaque site pris un par un ; le tunnel protège tout le poste, y compris ce qui se connecte tout seul en arrière-plan.",
       "reponses": [
         {
@@ -76,7 +76,7 @@
     {
       "enonce": "Vous laissez votre ordinateur portable dans la chambre d'hôtel pendant une journée de réunion. Que faites-vous avant de partir ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Un portable éteint et chiffré est illisible pour qui met la main dessus : c'est la protection principale, et elle ne fonctionne qu'à l'arrêt complet — un ordinateur en veille garde ses clés en mémoire. Le coffre de la chambre, s'il en existe un, vaut mieux que le lit. Ce qui compte au moins autant, c'est de ne pas laisser à côté ce qui annule la protection : les identifiants notés sur un carnet, ou la clé USB de sauvegarde. Le mot de passe de session, seul, ne protège pas un disque non chiffré : il suffit de retirer le disque pour tout lire.",
       "reponses": [
         {
@@ -104,7 +104,7 @@
     {
       "enonce": "Votre téléphone n'a plus de batterie dans une gare. Une borne de recharge USB est disponible. Que faites-vous ?",
       "multiple": false,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "Un port USB transporte de l'électricité et des données : brancher un téléphone sur une borne inconnue, c'est le brancher sur un appareil inconnu. La parade est simple et tient dans le sac : une batterie externe, ou un câble de charge seule dont les broches de données sont absentes, ou encore votre propre chargeur sur une prise électrique classique — une prise de courant ne transporte pas de données. Refuser la connexion sur l'écran du téléphone aide, mais dépend d'un choix fait dans la précipitation, avec 2 % de batterie et un train à prendre. Autant ne pas dépendre de sa vigilance à ce moment-là. Que la borne soit installée par l'exploitant ne garantit rien : elle peut avoir été modifiée après coup, sans que rien ne se voie. Et le mode avion coupe les ondes, pas le câble.",
       "reponses": [
         {
@@ -128,7 +128,7 @@
     {
       "enonce": "Vous représentez la Ville à un congrès. Quelles questions apparemment anodines méritent une réponse prudente ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "difficile",
       "explication": "La collecte d'informations en salon est un exercice discret et efficace : personne ne se méfie autour d'un café. Le nom du logiciel métier et de son éditeur permet de cibler les failles connues ; savoir qui décide des achats informatiques ouvre la voie à une fraude au virement bien construite ; connaître les périodes de congés du service indique quand attaquer. Ces trois questions n'ont rien d'illégal, et c'est bien le problème : la réponse utile est de renvoyer vers les canaux officiels. En revanche, le nombre d'habitants de Châtillon et le nom de la Maire figurent sur le site de la Ville : les taire n'apporterait rien.",
       "reponses": [
         {
@@ -156,7 +156,7 @@
     {
       "enonce": "Quels documents papier emporter en déplacement ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Le principe est celui du strict nécessaire : ce qui n'est pas dans le sac ne peut pas être perdu dans un train. Un ordre du jour et une note de synthèse anonymisée suffisent presque toujours. Le dossier nominatif complet, lui, reste au bureau : s'il faut y accéder, ce sera par le poste, avec le tunnel sécurisé. Et si un document sensible doit absolument voyager, il reste dans le bagage à main — jamais dans une valise en soute ni dans un coffre de voiture, où les vols sont fréquents et les assurances peu compatissantes.",
       "reponses": [
         {
@@ -184,7 +184,7 @@
     {
       "enonce": "Au retour, vous constatez que votre sacoche a été fouillée : rien ne manque. Que faites-vous ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "difficile",
       "explication": "Une fouille sans vol est plus inquiétante qu'un vol : quelqu'un a cherché autre chose que de la valeur marchande, ou a copié quelque chose. Le matériel doit être remis à la DSI pour vérification avant d'être rebranché au réseau de la Ville — un appareil manipulé peut avoir reçu un accessoire ou une modification. Changer ses mots de passe depuis un autre poste est une précaution peu coûteuse. Et le signalement compte, y compris auprès de la hiérarchie, parce qu'un incident isolé n'a pas le même sens qu'une série. Se dire que rien ne manque et reprendre le travail est précisément la réaction sur laquelle compte celui qui a fouillé.",
       "reponses": [
         {
@@ -205,6 +205,90 @@
         },
         {
           "libelle": "Vérifier moi-même le contenu de l'ordinateur avant d'en parler",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Vous partez trois jours en déplacement avec le portable de la Ville. Quel est le bon réflexe avant de partir ?",
+      "multiple": true,
+      "difficulte": "facile",
+      "explication": "Un déplacement se prépare la veille, pas dans le train. Deux gestes suffisent à réduire l'essentiel du risque : n'emporter que ce dont on a besoin — un portable allégé des dossiers qui n'ont rien à faire du voyage est un portable dont la perte coûte peu — et vérifier que l'on sait qui appeler, et à quel numéro, si l'appareil disparaît. Prévenir la DSI est utile quand la destination est inhabituelle, en particulier hors de l'Union européenne. À l'inverse, copier « au cas où » tous ses dossiers sur une clé personnelle multiplie exactement ce qu'on cherche à limiter, et noter le mot de passe dans la sacoche revient à ranger la clé avec la serrure.",
+      "reponses": [
+        {
+          "libelle": "N'emporter que les documents nécessaires au déplacement",
+          "correcte": true
+        },
+        {
+          "libelle": "Vérifier que je sais qui prévenir, et comment, en cas de perte ou de vol",
+          "correcte": true
+        },
+        {
+          "libelle": "Copier tous mes dossiers sur une clé personnelle, au cas où",
+          "correcte": false
+        },
+        {
+          "libelle": "Noter le mot de passe de session dans la sacoche, en cas de trou de mémoire",
+          "correcte": false
+        },
+        {
+          "libelle": "Prévenir la DSI si la destination est inhabituelle, notamment hors UE",
+          "correcte": true
+        }
+      ]
+    },
+    {
+      "enonce": "En déplacement, vous devez consulter une application interne de la Ville. Comment vous connectez-vous ?",
+      "multiple": true,
+      "difficulte": "moyen",
+      "explication": "Le partage de connexion du téléphone professionnel est la solution la plus simple et la plus sûre : le réseau est le vôtre, personne d'autre n'est dessus. Quand l'accès distant officiel — VPN ou portail — est disponible, il s'utilise systématiquement, y compris sur un réseau qui paraît fiable : c'est lui qui protège la liaison, quel que soit le Wi-Fi traversé. Se connecter en clair sur le Wi-Fi ouvert d'un hall d'hôtel revient à faire confiance à un réseau dont on ne sait rien, y compris à qui l'a nommé ainsi. Emprunter l'ordinateur de l'hôtel ou d'un partenaire est pire encore : rien ne dit ce qui y est installé, et le mot de passe saisi y reste. Quant à demander à un collègue de faire la manipulation à votre place avec ses identifiants, cela transforme une contrainte passagère en partage de compte durable.",
+      "reponses": [
+        {
+          "libelle": "Le partage de connexion de mon téléphone professionnel",
+          "correcte": true
+        },
+        {
+          "libelle": "L'accès distant officiel (VPN ou portail), même sur un réseau qui semble fiable",
+          "correcte": true
+        },
+        {
+          "libelle": "Le Wi-Fi ouvert du hall, sans autre précaution",
+          "correcte": false
+        },
+        {
+          "libelle": "L'ordinateur mis à disposition par l'hôtel",
+          "correcte": false
+        },
+        {
+          "libelle": "Les identifiants d'un collègue resté au bureau, le temps du déplacement",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "À un contrôle frontalier, on vous demande de déverrouiller l'ordinateur portable de la Ville et d'en montrer le contenu. Que faites-vous ?",
+      "multiple": true,
+      "difficulte": "difficile",
+      "explication": "La situation est rare, mais elle ne s'improvise pas : le matériel et les données appartiennent à la collectivité, pas à l'agent, et celui-ci n'a pas qualité pour décider seul de leur communication. On coopère sans se mettre en difficulté personnelle, on indique que l'appareil est professionnel, on demande à prévenir sa hiérarchie ou la DSI, et on note ce qui s'est passé : heure, lieu, service, durée pendant laquelle l'appareil a quitté votre vue. Ce dernier point est décisif, car un appareil rendu après être sorti de votre champ de vision doit être vérifié par la DSI avant d'être rebranché au réseau de la Ville. Refuser en bloc peut avoir des conséquences légales sur place ; à l'inverse, communiquer son mot de passe et laisser copier sans rien dire, puis reprendre le travail comme si de rien n'était, prive la collectivité de toute possibilité de réagir. La meilleure parade reste en amont : partir avec un appareil qui ne contient presque rien.",
+      "reponses": [
+        {
+          "libelle": "J'indique qu'il s'agit d'un appareil professionnel et je demande à prévenir ma hiérarchie",
+          "correcte": true
+        },
+        {
+          "libelle": "Je note précisément l'incident : heure, lieu, service, durée hors de ma vue",
+          "correcte": true
+        },
+        {
+          "libelle": "Je signale l'incident à la DSI avant de rebrancher l'appareil au réseau de la Ville",
+          "correcte": true
+        },
+        {
+          "libelle": "Je communique mon mot de passe et je n'en parle à personne au retour",
+          "correcte": false
+        },
+        {
+          "libelle": "Je reprends le travail normalement : l'appareil m'a été rendu, donc tout va bien",
           "correcte": false
         }
       ]

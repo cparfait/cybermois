@@ -1,5 +1,6 @@
 import { api, echapper, initialiserPage, alerte, confettis, animationsReduites } from '/js/commun.js';
 import { reconnaitreVideo, lienVideoSur } from '/js/video.js';
+import { libelleNiveau } from '/js/bareme.js';
 
 await initialiserPage('/accueil');
 
@@ -277,7 +278,7 @@ function afficherQuestion() {
     <div class="barre-progression">
       <div class="etat-progression">
         <span>Question ${index + 1} sur ${total}</span>
-        <span>${q.points} points</span>
+        <span>${libelleNiveau(q.difficulte) ? `${libelleNiveau(q.difficulte)} · ` : ''}${q.points} points</span>
       </div>
       <div class="piste" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pourcent}"
            aria-label="Progression dans le défi"><span style="width:${pourcent}%"></span></div>

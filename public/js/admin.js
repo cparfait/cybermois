@@ -8,6 +8,7 @@ import { formulaireRecalcul, chargerRegistre } from '/js/admin-corrections.js';
 import { ecranProgramme } from '/js/admin-programme.js';
 import { formulaireServices } from '/js/admin-services.js';
 import { reconnaitreVideo } from '/js/video.js';
+import { NIVEAUX, niveauDe, verifierBareme, QUESTIONS_PAR_DEFI, TOTAL_DEFI } from '/js/bareme.js';
 
 await initialiserPage('/administration');
 
@@ -454,9 +455,11 @@ async function ouvrirEditeur(id) {
         <textarea id="contexte-${i}" data-champ="contexte">${echapper(q.contexte || '')}</textarea>
       </div>
       <div class="rang" style="align-items:flex-end">
-        <div class="champ-admin" style="width:120px">
-          <label for="points-${i}">Points</label>
-          <input type="number" id="points-${i}" data-champ="points" value="${q.points}" min="1" max="100">
+        <div class="champ-admin" style="width:220px">
+          <label for="difficulte-${i}">Difficulté</label>
+          <select id="difficulte-${i}" data-champ="difficulte">
+            ${NIVEAUX.map((n) => `<option value="${n.cle}" ${niveauDe(q).cle === n.cle ? 'selected' : ''}>${n.libelle} — ${n.points} points</option>`).join('')}
+          </select>
         </div>
         <div class="champ-admin">
           <label style="display:flex;align-items:center;gap:.5rem;font-weight:600">
@@ -589,6 +592,13 @@ async function ouvrirEditeur(id) {
       <div id="apercu-video-editeur" style="margin-top:.6rem"></div>
 
       <h3 style="margin-top:1.5rem">Questions</h3>
+      <p class="discret" style="margin-top:-.4em">
+        Chaque défi compte ${QUESTIONS_PAR_DEFI} questions pour ${TOTAL_DEFI} points :
+        ${NIVEAUX.map((n) => `${n.attendues} ${n.libelle.toLowerCase()}${n.attendues > 1 ? 's' : ''} à ${n.points} points`).join(', ')}.
+        Les points découlent de la difficulté — ils ne se saisissent pas. Deux défis pèsent ainsi
+        le même poids au classement, quelle que soit la semaine où l'agent a joué.
+      </p>
+      <p id="etat-bareme" class="ui" style="font-weight:700;margin:.6rem 0"></p>
       <div id="liste-questions">${defi.questions.map(rendreQuestion).join('')}</div>
       <button type="button" class="btn btn-secondaire" id="btn-ajouter-question">+ Ajouter une question</button>
 
@@ -604,10 +614,29 @@ async function ouvrirEditeur(id) {
 
   const liste = document.getElementById('liste-questions');
 
+  /**
+   * Etat du bareme, en continu. Le serveur refuse un defi qui ne le respecte
+   * pas : le dire au moment ou l'on ecrit evite de le decouvrir en cliquant
+   * sur « Enregistrer », dix questions plus tard.
+   */
+  const rafraichirBareme = () => {
+    const niveaux = [...liste.querySelectorAll('[data-champ="difficulte"]')]
+      .map((select) => ({ difficulte: select.value }));
+    const v = verifierBareme(niveaux);
+    const etat = document.getElementById('etat-bareme');
+    etat.textContent = v.ok
+      ? `✅ ${niveaux.length} questions · ${v.total} points · barème respecté`
+      : `⚠️ ${niveaux.length} question(s) · ${v.total} points · ${v.ecarts.join(', ')}`;
+    etat.style.color = v.ok ? 'var(--vert-fonce)' : 'var(--alerte)';
+  };
+  rafraichirBareme();
+  liste.addEventListener('change', rafraichirBareme);
+
   liste.addEventListener('click', (e) => {
     if (e.target.matches('[data-supprimer-question]')) {
       if (liste.children.length <= 1) return alerte('alerte', 'Un défi doit comporter au moins une question.');
       e.target.closest('.editeur-question').remove();
+      rafraichirBareme();
     }
     if (e.target.matches('[data-supprimer-reponse]')) {
       const conteneur = e.target.closest('[data-reponses]');
@@ -631,10 +660,11 @@ async function ouvrirEditeur(id) {
   document.getElementById('btn-ajouter-question').addEventListener('click', () => {
     const i = liste.children.length;
     liste.insertAdjacentHTML('beforeend', rendreQuestion({
-      enonce: '', contexte: '', multiple: true, points: 10, explication: '',
+      enonce: '', contexte: '', multiple: true, difficulte: 'moyen', explication: '',
       reponses: [{ libelle: '', correcte: true }, { libelle: '', correcte: false }],
     }, i));
     amener(liste.lastElementChild, 'center');
+    rafraichirBareme();
   });
 
   document.getElementById('btn-fermer').addEventListener('click', () => { zone.innerHTML = ''; });
@@ -646,7 +676,7 @@ async function ouvrirEditeur(id) {
     const questions = [...liste.querySelectorAll('.editeur-question')].map((bloc) => ({
       enonce: bloc.querySelector('[data-champ="enonce"]').value.trim(),
       contexte: bloc.querySelector('[data-champ="contexte"]').value.trim() || null,
-      points: Number(bloc.querySelector('[data-champ="points"]').value) || 10,
+      difficulte: bloc.querySelector('[data-champ="difficulte"]').value,
       multiple: bloc.querySelector('[data-champ="multiple"]').checked,
       explication: bloc.querySelector('[data-champ="explication"]').value.trim(),
       reponses: [...bloc.querySelectorAll('.ligne-reponse')].map((l) => ({

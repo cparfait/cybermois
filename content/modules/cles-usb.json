@@ -20,7 +20,7 @@
     {
       "enonce": "Une clé USB est posée sur le parking de Technosud, marquée « Salaires 2026 ». Que faites-vous ?",
       "multiple": false,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "L'étiquette est l'appât : elle est là pour déclencher la curiosité, et « Salaires » fonctionne mieux que n'importe quel autre mot. Cette technique porte un nom, elle est employée en test d'intrusion comme en attaque réelle, et son taux de réussite reste élevé. Une clé peut se faire passer pour un clavier et taper des commandes sans que rien ne s'affiche : l'antivirus n'y voit rien, et il n'est même pas besoin d'ouvrir un fichier. La remettre à la DSI est le seul geste utile. La brancher sur un poste « pour voir à qui elle appartient » est exactement ce que l'attaquant a prévu. Les objets trouvés ne sont pas non plus le bon endroit : la clé finirait rendue — ou branchée — par quelqu'un qui n'a pas lu cette page.",
       "reponses": [
         {
@@ -44,7 +44,7 @@
     {
       "enonce": "Pourquoi une clé USB piégée est-elle dangereuse même sans ouvrir de fichier ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "difficile",
       "explication": "Une clé USB n'est pas seulement un espace de stockage : c'est un appareil qui déclare lui-même ce qu'il est. Une clé piégée peut se présenter comme un clavier et taper des commandes à votre place, en une fraction de seconde, sans qu'aucun fichier ne soit ouvert. D'autres exploitent des failles dans la façon dont le système reconnaît le matériel branché. Certaines, plus brutales, détruisent physiquement la carte mère par une décharge électrique. Face à cela, l'antivirus est démuni : il analyse des fichiers, pas des déclarations de matériel. Et le formatage ne répare rien, puisque le piège est dans l'électronique, pas dans les données. Désactiver l'exécution automatique ne protège pas davantage : un faux clavier n'a pas besoin d'autorun pour taper.",
       "reponses": [
         {
@@ -72,7 +72,7 @@
     {
       "enonce": "Vous devez transporter des dossiers entre la Mairie et Technosud. Quelle solution privilégier ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "La meilleure clé USB est celle qu'on n'utilise pas : si les deux sites accèdent au même espace partagé, le fichier n'a aucune raison de voyager. Quand le support physique s'impose vraiment, la clé doit être chiffrée et fournie par la DSI — c'est ce qui fait qu'une perte reste un désagrément au lieu d'être une violation de données à notifier. Et le contenu s'efface une fois le transfert fait, plutôt que de s'accumuler pendant deux ans. Ce qu'il faut proscrire : la clé personnelle qui sert aussi aux photos de famille, même avec un dossier « Ville » séparé — elle n'est ni chiffrée ni inventoriée, et elle repart à la maison le soir —, et le mot de passe commun à tout le service, qui rend le chiffrement purement décoratif : il finit sur un post-it et personne ne sait qui a ouvert quoi.",
       "reponses": [
         {
@@ -100,7 +100,7 @@
     {
       "enonce": "Quels autres appareils branchés en USB méritent la même prudence ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Tout ce qui se branche communique. Un chargeur ou un câble donné en salon professionnel peut contenir de l'électronique supplémentaire — ces objets existent et se vendent librement. Une borne de recharge publique, dans une gare ou un aéroport, expose au même risque : c'est pourquoi on recommande un câble de charge seule, ou une batterie externe. Un disque dur emprunté à un collègue a la même histoire qu'une clé : on ne sait pas où il est passé. En revanche, la souris et le clavier fournis avec le poste par la DSI font partie de l'équipement, et il n'y a aucune raison de s'en méfier.",
       "reponses": [
         {
@@ -128,7 +128,7 @@
     {
       "enonce": "Que faire d'une clé USB de service dont on n'a plus l'usage ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "difficile",
       "explication": "Une clé rendue au tiroir commun ou glissée dans une brocante emporte ses anciens fichiers avec elle : la suppression ordinaire ne fait que retirer l'entrée du répertoire, et les données se récupèrent avec des outils gratuits. La restituer à la DSI est le bon geste, parce qu'elle sait effacer réellement ou détruire. Si la clé était chiffrée, la question est plus simple, mais le retour à la DSI reste la règle — ne serait-ce que pour l'inventaire. Ce qui n'a pas de sens, c'est de la garder dans un tiroir « au cas où » : elle appartient à la collectivité, et elle a contenu ses données. Le formatage rapide fait la même chose à plus grande échelle : il vide la table des fichiers, pas les données. Et une clé « de secours » oubliée dans un tiroir est une clé qui finit perdue avec ses anciens fichiers.",
       "reponses": [
         {
@@ -156,7 +156,7 @@
     {
       "enonce": "Un prestataire vous demande de brancher sa clé sur un poste pour installer une mise à jour de son logiciel métier. Que faites-vous ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Le prestataire est de bonne foi dans l'immense majorité des cas ; le problème est que sa clé a circulé sur d'autres postes, chez d'autres clients, et personne ne sait ce qu'elle a rencontré. Plusieurs incidents en collectivité ont eu cette origine exacte. La bonne pratique est de faire passer l'intervention par la DSI, qui décide du support et vérifie ce qui est installé, et de préférer un téléchargement depuis la source officielle du prestataire. Rien de tout cela ne remet en cause sa compétence, et un intervenant habitué aux collectivités trouvera la demande normale. Une clause de sécurité dans le marché engage l'entreprise sur le papier ; elle ne dit pas où sa clé a été branchée la veille. L'analyse antivirus ne voit ni un faux clavier ni un installeur non validé. Et brancher son portable au réseau de la Ville n'est pas plus sûr que brancher sa clé : c'est le même inconnu, en plus gros.",
       "reponses": [
         {
@@ -184,7 +184,7 @@
     {
       "enonce": "Vous constatez qu'un poste de l'accueil a un port USB accessible au public. Que faites-vous ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "difficile",
       "explication": "Un port USB à portée du public est une porte ouverte : quelques secondes suffisent, et il ne se passe rien de visible. Le signaler à la DSI permet de le neutraliser — obturateur physique, désactivation logicielle, ou simple déplacement de l'unité centrale hors de portée. En attendant, tourner le poste ou le mettre hors d'atteinte est déjà utile. Le verrouillage de la session est indispensable mais ne suffit pas ici : une clé qui se fait passer pour un clavier n'a pas besoin d'une session ouverte pour agir au démarrage. Et compter sur la surveillance de l'agent est illusoire : il est occupé, c'est son métier. Désactiver le port depuis la session de l'agent ne tient pas : sans droits d'administration, le réglage ne s'applique pas, et la DSI ne saura jamais que le poste était exposé.",
       "reponses": [
         {
@@ -205,6 +205,86 @@
         },
         {
           "libelle": "En parler à sa hiérarchie pour que le sujet soit tracé",
+          "correcte": true
+        }
+      ]
+    },
+    {
+      "enonce": "Vous devez transmettre trois fichiers à une collègue du même service, assise deux bureaux plus loin. Quel support choisir ?",
+      "multiple": false,
+      "difficulte": "facile",
+      "explication": "Le partage de service existe exactement pour cela : le fichier ne bouge pas, on partage l'endroit où il se trouve. Rien ne se copie, rien ne se perd, et la version que vous modifiez est celle que votre collègue lit. Passer par une clé USB pour parcourir dix mètres crée une copie de plus, que personne ne sauvegarde et que personne n'effacera. L'envoi par mail à soi-même ou par messagerie personnelle fait sortir les fichiers du système d'information sans raison. Quant au disque dur personnel, il repart le soir à la maison avec les fichiers de la Ville dessus.",
+      "reponses": [
+        {
+          "libelle": "Le dossier partagé du service : rien ne se copie, tout le monde voit la même version",
+          "correcte": true
+        },
+        {
+          "libelle": "Une clé USB personnelle, c'est plus rapide que d'ouvrir le partage",
+          "correcte": false
+        },
+        {
+          "libelle": "Un envoi depuis ma messagerie personnelle, la pièce jointe passera mieux",
+          "correcte": false
+        },
+        {
+          "libelle": "Mon disque dur externe, que je lui prête cinq minutes",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Un collègue vous tend sa clé USB pour que vous y copiiez un document à imprimer à la reprographie. Que faites-vous ?",
+      "multiple": true,
+      "difficulte": "facile",
+      "explication": "La clé d'un collègue n'est pas une clé sûre : elle a été branchée chez lui, sur le poste d'un tiers, parfois sur l'ordinateur des enfants. Sa bonne foi n'est pas en cause, mais elle ne dit rien de ce que la clé a rencontré. Quand un partage existe ou que la reprographie accepte un envoi, le détour physique n'a plus lieu d'être. Si le support est vraiment nécessaire, c'est une clé de service, fournie et chiffrée, qui doit servir. Et si quelque chose vous paraît anormal au branchement — une fenêtre qui s'ouvre seule, un raccourci à la place des fichiers —, c'est la DSI qu'il faut appeler, pas le double-clic qu'il faut tenter.",
+      "reponses": [
+        {
+          "libelle": "Je propose de passer par le partage de service ou l'envoi à la reprographie",
+          "correcte": true
+        },
+        {
+          "libelle": "Si un support est nécessaire, j'utilise une clé de service fournie par la DSI",
+          "correcte": true
+        },
+        {
+          "libelle": "Je branche sans réfléchir : elle vient d'un collègue, donc elle est sûre",
+          "correcte": false
+        },
+        {
+          "libelle": "J'appelle la DSI si un comportement anormal apparaît au branchement",
+          "correcte": true
+        },
+        {
+          "libelle": "Je la branche sur le poste de la reprographie, qui n'a rien de sensible dessus",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "En centre de loisirs, les photos de la sortie sont sur la carte SD de l'appareil photo du service. Que faut-il en faire ?",
+      "multiple": true,
+      "difficulte": "moyen",
+      "explication": "Une carte mémoire est un support amovible comme un autre, à cela près qu'elle contient ici des images d'enfants — des données personnelles, et une image dont la diffusion est encadrée par les autorisations signées par les familles. Les photos se transfèrent donc rapidement vers l'espace prévu, puis la carte s'efface : ce qui reste dessus finit par voyager dans un sac, être prêté, ou disparaître avec l'appareil. Passer par un téléphone personnel pour « aller plus vite » sort les images du système d'information et les expose à une sauvegarde automatique vers un cloud privé. Les laisser s'accumuler « le temps de la saison » revient à constituer un stock que personne ne surveille. Et publier avant d'avoir vérifié les autorisations expose la Ville autant que l'agent.",
+      "reponses": [
+        {
+          "libelle": "Transférer les photos vers l'espace du service, puis effacer la carte",
+          "correcte": true
+        },
+        {
+          "libelle": "Vérifier les autorisations parentales avant toute diffusion",
+          "correcte": true
+        },
+        {
+          "libelle": "Les passer par mon téléphone personnel, c'est plus rapide",
+          "correcte": false
+        },
+        {
+          "libelle": "Les laisser sur la carte toute la saison, l'appareil ne quitte pas la structure",
+          "correcte": false
+        },
+        {
+          "libelle": "Ranger l'appareil et la carte dans un endroit fermé quand ils ne servent pas",
           "correcte": true
         }
       ]

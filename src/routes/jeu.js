@@ -183,6 +183,9 @@ export default async function routesJeu(app) {
         contexte: q.contexte,
         multiple: !!q.multiple,
         points: q.points,
+        // Le niveau est affiche avec les points : « 15 points » sans raison
+        // ressemble a une faveur, « Difficile · 15 points » s'explique tout seul.
+        difficulte: q.difficulte,
         // Les bonnes reponses ne sont JAMAIS envoyees au navigateur avant validation
         reponses: db.prepare('SELECT id, libelle FROM reponses WHERE question_id = ? ORDER BY ordre').all(q.id),
       })),

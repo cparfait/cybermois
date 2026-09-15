@@ -20,7 +20,7 @@
     {
       "enonce": "Pourquoi votre adresse mail personnelle mérite-t-elle autant d'attention que la professionnelle ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "L'adresse personnelle est la clé de tout le reste : c'est elle qui reçoit les liens de réinitialisation de vos autres comptes, y compris bancaires. Qui la contrôle contrôle votre vie numérique, et le rétablissement prend des semaines. Elle est aussi le point de départ des attaques contre votre employeur : un attaquant qui lit votre courrier personnel apprend où vous travaillez, qui sont vos collègues, quand vous partez en congés. Et elle contient dix ans de correspondance que vous n'auriez jamais accepté de publier. La double authentification y est donc au moins aussi utile qu'au travail — c'est même là qu'elle manque le plus souvent. Les filtres de l'hébergeur arrêtent beaucoup, pas tout : une connexion faite avec votre mot de passe volé ressemble exactement à la vôtre.",
       "reponses": [
         {
@@ -48,7 +48,7 @@
     {
       "enonce": "Un site où vous aviez un compte a subi une fuite de données. Que faites-vous ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Une fuite expose au minimum votre adresse et un mot de passe, souvent sous une forme qui finit par se casser. Le premier geste est donc de changer ce mot de passe — et surtout de le changer partout où vous l'aviez réutilisé, car c'est exactement ce que l'attaquant va essayer, automatiquement, sur des centaines de sites. Le second est d'activer la double authentification là où c'est possible : elle rend le mot de passe volé inutilisable seul. Attendez-vous ensuite à des messages ciblés qui reprendront des informations exactes vous concernant, pour vous convaincre. Et supprimer le compte ne répare rien : les données ont déjà fuité. Attendre le courrier du site fait perdre les jours qui comptent : au moindre doute, on change.",
       "reponses": [
         {
@@ -76,7 +76,7 @@
     {
       "enonce": "Vos enfants utilisent une tablette à la maison. Quelles mesures sont utiles ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "Le compte séparé est la mesure la plus efficace et la moins contraignante : un profil enfant limite les installations, isole les données et évite qu'une application téléchargée sur un coup de tête ne s'exécute avec vos droits. Retirer le moyen de paiement enregistré évite la mauvaise surprise autant que le risque. Le contrôle parental complète l'ensemble, sans remplacer la conversation : expliquer pourquoi on ne clique pas sur « vous avez gagné » vaut mieux qu'un filtre qu'ils apprendront à contourner en trois mois. Ce qui n'est pas une bonne idée : partager votre session — tout ce qui sera fait le sera avec vos droits, y compris sur votre messagerie. Et leur confier le mot de passe « pour qu'ils demandent avant », c'est leur confier le mot de passe.",
       "reponses": [
         {
@@ -104,7 +104,7 @@
     {
       "enonce": "Vous partez en vacances trois semaines. Qu'est-ce qui n'a pas besoin d'être public ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "Publier ses vacances en direct revient à annoncer que le logement est vide, et les cambriolages qui suivent des publications sont documentés. Les dates précises, la photo de la porte d'embarquement avec la carte lisible — elle porte votre nom et votre référence de réservation — et la géolocalisation activée disent tout ce qu'il faut. La parade est simple et ne prive de rien : publier au retour. Une photo de paysage sans indication de date ne pose aucun problème, et rien n'oblige à se cacher : il s'agit seulement de décaler. Annoncer son retour une fois rentré ne pose pas plus de problème : le logement n'est plus vide.",
       "reponses": [
         {
@@ -132,7 +132,7 @@
     {
       "enonce": "Quels objets connectés de la maison méritent une vérification ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Les objets connectés arrivent avec un mot de passe d'usine et repartent rarement avec un autre. Une caméra de surveillance mal réglée diffuse l'intérieur du logement sur internet — des sites recensent celles qui sont accessibles librement, par milliers. Un assistant vocal écoute et conserve, et ses réglages de conservation méritent une visite. Un objet connecté qui ne reçoit plus de mises à jour devient une porte ouverte sur le réseau de la maison, celui-là même par lequel vous télétravaillez. Un thermomètre non connecté et un four traditionnel, eux, ne posent aucune question. Une grande marque et des mises à jour automatiques ne dispensent pas de la vérification : le mot de passe d'usine, lui, ne se change pas tout seul. Une imprimante reliée par câble, sans Wi-Fi, n'est en revanche pas un objet connecté.",
       "reponses": [
         {
@@ -160,7 +160,7 @@
     {
       "enonce": "Vous vendez votre ancien téléphone. Que faites-vous avant ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "difficile",
       "explication": "Un téléphone vendu emporte tout ce qu'on a oublié d'en retirer. La réinitialisation d'usine est indispensable, mais elle ne suffit que si l'appareil était chiffré — ce qui est le cas des modèles récents dotés d'un code, et c'est une raison de plus d'en avoir un. Avant cela, il faut se déconnecter de son compte constructeur : sans quoi l'appareil reste verrouillé à votre nom, ce qui gênera l'acheteur et laissera un lien avec vous. La carte SIM et la carte mémoire se retirent physiquement — la seconde n'est pas effacée par la réinitialisation. Supprimer les photos une à une ne rend rien irrécupérable : les données restent sur le support jusqu'à réécriture. L'ordre compte : la déconnexion du compte constructeur se fait avant la réinitialisation, sinon l'appareil reste verrouillé à votre nom.",
       "reponses": [
         {
@@ -188,7 +188,7 @@
     {
       "enonce": "Un proche est victime d'une arnaque en ligne. Que lui conseiller ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "difficile",
       "explication": "Les réflexes sont les mêmes qu'au travail, avec une différence : la honte, qui pousse à se taire et fait perdre les heures qui comptent. Il faut faire opposition sans attendre si des coordonnées bancaires sont en jeu, conserver tous les éléments — messages, captures, références de virement — et déposer plainte, qui est nécessaire pour la banque comme pour l'assurance. Le portail cybermalveillance.gouv.fr oriente vers les bons interlocuteurs, gratuitement. Ce qu'il ne faut surtout pas faire, c'est reprendre contact avec l'escroc : il existe une seconde arnaque, très répandue, qui consiste à rappeler la victime en promettant de récupérer les fonds. Et attendre par gêne ne fait qu'aggraver la perte. L'organisme qui « rappelle pour récupérer les fonds » est cette seconde arnaque, et la banque attend justement la plainte pour instruire le dossier : l'ordre est l'inverse.",
       "reponses": [
         {
@@ -209,6 +209,90 @@
         },
         {
           "libelle": "Attendre le retour de la banque avant de déposer plainte, pour ne pas engager de démarche inutile",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Vous recevez un SMS : « Coucou papa, mon téléphone est cassé, voici mon nouveau numéro, tu peux m'aider ? » Que faites-vous ?",
+      "multiple": true,
+      "difficulte": "facile",
+      "explication": "C'est l'arnaque dite au faux conseiller familial, massivement diffusée et redoutablement efficace, parce qu'elle mobilise l'inquiétude d'un parent avant tout raisonnement. Le déroulé est toujours le même : quelques messages pour installer la conversation, puis une demande d'argent urgente, un virement à faire « tout de suite », ou un code à transmettre. Le seul geste utile est d'appeler l'ancien numéro, celui de l'annuaire, pour vérifier — ce que l'escroc ne peut pas empêcher. Enregistrer le nouveau numéro sans vérifier, c'est valider l'usurpation dans son propre répertoire. Répondre pour « voir ce qu'il veut » entretient la conversation sur laquelle tout repose. Et en parler autour de soi, notamment aux proches les plus exposés, est ce qui coupe le mieux la diffusion de ce genre de fraude.",
+      "reponses": [
+        {
+          "libelle": "J'appelle l'ancien numéro, celui de mon répertoire, pour vérifier",
+          "correcte": true
+        },
+        {
+          "libelle": "Je n'envoie aucun argent et je ne transmets aucun code",
+          "correcte": true
+        },
+        {
+          "libelle": "J'enregistre le nouveau numéro et je poursuis la conversation",
+          "correcte": false
+        },
+        {
+          "libelle": "Je réponds pour comprendre ce qu'il veut vraiment",
+          "correcte": false
+        },
+        {
+          "libelle": "J'en parle autour de moi : cette arnaque vise surtout les parents et les aînés",
+          "correcte": true
+        }
+      ]
+    },
+    {
+      "enonce": "Comment éviter de perdre définitivement l'accès à vos comptes personnels importants ?",
+      "multiple": true,
+      "difficulte": "moyen",
+      "explication": "On pense à se protéger des intrusions, rarement à se protéger de soi-même : téléphone perdu, numéro changé, adresse de secours abandonnée depuis dix ans, et le compte devient inaccessible sans que personne n'ait rien piraté. Trois précautions suffisent. Vérifier et tenir à jour les moyens de récupération — adresse secondaire et numéro de téléphone — une fois par an. Mettre à l'abri les codes de secours fournis lors de l'activation de la double authentification, sur papier dans un endroit sûr, car ils sont précisément faits pour le jour où le téléphone n'est plus là. Et utiliser un gestionnaire de mots de passe, dont le mot de passe principal, lui, doit être mémorisé. En revanche, ouvrir un second compte « de secours » ne protège rien, et confier ses identifiants à un proche « en cas de problème » crée un risque permanent pour parer à une éventualité rare.",
+      "reponses": [
+        {
+          "libelle": "Vérifier chaque année l'adresse et le numéro de récupération",
+          "correcte": true
+        },
+        {
+          "libelle": "Conserver au coffre, sur papier, les codes de secours de la double authentification",
+          "correcte": true
+        },
+        {
+          "libelle": "Utiliser un gestionnaire de mots de passe, dont le mot de passe principal est mémorisé",
+          "correcte": true
+        },
+        {
+          "libelle": "Créer un second compte de secours avec les mêmes informations",
+          "correcte": false
+        },
+        {
+          "libelle": "Confier mes identifiants à un proche, au cas où",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Vous publiez régulièrement des photos de vos enfants sur vos réseaux. Qu'est-ce que cela implique ?",
+      "multiple": true,
+      "difficulte": "difficile",
+      "explication": "Publier la vie d'un enfant, c'est décider à sa place d'une trace qu'il n'a pas choisie et qu'il ne pourra pas effacer : la loi française reconnaît d'ailleurs depuis 2024 que le respect de sa vie privée s'impose aussi à ses parents. Au-delà du principe, les conséquences sont concrètes. Une photo d'école, un maillot de club et un prénom suffisent à reconstituer les habitudes d'un enfant — et ce sont exactement les éléments qu'un manipulateur utilise pour établir un contact crédible. Les images publiées sont massivement recopiées, y compris pour alimenter des bases d'entraînement ou fabriquer de faux profils. Ce qui reste raisonnable : publier en cercle restreint, éviter ce qui permet d'identifier école, club ou horaires, et demander leur avis aux enfants dès qu'ils sont en âge de le donner — ils le donnent rarement. Se rassurer parce que le compte est « privé » ne suffit pas : la confidentialité dépend aussi des centaines d'amis qui peuvent enregistrer et repartager.",
+      "reponses": [
+        {
+          "libelle": "L'enfant a droit au respect de sa vie privée, y compris vis-à-vis de ses parents",
+          "correcte": true
+        },
+        {
+          "libelle": "École, club et horaires se déduisent facilement d'une série de photos",
+          "correcte": true
+        },
+        {
+          "libelle": "Les images publiées sont recopiées et réutilisées hors de tout contrôle",
+          "correcte": true
+        },
+        {
+          "libelle": "Un compte privé garantit que les photos ne sortiront pas du cercle familial",
+          "correcte": false
+        },
+        {
+          "libelle": "Tant que le prénom n'apparaît pas, l'enfant n'est pas identifiable",
           "correcte": false
         }
       ]

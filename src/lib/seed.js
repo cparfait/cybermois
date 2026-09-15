@@ -4,6 +4,7 @@ import { lireModule, lireProgramme } from './modules.js';
 // La table des tentatives est creee par ce module : sans l'importer, le
 // rechargement lance en ligne de commande echouerait sur une table absente.
 import './tentatives.js';
+import { niveauDe } from './bareme.js';
 
 /**
  * Verse dans les defis le contenu des modules programmes.
@@ -112,12 +113,15 @@ export function importerContenus({ force = false } = {}) {
 }
 
 function insererQuestions(defiId, questions) {
-  const q = db.prepare('INSERT INTO questions (defi_id, ordre, enonce, contexte, multiple, points, explication) VALUES (?, ?, ?, ?, ?, ?, ?)');
+  const q = db.prepare('INSERT INTO questions (defi_id, ordre, enonce, contexte, multiple, difficulte, points, explication) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
   const r = db.prepare('INSERT INTO reponses (question_id, ordre, libelle, correcte) VALUES (?, ?, ?, ?)');
   questions.forEach((question, i) => {
+    // Les points ne sont pas lus dans le fichier : ils decoulent de la
+    // difficulte, pour que deux defis pesent exactement le meme poids.
+    const niveau = niveauDe(question);
     const res = q.run(
       defiId, i + 1, question.enonce, question.contexte || null,
-      question.multiple ? 1 : 0, question.points || 10, question.explication || ''
+      question.multiple ? 1 : 0, niveau.cle, niveau.points, question.explication || ''
     );
     question.reponses.forEach((rep, j) => r.run(res.lastInsertRowid, j + 1, rep.libelle, rep.correcte ? 1 : 0));
   });
@@ -152,7 +156,8 @@ export function exporterDefi(id) {
         }
       : null,
     questions: questions.map((q) => ({
-      enonce: q.enonce, contexte: q.contexte, multiple: !!q.multiple, points: q.points, explication: q.explication,
+      enonce: q.enonce, contexte: q.contexte, multiple: !!q.multiple,
+      difficulte: niveauDe(q).cle, points: q.points, explication: q.explication,
       reponses: db.prepare('SELECT libelle, correcte FROM reponses WHERE question_id = ? ORDER BY ordre').all(q.id)
         .map((r) => ({ libelle: r.libelle, correcte: !!r.correcte })),
     })),

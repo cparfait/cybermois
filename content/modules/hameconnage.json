@@ -21,7 +21,7 @@
       "enonce": "Quels éléments de ce message doivent vous alerter ?",
       "contexte": "De : Direction Informatique <support-dsi@chatillon92-support.fr>\nObjet : URGENT - Votre boîte mail sera supprimée sous 24h\n\nBonjour,\n\nVotre quota de messagerie est dépassé. Sans action de votre part sous 24 heures, votre compte sera définitivement supprimé et vos messages perdus.\n\nCliquez ici pour valider votre compte : http://webmail-chatillon.verify-account.ru/login\n\nCordialement,\nLe service informatique",
       "multiple": true,
-      "points": 15,
+      "difficulte": "moyen",
       "explication": "Quatre signaux ici. Le domaine de l'expéditeur (chatillon92-support.fr) n'est pas le domaine officiel : les attaquants créent des domaines qui « ressemblent ». L'urgence à 24 h et la menace de suppression servent à court-circuiter votre réflexion. Le lien pointe vers un domaine étranger (.ru) sans rapport. Enfin, la formule impersonnelle trahit un envoi de masse. Un vrai message de la DSI ne vous demandera jamais de « valider votre compte » par un lien. Le début du lien, « webmail-chatillon », ne prouve rien : le domaine réel se lit à droite, juste avant le premier « / », et ici c'est verify-account.ru.",
       "reponses": [
         {
@@ -50,7 +50,7 @@
       "enonce": "Vous recevez ce message. Que faites-vous ?",
       "contexte": "De : Marie LEROY <m.leroy@ville-chatillon.fr>\nObjet : RE: Facture rectificative marché voirie\n\nBonjour,\n\nComme convenu au téléphone, je te transmets la facture corrigée du marché voirie. Peux-tu la faire suivre à la compta avant vendredi ?\n\nPJ : Facture_rectificative_2026.zip\n\nMarie",
       "multiple": true,
-      "points": 15,
+      "difficulte": "moyen",
       "explication": "Trois indices : une pièce jointe .zip est un format d'archive qui permet de dissimuler un exécutable et n'a rien à faire dans un échange de facture. Le « RE: » simule une conversation qui n'a jamais eu lieu. Le « comme convenu au téléphone » crée un faux passé commun. La bonne réaction : ne pas ouvrir, et vérifier par un canal différent — appeler Marie sur son numéro connu de l'annuaire, pas celui indiqué dans le mail. Répondre au message ne sert à rien : si l'adresse est usurpée, vous écrivez à l'attaquant. Une adresse en @ville-chatillon.fr ne garantit pas que le message est passé par notre serveur : le nom d'expéditeur se falsifie, et une boîte interne peut avoir été piratée.",
       "reponses": [
         {
@@ -78,7 +78,7 @@
     {
       "enonce": "Comment vérifier où mène réellement un lien avant de cliquer ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "Le survol du lien (sans cliquer) affiche la vraie destination en bas du navigateur ou dans une bulle : c'est le réflexe de base. Sur mobile, un appui long affiche la même information. Le texte affiché du lien ne prouve rien : on peut écrire « www.impots.gouv.fr » et pointer ailleurs. Et cliquer « pour voir » est précisément ce qu'il ne faut jamais faire. Que le texte commence par https:// et par le bon nom ne change rien : c'est du texte, pas la destination. Et la navigation privée n'isole rien : elle n'enregistre pas l'historique, mais le site s'ouvre bien sur votre poste, avec ce qu'il contient.",
       "reponses": [
         {
@@ -106,7 +106,7 @@
     {
       "enonce": "Parmi ces adresses, lesquelles sont des tentatives d'usurpation du site des impôts ?",
       "multiple": true,
-      "points": 15,
+      "difficulte": "difficile",
       "explication": "La règle de lecture d'une adresse : le domaine réel est ce qui précède immédiatement le premier « / », en partant de la droite. Dans « impots.gouv.fr.verification-fiscale.com », le vrai domaine est verification-fiscale.com. Dans « impots-gouv.fr », le tiret remplace le point : c'est un autre domaine. Dans « impots.gouv.fr.secure-paiement.net », idem. Seul « www.impots.gouv.fr » est authentique, tout comme le sous-domaine « cfspro.impots.gouv.fr » qui appartient bien au domaine impots.gouv.fr.",
       "reponses": [
         {
@@ -134,7 +134,7 @@
     {
       "enonce": "Vous avez cliqué sur un lien de hameçonnage et saisi votre mot de passe. Que faites-vous ?",
       "multiple": true,
-      "points": 15,
+      "difficulte": "difficile",
       "explication": "Trois actions, dans cet ordre : changer immédiatement le mot de passe partout où il était utilisé, prévenir la DSI sans attendre, et ne surtout pas éteindre le poste — les journaux et la mémoire vive aident à comprendre l'incident. Et surtout : ne restez pas silencieux par crainte d'être blâmé. Un signalement dans l'heure, c'est un incident maîtrisé ; un signalement dans la semaine, c'est parfois toute la collectivité à l'arrêt. Personne ne vous reprochera d'avoir cliqué — tout le monde clique un jour. Isoler le poste du réseau peut se justifier, mais sur consigne de la DSI ; l'éteindre, jamais. Et surveiller son compte ne suffit pas : l'attaquant se sert des identifiants ailleurs, sans que rien ne soit visible de votre côté.",
       "reponses": [
         {
@@ -162,7 +162,7 @@
     {
       "enonce": "Le hameçonnage arrive uniquement par courriel. Vrai ou faux ?",
       "multiple": false,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "Faux, et c'est une confusion fréquente. Le SMS (smishing), l'appel téléphonique (vishing), les QR codes piégés collés sur des bornes ou des affiches (quishing), les messages sur les réseaux sociaux et même les invitations d'agenda sont autant de canaux utilisés. Le réflexe est le même partout : une demande urgente qui réclame une information ou une action inhabituelle se vérifie par un autre canal. Ni la définition ni le support ne limitent le hameçonnage au courriel : un appel sans aucun lien peut extorquer un mot de passe, et un SMS reçu sur le téléphone personnel peut viser le compte professionnel.",
       "reponses": [
         {
@@ -186,7 +186,7 @@
     {
       "enonce": "Quels éléments ne prouvent EN RIEN qu'un message est légitime ?",
       "multiple": true,
-      "points": 15,
+      "difficulte": "difficile",
       "explication": "Aucun de ces éléments n'est une preuve. Le logo se copie en trois clics. Le nom affiché de l'expéditeur est librement modifiable — c'est l'adresse réelle qui compte. Le cadenas HTTPS signifie seulement que la connexion est chiffrée, pas que le site est honnête : la majorité des sites de hameçonnage sont en HTTPS. Un français impeccable est désormais la norme depuis que les attaquants utilisent des outils de rédaction automatique. Seul un contact direct par un canal connu apporte une vraie certitude.",
       "reponses": [
         {
@@ -214,7 +214,7 @@
     {
       "enonce": "Un message vous propose un remboursement de 78,40 € et demande votre RIB. Il vient d'une adresse en @ameli.fr. Que concluez-vous ?",
       "multiple": false,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "L'adresse d'expédition est trivialement falsifiable : afficher « @ameli.fr » ne coûte rien à un attaquant. Surtout, aucun organisme public ne réclame de coordonnées bancaires par courriel — l'Assurance maladie dispose déjà de votre RIB. Le petit montant crédible (78,40 € plutôt que 5 000 €) est justement une technique pour ne pas éveiller les soupçons. La seule bonne démarche : se connecter à son compte en tapant l'adresse soi-même dans le navigateur. Le cadenas et le logo sur la page ne prouvent rien non plus : les sites de hameçonnage sont en HTTPS et copient les logos.",
       "reponses": [
         {
@@ -232,6 +232,62 @@
         {
           "libelle": "Je vérifie en cliquant sur le lien : si la page affiche le cadenas HTTPS et le logo de l'Assurance maladie, j'envoie mon RIB",
           "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Un collègue dont vous reconnaissez l'adresse vous écrit trois mots : « Regarde ça, c'est important », suivis d'un lien. Que faites-vous ?",
+      "multiple": true,
+      "difficulte": "facile",
+      "explication": "Une adresse connue n'est pas une garantie : c'est même le scénario le plus efficace, parce qu'il exploite la confiance. Deux explications à ce message : soit la boîte du collègue a été compromise et envoie automatiquement des liens à tout son carnet d'adresses, soit l'adresse est usurpée. Dans les deux cas, ce qui tranche ne se trouve pas dans le message : un appel de dix secondes, ou un mot dans le couloir, suffit à savoir s'il l'a réellement envoyé. Le ton inhabituel — trois mots là où le collègue écrit habituellement des phrases — est justement l'indice qui doit retenir la main. Cliquer parce que l'expéditeur est connu, ou répondre au message pour demander « c'est bien toi ? », reviennent à interroger celui qui tient la boîte.",
+      "reponses": [
+        {
+          "libelle": "Je vérifie de vive voix, par téléphone ou en passant le voir",
+          "correcte": true
+        },
+        {
+          "libelle": "Je remarque que le ton ne ressemble pas à sa façon d'écrire",
+          "correcte": true
+        },
+        {
+          "libelle": "Je clique : l'adresse est celle d'un collègue que je connais",
+          "correcte": false
+        },
+        {
+          "libelle": "Je réponds au message pour demander si c'est bien lui",
+          "correcte": false
+        },
+        {
+          "libelle": "Je signale le message si le doute persiste",
+          "correcte": true
+        }
+      ]
+    },
+    {
+      "enonce": "Vous attendiez réellement un message de votre mutuelle, et il vous demande de vous connecter pour valider un remboursement. Comment vérifier sans risque ?",
+      "multiple": true,
+      "difficulte": "moyen",
+      "explication": "Le cas est le plus piégeux de tous, parce que l'attente rend crédible : l'escroc n'a pas besoin d'être bon, il suffit qu'il tombe au bon moment. La règle est simple et vaut pour tous les messages de ce genre : on n'utilise jamais le lien reçu, on se rend au service par le chemin habituel — adresse tapée soi-même, favori enregistré, application installée. Si l'information existe vraiment, elle s'y trouve ; si elle n'y est pas, le message était faux. Il vaut mieux aussi éviter le numéro de téléphone figurant dans le message, qui mène au même endroit que le lien. À l'inverse, se fier au logo, à la présentation soignée ou au fait que le message tombe pile au moment attendu revient à accepter précisément ce que l'attaquant contrôle entièrement.",
+      "reponses": [
+        {
+          "libelle": "Je me connecte par mon favori ou l'application, jamais par le lien reçu",
+          "correcte": true
+        },
+        {
+          "libelle": "Je vérifie si l'information figure bien dans mon espace personnel",
+          "correcte": true
+        },
+        {
+          "libelle": "J'appelle le numéro indiqué dans le message pour confirmer",
+          "correcte": false
+        },
+        {
+          "libelle": "Le message arrive au moment où je l'attendais : il est donc authentique",
+          "correcte": false
+        },
+        {
+          "libelle": "Je signale le message s'il ne correspond à rien dans mon espace",
+          "correcte": true
         }
       ]
     }

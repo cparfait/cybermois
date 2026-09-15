@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { db, journaliser } from './db.js';
 import { ajouterColonne } from './db.js';
+import { niveauDe, verifierBareme } from './bareme.js';
 
 /**
  * Catalogue de modules et programmation des parutions.
@@ -76,7 +77,7 @@ export function marquerLesDefisDejaRetouches() {
     String(q.enonce || '').trim(),
     String(q.contexte || '').trim(),
     q.multiple ? 1 : 0,
-    Number(q.points) || 10,
+    niveauDe(q).points,
     String(q.explication || '').trim(),
     (q.reponses || []).map((r) => [String(r.libelle || '').trim(), r.correcte ? 1 : 0]),
   ]));
@@ -121,7 +122,10 @@ export function listerModules() {
       badge: m.badge || null,
       video: m.video || null,
       questions: m.questions.length,
-      points: m.questions.reduce((n, q) => n + (q.points || 10), 0),
+      points: m.questions.reduce((n, q) => n + niveauDe(q).points, 0),
+      // Un module qui ne tient pas le bareme se voit des l'ecran de
+      // programmation : le corriger apres l'ouverture n'est plus possible.
+      bareme: verifierBareme(m.questions),
     }))
     .sort((a, b) => a.theme.localeCompare(b.theme, 'fr') || a.titre.localeCompare(b.titre, 'fr'));
 }

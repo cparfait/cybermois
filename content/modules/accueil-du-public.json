@@ -20,7 +20,7 @@
     {
       "enonce": "Une personne se présente à l'état civil et demande une copie intégrale d'un acte de naissance qui n'est pas le sien. Que faites-vous ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "difficile",
       "explication": "La copie intégrale d'un acte de naissance de moins de 75 ans n'est pas délivrable à n'importe qui : la loi la réserve à l'intéressé majeur, à ses ascendants et descendants, à son conjoint et à quelques professionnels habilités. C'est le cadre, et il ne se négocie pas au guichet. Il faut donc vérifier la qualité du demandeur et son identité — c'est précisément ce contrôle qui protège les personnes contre l'usurpation, car un acte intégral porte tout ce qu'il faut pour ouvrir un compte au nom d'un autre. Face à l'insistance ou à la pression, la bonne réponse est d'appliquer la règle et d'appeler un responsable ; l'émotion du demandeur, sincère ou jouée, ne modifie pas le droit. Et un extrait sans filiation, lui, se délivre librement. Une pièce d'identité valide prouve qui est en face de vous, pas qu'il a le droit d'obtenir l'acte : les deux contrôles sont nécessaires.",
       "reponses": [
         {
@@ -48,7 +48,7 @@
     {
       "enonce": "Un homme au téléphone se présente comme agent d'une autre commune et demande des renseignements sur un administré. Comment réagir ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Se présenter comme un collègue est la manœuvre la plus économique qui soit : elle ne coûte rien et elle fonctionne, parce qu'entre agents on s'entraide. Rien ne prouve pourtant l'identité de la voix. La bonne pratique est de proposer de rappeler au standard de la commune concernée — un vrai collègue trouvera cela normal, un escroc trouvera une raison de refuser. Il faut aussi se demander à quel titre la demande est faite : entre communes, les échanges de données ont un cadre, et « c'est pour un dossier » n'en est pas un. En cas d'hésitation, la demande écrite via le service compétent règle tout, et la DPO répond vite. Confirmer une information déjà connue, c'est la communiquer ; et un nom, un service, un numéro de poste se donnent en une phrase sans rien prouver.",
       "reponses": [
         {
@@ -76,7 +76,7 @@
     {
       "enonce": "Votre poste d'accueil est visible depuis la file d'attente. Quelles précautions prendre ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "La confidentialité au guichet se joue autant sur l'écran que sur la parole. Orienter l'écran, ou l'équiper d'un filtre de confidentialité, empêche la personne suivante de lire le dossier de la précédente. Verrouiller la session dès qu'on s'éloigne du poste — même trente secondes pour chercher un formulaire — est le geste le plus rentable de la journée. Fermer le dossier en cours avant d'appeler le suivant évite le mélange. Et ce qui vaut pour l'écran vaut pour le comptoir : un document oublié à côté du clavier finit par être lu. Baisser la voix aide, mais ne remplace aucun de ces gestes. La mise en veille automatique après quelques minutes est un filet de sécurité, pas une protection : cinq minutes, c'est le temps de lire tout un dossier.",
       "reponses": [
         {
@@ -104,7 +104,7 @@
     {
       "enonce": "Une personne en gilet, badge à la ceinture, se présente pour « intervenir sur le réseau ». Que faites-vous ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Le faux technicien est un classique qui marche justement parce que personne n'ose demander à quelqu'un d'équipé de justifier sa présence. Un badge n'est pas une preuve : il s'imprime. Ce qui compte, c'est qu'une intervention soit attendue — donc qu'un service l'ait commandée, et la DSI le sait. Un appel de trente secondes règle la question. Tant que ce n'est pas fait, la personne n'accède pas seule aux locaux techniques et n'est pas laissée sans accompagnement dans les bureaux : ce n'est pas de la suspicion, c'est la règle pour tout intervenant extérieur. Un vrai technicien la connaît et l'attend. Photocopier une carte professionnelle trace la visite mais ne dit pas si elle est attendue — une carte se fabrique comme un badge, et le nom du prestataire figure sur ses véhicules.",
       "reponses": [
         {
@@ -132,7 +132,7 @@
     {
       "enonce": "Quels comportements, chez un visiteur, doivent éveiller votre attention ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "Aucun de ces signaux n'est une preuve, mais leur accumulation dessine un scénario connu. La pression sur l'horaire — « je repasse pas, faites une exception » — vise à empêcher la vérification. Flatter l'agent ou invoquer un proche haut placé cherche à créer une dette. Poser des questions sur l'organisation interne, les absences, les procédures, c'est de la reconnaissance : cela sert à préparer un appel plus tard. Et une demande insistante d'accès à un poste ou à une imprimante n'a jamais de bonne raison. En revanche, être ému en évoquant un dossier difficile n'a rien de suspect : c'est le quotidien d'un guichet, et cela mérite de l'attention, pas de la méfiance.",
       "reponses": [
         {
@@ -160,7 +160,7 @@
     {
       "enonce": "En fin de journée, que faut-il ranger avant de quitter le poste d'accueil ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "Les locaux sont fréquentés le soir : entretien, livraisons, réunions associatives. Ce qui reste sur un bureau est lisible par des gens qui n'ont rien demandé, et un vol opportuniste n'a besoin que d'une minute. Les dossiers d'administrés se rangent sous clé, les impressions oubliées se récupèrent — le bac de l'imprimante partagée est un formidable gisement de données —, la session se ferme et les clés des armoires ne restent pas dans la serrure. Éteindre l'écran, en revanche, ne protège de rien : la session reste ouverte derrière, il suffit de bouger la souris. Une clause de confidentialité dans le marché d'entretien engage l'entreprise, pas chaque personne qui passe dans le couloir, et elle ne fait rien contre un vol.",
       "reponses": [
         {
@@ -188,7 +188,7 @@
     {
       "enonce": "Un administré vous demande votre adresse mail personnelle pour « aller plus vite ». Que répondez-vous ?",
       "multiple": false,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Un échange qui sort de la messagerie de la Ville sort aussi de son cadre : plus de traçabilité, plus de continuité si vous êtes absent, plus de protection pour vous en cas de litige — et une adresse personnelle qui circule, avec tout ce que cela promet ensuite. Le refus n'a rien de désobligeant et il s'explique en une phrase : l'adresse du service est faite pour cela, et elle garantit que quelqu'un répondra même en votre absence. C'est d'ailleurs un meilleur service rendu à l'administré qu'un canal privé qui s'interrompt au premier congé. Mettre le service en copie ne change rien : l'adresse personnelle circule et les réponses suivantes ne passeront plus par la copie. Une adresse créée « pour les administrés » chez un fournisseur grand public reste hors du cadre de la Ville : ni sauvegarde, ni continuité, ni protection en cas de litige.",
       "reponses": [
         {
@@ -206,6 +206,90 @@
         {
           "libelle": "Je lui donne mon numéro de portable personnel à la place",
           "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Un visiteur filme avec son téléphone la banque d'accueil et les écrans, « pour un reportage citoyen ». Que faites-vous ?",
+      "multiple": true,
+      "difficulte": "moyen",
+      "explication": "Filmer dans un lieu ouvert au public n'est pas interdit en soi, mais ce qui apparaît à l'écran, sur les documents posés et sur les étiquettes de dossiers concerne des administrés qui n'ont rien demandé. Le réflexe utile est immédiat et discret : masquer ou verrouiller l'écran, retirer ce qui traîne, puis expliquer calmement que les données des administrés ne peuvent pas être filmées et orienter la demande vers le service communication, qui sait accueillir un tournage. Confisquer le téléphone ou effacer soi-même les images est illégal : vous n'en avez ni le droit ni le pouvoir. Laisser faire en se disant que « c'est public » ne l'est pas davantage : la salle est publique, le contenu des écrans ne l'est pas.",
+      "reponses": [
+        {
+          "libelle": "Je verrouille mon écran et je retire les documents visibles",
+          "correcte": true
+        },
+        {
+          "libelle": "J'explique que les données des administrés ne peuvent pas être filmées",
+          "correcte": true
+        },
+        {
+          "libelle": "J'oriente la demande vers le service communication",
+          "correcte": true
+        },
+        {
+          "libelle": "Je lui prends son téléphone pour effacer les images",
+          "correcte": false
+        },
+        {
+          "libelle": "Je laisse faire : l'accueil est un lieu public, donc tout y est filmable",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Au téléphone, une personne se présente comme gendarme et demande en urgence l'adresse d'un administré « dans le cadre d'une enquête ». Que faites-vous ?",
+      "multiple": true,
+      "difficulte": "difficile",
+      "explication": "Une demande d'une force de l'ordre existe bel et bien, mais elle se traite par écrit : une réquisition judiciaire, signée, précisant le cadre légal, que la hiérarchie et le service juridique savent vérifier. Le téléphone ne prouve rien — c'est même le scénario favori des escrocs, parce que l'uniforme évoqué et l'urgence annoncée désarment la prudence. Rappeler la brigade sur son numéro officiel, jamais celui donné par l'interlocuteur, est le seul moyen de savoir à qui l'on parle. Répondre « juste l'adresse, ce n'est pas confidentiel » est une erreur : une adresse peut être exactement ce qu'un conjoint violent cherche à obtenir. Et le fait que la personne connaisse déjà le nom ou la date de naissance ne prouve rien : ces éléments circulent, et les fournir sert justement à vous mettre en confiance.",
+      "reponses": [
+        {
+          "libelle": "Je demande une réquisition écrite et je préviens ma hiérarchie",
+          "correcte": true
+        },
+        {
+          "libelle": "Je propose de rappeler la brigade sur son numéro officiel",
+          "correcte": true
+        },
+        {
+          "libelle": "Je donne l'adresse : ce n'est pas une information confidentielle",
+          "correcte": false
+        },
+        {
+          "libelle": "Je réponds puisqu'il connaît déjà le nom et la date de naissance de la personne",
+          "correcte": false
+        },
+        {
+          "libelle": "Je note la demande et je la transmets au service compétent sans rien communiquer",
+          "correcte": true
+        }
+      ]
+    },
+    {
+      "enonce": "Un collègue d'un autre service vous demande de regarder « vite fait » dans le logiciel si une personne qu'il connaît habite bien la commune. Que faites-vous ?",
+      "multiple": true,
+      "difficulte": "difficile",
+      "explication": "Un accès autorisé n'est pas un accès permis pour tout : le droit d'entrer dans une application vaut pour les dossiers que le travail impose de traiter, pas pour ceux qui éveillent la curiosité. Consulter une fiche sans motif professionnel est un détournement de finalité, sanctionné disciplinairement et pénalement, et les journaux de connexion conservent qui a ouvert quel dossier et quand — c'est précisément à cela qu'ils servent. Le refus n'a rien de personnel, et il vaut mieux l'expliquer que de le faire sentir : le collègue n'a en général pas conscience de ce qu'il demande. Le fait que la consultation soit brève, qu'il s'agisse d'un collègue de confiance ou que rien ne soit imprimé ne change rien : c'est la consultation elle-même qui est en cause, pas ce qu'on en fait ensuite.",
+      "reponses": [
+        {
+          "libelle": "Je refuse : consulter un dossier sans motif professionnel est interdit",
+          "correcte": true
+        },
+        {
+          "libelle": "Je lui explique que les consultations sont tracées et engagent ma responsabilité",
+          "correcte": true
+        },
+        {
+          "libelle": "Je regarde rapidement : je ne note rien et je n'imprime rien",
+          "correcte": false
+        },
+        {
+          "libelle": "J'accepte parce que c'est un collègue, donc un agent habilité",
+          "correcte": false
+        },
+        {
+          "libelle": "Je lui indique la procédure officielle s'il a un vrai besoin professionnel",
+          "correcte": true
         }
       ]
     }
