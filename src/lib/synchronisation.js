@@ -101,6 +101,10 @@ export async function analyserSynchronisation() {
   const ecartes = [];
   const sansAdresse = [];
   const vusDansAnnuaire = new Set();
+  // Comptes dont l'annuaire ne dit pas le service : ni l'attribut, ni l'OU.
+  // Ils gardent leur rattachement actuel, mais le chiffre merite d'etre dit -
+  // c'est lui qui pointe une OU mal placee ou un « department » a remplir.
+  let sansService = 0;
 
   for (const a of lecture.agents) {
     vusDansAnnuaire.add(a.login);
@@ -124,6 +128,8 @@ export async function analyserSynchronisation() {
       continue;
     }
 
+    if (!a.serviceAd) sansService++;
+
     if (!existant) {
       // Sans adresse, l'agent ne recevra jamais ni lancement ni relance :
       // l'inclure ne ferait que degrader le taux de participation de son service.
@@ -142,7 +148,10 @@ export async function analyserSynchronisation() {
     if ((existant.email || '') !== (a.email || '')) {
       changements.push({ champ: 'adresse', avant: existant.email || '(vide)', apres: a.email || '(vide)' });
     }
-    if (!existant.service_force
+    // a.serviceAd vide : l'annuaire ne dit rien du service de cet agent. Ce
+    // n'est pas un changement, et surtout pas un passage a « Non rattache » -
+    // le silence de l'annuaire ne defait pas ce qu'on sait deja.
+    if (!existant.service_force && a.serviceAd
       && normaliser(existant.service_ad || existant.service) !== normaliser(a.serviceAd)) {
       changements.push({ champ: 'service', avant: existant.service_ad || existant.service, apres: a.serviceAd });
     }
@@ -202,6 +211,7 @@ export async function analyserSynchronisation() {
       ecartes: ecartes.length,
       sansAdresse: sansAdresse.length,
       enBaseSansAdresse: enBaseSansAdresse.length,
+      sansService,
       services: parService.size,
     },
     nouveauxParService: [...parService.entries()]
@@ -233,8 +243,11 @@ export async function appliquerSynchronisation({
   accepter = [], appliquerModifications = true,
   exclureDesactives = true, exclureDisparus = false, supprimerDisparus = false,
   disparusChoisis = null,
+  // Annuaire deja lu. Sert a rejouer exactement la lecture presentee dans le
+  // sas, et a eprouver cette fonction sans controleur de domaine.
+  annuaire = null,
 } = {}, parQui) {
-  const lecture = await listerAgentsAnnuaire();
+  const lecture = annuaire ? { ok: true, agents: annuaire } : await listerAgentsAnnuaire();
   if (!lecture.ok) return { ok: false, message: lecture.message };
 
   const retenus = new Set(accepter.map((l) => String(l).toLowerCase()));
@@ -249,19 +262,25 @@ export async function appliquerSynchronisation({
   // sinon il faudrait refaire le tri a chaque fois. Seules les exclusions
   // prononcees par l'annuaire lui-meme sont levees quand le compte redevient actif.
   const majorer = db.prepare(`
-    UPDATE agents SET nom_complet = ?,
+    UPDATE agents SET nom_complet = @nomComplet,
                       -- COALESCE : un annuaire muet sur givenName ne doit pas
                       -- effacer un prenom deja connu.
-                      prenom = COALESCE(?, prenom),
-                      email = COALESCE(?, email),
+                      prenom = COALESCE(@prenom, prenom),
+                      email = COALESCE(@email, email),
+                      -- Deux raisons de ne pas toucher au service.
                       -- Un rattachement decide a la main resiste a l'annuaire :
-                      -- c'est tout l'interet de l'avoir saisi.
-                      service    = CASE WHEN service_force = 1 THEN service    ELSE ? END,
-                      service_ad = CASE WHEN service_force = 1 THEN service_ad ELSE ? END,
-                      service_brut = ?,
+                      -- c'est tout l'interet de l'avoir saisi. Et un annuaire
+                      -- qui ne dit rien du service ne dit pas « Non rattache » :
+                      -- ecraser avec son silence vidait de leur direction des
+                      -- centaines d'agents a chaque synchronisation.
+                      service    = CASE WHEN service_force = 1 OR @serviceAd IS NULL
+                                        THEN service    ELSE @service    END,
+                      service_ad = CASE WHEN service_force = 1 OR @serviceAd IS NULL
+                                        THEN service_ad ELSE @serviceAd END,
+                      service_brut = @dn,
                       exclu = CASE WHEN exclu_motif = 'manuel' THEN exclu ELSE 0 END,
                       exclu_motif = CASE WHEN exclu_motif = 'manuel' THEN exclu_motif ELSE NULL END
-    WHERE login = ?
+    WHERE login = @login
   `);
   const exclure = db.prepare(
     "UPDATE agents SET exclu = 1, exclu_motif = 'annuaire', note = COALESCE(note, ?) WHERE login = ?"
@@ -311,7 +330,11 @@ export async function appliquerSynchronisation({
         const existant = enBase.get(a.login);
         // Les comptes locaux d'administration ne sont pas pilotes par l'annuaire
         if (!existant || !a.actif || existant.origine === 'local') continue;
-        majorer.run(a.nomComplet, a.prenom || null, a.email, resoudreService(a.serviceAd), a.serviceAd, a.dn, a.login);
+        majorer.run({
+          nomComplet: a.nomComplet, prenom: a.prenom || null, email: a.email,
+          service: a.serviceAd ? resoudreService(a.serviceAd) : null,
+          serviceAd: a.serviceAd || null, dn: a.dn, login: a.login,
+        });
         misAJour++;
       }
     }

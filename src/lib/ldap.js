@@ -97,6 +97,34 @@ export function normaliserService(nom) {
   return String(nom).replace(/\s+/g, ' ').trim();
 }
 
+// Un attribut LDAP peut revenir en tableau des qu'il est multivalue : le
+// prendre tel quel donnait un service nomme « Finances,Budget ».
+const premiereValeur = (v) => (Array.isArray(v) ? v[0] : v);
+
+/**
+ * Service d'un compte, lu dans l'annuaire.
+ *
+ * Deux sources coexistent : l'attribut (« department », en general) et l'OU du
+ * DN. La configuration dit laquelle fait foi, mais l'autre sert de repli -
+ * c'est tout l'objet de cette fonction.
+ *
+ * Un annuaire de collectivite n'est jamais renseigne a 100 % : des centaines de
+ * fiches ont un « department » vide alors que leur DN dit exactement dans quel
+ * service elles sont. S'en tenir a la source configuree faisait basculer tous
+ * ces agents dans « Non rattache », ou ils ne comptent plus pour personne.
+ *
+ * Renvoie null quand l'annuaire ne dit vraiment rien : cette absence doit
+ * pouvoir se distinguer d'un service reellement nomme « Non rattache », faute
+ * de quoi elle ecrase les rattachements deja connus.
+ */
+export function serviceDepuisAnnuaire(entree) {
+  const attribut = premiereValeur(entree[config.service.attribut])
+    || premiereValeur(entree.physicalDeliveryOfficeName);
+  const ou = serviceDepuisDn(entree.dn, config.service.ouDepth);
+  const brut = config.service.source === 'attr' ? (attribut || ou) : (ou || attribut);
+  return brut ? normaliserService(brut) : null;
+}
+
 const ATTRIBUTS = [
   'dn', 'sAMAccountName', 'displayName', 'givenName', 'sn',
   'mail', 'department', 'physicalDeliveryOfficeName', 'memberOf', 'userAccountControl',
@@ -160,10 +188,6 @@ export async function authentifier(login, motDePasse) {
     await clientAgent.unbind().catch(() => {});
   }
 
-  const brut = config.service.source === 'attr'
-    ? entree[config.service.attribut] || entree.physicalDeliveryOfficeName
-    : serviceDepuisDn(entree.dn, config.service.ouDepth);
-
   const prenomNom = [entree.givenName, entree.sn].filter(Boolean).join(' ');
 
   return {
@@ -175,7 +199,9 @@ export async function authentifier(login, motDePasse) {
       // son prenom, et displayName ne dit pas ou il commence.
       prenom: entree.givenName ? String(entree.givenName) : null,
       email: entree.mail ? String(entree.mail) : null,
-      service: normaliserService(brut),
+      // null quand l'annuaire ne dit rien : l'appelant garde alors le service
+      // deja connu plutot que de rattacher l'agent a « Non rattache ».
+      service: serviceDepuisAnnuaire(entree),
       serviceBrut: String(entree.dn),
       groupes,
       // Administrateur par appartenance a un groupe dedie, en complement de
@@ -287,9 +313,6 @@ export async function listerAgentsAnnuaire({ limite = 20000 } = {}) {
     });
 
     const agents = searchEntries.map((e) => {
-      const brut = config.service.source === 'attr'
-        ? e[config.service.attribut] || e.physicalDeliveryOfficeName
-        : serviceDepuisDn(e.dn, config.service.ouDepth);
       const prenomNom = [e.givenName, e.sn].filter(Boolean).join(' ');
 
       return {
@@ -297,7 +320,7 @@ export async function listerAgentsAnnuaire({ limite = 20000 } = {}) {
         nomComplet: String(e.displayName || prenomNom || e.sAMAccountName || ''),
         prenom: e.givenName ? String(e.givenName) : null,
         email: e.mail ? String(e.mail).toLowerCase() : null,
-        serviceAd: normaliserService(brut),
+        serviceAd: serviceDepuisAnnuaire(e),
         dn: String(e.dn),
         // bit 2 de userAccountControl : compte desactive
         actif: !(Number(e.userAccountControl || 0) & 2),

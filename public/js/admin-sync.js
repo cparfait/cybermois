@@ -53,7 +53,16 @@ function rendre() {
         <div class="stat-admin"><div class="v">${r.ecartes}</div><div class="l">écartés par vos règles</div></div>
         <div class="stat-admin"><div class="v">${r.sansAdresse}</div><div class="l">écartés faute d'adresse mail</div></div>
         <div class="stat-admin"><div class="v">${r.services}</div><div class="l">services concernés</div></div>
+        <div class="stat-admin"><div class="v">${r.sansService ?? 0}</div><div class="l">sans service dans l'annuaire</div></div>
       </div>
+
+      ${r.sansService ? `
+        <p class="discret" style="margin:-.4rem 0 1rem">
+          ${r.sansService} compte(s) ne portent aucun service dans l'annuaire, ni dans l'attribut
+          ni dans leur OU. Les fiches déjà rattachées gardent leur direction : la synchronisation
+          ne l'efface pas. Les nouveaux comptes arrivent en « Non rattaché » — l'écran
+          <strong>Rattachement</strong> les reprend un par un.
+        </p>` : ''}
 
       <details class="aide-admin">
         <summary>Règles d'exclusion — ce qui n'est jamais proposé</summary>

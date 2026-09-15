@@ -498,7 +498,12 @@ export default async function routesConfiguration(app) {
 
       const e = searchEntries[0];
       const ous = chaineOu(e.dn);
-      const service = config.service.source === 'ou' ? ous[p.ouDepth - 1] : e.department;
+      // Meme repli qu'a la connexion : la source configuree d'abord, l'autre
+      // ensuite. Sans cela l'ecran de test annoncait « Non rattache » pour un
+      // agent que l'application, elle, sait rattacher.
+      const service = config.service.source === 'ou'
+        ? (ous[p.ouDepth - 1] || e.department)
+        : (e.department || ous[p.ouDepth - 1]);
 
       return {
         ok: true,

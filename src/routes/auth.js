@@ -2,7 +2,7 @@ import { authentifier } from '../lib/ldap.js';
 import { estModeDemo, authentifierDemo } from '../lib/annuaire-demo.js';
 import { resoudreService } from '../lib/services.js';
 import { verifierAdminLocal, existeAdminLocal } from '../lib/admin-local.js';
-import { db, journaliser } from '../lib/db.js';
+import { db, journaliser, SERVICE_NON_RATTACHE } from '../lib/db.js';
 import { config } from '../lib/config.js';
 import { creerSession, detruireSession, lireSession, COOKIE, optionsCookie } from '../lib/session.js';
 import { prenomUsuel } from '../lib/prenom.js';
@@ -101,7 +101,12 @@ export default async function routesAuth(app) {
     // Creation ou mise a jour de la fiche agent : le service est resynchronise a chaque connexion
     // Le libelle lu dans l'annuaire est conserve tel quel dans service_ad ;
     // service porte le regroupement retenu pour la campagne.
-    const serviceAffiche = resoudreService(a.service);
+    // a.service vaut null quand l'annuaire ne dit rien : ni l'attribut, ni
+    // l'OU du DN. Une premiere connexion cree alors la fiche en
+    // « Non rattache », mais une connexion suivante ne doit pas y faire
+    // retomber un agent deja rattache. C'est service_ad, laisse a NULL, qui
+    // porte ce silence jusqu'au ON CONFLICT.
+    const serviceAffiche = a.service ? resoudreService(a.service) : null;
 
     db.prepare(`
       INSERT INTO agents (login, nom_complet, prenom, email, service, service_ad, service_brut,
@@ -115,19 +120,26 @@ export default async function routesAuth(app) {
         email       = excluded.email,
         -- Une direction affectee a la main dans le back-office ne se defait
         -- pas a la connexion suivante : l'annuaire ne fait foi que par defaut.
-        service     = CASE WHEN agents.service_force = 1 THEN agents.service    ELSE excluded.service    END,
-        service_ad  = CASE WHEN agents.service_force = 1 THEN agents.service_ad ELSE excluded.service_ad END,
+        -- Et un annuaire muet sur le service n'en est pas une : il laisse la
+        -- fiche telle qu'elle est.
+        service     = CASE WHEN agents.service_force = 1 OR excluded.service_ad IS NULL
+                           THEN agents.service    ELSE excluded.service    END,
+        service_ad  = CASE WHEN agents.service_force = 1 OR excluded.service_ad IS NULL
+                           THEN agents.service_ad ELSE excluded.service_ad END,
         service_brut= excluded.service_brut,
         est_admin   = excluded.est_admin,
         -- D'ou vient le droit : la configuration peut ainsi revoquer un
         -- identifiant retire de la liste sans toucher aux membres du groupe.
         admin_source= excluded.admin_source,
         vu_le       = datetime('now')
-    `).run(a.login, a.nomComplet, a.prenom || null, a.email, serviceAffiche, a.service, a.serviceBrut, estAdmin, sourceAdmin);
+    `).run(a.login, a.nomComplet, a.prenom || null, a.email,
+           serviceAffiche || SERVICE_NON_RATTACHE, a.service || null, a.serviceBrut,
+           estAdmin, sourceAdmin);
 
     const agent = db.prepare('SELECT * FROM agents WHERE login = ?').get(a.login);
     const token = creerSession(agent.id);
-    journaliser(a.login, 'connexion_ok', `service=${serviceAffiche} (annuaire: ${a.service})`, ip);
+    journaliser(a.login, 'connexion_ok',
+      `service=${agent.service} (annuaire: ${a.service || 'rien'})`, ip);
 
     return reponse
       .setCookie(COOKIE, token, optionsCookie())
