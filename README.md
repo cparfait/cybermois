@@ -274,7 +274,11 @@ Deux méthodes, au choix :
   Recharger les contenus. Pratique pour préparer une édition suivante ou versionner les
   contenus dans Git.
 
-Un défi déjà joué n'est jamais écrasé par un rechargement, sauf en forçant explicitement.
+Les deux ne se mélangent pas : **un défi modifié dans le back-office n'est plus jamais
+réécrit depuis son fichier**, ni au redémarrage qui suit chaque mise à jour de
+l'application, ni par « Recharger les contenus », ni en forçant. Retiré du programme, il
+est masqué plutôt que supprimé. La liste des défis le signale par « ✎ modifié ici —
+protégé du rechargement ». Un défi déjà joué n'est écrasé qu'en forçant explicitement.
 
 ### Le barème : dix questions, cent points
 

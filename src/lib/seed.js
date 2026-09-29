@@ -19,13 +19,16 @@ import { niveauDe } from './bareme.js';
  * tire les questionnaires. Elle est idempotente : la rejouer met a jour
  * titres, dates et questions sans toucher aux participations.
  *
- * Deux choses ne sont jamais reecrites sans force :
- *   - un defi deja joue, dont les participants ont repondu a des questions qui
- *     doivent rester celles qu'ils ont vues ;
- *   - un defi retouche dans le back-office, dont la correction vaut mieux que
- *     le fichier. Cette fonction s'executant a chaque demarrage du serveur,
- *     sans cette protection une question corrigee le lundi disparaissait au
- *     redemarrage du mardi, remplacee par le texte d'origine.
+ * Un defi retouche dans le back-office n'est JAMAIS reecrit, meme en forcant :
+ * la correction de la collectivite vaut mieux que le fichier. Cette fonction
+ * s'executant a chaque demarrage du serveur - donc a chaque mise a jour de
+ * l'application -, une question corrigee le lundi disparaissait sinon au
+ * redemarrage du mardi, remplacee par le texte d'origine. Le rechargement
+ * force l'ecrasait aussi : un bouton de maintenance suffisait a perdre des
+ * semaines de relecture.
+ *
+ * Un defi deja joue, lui, n'est reecrit qu'en forcant : ses participants ont
+ * repondu a des questions qui doivent rester celles qu'ils ont vues.
  *
  * Dans les deux cas la DATE reste appliquee : la repousser ou l'avancer ne
  * touche pas au questionnaire.
@@ -43,11 +46,17 @@ export function importerContenus({ force = false } = {}) {
 
     // Le module est ce qui identifie un defi d'un import a l'autre : c'est lui
     // qu'on retrouve, sa date n'etant qu'une propriete de plus a mettre a jour.
-    const existant = db.prepare('SELECT id, contenu_modifie FROM defis WHERE module_code = ?').get(code);
+    const existant = db.prepare('SELECT id, contenu_modifie, hors_programme FROM defis WHERE module_code = ?').get(code);
     const badge = module.badge || {};
     const video = module.video || {};
 
     if (existant) {
+      // Reprogramme apres en avoir ete retire : il reparait a sa nouvelle date,
+      // comme un defi tout juste cree. Un defi masque a la main, lui, n'a pas
+      // ce drapeau et reste masque.
+      if (existant.hors_programme) {
+        db.prepare('UPDATE defis SET hors_programme = 0, publie = 1 WHERE id = ?').run(existant.id);
+      }
       const joue = db.prepare('SELECT COUNT(*) AS n FROM participations WHERE defi_id = ?').get(existant.id).n;
       // Une tentative en cours compte autant qu'une participation terminee.
       // Sans elle, un simple redemarrage du conteneur - donc chaque
@@ -60,7 +69,7 @@ export function importerContenus({ force = false } = {}) {
         : joue > 0 ? `${joue} participation(s) enregistree(s)`
           : enCours > 0 ? `${enCours} reponse(s) en cours de saisie` : null;
 
-      if (motif && !force) {
+      if (existant.contenu_modifie || (motif && !force)) {
         // La date, elle, reste modifiable : la repousser ou l'avancer ne
         // change rien au questionnaire.
         db.prepare("UPDATE defis SET ouvre_le = ?, maj_le = datetime('now') WHERE id = ?")
@@ -68,8 +77,6 @@ export function importerContenus({ force = false } = {}) {
         rapport.push({ module: code, ouvre_le: ouverture, statut: 'protege', motif });
         continue;
       }
-      // Le defi redevient conforme a son module : le drapeau tombe, sans quoi
-      // un rechargement force resterait annonce comme « protege » ensuite.
       db.prepare(`UPDATE defis SET titre = ?, accroche = ?, intro = ?, duree_minutes = ?, ouvre_le = ?,
                     module_code = ?, badge_code = ?, badge_libelle = ?, badge_emoji = ?, badge_description = ?,
                     video_url = ?, video_titre = ?, contenu_modifie = 0,
@@ -95,18 +102,21 @@ export function importerContenus({ force = false } = {}) {
     }
   }
 
-  // Un module deprogramme n'a plus de raison d'apparaitre au portail. On ne
-  // supprime que ce que personne n'a joue : le reste se depublie a la main.
+  // Un module deprogramme n'a plus de raison d'apparaitre au portail : son
+  // defi est masque. Il n'est plus supprime - vider le programme pour le
+  // replanifier emportait sinon tous les questionnaires, corrections
+  // comprises - et reprend sa place quand son module est reprogramme.
   // Les defis rediges directement dans l'administration n'ont pas de module :
-  // ils ne dependent pas du programme, et ne sont donc jamais emportes ici.
+  // ils ne dependent pas du programme, et ne sont donc jamais touches ici.
   const programmes = new Set(programme.map((p) => p.module_code));
-  for (const d of db.prepare('SELECT id, module_code, titre FROM defis WHERE module_code IS NOT NULL').all()) {
+  for (const d of db.prepare('SELECT id, module_code, hors_programme FROM defis WHERE module_code IS NOT NULL').all()) {
     if (programmes.has(d.module_code)) continue;
     const joue = db.prepare('SELECT COUNT(*) AS n FROM participations WHERE defi_id = ?').get(d.id).n;
     if (joue > 0) { rapport.push({ module: d.module_code, statut: 'conserve', motif: `${joue} participation(s)` }); continue; }
-    db.prepare('DELETE FROM questions WHERE defi_id = ?').run(d.id);
-    db.prepare('DELETE FROM defis WHERE id = ?').run(d.id);
-    rapport.push({ module: d.module_code, statut: 'deprogramme' });
+    // Une seule fois : republie a la main ensuite, il doit le rester.
+    if (d.hors_programme) continue;
+    db.prepare("UPDATE defis SET hors_programme = 1, publie = 0, maj_le = datetime('now') WHERE id = ?").run(d.id);
+    rapport.push({ module: d.module_code, statut: 'deprogramme', motif: 'masque, questionnaire conserve' });
   }
 
   return rapport;

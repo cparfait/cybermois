@@ -244,7 +244,11 @@ chargeurs.defis = async () => {
             <td>${echapper(d.titre)}</td>
             <td>
               <span class="pastille-etat ${d.publie ? 'etat-ok' : 'etat-ko'}">${d.publie ? 'Publié' : 'Masqué'}</span>
-              ${!d.publie && d.ouvre_le <= aujourdhuiIso() ? `
+              ${d.hors_programme ? `
+                <br><span class="discret" style="font-size:.76rem">
+                  hors programme : donnez-lui une date pour qu'il reparaisse
+                </span>` : ''}
+              ${!d.publie && !d.hors_programme && d.ouvre_le <= aujourdhuiIso() ? `
                 <br><span class="discret" style="font-size:.76rem;color:var(--alerte)">
                   sa date est passée : publiez-le pour qu'il paraisse
                 </span>` : ''}
@@ -549,6 +553,11 @@ async function ouvrirEditeur(id) {
           sont ignorés. Cybermalveillance.gouv.fr publie sur Dailymotion : c'est de là que
           viennent les vidéos fournies avec les modules.
         </p>
+        <p class="message message-alerte" style="margin:.6rem 0 0;font-size:.82rem">
+          <strong>Dailymotion refuse désormais son lecteur inséré</strong> : l'agent voit
+          « Forbidden » à la place de la vidéo. Déposez plutôt le fichier MP4 ci-dessous —
+          il est servi par le portail, sans dépendre d'un hébergeur.
+        </p>
       </details>
       <div class="grille grille-2">
         <div class="champ-admin" style="grid-column:1/-1"><label for="ed-video-url">Adresse de la vidéo</label>
@@ -669,7 +678,7 @@ async function ouvrirEditeur(id) {
 
   document.getElementById('btn-fermer').addEventListener('click', () => { zone.innerHTML = ''; });
 
-  brancherApercuVideo();
+  brancherApercuVideo(defi.illustration);
 
   const boutonEnregistrer = document.getElementById('btn-enregistrer');
   boutonEnregistrer.addEventListener('click', () => pendant(boutonEnregistrer, 'Enregistrement…', async () => {
@@ -726,6 +735,26 @@ chargeurs.configuration = chargerConfiguration;
 
 /* ============================================================== Mails */
 
+/** Les mails de campagne, tels que l'onglet Mails les presente. */
+const ENVOIS = {
+  ouverture: {
+    nom: "Mail d'ouverture", quand: 'Premier jour', cible: 'chaque agent, une fois',
+    confirmer: "Envoyer maintenant le mail d'ouverture à tous les agents ?",
+  },
+  annonce: {
+    nom: 'Annonce de la semaine', quand: 'Lundis suivants', cible: 'chaque agent',
+    confirmer: 'Envoyer maintenant l’annonce des défis de la semaine à tous les agents ?',
+  },
+  'relance-semaine': {
+    nom: 'Relance', quand: 'Mercredi', cible: 'agents en retard sur la semaine',
+    confirmer: 'Relancer maintenant les agents qui n’ont pas fait tous les défis des sept derniers jours ?',
+  },
+  resultats: {
+    nom: 'Résultats', quand: 'Vendredi', cible: 'groupe de diffusion',
+    confirmer: 'Envoyer maintenant les résultats du dernier défi paru au groupe de diffusion ?',
+  },
+};
+
 chargeurs.mails = async () => {
   const cible = document.getElementById('panneau-mails');
 
@@ -747,14 +776,24 @@ chargeurs.mails = async () => {
         Aucun envoi n'est possible tant que ce n'est pas réglé : rechargez la page.
       </div>` : ''}
 
+    <div id="zone-envois" class="carte" style="margin-bottom:1.5rem">
+      <p class="discret">Chargement…</p>
+    </div>
+
     <details class="aide-admin">
       <summary>Qui envoie quoi</summary>
-      <p><strong>Lancement (lundi)</strong> — à copier-coller par la DPO, pour qu'il parte de sa propre boîte
-      et porte sa signature. Utilisez le bouton « Copier le texte » ci-dessous.<br>
-      <strong>Relance (mercredi)</strong> — envoyée automatiquement par l'application aux seuls agents
-      n'ayant pas encore fait le défi choisi.<br>
-      <strong>Résultats (vendredi)</strong> — envoyés automatiquement au groupe de distribution.<br>
-      Les envois automatiques portent sur le <strong>dernier défi paru</strong>.</p>
+      <p>Quand les envois automatiques sont actifs (tableau ci-dessus), l'application envoie :</p>
+      <ul class="ui" style="font-size:.9rem">
+        <li><strong>Ouverture (premier jour)</strong> — à chaque agent, le jour de parution du premier
+          défi : ce qu'est le Cybermois, comment il se déroule, le calendrier, les données. Une seule fois.</li>
+        <li><strong>Annonce (lundis suivants)</strong> — à chaque agent : les défis de la semaine, et
+          ceux d'avant qu'il n'a pas encore faits, toujours ouverts. Une fois par semaine.</li>
+        <li><strong>Relance (mercredi)</strong> — aux seuls agents qui n'ont pas terminé tous les défis
+          parus ces sept derniers jours. Un seul message, qui liste ceux qui manquent.</li>
+        <li><strong>Résultats (vendredi)</strong> — au groupe de distribution, sur le dernier défi paru.</li>
+      </ul>
+      <p>Chacun se déclenche aussi à la main ci-dessous. Pour les mails de semaine, le défi choisi
+      sert à l'aperçu : il montre le message tel qu'il partira la semaine de ce défi.</p>
     </details>
 
     <div class="carte" style="margin-bottom:1.5rem">
@@ -770,27 +809,154 @@ chargeurs.mails = async () => {
         <div class="champ-admin" style="width:200px">
           <label for="mail-type">Type de message</label>
           <select id="mail-type">
-            <option value="lancement">Lancement (DPO)</option>
-            <option value="relance">Relance</option>
-            <option value="resultats">Résultats</option>
+            <option value="ouverture">Ouverture (premier jour)</option>
+            <option value="annonce">Annonce du lundi</option>
+            <option value="relance-semaine">Relance du mercredi</option>
+            <option value="resultats">Résultats du vendredi</option>
+            <option value="relance">Relance d'un seul défi</option>
+            <option value="lancement">Texte pour la DPO (copier-coller)</option>
           </select>
         </div>
         <div class="champ-admin"><button class="btn btn-principal" id="btn-apercu">Prévisualiser</button></div>
       </div>
 
       <div id="zone-actions" class="rang" style="border-top:1px solid var(--bordure);padding-top:1rem"></div>
+
+      <div class="rang" style="align-items:flex-end;border-top:1px solid var(--bordure);padding-top:1rem;margin-top:1rem">
+        <div class="champ-admin" style="width:320px">
+          <label for="mail-test-adresse">Adresse de test</label>
+          <input type="email" id="mail-test-adresse" autocomplete="email" placeholder="prenom.nom@chatillon92.fr">
+        </div>
+        <div class="champ-admin">
+          <button class="btn btn-secondaire" id="btn-test-mail">Envoyer un test à cette adresse</button>
+        </div>
+      </div>
+      <p class="discret" style="margin:.4rem 0 0;font-size:.82rem">
+        Envoie le message choisi ci-dessus à cette seule adresse, avec « [TEST] » dans l'objet,
+        pour le valider dans une vraie boîte. Il n'est pas compté comme envoyé : le vrai envoi
+        reste à faire.
+      </p>
     </div>
 
     <div id="zone-apercu"></div>`;
 
   document.getElementById('btn-apercu').addEventListener('click', apercu);
   document.getElementById('mail-type').addEventListener('change', majActions);
+  document.getElementById('btn-test-mail').addEventListener('click', envoyerTest);
   majActions();
+  afficherEnvois();
+
+  /**
+   * Un message a une seule adresse, pour le valider avant l'envoi reel. Le
+   * serveur le construit exactement comme l'apercu.
+   */
+  async function envoyerTest() {
+    const defiId = defiChoisi();
+    if (!defiId) return;
+    const champ = document.getElementById('mail-test-adresse');
+    const adresse = champ.value.trim();
+    if (!adresse || !champ.checkValidity()) {
+      champ.focus();
+      alerte('alerte', 'Saisissez une adresse de test valide.');
+      return;
+    }
+    const bouton = document.getElementById('btn-test-mail');
+    await pendant(bouton, 'Envoi…', async () => {
+      try {
+        const r = await api('/api/admin/mails/test', {
+          method: 'POST',
+          body: { type: document.getElementById('mail-type').value, defiId, adresse },
+        });
+        alerte('alerte', r.message, 'succes');
+      } catch (e) { alerte('alerte', e.message); }
+    });
+  }
+
+  /**
+   * Les mails de campagne, chacun avec son interrupteur et son bouton
+   * d'envoi. Couper l'automatique n'empeche jamais d'envoyer a la main : les
+   * deux reglages sont independants, et c'est ce qui permet de tout piloter
+   * soi-meme pendant la recette.
+   */
+  async function afficherEnvois() {
+    const zone = document.getElementById('zone-envois');
+    let etat;
+    try { etat = await api('/api/admin/mails/etat'); } catch (e) {
+      zone.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`;
+      return;
+    }
+    // L'adresse de test proposee est la sienne, sans ecraser une saisie.
+    const champTest = document.getElementById('mail-test-adresse');
+    if (champTest && !champTest.value && etat.monAdresse) champTest.value = etat.monAdresse;
+    // L'horodatage est ecrit en UTC par SQLite.
+    const quand = (h) => new Date(`${h.replace(' ', 'T')}Z`).toLocaleString('fr-FR', {
+      day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+    });
+    const ligne = (m) => {
+      const d = ENVOIS[m.type];
+      const e = m.dernierEnvoi;
+      return `<tr>
+        <td><strong>${echapper(d.nom)}</strong><br>
+          <span class="discret" style="font-size:.78rem">${echapper(d.quand)} — ${echapper(d.cible)}</span></td>
+        <td><label class="ui" style="display:flex;gap:.4rem;align-items:center;cursor:pointer">
+            <input type="checkbox" data-reglage="${echapper(m.cle)}" ${m.actif ? 'checked' : ''}>
+            ${m.actif ? (etat.automatique ? 'oui' : 'oui, en pause') : 'non'}</label>
+          <code style="font-size:.74rem">${echapper(m.planification)}</code></td>
+        <td style="font-size:.84rem">${e
+          ? `${echapper(quand(e.horodatage))}<br><span class="discret">${e.succes} / ${e.destinataires} envoyé(s)</span>${
+            e.erreur ? `<br><span style="color:var(--erreur)">${echapper(e.erreur)}</span>` : ''}`
+          : '<span class="discret">jamais</span>'}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-secondaire" style="padding:.3rem .7rem;font-size:.8rem" data-simuler="${m.type}">Simuler</button>
+          <button class="btn btn-principal" style="padding:.3rem .7rem;font-size:.8rem" data-envoyer="${m.type}">Envoyer maintenant</button>
+        </td></tr>`;
+    };
+
+    zone.innerHTML = `
+      <h2 style="margin-top:0">Envois de la campagne</h2>
+      ${etat.smtpConfigure ? '' : `<div class="message message-alerte" style="margin-bottom:.8rem">
+        Aucun serveur SMTP n'est configuré (onglet Configuration) : aucun envoi n'est possible.</div>`}
+      <label class="ui" style="display:flex;gap:.5rem;align-items:center;cursor:pointer;margin-bottom:.3rem">
+        <input type="checkbox" data-reglage="smtp.actif" ${etat.automatique ? 'checked' : ''}>
+        <strong>Envois automatiques</strong>
+        <span class="pastille-etat ${etat.automatique ? 'etat-ok' : 'etat-ko'}">${etat.automatique ? 'actifs' : 'en pause'}</span>
+      </label>
+      <p class="discret" style="margin:0 0 1rem;font-size:.84rem">Interrupteur général : en pause, rien ne part
+        tout seul, quels que soient les réglages ci-dessous. L'envoi à la main reste toujours possible.</p>
+      <div class="tableau-defilant"><table class="admin">
+        <caption class="sr-only">Mails de la campagne : envoi automatique et envoi à la main</caption>
+        <thead><tr><th scope="col">Mail</th><th scope="col">Automatique</th>
+          <th scope="col">Dernier envoi</th><th scope="col">À la main</th></tr></thead>
+        <tbody>${etat.mails.map(ligne).join('')}</tbody></table></div>`;
+
+    zone.querySelectorAll('[data-reglage]').forEach((c) => c.addEventListener('change', async () => {
+      c.disabled = true;
+      try {
+        await api('/api/admin/configuration', { method: 'PUT', body: { valeurs: { [c.dataset.reglage]: c.checked } } });
+        alerte('alerte', c.checked ? 'Envoi automatique activé.' : 'Envoi automatique coupé.', 'succes');
+      } catch (e) { alerte('alerte', e.message); }
+      afficherEnvois();
+    }));
+    zone.querySelectorAll('[data-simuler]').forEach((b) =>
+      b.addEventListener('click', () => envoyerCampagne(b.dataset.simuler, true)));
+    zone.querySelectorAll('[data-envoyer]').forEach((b) => b.addEventListener('click', () => {
+      if (!confirm(ENVOIS[b.dataset.envoyer].confirmer)) return undefined;
+      return pendant(b, 'Envoi…', async () => {
+        await envoyerCampagne(b.dataset.envoyer, false);
+        afficherEnvois();
+      });
+    }));
+  }
 
   function majActions() {
     const type = document.getElementById('mail-type').value;
     const zone = document.getElementById('zone-actions');
-    if (type === 'lancement') {
+    // Un seul endroit pour envoyer un mail de campagne : le tableau du haut.
+    // Ici, on ne fait que le previsualiser.
+    if (ENVOIS[type] && type !== 'resultats') {
+      zone.innerHTML = `<span class="discret ui">Pour l'envoyer, utilisez « Envoyer maintenant »
+        sur la ligne « ${echapper(ENVOIS[type].nom)} » du tableau ci-dessus.</span>`;
+    } else if (type === 'lancement') {
       zone.innerHTML = `
         <button class="btn btn-secondaire" id="btn-copier-texte">Copier le texte brut</button>
         <button class="btn btn-secondaire" id="btn-copier-html">Copier le HTML</button>
@@ -853,6 +1019,31 @@ chargeurs.mails = async () => {
     } catch {
       alerte('alerte', 'Copie automatique refusée par le navigateur : sélectionnez le texte de l\'aperçu.', 'alerte');
     }
+  }
+
+  /**
+   * Ouverture, annonce, relance de la semaine : ils ne portent pas sur le defi
+   * choisi mais sur la campagne. Un envoi deja fait se confirme une seconde
+   * fois plutot que de partir en double par megarde.
+   */
+  async function envoyerCampagne(type, simulation, forcer = false) {
+    try {
+      const r = await api(`/api/admin/mails/campagne/${type}`, { method: 'POST', body: { simulation, forcer } });
+      if (r.code === 'DEJA_ENVOYE' && !forcer) {
+        if (confirm(`${r.message}\n\nLe renvoyer quand même à tous les agents ?`)) envoyerCampagne(type, false, true);
+        return undefined;
+      }
+      if (!r.ok) return alerte('alerte', r.message || 'Envoi impossible.');
+      // « Envoi effectué : 0 / 1 » se lisait comme un succes.
+      if (!simulation && r.destinataires && !r.succes) {
+        return alerte('alerte', `Aucun message n'est parti${r.erreur ? ` : ${r.erreur}` : ''}.`);
+      }
+      return alerte('alerte', simulation
+        ? `Simulation : ${r.destinataires} destinataire(s)${r.defis ? ` — défis : ${r.defis.join(', ')}` : ''}.`
+          + (r.dejaEnvoye ? ' Attention : ce mail est déjà parti.' : '')
+        : `Envoi effectué : ${r.succes} / ${r.destinataires} message(s) transmis.${r.erreur ? ` Dernière erreur : ${r.erreur}` : ''}`,
+      'succes');
+    } catch (e) { return alerte('alerte', e.message); }
   }
 
   async function envoyer(quoi, simulation) {
@@ -967,6 +1158,8 @@ chargeurs.technique = async () => {
           <tr><th scope="row">Groupe requis</th><td>${echapper(c.groupeRequis)}</td></tr>
           <tr><th scope="row">Envoi de mails</th><td>${c.envoiMailActif ? 'Actif' : 'Désactivé'}</td></tr>
           <tr><th scope="row">Groupe de diffusion</th><td>${echapper(c.groupeDiffusion)}</td></tr>
+          <tr><th scope="row">Mail d'ouverture</th><td><code>${echapper(c.cronOuverture)}</code></td></tr>
+          <tr><th scope="row">Annonce du lundi</th><td><code>${echapper(c.cronAnnonce)}</code></td></tr>
           <tr><th scope="row">Planification des relances</th><td><code>${echapper(c.cronRelance)}</code></td></tr>
           <tr><th scope="row">Planification des résultats</th><td><code>${echapper(c.cronResultats)}</code></td></tr>
           <tr><th scope="row">URL publique</th><td>${echapper(c.urlPublique)}</td></tr>
@@ -977,9 +1170,9 @@ chargeurs.technique = async () => {
       <p class="discret">Recharge les modules de <code>content/modules/</code> dans les défis programmés.
       Les défis déjà joués, et ceux que vous avez modifiés dans l'éditeur, sont préservés.</p>
       <div class="message message-alerte" style="margin-bottom:.8rem">
-        <strong>Forcer efface les modifications faites dans l'éditeur.</strong> Le questionnaire
-        revient au texte du fichier du module. À n'utiliser que si c'est précisément ce que
-        vous voulez : il n'y a pas de retour en arrière.
+        <strong>Forcer réécrit aussi les défis déjà joués</strong>, à partir du texte du fichier
+        du module : les réponses enregistrées de leurs participants sont perdues, sans retour
+        en arrière. Les défis modifiés dans l'éditeur ne sont jamais touchés, même en forçant.
       </div>
       <div class="rang">
         <button class="btn btn-secondaire" id="btn-reimport">Recharger les contenus</button>
@@ -999,9 +1192,17 @@ chargeurs.technique = async () => {
         l'historique des envois et les dates de première connexion : les statistiques et le classement
         repartent de zéro.<br>
         <strong>Conserve</strong> tout le paramétrage : annuaire Active Directory, messagerie, référentiel
-        des directions, regroupements, exclusions, comptes agents, défis et programmation.
+        des directions, regroupements, exclusions, comptes agents et questionnaires des défis.
         À utiliser à l'issue de la phase de test, ou pour lancer une nouvelle campagne.
       </div>
+      <p style="margin:.8rem 0">
+        <label class="ui" style="display:flex;gap:.5rem;align-items:flex-start;cursor:pointer">
+          <input type="checkbox" id="reinit-programme" style="margin-top:.25rem">
+          <span><strong>Vider aussi le programme des parutions.</strong>
+            Plus aucun défi n'est planifié : leurs questionnaires sont conservés, masqués
+            jusqu'à ce que vous leur redonniez une date dans l'onglet Défis.</span>
+        </label>
+      </p>
       <button class="btn btn-secondaire" id="btn-reinit" style="border-color:var(--erreur);color:var(--erreur)">Remettre la campagne à zéro</button>`;
 
     document.getElementById('btn-reimport').addEventListener('click', () => reimporter(false));
@@ -1009,8 +1210,8 @@ chargeurs.technique = async () => {
       const saut = String.fromCharCode(10);
       if (confirm([
         'Forcer le rechargement écrase les questions par le texte des fichiers de modules.',
-        'Sont concernés les défis déjà joués ET ceux que vous avez modifiés dans l\'éditeur : '
-          + 'ces modifications seront définitivement perdues.',
+        'Sont concernés les défis déjà joués : les réponses de leurs participants seront '
+          + 'définitivement perdues. Les défis modifiés dans l\'éditeur, eux, ne sont pas touchés.',
         'Continuer ?',
       ].join(saut + saut))) reimporter(true);
     });
@@ -1018,20 +1219,30 @@ chargeurs.technique = async () => {
     document.getElementById('btn-reinit').addEventListener('click', async () => {
       // On enumere ce qui part : « participations et badges » laissait croire
       // que les dates de connexion survivaient, ce qui n'est plus le cas.
+      const viderProgramme = document.getElementById('reinit-programme').checked;
       if (!confirm(
         'Remettre la campagne à zéro ?'
         + String.fromCharCode(10, 10)
         + 'Effacés : participations, réponses, tentatives en cours, badges, historique des envois '
-        + 'et dates de première connexion. Le classement repart de zéro.'
+        + 'et dates de première connexion'
+        + (viderProgramme ? ', programme des parutions' : '')
+        + '. Le classement repart de zéro.'
         + String.fromCharCode(10, 10)
         + 'Conservés : annuaire, messagerie, référentiel des directions, regroupements, exclusions, '
-        + 'comptes agents, défis et programmation.'
+        + 'comptes agents, questionnaires des défis'
+        + (viderProgramme ? ' (masqués jusqu’à leur reprogrammation)' : ' et programmation')
+        + '.'
         + String.fromCharCode(10, 10)
         + 'Action irréversible.'
       )) return;
       try {
-        const r = await api('/api/admin/reinitialiser', { method: 'POST', body: { confirmation: 'REINITIALISER' } });
+        const r = await api('/api/admin/reinitialiser', {
+          method: 'POST', body: { confirmation: 'REINITIALISER', viderProgramme },
+        });
         alerte('alerte', r.message, 'succes');
+        // Le suivi et la liste des defis refletent l'ancien etat : on les
+        // recharge a la prochaine ouverture.
+        dejaCharge.delete('defis'); dejaCharge.delete('suivi');
       } catch (e) { alerte('alerte', e.message); }
     });
 
@@ -1191,7 +1402,7 @@ async function testerDefi(id, bouton) {
  * ouvre le défi — c'est-à-dire trop tard. On dit tout de suite si elle est
  * reconnue, et par quel hébergeur.
  */
-function brancherApercuVideo() {
+function brancherApercuVideo(illustration = null) {
   const champ = document.getElementById('ed-video-url');
   const zone = document.getElementById('apercu-video-editeur');
   if (!champ || !zone) return;
@@ -1205,8 +1416,12 @@ function brancherApercuVideo() {
   const majApercu = () => {
     const valeur = champ.value.trim();
     if (!valeur) {
-      zone.innerHTML = '<p class="discret" style="margin:0;font-size:.84rem">'
-        + 'Aucune vidéo : le défi commence directement par les questions.</p>';
+      zone.innerHTML = illustration
+        ? `<p class="discret" style="margin:0 0 .5rem;font-size:.84rem">Aucune vidéo :
+            les agents verront l'illustration du défi à la place.</p>
+          <img src="${echapper(illustration)}" alt="" style="width:100%;max-width:520px;border-radius:var(--rayon)">`
+        : '<p class="discret" style="margin:0;font-size:.84rem">'
+          + 'Aucune vidéo : le défi commence directement par les questions.</p>';
       return;
     }
 
@@ -1241,9 +1456,14 @@ function brancherApercuVideo() {
 
     // La prévisualisation se demande : la charger d'office ferait appeler
     // l'hébergeur à chaque frappe dans le champ.
+    // Dailymotion repond « Forbidden » a son lecteur insere sans identifiant
+    // de lecteur : l'adresse est bien reconnue, mais l'agent ne verra rien.
+    const refusee = v.hebergeur === 'Dailymotion';
     zone.innerHTML = `
-      <div class="message message-succes" style="margin:0">
+      <div class="message ${refusee ? 'message-alerte' : 'message-succes'}" style="margin:0">
         Reconnu : <strong>${echapper(v.hebergeur)}</strong> — <code>${echapper(v.id)}</code>
+        ${refusee ? `<br>Dailymotion refuse désormais son lecteur inséré : les agents verront
+          « Forbidden ». Déposez plutôt le fichier vidéo ci-dessous.` : ''}
         <button type="button" class="btn btn-secondaire" id="btn-previsualiser-video"
                 style="padding:.25rem .7rem;font-size:.8rem;margin-left:.6rem">Prévisualiser</button>
       </div>
@@ -1327,6 +1547,15 @@ function brancherEnvoiVideo(champUrl, majApercu) {
         majApercu();
         etat.textContent = r.message || 'Vidéo déposée.';
         alerte('alerte', "Vidéo déposée. Enregistrez le défi pour qu'elle s'applique.", 'succes');
+      } else if (requete.status === 413 && !r.erreur) {
+        // Refus du reverse proxy, et non de l'application : sa page d'erreur
+        // n'est pas du JSON. « Échec de l'envoi (code 413) » ne disait pas
+        // qu'il fallait relever client_max_body_size dans nginx.
+        etat.textContent = `Fichier de ${mo} Mo refusé par le reverse proxy, avant même `
+          + "d'atteindre le portail. Une directive « client_max_body_size » trop basse a dû "
+          + "être ajoutée dans l'onglet Advanced de nginx-proxy-manager : retirez-la, la "
+          + 'valeur par défaut suffit (docs/deploiement-portainer.md).';
+        alerte('alerte', etat.textContent);
       } else {
         etat.textContent = r.erreur || `Échec de l'envoi (code ${requete.status}).`;
         alerte('alerte', etat.textContent);

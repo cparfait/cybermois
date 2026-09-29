@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Une pile de courriels et un compteur de cent messages non lus">
+<title>Une pile de courriels et un compteur de cent messages non lus</title>
+<rect width="640" height="360" fill="#e6f1ec"/>
+<circle cx="585" cy="35" r="150" fill="#f4f8dd"/>
+<circle cx="35" cy="345" r="105" fill="#d3e6dc"/>
+<circle cx="520" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/>
+<rect x="0" y="300" width="640" height="60" fill="#d3e6dc"/>
+<path d="M150 300 L178 196 H462 L490 300 Z" fill="#006e46"/>
+<rect x="150" y="286" width="340" height="18" rx="4" fill="#005435"/>
+<g transform="rotate(-8 320 170)">
+<rect x="240" y="150" width="160" height="96" rx="6" fill="#dfe7e3" stroke="#b9c7c0" stroke-width="3"/>
+<path d="M245 156 L320 203.76 L395 156" fill="none" stroke="#b9c7c0" stroke-width="3" stroke-linejoin="round"/></g><g transform="rotate(5 320 150)">
+<rect x="240" y="128" width="160" height="96" rx="6" fill="#dfe7e3" stroke="#b9c7c0" stroke-width="3"/>
+<path d="M245 134 L320 181.76 L395 134" fill="none" stroke="#b9c7c0" stroke-width="3" stroke-linejoin="round"/></g><g transform="rotate(-3 320 130)">
+<rect x="240" y="106" width="160" height="96" rx="6" fill="#dfe7e3" stroke="#b9c7c0" stroke-width="3"/>
+<path d="M245 112 L320 159.76 L395 112" fill="none" stroke="#b9c7c0" stroke-width="3" stroke-linejoin="round"/></g><g transform="rotate(7 320 110)">
+<rect x="240" y="84" width="160" height="96" rx="6" fill="#dfe7e3" stroke="#b9c7c0" stroke-width="3"/>
+<path d="M245 90 L320 137.76 L395 90" fill="none" stroke="#b9c7c0" stroke-width="3" stroke-linejoin="round"/></g><g transform="rotate(-2 320 90)">
+<rect x="240" y="62" width="160" height="96" rx="6" fill="#ffffff" stroke="#006e46" stroke-width="3"/>
+<path d="M245 68 L320 115.76 L395 68" fill="none" stroke="#006e46" stroke-width="3" stroke-linejoin="round"/></g>
+<circle cx="452" cy="72" r="38" fill="#d64545" stroke="#ffffff" stroke-width="5"/>
+<text x="452" y="84" text-anchor="middle" font-size="31" fill="#ffffff" font-family="Montserrat, Arial, sans-serif" font-weight="800">100</text>
+<path d="M150 98.5 L178.9 147.8 H121.1 Z" fill="#f2b705" stroke="#14211c" stroke-width="2.55" stroke-linejoin="round"/>
+<rect x="147.025" y="113.8" width="5.95" height="18.7" rx="2.55" fill="#14211c"/>
+<circle cx="150" cy="138.45" r="3.4" fill="#14211c"/>
+</svg>

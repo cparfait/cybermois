@@ -131,10 +131,29 @@ export const DESCRIPTEUR = [
     libelle: 'Groupe de diffusion', aide: 'Destinataire du mail de resultats du vendredi.' },
   { cle: 'smtp.copie', chemin: ['smtp', 'copie'], type: 'texte', groupe: 'smtp', libelle: 'En copie' },
   { cle: 'smtp.actif', chemin: ['smtp', 'actif'], type: 'booleen', groupe: 'smtp',
-    libelle: 'Envois automatiques actifs', aide: 'A laisser inactif jusqu\'a la fin de la recette.' },
+    libelle: 'Envois automatiques actifs',
+    aide: 'Interrupteur general des envois planifies. A laisser inactif jusqu\'a la fin de la '
+      + 'recette. Les envois faits a la main depuis l\'onglet Mails restent possibles.' },
 
+  { cle: 'mails.ouverture', chemin: ['mails', 'ouverture'], type: 'booleen', groupe: 'planification',
+    libelle: "Mail d'ouverture automatique", aide: 'Le premier jour, a chaque agent.' },
+  { cle: 'mails.annonce', chemin: ['mails', 'annonce'], type: 'booleen', groupe: 'planification',
+    libelle: 'Annonce du lundi automatique', aide: 'Les lundis suivants, a chaque agent.' },
+  { cle: 'mails.relance', chemin: ['mails', 'relance'], type: 'booleen', groupe: 'planification',
+    libelle: 'Relance du mercredi automatique', aide: 'Aux agents en retard sur la semaine.' },
+  { cle: 'mails.resultats', chemin: ['mails', 'resultats'], type: 'booleen', groupe: 'planification',
+    libelle: 'Resultats du vendredi automatiques', aide: 'Au groupe de diffusion.' },
+  { cle: 'cron.ouverture', chemin: ['cron', 'ouverture'], type: 'texte', groupe: 'planification',
+    libelle: "Mail d'ouverture",
+    aide: '0 8-17 * * * = chaque heure de 8h a 17h. Le mail ne part que le jour du premier '
+      + 'defi, une seule fois : les passages suivants rattrapent un serveur arrete a 8h.' },
+  { cle: 'cron.annonce', chemin: ['cron', 'annonce'], type: 'texte', groupe: 'planification',
+    libelle: 'Annonce des defis de la semaine',
+    aide: '0 8-17 * * 1 = le lundi, chaque heure de 8h a 17h. Un seul envoi par semaine, '
+      + 'a partir de la deuxieme : la premiere est annoncee par le mail d\'ouverture.' },
   { cle: 'cron.relance', chemin: ['cron', 'relance'], type: 'texte', groupe: 'planification',
-    libelle: 'Relance des non-joueurs', aide: '0 9 * * 3 = mercredi a 9h.' },
+    libelle: 'Relance des non-joueurs',
+    aide: '0 9 * * 3 = mercredi a 9h. Porte sur les defis parus les sept derniers jours.' },
   { cle: 'cron.resultats', chemin: ['cron', 'resultats'], type: 'texte', groupe: 'planification',
     libelle: 'Envoi des resultats', aide: '0 16 * * 5 = vendredi a 16h.' },
 
@@ -303,7 +322,7 @@ export function validerParametres(valeurs) {
     erreurs.push('La fin de campagne ne peut pas preceder son debut.');
   }
 
-  for (const cle of ['cron.relance', 'cron.resultats']) {
+  for (const cle of ['cron.ouverture', 'cron.annonce', 'cron.relance', 'cron.resultats']) {
     if (v(cle) !== undefined && !cron.validate(String(v(cle)).trim())) {
       erreurs.push(`${PAR_CLE[cle].libelle} : expression de planification invalide `
         + '(exemple : « 0 9 * * 3 » pour le mercredi a 9 h).');

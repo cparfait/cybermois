@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Une main qui manipule un agent comme une marionnette">
+<title>Une main qui manipule un agent comme une marionnette</title>
+<rect width="640" height="360" fill="#e6f1ec"/>
+<circle cx="585" cy="35" r="150" fill="#f4f8dd"/>
+<circle cx="35" cy="345" r="105" fill="#d3e6dc"/>
+<circle cx="520" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/>
+<rect x="0" y="305" width="640" height="55" fill="#d3e6dc"/>
+<rect x="206" y="40" width="232" height="16" rx="8" fill="#005435"/>
+<rect x="314" y="16" width="16" height="72" rx="8" fill="#005435"/>
+<path d="M288 16 Q322 -6 356 16 V34 H288 Z" fill="#c98d62"/>
+<g stroke="#4a5a53" stroke-width="2.5">
+<path d="M216 56 L256 196"/><path d="M428 56 L388 196"/><path d="M322 88 L322 130"/><path d="M270 56 L300 290"/><path d="M374 56 L344 290"/></g>
+<path d="M290 300 L300 238 H344 L354 300" fill="#14211c"/>
+<path d="M278 238 Q278 176 322 176 Q366 176 366 238 Z" fill="#006e46"/>
+<path d="M286 196 L256 196" stroke="#006e46" stroke-width="16" stroke-linecap="round"/>
+<path d="M358 196 L388 196" stroke="#006e46" stroke-width="16" stroke-linecap="round"/>
+<circle cx="322" cy="152" r="23" fill="#f1c9a5"/>
+<path d="M299 150 A23 23 0 0 1 345 150 Q322 136 299 150 Z" fill="#14211c"/>
+<circle cx="314" cy="154" r="2.6" fill="#14211c"/><circle cx="330" cy="154" r="2.6" fill="#14211c"/>
+<path d="M314 164 Q322 170 330 164" fill="none" stroke="#14211c" stroke-width="2.5" stroke-linecap="round"/>
+<rect x="430" y="116" width="150" height="60" rx="16" fill="#ffffff"/>
+<path d="M444 175 L440 194 L466 175 Z" fill="#ffffff"/>
+<text x="505" y="154" text-anchor="middle" font-size="19" fill="#006e46" font-family="Montserrat, Arial, sans-serif" font-weight="800">Rends-moi</text>
+<text x="505" y="174" text-anchor="middle" font-size="19" fill="#006e46" font-family="Montserrat, Arial, sans-serif" font-weight="800">service…</text>
+</svg>

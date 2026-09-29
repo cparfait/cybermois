@@ -3,6 +3,8 @@ import { prenomUsuel } from './prenom.js';
 import { config } from './config.js';
 import { db } from './db.js';
 import { classementServices, classementAgents, statistiquesGlobales, ligneClassement } from './scoring.js';
+import { NIVEAUX, QUESTIONS_PAR_DEFI, TOTAL_DEFI } from './bareme.js';
+import { aujourdhui, decalerJours, dateLisible } from './dates.js';
 
 let transport = null;
 function obtenirTransport() {
@@ -70,6 +72,45 @@ const versTexte = (html) => html
 /* ------------------------------------------------------------- Contenus */
 
 /**
+ * Le premier defi de la campagne : le plus ancien des defis publies. Sa date
+ * de parution est le « premier jour », celui du mail d'ouverture.
+ */
+export const premierDefi = () => db.prepare(
+  'SELECT * FROM defis WHERE publie = 1 ORDER BY ouvre_le, id LIMIT 1'
+).get() || null;
+
+/**
+ * Le dernier defi paru, sujet du mail de resultats. Un rang calcule sur le
+ * calendrier ne veut rien dire des lors que les dates de parution sont
+ * libres. La date du jour est la date locale : `date('now')`, en UTC, le
+ * faisait encore attendre deux heures le jour d'une parution.
+ */
+export const dernierDefiParu = (jour = aujourdhui()) => db.prepare(
+  'SELECT * FROM defis WHERE publie = 1 AND ouvre_le <= ? ORDER BY ouvre_le DESC, id DESC LIMIT 1'
+).get(jour) || null;
+
+/**
+ * Les defis de la semaine : parus dans les sept derniers jours, aujourd'hui
+ * compris. Une fenetre glissante plutot que la semaine du calendrier : un
+ * defi paru un jeudi doit encore etre rappele le mercredi suivant, alors
+ * qu'il appartient a la semaine d'avant.
+ */
+export const defisDeLaSemaine = (jour = aujourdhui()) => db.prepare(`
+  SELECT * FROM defis WHERE publie = 1 AND ouvre_le BETWEEN ? AND ? ORDER BY ouvre_le, id
+`).all(decalerJours(jour, -6), jour);
+
+/** Les defis qui paraissent dans les sept jours qui viennent, aujourd'hui compris. */
+export const defisAVenir = (jour = aujourdhui()) => db.prepare(`
+  SELECT * FROM defis WHERE publie = 1 AND ouvre_le BETWEEN ? AND ? ORDER BY ouvre_le, id
+`).all(jour, decalerJours(jour, 6));
+
+/** Mail d'ouverture adresse a un agent. `null` si aucun defi n'est publie. */
+export function mailBienvenue(agent) {
+  const defi = premierDefi();
+  return defi ? mailOuverture(defi, agent) : null;
+}
+
+/**
  * Mail de lancement : destine a etre copie-colle par la DPO depuis sa propre boite.
  *
  * Le premier defi n'annonce pas un questionnaire, il ouvre une operation : il
@@ -82,15 +123,12 @@ export function mailLancement(defiId) {
   const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(Number(defiId));
   if (!defi) return null;
   const lien = `${config.publicUrl}/defi/${defi.id}`;
-  const nbDefis = db.prepare('SELECT COUNT(*) AS n FROM defis WHERE publie = 1').get().n;
 
   // Le premier defi de la campagne se reconnait a sa date de parution, non a
   // un rang : rien n'empeche d'en faire paraitre deux le meme jour, mais le
   // mail d'ouverture ne se justifie que pour le plus ancien.
-  const premier = db.prepare(
-    'SELECT id FROM defis WHERE publie = 1 ORDER BY ouvre_le, id LIMIT 1'
-  ).get();
-  if (premier && premier.id === defi.id) return mailOuverture(defi, lien, nbDefis);
+  const premier = premierDefi();
+  if (premier && premier.id === defi.id) return mailOuverture(defi);
 
   const corps = `
 <p>Bonjour à toutes et à tous,</p>
@@ -118,14 +156,30 @@ ${bouton(lien, 'Je relève le défi')}
  * nominatif decouvert sans preavis fait fuir plus d'agents qu'il n'en motive.
  * Et l'information RGPD, qui n'est pas une formalite mais precisement ce qui
  * rend la premiere credible.
+ *
+ * Envoye a chaque agent le jour de parution du premier defi, il doit aussi
+ * expliquer comment la campagne se deroule : c'est le seul message qui le
+ * dit, et un agent qui ne sait pas qu'un defi manque se rattrape ne revient
+ * pas apres une semaine d'absence.
+ *
+ * @param agent destinataire, pour le saluer par son prenom ; absent, le
+ *              message s'adresse a tous (copie de la DPO, apercu).
  */
-function mailOuverture(defi, lien, nbDefis) {
+function mailOuverture(defi, agent = null) {
+  const lien = `${config.publicUrl}/defi/${defi.id}`;
+  const defis = db.prepare('SELECT titre, ouvre_le FROM defis WHERE publie = 1 ORDER BY ouvre_le, id').all();
+  const nbDefis = defis.length;
+  const h3 = "font-family:'Montserrat',Arial,sans-serif;font-size:17px;color:#006e46;margin:26px 0 6px;";
+  const salutation = agent
+    ? `Bonjour ${echapper(prenomUsuel(agent.nom_complet, agent.prenom))},`
+    : 'Bonjour à toutes et à tous,';
+
   const corps = `
-<p>Bonjour à toutes et à tous,</p>
+<p>${salutation}</p>
 
 <p>Octobre est le <strong>mois européen de la cybersécurité</strong>. La Ville de Châtillon
 y participe cette année avec une opération courte, ouverte à tous les agents :
-<strong>le Cybermois</strong>.</p>
+<strong>le Cybermois</strong>. Il commence aujourd'hui.</p>
 
 <h2 style="font-family:'Montserrat',Arial,sans-serif;font-size:21px;color:#006e46;margin:22px 0 6px;">${echapper(defi.titre)}</h2>
 <p style="font-style:italic;color:#4a5a53;margin-top:0;">${echapper(defi.accroche)}</p>
@@ -140,6 +194,31 @@ ${bouton(lien, 'Je relève le premier défi')}
 <p>Connectez-vous avec <strong>vos identifiants de session Windows</strong> — votre
 identifiant ou votre adresse professionnelle, au choix. Il n'y a rien à installer,
 et vous pouvez jouer depuis un téléphone.</p>
+
+<h3 style="${h3}">Comment ça marche</h3>
+<ul style="padding-left:20px;margin:8px 0;">
+  <li style="margin-bottom:8px;"><strong>Un défi paraît à chaque date du calendrier</strong>
+    ci-dessous. Il reste ouvert jusqu'à la fin de la campagne${config.campagne.fin
+      ? `, le ${echapper(dateLisible(config.campagne.fin))}` : ''} : si vous en manquez un,
+    vous pouvez le rattraper.</li>
+  <li style="margin-bottom:8px;"><strong>${QUESTIONS_PAR_DEFI} questions, ${TOTAL_DEFI} points par défi</strong> :
+    ${NIVEAUX.map((n) => `${n.attendues} ${n.libelle.toLowerCase()}${n.attendues > 1 ? 's' : ''} à ${n.points} points`).join(', ')}.
+    Tous les défis pèsent le même poids : aucune semaine ne compte plus qu'une autre.</li>
+  <li style="margin-bottom:8px;"><strong>Le mercredi</strong>, un rappel est envoyé à celles
+    et ceux qui n'ont pas encore fait les défis de la semaine. Aucun si vous êtes à jour.</li>
+  <li style="margin-bottom:8px;"><strong>Le vendredi</strong>, les résultats et le classement
+    des services sont diffusés.</li>
+  <li>À la fin de la campagne, une <strong>attestation de participation</strong> est à
+    télécharger depuis votre profil sur le portail.</li>
+</ul>
+
+${nbDefis > 1 ? `
+<p style="margin:16px 0 6px;"><strong>Le calendrier</strong></p>
+<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:15px;">
+  ${defis.map((d) => `<tr>
+    <td style="padding:4px 14px 4px 0;white-space:nowrap;color:#006e46;font-family:'Montserrat',Arial,sans-serif;font-weight:700;">${echapper(dateLisible(d.ouvre_le))}</td>
+    <td style="padding:4px 0;">${echapper(d.titre)}</td></tr>`).join('')}
+</table>` : ''}
 
 <h3 style="font-family:'Montserrat',Arial,sans-serif;font-size:17px;color:#006e46;margin:26px 0 6px;">Ce n'est pas un examen</h3>
 <p>Aucun résultat individuel n'est transmis à votre hiérarchie, et se tromper n'a
@@ -193,11 +272,101 @@ export function mailRelance(agent, defiId) {
 </p>
 <p><strong>${defi.duree_minutes} minutes</strong>, pas plus. Et il n'y a rien à installer.</p>
 ${bouton(lien, 'Faire le défi maintenant')}
-<p style="font-size:14px;color:#4a5a53;">Vous pouvez encore rattraper les défis déjà parus : ils restent ouverts jusqu'au 31 octobre.</p>`;
+<p style="font-size:14px;color:#4a5a53;">${rattrapage()}</p>`;
 
   return {
     objet: `Il vous reste 5 minutes ? Le défi « ${defi.titre} » vous attend`,
     html: gabarit({ titre: 'Relance', preheader: defi.accroche, corps }),
+    texte: versTexte(corps),
+  };
+}
+
+/**
+ * Annonce du lundi : les defis de la semaine, et ceux d'avant que l'agent n'a
+ * pas encore faits - ils restent ouverts, et beaucoup l'ignorent.
+ *
+ * Un defi qui parait plus tard dans la semaine est annonce avec sa date : le
+ * lien ne s'ouvrira qu'a partir de ce jour-la.
+ */
+export function mailAnnonce(agent, semaine, enRetard, jour = aujourdhui()) {
+  if (!semaine?.length) return null;
+  const h2 = "font-family:'Montserrat',Arial,sans-serif;font-size:19px;color:#006e46;margin:22px 0 4px;";
+  const salutation = agent
+    ? `Bonjour ${echapper(prenomUsuel(agent.nom_complet, agent.prenom))},`
+    : 'Bonjour à toutes et à tous,';
+
+  const blocDefi = (d) => {
+    const ouvert = d.ouvre_le <= jour;
+    return `
+<h2 style="${h2}">${echapper(d.titre)}</h2>
+<p style="font-style:italic;color:#4a5a53;margin:0;">${echapper(d.accroche)} — ${d.duree_minutes} minutes</p>
+${ouvert
+    ? bouton(`${config.publicUrl}/defi/${d.id}`, 'Je relève le défi')
+    : `<p style="margin:10px 0 18px;"><strong>En ligne à partir du ${echapper(dateLisible(d.ouvre_le))}.</strong></p>`}`;
+  };
+
+  const corps = `
+<p>${salutation}</p>
+<p>Le <strong>Cybermois</strong> continue. ${semaine.length > 1
+    ? `Voici les <strong>${semaine.length} défis</strong> de la semaine :`
+    : 'Voici le défi de la semaine :'}</p>
+${semaine.map(blocDefi).join('')}
+
+<h3 style="font-family:'Montserrat',Arial,sans-serif;font-size:17px;color:#006e46;margin:26px 0 6px;">Les défis précédents sont toujours ouverts</h3>
+${enRetard?.length ? `
+<p style="margin-top:0;">Il vous en reste ${enRetard.length === 1 ? 'un' : enRetard.length} à faire — chacun fait encore gagner des points à votre service :</p>
+<ul style="padding-left:20px;margin:8px 0 16px;">
+  ${enRetard.map((d) => `<li style="margin-bottom:6px;"><a href="${echapper(`${config.publicUrl}/defi/${d.id}`)}" style="color:#006e46;font-weight:700;">${echapper(d.titre)}</a></li>`).join('')}
+</ul>` : `
+<p style="margin-top:0;">${agent
+    ? 'Vous êtes à jour : bravo. Si un collègue a manqué une semaine, dites-lui qu’il peut encore la rattraper.'
+    : 'Vous en avez manqué un ? Il n’est pas trop tard : chaque défi rattrapé fait encore gagner des points à votre service.'}</p>`}
+<p style="font-size:14px;color:#4a5a53;">${rattrapage()}</p>
+<p>Bonne semaine,<br>La Direction des systèmes d'information</p>`;
+
+  return {
+    objet: semaine.length > 1
+      ? `Cybermois — ${semaine.length} nouveaux défis cette semaine`
+      : `Cybermois — Nouveau défi : ${semaine[0].titre}`,
+    html: gabarit({ titre: 'Les défis de la semaine', preheader: semaine.map((d) => d.titre).join(' · '), corps }),
+    texte: versTexte(corps),
+  };
+}
+
+// « jusqu'au 31 octobre » etait ecrit en dur : faux des que la campagne
+// changeait de dates.
+const rattrapage = () => (config.campagne.fin
+  ? `Les défis déjà parus restent ouverts jusqu'au ${echapper(dateLisible(config.campagne.fin))} : vous pouvez les rattraper.`
+  : 'Les défis déjà parus restent ouverts : vous pouvez les rattraper.');
+
+/**
+ * Relance du mercredi : les defis de la semaine que l'agent n'a pas termines.
+ *
+ * Un seul message, meme quand deux defis sont parus : deux relances le meme
+ * matin se liraient comme du harcelement, et la seconde ne serait pas ouverte.
+ */
+export function mailRelanceSemaine(agent, manquants) {
+  if (!manquants?.length) return null;
+  if (manquants.length === 1) return mailRelance(agent, manquants[0].id);
+
+  const stats = ligneClassement(agent.service);
+  const corps = `
+<p>Bonjour ${echapper(prenomUsuel(agent.nom_complet, agent.prenom))},</p>
+<p>Cette semaine, <strong>${manquants.length} défis</strong> du Cybermois vous attendent encore :</p>
+${manquants.map((d) => `
+<h2 style="font-family:'Montserrat',Arial,sans-serif;font-size:18px;color:#006e46;margin:22px 0 4px;">${echapper(d.titre)}</h2>
+<p style="font-style:italic;color:#4a5a53;margin:0;">${echapper(d.accroche)} — ${d.duree_minutes} minutes</p>
+${bouton(`${config.publicUrl}/defi/${d.id}`, 'Faire ce défi')}`).join('')}
+<p style="background:#f4f8dd;border-left:4px solid #aec80c;padding:12px 16px;margin:20px 0;">
+  ${stats
+    ? `Votre service — <strong>${echapper(agent.service)}</strong> — affiche <strong>${stats.taux_participation} %</strong> de participation. Chaque défi terminé fait monter votre service au classement.`
+    : `Votre participation fera monter <strong>${echapper(agent.service)}</strong> au classement.`}
+</p>
+<p style="font-size:14px;color:#4a5a53;">${rattrapage()}</p>`;
+
+  return {
+    objet: `Cybermois — ${manquants.length} défis vous attendent cette semaine`,
+    html: gabarit({ titre: 'Relance', preheader: manquants.map((d) => d.titre).join(' · '), corps }),
     texte: versTexte(corps),
   };
 }
@@ -272,13 +441,41 @@ ${bouton(`${config.publicUrl}/profil`, 'Récupérer mon attestation')}
 async function envoyer({ to, objet, html, texte, bcc }) {
   const t = obtenirTransport();
   if (!t) throw new Error('SMTP non configure');
-  if (!config.smtp.actif) throw new Error('Envoi desactive (MAIL_ENVOI_ACTIF=false)');
+  // Plus de refus sur smtp.actif : cet interrupteur coupe les envois
+  // PLANIFIES, que server.js ne programme pas quand il est eteint. Refuser ici
+  // bloquait aussi l'envoi fait a la main, confirme a l'ecran - si bien qu'il
+  // fallait activer tout l'automatique pour envoyer un seul message.
   await t.sendMail({
     from: config.smtp.from,
     to, bcc,
     cc: config.smtp.copie || undefined,
     subject: objet,
     html, text: texte,
+  });
+}
+
+/**
+ * Une seule adresse, sans nom ni liste : le champ de test ne doit pas pouvoir
+ * servir a arroser plusieurs destinataires d'un coup.
+ */
+export const adresseValide = (adresse) =>
+  /^[^\s@,;<>"]+@[^\s@,;<>"]+\.[^\s@,;<>"]+$/.test(String(adresse || '')) && String(adresse).length <= 254;
+
+/**
+ * Envoi de test : le message tel quel, a une seule adresse, marque dans son
+ * objet. Sans la copie configuree - elle recevrait chaque essai - et sans
+ * trace dans « envois », ou il passerait pour le vrai envoi.
+ */
+export async function envoyerTest(adresse, m) {
+  if (!adresseValide(adresse)) throw new Error('Adresse invalide');
+  const t = obtenirTransport();
+  if (!t) throw new Error('SMTP non configure');
+  await t.sendMail({
+    from: config.smtp.from,
+    to: adresse,
+    subject: `[TEST] ${m.objet}`,
+    html: m.html,
+    text: m.texte,
   });
 }
 
@@ -339,6 +536,189 @@ export async function envoyerRelances(defiId, { simulation = false } = {}) {
   }
 
   return { ok: true, destinataires: cibles.length, succes, erreur: derniereErreur };
+}
+
+// Agents qui recoivent les mails individuels. Le compte d'administration
+// locale n'est pas un agent : il ne joue pas et n'a rien a recevoir.
+const AGENTS_JOIGNABLES = `a.email IS NOT NULL AND a.email <> '' AND a.exclu = 0 AND a.origine <> 'local'`;
+
+/** Le mail d'ouverture est-il deja parti ? Une remise a zero l'oublie. */
+export const ouvertureEnvoyee = () =>
+  !!db.prepare("SELECT 1 FROM envois WHERE type = 'ouverture' AND succes > 0 LIMIT 1").get();
+
+/**
+ * Mail d'ouverture, a chaque agent.
+ *
+ * Il ne part qu'une fois : la tache planifiee passe plusieurs fois le premier
+ * jour, pour rattraper un serveur arrete a l'heure prevue, et un envoi manuel
+ * peut tomber apres elle. `forcer` le renvoie quand meme - a un effectif
+ * complete apres coup, par exemple.
+ */
+export async function envoyerOuverture({ simulation = false, forcer = false } = {}) {
+  const defi = premierDefi();
+  if (!defi) return { ok: false, message: 'Aucun défi publié : rien à annoncer.' };
+
+  const cibles = db.prepare(`SELECT a.* FROM agents a WHERE ${AGENTS_JOIGNABLES}`).all();
+  const deja = ouvertureEnvoyee();
+
+  if (simulation) {
+    return {
+      ok: true, simulation: true, destinataires: cibles.length, dejaEnvoye: deja,
+      premierJour: defi.ouvre_le, apercu: cibles.slice(0, 5).map((a) => a.email),
+    };
+  }
+  if (deja && !forcer) {
+    return {
+      ok: false, code: 'DEJA_ENVOYE',
+      message: "Le mail d'ouverture a déjà été envoyé pour cette campagne.",
+    };
+  }
+  if (!verrouiller('ouverture')) {
+    return { ok: false, code: 'ENVOI_EN_COURS', message: "Le mail d'ouverture est déjà en cours d'envoi." };
+  }
+
+  let succes = 0; let derniereErreur = null;
+  try {
+    for (const agent of cibles) {
+      try {
+        await envoyer({ to: agent.email, ...mailOuverture(defi, agent) });
+        succes++;
+      } catch (err) { derniereErreur = err.message; }
+    }
+    db.prepare('INSERT INTO envois (type, defi_id, destinataires, succes, erreur) VALUES (?, ?, ?, ?, ?)')
+      .run('ouverture', defi.id, cibles.length, succes, derniereErreur);
+  } finally {
+    envoisEnCours.delete('ouverture');
+  }
+  return { ok: true, destinataires: cibles.length, succes, erreur: derniereErreur };
+}
+
+/**
+ * Tache du premier jour : n'envoie que le jour de parution du premier defi,
+ * et une seule fois. Renvoie `null` quand il n'y a rien a faire.
+ */
+export async function ouvertureDuJour(jour = aujourdhui()) {
+  const defi = premierDefi();
+  if (!defi || defi.ouvre_le !== jour || ouvertureEnvoyee()) return null;
+  return envoyerOuverture();
+}
+
+/** L'annonce de la semaine est-elle deja partie ? Six jours : un lundi ne voit pas le precedent. */
+const annonceEnvoyee = () => !!db.prepare(
+  "SELECT 1 FROM envois WHERE type = 'annonce' AND succes > 0 AND horodatage >= datetime('now', '-6 days') LIMIT 1"
+).get();
+
+/**
+ * Annonce du lundi, a chaque agent : les defis de la semaine, et ceux d'avant
+ * qui lui restent.
+ *
+ * Pas d'annonce avant ni pendant le premier jour : le mail d'ouverture la
+ * remplace, et deux messages le meme matin se feraient concurrence.
+ */
+export async function envoyerAnnonce({ simulation = false, forcer = false, jour = aujourdhui() } = {}) {
+  if (config.campagne.fin && jour > config.campagne.fin) {
+    return { ok: false, message: 'La campagne est terminée : plus d\'annonce.' };
+  }
+  const premier = premierDefi();
+  if (!premier || premier.ouvre_le >= jour) {
+    return {
+      ok: false, code: 'OUVERTURE',
+      message: "La campagne n'a pas encore commencé : c'est le mail d'ouverture qui annonce le premier défi.",
+    };
+  }
+  const semaine = defisAVenir(jour);
+  if (!semaine.length) return { ok: false, message: 'Aucun défi ne paraît dans les sept jours qui viennent : rien à annoncer.' };
+
+  const anciens = db.prepare('SELECT * FROM defis WHERE publie = 1 AND ouvre_le < ? ORDER BY ouvre_le, id').all(jour);
+  const fait = db.prepare(
+    'SELECT 1 FROM participations WHERE agent_id = ? AND defi_id = ? AND entrainement = 0'
+  );
+  const cibles = db.prepare(`SELECT a.* FROM agents a WHERE ${AGENTS_JOIGNABLES}`).all();
+  const deja = annonceEnvoyee();
+
+  if (simulation) {
+    return {
+      ok: true, simulation: true, destinataires: cibles.length, dejaEnvoye: deja,
+      defis: semaine.map((d) => d.titre), apercu: cibles.slice(0, 5).map((a) => a.email),
+    };
+  }
+  if (deja && !forcer) {
+    return { ok: false, code: 'DEJA_ENVOYE', message: "L'annonce de la semaine a déjà été envoyée." };
+  }
+  if (!verrouiller('annonce')) {
+    return { ok: false, code: 'ENVOI_EN_COURS', message: "L'annonce est déjà en cours d'envoi." };
+  }
+
+  let succes = 0; let derniereErreur = null;
+  try {
+    for (const agent of cibles) {
+      try {
+        const enRetard = anciens.filter((d) => !fait.get(agent.id, d.id));
+        await envoyer({ to: agent.email, ...mailAnnonce(agent, semaine, enRetard, jour) });
+        succes++;
+      } catch (err) { derniereErreur = err.message; }
+    }
+    db.prepare('INSERT INTO envois (type, defi_id, destinataires, succes, erreur) VALUES (?, ?, ?, ?, ?)')
+      .run('annonce', semaine[0].id, cibles.length, succes, derniereErreur);
+  } finally {
+    envoisEnCours.delete('annonce');
+  }
+  return { ok: true, destinataires: cibles.length, succes, erreur: derniereErreur, defis: semaine.map((d) => d.titre) };
+}
+
+/** Tache du lundi : `null` quand il n'y a rien a faire, ou que c'est deja fait. */
+export async function annonceDuJour(jour = aujourdhui()) {
+  if (annonceEnvoyee()) return null;
+  const res = await envoyerAnnonce({ jour });
+  return res.ok ? res : null;
+}
+
+/**
+ * Relance du mercredi : chaque agent qui n'a pas termine tous les defis de la
+ * semaine recoit un message listant ceux qui lui manquent.
+ *
+ * Elle ne regardait que le dernier defi paru : quand deux defis sortaient la
+ * meme semaine, celui qui avait fait le plus recent n'etait jamais relance
+ * pour l'autre.
+ */
+export async function envoyerRelancesSemaine({ simulation = false, jour = aujourdhui() } = {}) {
+  if (config.campagne.fin && jour > config.campagne.fin) {
+    return { ok: false, message: 'La campagne est terminée : plus de relance.' };
+  }
+  const defis = defisDeLaSemaine(jour);
+  if (!defis.length) return { ok: false, message: 'Aucun défi paru ces sept derniers jours : rien à relancer.' };
+
+  const fait = db.prepare(
+    'SELECT 1 FROM participations WHERE agent_id = ? AND defi_id = ? AND entrainement = 0'
+  );
+  const cibles = db.prepare(`SELECT a.* FROM agents a WHERE ${AGENTS_JOIGNABLES}`).all()
+    .map((agent) => ({ agent, manquants: defis.filter((d) => !fait.get(agent.id, d.id)) }))
+    .filter((c) => c.manquants.length);
+
+  if (simulation) {
+    return {
+      ok: true, simulation: true, destinataires: cibles.length,
+      defis: defis.map((d) => d.titre), apercu: cibles.slice(0, 5).map((c) => c.agent.email),
+    };
+  }
+  if (!verrouiller('relance-semaine')) {
+    return { ok: false, code: 'ENVOI_EN_COURS', message: 'Une relance est déjà en cours d\'envoi.' };
+  }
+
+  let succes = 0; let derniereErreur = null;
+  try {
+    for (const { agent, manquants } of cibles) {
+      try {
+        await envoyer({ to: agent.email, ...mailRelanceSemaine(agent, manquants) });
+        succes++;
+      } catch (err) { derniereErreur = err.message; }
+    }
+    db.prepare('INSERT INTO envois (type, defi_id, destinataires, succes, erreur) VALUES (?, NULL, ?, ?, ?)')
+      .run('relance_semaine', cibles.length, succes, derniereErreur);
+  } finally {
+    envoisEnCours.delete('relance-semaine');
+  }
+  return { ok: true, destinataires: cibles.length, succes, erreur: derniereErreur, defis: defis.map((d) => d.titre) };
 }
 
 /** Resultats d'un defi envoyes au groupe de distribution. */

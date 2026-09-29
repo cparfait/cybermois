@@ -8,7 +8,7 @@
  * l'explique, et on croyait avoir mal enregistre.
  *
  * Ces tests fixent la regle : le back-office l'emporte sur le fichier, et
- * seul un rechargement force revient en arriere.
+ * rien - pas meme un rechargement force - ne revient en arriere.
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -65,13 +65,57 @@ test('la date reste appliquee sur un defi protege', () => {
   assert.equal(premiereQuestion(protege), CORRIGE);
 });
 
-test('forcer revient au module, et leve la protection', () => {
-  importerContenus({ force: true });
+test('forcer ne touche pas a un defi modifie, mais reecrit les autres', () => {
+  // Le rechargement force est un bouton de maintenance : il ne doit pas
+  // pouvoir emporter des semaines de relecture faites dans le back-office.
+  db.prepare('UPDATE questions SET enonce = ? WHERE defi_id = ? AND ordre = 1').run('DERIVE', intact);
+  const rapport = importerContenus({ force: true });
 
-  assert.equal(premiereQuestion(protege), lireModule('mots-de-passe').questions[0].enonce,
-    'forcer doit bien ecraser : c\'est le seul moyen de revenir au fichier');
-  assert.equal(db.prepare('SELECT contenu_modifie FROM defis WHERE id = ?').get(protege).contenu_modifie, 0,
-    'le defi est de nouveau conforme a son module : il ne doit plus etre annonce protege');
+  assert.equal(premiereQuestion(protege), CORRIGE, 'la correction doit survivre au forcage');
+  assert.equal(rapport.find((r) => r.module === 'mots-de-passe').statut, 'protege');
+  assert.equal(premiereQuestion(intact), lireModule('hameconnage').questions[0].enonce,
+    'un defi non modifie revient bien a son module');
+});
+
+test('un defi modifie retire du programme est masque, pas supprime', () => {
+  enregistrerProgramme([{ module_code: 'hameconnage', ouvre_le: '2026-10-12' }], 'test');
+  const rapport = importerContenus();
+
+  const defi = db.prepare('SELECT publie, hors_programme FROM defis WHERE id = ?').get(protege);
+  assert.ok(defi, 'supprimer le defi emporterait les corrections');
+  assert.equal(premiereQuestion(protege), CORRIGE);
+  assert.equal(defi.publie, 0, 'deprogramme, il ne doit plus paraitre');
+  assert.equal(defi.hors_programme, 1);
+  assert.equal(rapport.find((r) => r.module === 'mots-de-passe').statut, 'deprogramme');
+});
+
+test('reprogramme, il reparait avec ses corrections a sa nouvelle date', () => {
+  enregistrerProgramme([
+    { module_code: 'mots-de-passe', ouvre_le: '2026-11-02' },
+    { module_code: 'hameconnage', ouvre_le: '2026-10-12' },
+  ], 'test');
+  importerContenus();
+
+  const defi = db.prepare('SELECT publie, hors_programme, ouvre_le FROM defis WHERE id = ?').get(protege);
+  assert.equal(defi.publie, 1);
+  assert.equal(defi.hors_programme, 0);
+  assert.equal(defi.ouvre_le, '2026-11-02');
+  assert.equal(premiereQuestion(protege), CORRIGE);
+});
+
+test('vider le programme conserve tous les defis, modifies ou non', () => {
+  enregistrerProgramme([], 'test');
+  importerContenus();
+
+  const restants = db.prepare('SELECT publie FROM defis WHERE id IN (?, ?)').all(protege, intact);
+  assert.equal(restants.length, 2, 'aucun questionnaire ne doit partir avec le programme');
+  assert.ok(restants.every((d) => d.publie === 0), 'hors programme, aucun ne doit paraitre');
+
+  enregistrerProgramme([
+    { module_code: 'mots-de-passe', ouvre_le: '2026-10-19' },
+    { module_code: 'hameconnage', ouvre_le: '2026-10-12' },
+  ], 'test');
+  importerContenus();
 });
 
 test('un defi qui differe deja de son module est rattrape', () => {

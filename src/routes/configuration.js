@@ -279,7 +279,8 @@ export default async function routesConfiguration(app) {
 
       // Les horaires et l'activation des envois changent la planification :
       // on la reconstruit sans redemarrer le conteneur.
-      if (Object.keys(valeurs).some((c) => c.startsWith('cron.') || c === 'smtp.actif')) {
+      const planification = (c) => c.startsWith('cron.') || c.startsWith('mails.') || c === 'smtp.actif';
+      if (Object.keys(valeurs).some(planification)) {
         app.replanifier?.();
       }
       return {
@@ -287,7 +288,7 @@ export default async function routesConfiguration(app) {
         message: `${n} paramètre(s) enregistré(s) et appliqué(s) immédiatement.`
           + (etat.ok ? '' : ` Configuration encore incomplète : ${etat.manquants.join(', ')}.`),
         etat,
-        replanifier: Object.keys(valeurs).some((c) => c.startsWith('cron.') || c === 'smtp.actif'),
+        replanifier: Object.keys(valeurs).some(planification),
       };
     } catch (err) {
       requete.log.error(err, 'enregistrement de configuration impossible');

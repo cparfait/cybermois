@@ -11,6 +11,7 @@ import {
 } from '../lib/tentatives.js';
 import { jetonValide } from '../lib/apercu.js';
 import { aujourdhui } from '../lib/dates.js';
+import { illustrationDe } from '../lib/illustrations.js';
 
 // La date du jour vient d'un module partage : le calcul des scores l'emploie
 // aussi, et les deux divergeaient d'un jour deux heures par nuit.
@@ -165,6 +166,8 @@ export default async function routesJeu(app) {
             transcription: defi.video_transcription || null,
           }
         : null,
+      // Sans video, l'illustration du module prend sa place.
+      illustration: defi.video_url ? null : illustrationDe(defi),
       // Hebergeurs autorises : l'ecran ne connait le format d'insertion que de
       // YouTube et Dailymotion. Pour une autre plateforme, il insere l'adresse
       // telle quelle - a condition qu'elle figure ici, sinon le navigateur la

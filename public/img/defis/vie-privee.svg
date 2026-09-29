@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Une maison le soir, protégée par un bouclier en forme de cœur">
+<title>Une maison le soir, protégée par un bouclier en forme de cœur</title>
+<rect width="640" height="360" fill="#e6f1ec"/>
+<circle cx="585" cy="35" r="150" fill="#f4f8dd"/>
+<circle cx="35" cy="345" r="105" fill="#d3e6dc"/>
+<circle cx="520" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/>
+<rect width="640" height="360" fill="#dbe7e8"/>
+<circle cx="560" cy="70" r="40" fill="#fde9a8"/><circle cx="578" cy="58" r="36" fill="#dbe7e8"/>
+<g fill="#ffffff"><circle cx="80" cy="50" r="3"/><circle cx="150" cy="90" r="3"/><circle cx="440" cy="40" r="3"/><circle cx="300" cy="70" r="3"/><circle cx="620" cy="150" r="3"/></g>
+<circle cx="35" cy="345" r="105" fill="#d3e6dc"/>
+<rect x="0" y="300" width="640" height="60" fill="#d3e6dc"/>
+<rect x="110" y="170" width="230" height="130" fill="#ffffff"/>
+<path d="M90 172 L225 98.5 L360 172 Z" fill="#005435"/>
+<rect x="136" y="196" width="60" height="50" rx="4" fill="#f2b705"/><rect x="254" y="196" width="60" height="50" rx="4" fill="#f2b705"/>
+<path d="M166 196 V246 M136 221 H196 M284 196 V246 M254 221 H314" stroke="#ffffff" stroke-width="4"/>
+<rect x="202" y="236" width="46" height="64" rx="4" fill="#006e46"/>
+<path d="M450 96.4 L522.2 123 V180 Q522.2 244.6 450 275 Q377.8 244.6 377.8 180 V123 Z" fill="#006e46"/>
+<path d="M450 111.8 L508.9 133.5 V180 Q508.9 232.7 450 257.5 Q391.1 232.7 391.1 180 V133.5 Z" fill="#aec80c"/>
+<path d="M450 204.9 C409.5 177.9 428.4 148.2 450 169.8 C471.6 148.2 490.5 177.9 450 204.9 Z" fill="#ffffff"/>
+</svg>

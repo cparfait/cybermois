@@ -10,7 +10,12 @@ import { classementServices, classementAgents, statistiquesGlobales } from '../l
 import {
   testerSmtp, envoyerRelances, envoyerResultats,
   mailLancement, mailRelance, mailResultats,
+  mailBienvenue, mailAnnonce, mailRelanceSemaine, defisAVenir, defisDeLaSemaine,
+  envoyerOuverture, envoyerAnnonce, envoyerRelancesSemaine, dernierDefiParu,
+  envoyerTest, adresseValide,
 } from '../lib/mail.js';
+import { decalerJours } from '../lib/dates.js';
+import { illustrationDe } from '../lib/illustrations.js';
 import { creerJetonApercu, revoquerJetonApercu, lienApercu } from '../lib/apercu.js';
 import {
   enregistrerVideo, listerVideos, supprimerVideo, formatsLisibles, TAILLE_MAX,
@@ -68,6 +73,8 @@ export default async function routesAdmin(app) {
         groupeRequis: config.ldap.requiredGroup || '(aucun)',
         envoiMailActif: config.smtp.actif,
         groupeDiffusion: config.smtp.groupeDiffusion || '(non renseigne)',
+        cronOuverture: config.cron.ouverture,
+        cronAnnonce: config.cron.annonce,
         cronRelance: config.cron.relance,
         cronResultats: config.cron.resultats,
         urlPublique: config.publicUrl,
@@ -145,7 +152,10 @@ export default async function routesAdmin(app) {
     // de l'editeur ne pouvait pas juger d'une adresse et annoncait « adresse
     // non reconnue » pour une plateforme parfaitement acceptee. L'ecran devait
     // sinon aller les chercher dans un second appel.
-    return { ...defi, videoDomaines: config.videoDomaines || [] };
+    // L'illustration du module s'affiche quand la video est vide : l'editeur
+    // la montre pour qu'on sache ce que l'agent verra a la place.
+    const brut = db.prepare('SELECT module_code FROM defis WHERE id = ?').get(defi.id);
+    return { ...defi, videoDomaines: config.videoDomaines || [], illustration: illustrationDe(brut) };
   });
 
   /** Creation d'un defi. Il arrive masque : on le publie une fois redige. */
@@ -642,7 +652,9 @@ export default async function routesAdmin(app) {
       const touches = db.prepare(`
         SELECT d.titre, COUNT(p.id) AS n
         FROM defis d JOIN participations p ON p.defi_id = d.id AND p.entrainement = 0
-        WHERE d.module_code IS NOT NULL
+        -- Un defi modifie dans le back-office n'est jamais reecrit : le
+        -- compter ici annoncerait une perte qui n'aura pas lieu.
+        WHERE d.module_code IS NOT NULL AND d.contenu_modifie = 0
         GROUP BY d.id HAVING n > 0
       `).all();
       const total = touches.reduce((s, d) => s + d.n, 0);
@@ -667,24 +679,138 @@ export default async function routesAdmin(app) {
   });
 
   /* --------------------------------------------------------------- Mails */
-  app.get('/api/admin/mails/:type/:id', async (requete, reponse) => {
-    const id = Number(requete.params.id);
-    const type = requete.params.type;
-    let m = null;
-    if (type === 'lancement') m = mailLancement(id);
-    else if (type === 'resultats') m = mailResultats(id);
-    else if (type === 'relance') {
-      // Un agent reel, et non le premier venu : « SELECT ... LIMIT 1 » tombait
-      // volontiers sur le compte d'administration locale, dont le nom et la
-      // direction ne ressemblent a rien de ce que les agents recevront.
-      const exemple = db.prepare(
-        "SELECT * FROM agents WHERE exclu = 0 AND origine <> 'local' ORDER BY id LIMIT 1"
-      ).get() || { nom_complet: 'Prénom NOM', service: 'Direction exemple' };
-      m = mailRelance(exemple, id);
-    } else return reponse.code(400).send({ erreur: 'Type inconnu (lancement, relance, resultats).' });
+  /**
+   * Construit un mail tel qu'un agent le recevrait. Partage par l'apercu et
+   * l'envoi de test : ce qu'on valide dans sa boite est exactement ce que
+   * montre l'ecran.
+   *
+   * Les mails de semaine se construisent tels qu'ils partiront la semaine du
+   * defi choisi : l'annonce le jour de sa parution, la relance deux jours
+   * apres. Pour un agent qui n'aurait rien fait : c'est le cas le plus complet.
+   *
+   * @returns le mail, `null` si le defi manque, `undefined` si le type est inconnu
+   */
+  function construireMail(type, id, agent) {
+    const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(id);
+    switch (type) {
+      case 'lancement': return mailLancement(id);
+      case 'resultats': return mailResultats(id);
+      case 'relance': return mailRelance(agent, id);
+      case 'ouverture': return mailBienvenue(agent);
+      case 'annonce': {
+        if (!defi) return null;
+        const anciens = db.prepare('SELECT * FROM defis WHERE publie = 1 AND ouvre_le < ? ORDER BY ouvre_le, id')
+          .all(defi.ouvre_le);
+        return mailAnnonce(agent, defisAVenir(defi.ouvre_le), anciens, defi.ouvre_le);
+      }
+      case 'relance-semaine':
+        return defi ? mailRelanceSemaine(agent, defisDeLaSemaine(decalerJours(defi.ouvre_le, 2))) : null;
+      default: return undefined;
+    }
+  }
 
+  // Un agent reel, et non le premier venu : « SELECT ... LIMIT 1 » tombait
+  // volontiers sur le compte d'administration locale, dont le nom et la
+  // direction ne ressemblent a rien de ce que les agents recevront.
+  const agentExemple = () => db.prepare(
+    "SELECT * FROM agents WHERE exclu = 0 AND origine <> 'local' ORDER BY id LIMIT 1"
+  ).get() || { nom_complet: 'Prénom NOM', service: 'Direction exemple' };
+
+  const TYPE_INCONNU = 'Type inconnu (ouverture, lancement, annonce, relance-semaine, relance, resultats).';
+
+  app.get('/api/admin/mails/:type/:id', async (requete, reponse) => {
+    const m = construireMail(requete.params.type, Number(requete.params.id), agentExemple());
+    if (m === undefined) return reponse.code(400).send({ erreur: TYPE_INCONNU });
     if (!m) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
     return m;
+  });
+
+  /**
+   * Envoi de test a une seule adresse, pour valider un message dans une vraie
+   * boite avant de l'envoyer a cinq cents agents.
+   *
+   * Le message est personnalise comme pour l'agent qui porte cette adresse,
+   * s'il existe - sinon comme pour un agent d'exemple. Il n'est pas trace
+   * parmi les envois : un test ne doit pas faire croire que l'ouverture est
+   * deja partie, ce qui bloquerait le vrai envoi.
+   */
+  app.post('/api/admin/mails/test', async (requete, reponse) => {
+    const { type, defiId } = requete.body || {};
+    const adresse = String(requete.body?.adresse || '').trim();
+    if (!adresseValide(adresse)) {
+      return reponse.code(400).send({ erreur: 'Adresse de test invalide : une seule adresse attendue.' });
+    }
+
+    const agent = db.prepare('SELECT * FROM agents WHERE lower(email) = lower(?) LIMIT 1').get(adresse)
+      || agentExemple();
+    const m = construireMail(String(type || ''), Number(defiId), agent);
+    if (m === undefined) return reponse.code(400).send({ erreur: TYPE_INCONNU });
+    if (!m) return reponse.code(404).send({ erreur: 'Défi introuvable, ou rien à envoyer pour cette semaine.' });
+
+    try {
+      await envoyerTest(adresse, m);
+    } catch (err) {
+      return reponse.code(502).send({ erreur: `Échec de l'envoi : ${err.message}` });
+    }
+    journaliser(requete.agent.login, 'mail_test', `${type} -> ${adresse}`, requete.ip);
+    return { ok: true, message: `Test envoyé à ${adresse} : « [TEST] ${m.objet} ».` };
+  });
+
+  // Envois automatiques, declenchables a la main : un serveur arrete le jour
+  // prevu, ou un effectif complete apres coup. « forcer » passe outre le
+  // « deja envoye » - la confirmation se fait a l'ecran.
+  const envoisCampagne = {
+    ouverture: (corps) => envoyerOuverture(corps),
+    annonce: (corps) => envoyerAnnonce(corps),
+    'relance-semaine': (corps) => envoyerRelancesSemaine(corps),
+    // Le meme que la tache du vendredi : les resultats du dernier defi paru.
+    resultats: async ({ simulation }) => {
+      const defi = dernierDefiParu();
+      if (!defi) return { ok: false, message: 'Aucun défi paru : pas de résultats à envoyer.' };
+      return { ...(await envoyerResultats(defi.id, { simulation })), defis: [defi.titre] };
+    },
+  };
+
+  /**
+   * Tableau de bord des envois : pour chaque mail, s'il part tout seul, quand,
+   * et quand il est parti pour la derniere fois. L'onglet Mails s'en sert pour
+   * les interrupteurs et les boutons « Envoyer maintenant ».
+   */
+  app.get('/api/admin/mails/etat', async (requete) => {
+    const dernier = db.prepare(`
+      SELECT horodatage, destinataires, succes, erreur FROM envois
+      WHERE type = ? ORDER BY id DESC LIMIT 1`);
+    const types = [
+      ['ouverture', 'ouverture', 'ouverture'],
+      ['annonce', 'annonce', 'annonce'],
+      ['relance-semaine', 'relance', 'relance_semaine'],
+      ['resultats', 'resultats', 'resultats'],
+    ];
+    return {
+      automatique: !!config.smtp.actif,
+      smtpConfigure: !!config.smtp.host,
+      groupeDiffusion: config.smtp.groupeDiffusion || null,
+      // Adresse proposee par defaut pour les envois de test : la sienne.
+      monAdresse: requete.agent.email || null,
+      mails: types.map(([type, cle, trace]) => ({
+        type,
+        cle: `mails.${cle}`,
+        actif: !!config.mails?.[cle],
+        planification: config.cron[cle],
+        dernierEnvoi: dernier.get(trace) || null,
+      })),
+    };
+  });
+
+  app.post('/api/admin/mails/campagne/:type', async (requete, reponse) => {
+    const envoi = envoisCampagne[requete.params.type];
+    if (!envoi) return reponse.code(400).send({ erreur: 'Type inconnu (ouverture, annonce, relance-semaine, resultats).' });
+    const simulation = !!requete.body?.simulation;
+    const res = await envoi({ simulation, forcer: !!requete.body?.forcer });
+    if (!simulation) {
+      journaliser(requete.agent.login, `mail_${requete.params.type}_envoye`, JSON.stringify(res), requete.ip);
+    }
+    return res;
   });
 
   app.post('/api/admin/mails/relances/:id', async (requete) => {
@@ -819,12 +945,17 @@ export default async function routesAdmin(app) {
     // sont connectes », et le taux de participation ne repartait jamais de zero.
     // D'un bloc : une remise a zero interrompue au milieu laissait des badges
     // sans participation, ou des tentatives orphelines.
+    // Vider aussi le programme : on replanifie tout. Les questionnaires, eux,
+    // restent en base - masques jusqu'a ce que leur module retrouve une date.
+    const viderProgramme = !!requete.body?.viderProgramme;
     let oublies = 0;
+    let deprogrammes = 0;
     db.exec('BEGIN');
     try {
       db.exec('DELETE FROM reponses_agent; DELETE FROM participations; '
         + 'DELETE FROM tentatives; DELETE FROM badges_agent; DELETE FROM envois;');
       oublies = db.prepare('UPDATE agents SET vu_le = NULL').run().changes;
+      if (viderProgramme) deprogrammes = db.prepare('DELETE FROM programme').run().changes;
       db.exec('COMMIT');
     } catch (err) {
       db.exec('ROLLBACK');
@@ -835,16 +966,25 @@ export default async function routesAdmin(app) {
       });
     }
 
+    // Hors transaction : l'import masque les defis sortis du programme, et
+    // n'a rien a defaire si la remise a zero elle-meme a echoue.
+    if (viderProgramme) importerContenus();
+
     journaliser(requete.agent.login, 'reinitialisation',
-      `participations, tentatives, badges effaces, ${oublies} date(s) de connexion oubliee(s)`,
+      `participations, tentatives, badges effaces, ${oublies} date(s) de connexion oubliee(s)`
+        + (viderProgramme ? `, programme vide (${deprogrammes} parution(s))` : ''),
       requete.ip);
 
     return {
       ok: true,
       message: "Participations, tentatives, badges et historique d'envois effacés. "
         + `${oublies} date(s) de première connexion remises à zéro : le taux de `
-        + 'participation repart de zéro. Les comptes agents, les défis et le '
-        + 'paramétrage sont conservés.',
+        + 'participation repart de zéro. '
+        + (viderProgramme
+          ? `Programme vidé (${deprogrammes} parution(s)) : les défis sont conservés, masqués `
+            + "jusqu'à ce que vous leur redonniez une date dans l'onglet Défis. "
+          : '')
+        + 'Les comptes agents, les questionnaires et le paramétrage sont conservés.',
     };
   });
 }

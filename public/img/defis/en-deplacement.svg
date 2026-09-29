@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Dans le train, un ordinateur portable ouvert lu par-dessus l’épaule">
+<title>Dans le train, un ordinateur portable ouvert lu par-dessus l’épaule</title>
+<rect width="640" height="360" fill="#e6f1ec"/>
+<circle cx="585" cy="35" r="150" fill="#f4f8dd"/>
+<circle cx="35" cy="345" r="105" fill="#d3e6dc"/>
+<circle cx="520" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/>
+<rect x="40" y="30" width="560" height="170" rx="26" fill="#dfe7e3"/>
+<rect x="60" y="48" width="250" height="134" rx="18" fill="#cfe6f0"/><rect x="330" y="48" width="250" height="134" rx="18" fill="#cfe6f0"/>
+<path d="M60 150 Q140 100 220 140 T310 130 V182 H60 Z" fill="#8fbfa6"/><path d="M330 140 Q400 110 470 140 T580 124 V182 H330 Z" fill="#8fbfa6"/>
+<rect x="0" y="236" width="640" height="18" fill="#4a5a53"/>
+<rect x="0" y="254" width="640" height="106" fill="#d3e6dc"/>
+<path d="M190 236 L210 150 H370 L390 236 Z" fill="#14211c"/>
+<path d="M200 226 L216 160 H364 L380 226 Z" fill="#ffffff"/>
+<rect x="236" y="176" width="110" height="7" rx="3.5" fill="#b9c7c0"/><rect x="236" y="190" width="110" height="7" rx="3.5" fill="#b9c7c0"/><rect x="236" y="204" width="66" height="7" rx="3.5" fill="#b9c7c0"/>
+<rect x="236" y="200" width="60" height="8" rx="4" fill="#d64545"/>
+<rect x="170" y="232" width="240" height="10" rx="5" fill="#b9c7c0"/>
+<rect x="452" y="150" width="104" height="90" rx="10" fill="#006e46"/><rect x="484" y="136" width="40" height="18" rx="6" fill="none" stroke="#005435" stroke-width="7"/>
+<rect x="452" y="186" width="104" height="10" fill="#aec80c"/>
+<rect x="534" y="200" width="20" height="30" rx="3" fill="#fde9a8"/>
+<rect x="26" y="176" width="124" height="200" rx="34" fill="#005435"/>
+<rect x="44" y="194" width="88" height="40" rx="14" fill="#006e46"/>
+<path d="M50 170 Q88 139.6 126 170 Q88 200.4 50 170 Z" fill="#ffffff" stroke="#14211c" stroke-width="3.8"/>
+<circle cx="88" cy="170" r="12.35" fill="#006e46"/><circle cx="88" cy="170" r="5.699999999999999" fill="#14211c"/>
+<circle cx="91.8" cy="166.2" r="2.375" fill="#ffffff"/>
+</svg>

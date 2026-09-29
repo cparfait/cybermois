@@ -18,3 +18,18 @@ export function aujourdhui(maintenant = new Date()) {
   const p = (n) => String(n).padStart(2, '0');
   return `${maintenant.getFullYear()}-${p(maintenant.getMonth() + 1)}-${p(maintenant.getDate())}`;
 }
+
+/**
+ * AAAA-MM-JJ decale de `jours` jours. Midi plutot que minuit : un changement
+ * d'heure ne fait alors jamais sauter ou doubler une date.
+ */
+export function decalerJours(jour, jours) {
+  const d = new Date(`${jour}T12:00:00`);
+  d.setDate(d.getDate() + jours);
+  return aujourdhui(d);
+}
+
+/** « lundi 5 octobre », « jeudi 1er octobre », pour les mails. */
+export const dateLisible = (jour) => new Intl.DateTimeFormat('fr-FR', {
+  weekday: 'long', day: 'numeric', month: 'long',
+}).format(new Date(`${jour}T12:00:00`)).replace(/ 1 /, ' 1er ');

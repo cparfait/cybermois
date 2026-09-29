@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Un poste, un serveur sauvegardé et un cloud personnel incertain">
+<title>Un poste, un serveur sauvegardé et un cloud personnel incertain</title>
+<rect width="640" height="360" fill="#e6f1ec"/>
+<circle cx="585" cy="35" r="150" fill="#f4f8dd"/>
+<circle cx="35" cy="345" r="105" fill="#d3e6dc"/>
+<circle cx="520" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/>
+<rect x="0" y="300" width="640" height="60" fill="#d3e6dc"/>
+<rect x="119" y="210" width="24" height="24" fill="#4a5a53"/>
+<rect x="76" y="232" width="110" height="9" rx="4" fill="#4a5a53"/>
+<rect x="56" y="104" width="150" height="106" rx="10" fill="#14211c"/>
+<rect x="66" y="114" width="130" height="86" rx="4" fill="#e6f1ec"/>
+<rect x="78" y="126" width="26" height="22" rx="3" fill="#f2b705"/><rect x="116" y="126" width="26" height="22" rx="3" fill="#f2b705"/><rect x="154" y="126" width="26" height="22" rx="3" fill="#f2b705"/>
+<circle cx="196" cy="104" r="22" fill="#f2b705" stroke="#ffffff" stroke-width="4"/>
+<text x="196" y="113.24" text-anchor="middle" font-size="27.5" fill="#14211c" font-family="Montserrat, Arial, sans-serif" font-weight="800">?</text>
+<rect x="262" y="70" width="120" height="230" rx="10" fill="#006e46"/>
+<rect x="276" y="88" width="92" height="38" rx="5" fill="#005435"/>
+<circle cx="292" cy="107" r="5" fill="#aec80c"/>
+<rect x="306" y="104" width="50" height="6" rx="3" fill="#8fbfa6"/><rect x="276" y="140" width="92" height="38" rx="5" fill="#005435"/>
+<circle cx="292" cy="159" r="5" fill="#aec80c"/>
+<rect x="306" y="156" width="50" height="6" rx="3" fill="#8fbfa6"/><rect x="276" y="192" width="92" height="38" rx="5" fill="#005435"/>
+<circle cx="292" cy="211" r="5" fill="#aec80c"/>
+<rect x="306" y="208" width="50" height="6" rx="3" fill="#8fbfa6"/><rect x="276" y="244" width="92" height="38" rx="5" fill="#005435"/>
+<circle cx="292" cy="263" r="5" fill="#aec80c"/>
+<rect x="306" y="260" width="50" height="6" rx="3" fill="#8fbfa6"/>
+<circle cx="376" cy="76" r="26" fill="#aec80c" stroke="#ffffff" stroke-width="4"/>
+<path d="M364.3 77 L373.4 85.88 L389 66.9" fill="none" stroke="#ffffff" stroke-width="5.72" stroke-linecap="round" stroke-linejoin="round"/>
+<g fill="#ffffff"><circle cx="467.5" cy="157.5" r="32.5"/><circle cx="510" cy="135" r="45"/>
+<circle cx="557.5" cy="155" r="35"/><rect x="435" y="155" width="155" height="35" rx="17.5"/></g>
+<path d="M510 160 V210" stroke="#b9c7c0" stroke-width="4" stroke-dasharray="8 8"/>
+<circle cx="560" cy="110" r="22" fill="#f2b705" stroke="#ffffff" stroke-width="4"/>
+<text x="560" y="119.24" text-anchor="middle" font-size="27.5" fill="#14211c" font-family="Montserrat, Arial, sans-serif" font-weight="800">?</text>
+<path d="M214 250 H254 M390 250 H440" stroke="#8fbfa6" stroke-width="5" stroke-dasharray="10 8" stroke-linecap="round"/>
+</svg>

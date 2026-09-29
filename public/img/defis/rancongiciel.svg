@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Un écran bloqué par un cadenas et une rançon exigée">
+<title>Un écran bloqué par un cadenas et une rançon exigée</title>
+<rect width="640" height="360" fill="#e6f1ec"/>
+<circle cx="585" cy="35" r="150" fill="#f4f8dd"/>
+<circle cx="35" cy="345" r="105" fill="#d3e6dc"/>
+<circle cx="520" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/>
+<rect x="0" y="300" width="640" height="60" fill="#d3e6dc"/>
+<rect x="248" y="240" width="24" height="24" fill="#4a5a53"/>
+<rect x="205" y="262" width="110" height="9" rx="4" fill="#4a5a53"/>
+<rect x="110" y="50" width="300" height="190" rx="10" fill="#14211c"/>
+<rect x="120" y="60" width="280" height="170" rx="4" fill="#f8d7d7"/>
+<g stroke="#4a5a53" stroke-width="10" stroke-linecap="round" opacity=".85"><path d="M126 70 L394 224"/><path d="M394 70 L126 224"/></g>
+<g stroke="#b9c7c0" stroke-width="4" fill="none"><path d="M126 70 L394 224" stroke-dasharray="12 10"/><path d="M394 70 L126 224" stroke-dasharray="12 10"/></g>
+<path d="M236 136 V116.8 A24 24 0 0 1 284 116.8 V136" fill="none" stroke="#d64545" stroke-width="11.200000000000001" stroke-linecap="round"/>
+<rect x="220" y="132.8" width="80" height="64" rx="11.200000000000001" fill="#d64545"/>
+<circle cx="260" cy="158.4" r="8" fill="#ffffff"/>
+<rect x="256" y="161.6" width="8" height="16" rx="3.2" fill="#ffffff"/>
+<g transform="rotate(7 520 170)">
+<rect x="450" y="80" width="140" height="176" fill="#ffffff" stroke="#b9c7c0" stroke-width="3"/>
+<text x="520" y="126" text-anchor="middle" font-size="30" fill="#d64545" font-family="Montserrat, Arial, sans-serif" font-weight="800">€€€</text>
+<rect x="468" y="146" width="104" height="8" rx="4" fill="#b9c7c0"/><rect x="468" y="164" width="104" height="8" rx="4" fill="#b9c7c0"/><rect x="468" y="182" width="104" height="8" rx="4" fill="#b9c7c0"/><rect x="468" y="200" width="62.4" height="8" rx="4" fill="#b9c7c0"/>
+<rect x="468" y="224" width="70" height="14" rx="4" fill="#d64545"/>
+</g>
+</svg>

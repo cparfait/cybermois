@@ -123,8 +123,25 @@ export const config = {
     actif: bool(process.env.MAIL_ENVOI_ACTIF, false),
   },
 
+  // Chaque mail automatique s'active ou se coupe seul, sous l'interrupteur
+  // general smtp.actif. Couper un envoi automatique n'empeche pas de le faire
+  // a la main depuis l'onglet Mails.
+  mails: {
+    ouverture: bool(process.env.MAIL_AUTO_OUVERTURE, true),
+    annonce: bool(process.env.MAIL_AUTO_ANNONCE, true),
+    relance: bool(process.env.MAIL_AUTO_RELANCE, true),
+    resultats: bool(process.env.MAIL_AUTO_RESULTATS, true),
+  },
+
   cron: {
     timezone: process.env.TIMEZONE || 'Europe/Paris',
+    // Passages de la tache d'ouverture. Le mail ne part que le jour du premier
+    // defi, et une seule fois : les passages suivants rattrapent un serveur
+    // arrete a 8 h ce jour-la.
+    ouverture: process.env.CRON_OUVERTURE || '0 8-17 * * *',
+    // Annonce des defis de la semaine, les lundis suivants. Meme principe :
+    // plusieurs passages, un seul envoi.
+    annonce: process.env.CRON_ANNONCE || '0 8-17 * * 1',
     relance: process.env.CRON_RELANCE || '0 9 * * 3',
     resultats: process.env.CRON_RESULTATS || '0 16 * * 5',
   },

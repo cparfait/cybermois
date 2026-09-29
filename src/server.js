@@ -13,7 +13,9 @@ import { purgerSessions, exigerAdmin, DUREE_HEURES } from './lib/session.js';
 import { appliquerRetention } from './lib/retention.js';
 import { SEUIL_BADGE_DEFI } from './lib/scoring.js';
 import { importerContenus } from './lib/seed.js';
-import { envoyerRelances, envoyerResultats } from './lib/mail.js';
+import {
+  envoyerRelancesSemaine, envoyerResultats, ouvertureDuJour, annonceDuJour, dernierDefiParu,
+} from './lib/mail.js';
 import { verifierModeDemo, estModeDemo, motDePasseDemo } from './lib/annuaire-demo.js';
 import { verifierChiffrement } from './lib/ldap.js';
 import { appliquerParametres, configurationUtilisable } from './lib/parametres.js';
@@ -325,41 +327,53 @@ export function planifier() {
   for (const t of tachesPlanifiees) { try { t.stop(); } catch { /* deja arretee */ } }
   tachesPlanifiees = [];
 
-  // Le defi que les mails automatiques annoncent : le dernier paru. Un rang
-  // calcule sur le calendrier ne veut plus rien dire des lors que les dates de
-  // parution sont libres - deux defis peuvent sortir le meme jour, ou aucun de
-  // la semaine.
-  const defiCourant = () => db.prepare(
-    "SELECT id FROM defis WHERE publie = 1 AND ouvre_le <= date('now') ORDER BY ouvre_le DESC, id DESC LIMIT 1"
-  ).get()?.id || null;
-
   if (!config.smtp.actif) {
-    app.log.warn('Envoi de mails desactive : relances et resultats non planifies.');
+    app.log.warn('Envois automatiques desactives : aucun mail planifie. Les envois manuels restent possibles.');
     return;
   }
 
-  if (!cron.validate(config.cron.relance) || !cron.validate(config.cron.resultats)) {
-    app.log.error(`Expression de planification invalide : relances "${config.cron.relance}", resultats "${config.cron.resultats}". Aucune tache planifiee.`);
+  const { ouverture, annonce, relance, resultats } = config.cron;
+  if (![ouverture, annonce, relance, resultats].every((c) => cron.validate(c))) {
+    app.log.error(`Expression de planification invalide : ouverture "${ouverture}", annonce "${annonce}", relances "${relance}", resultats "${resultats}". Aucune tache planifiee.`);
     return;
   }
 
-  tachesPlanifiees.push(cron.schedule(config.cron.relance, async () => {
-    const id = defiCourant();
-    if (!id) return app.log.warn('Relance automatique ignoree : aucun defi paru.');
-    app.log.info(`Relance automatique - defi ${id}`);
-    const res = await envoyerRelances(id);
-    app.log.info(res, 'relances envoyees');
-  }, { timezone: config.cron.timezone }));
+  // Chaque mail a son interrupteur : on ne programme que ceux qui sont actifs.
+  const taches = {
+    // Tache quotidienne, mais qui n'envoie que le jour du premier defi, une fois.
+    ouverture: [ouverture, async () => {
+      const res = await ouvertureDuJour();
+      if (res) app.log.info(res, "mail d'ouverture envoye");
+    }],
+    // A partir de la deuxieme semaine, un seul envoi quel que soit le nombre de passages.
+    annonce: [annonce, async () => {
+      const res = await annonceDuJour();
+      if (res) app.log.info(res, 'annonce de la semaine envoyee');
+    }],
+    // Les defis parus ces sept derniers jours, et non plus le seul dernier.
+    relance: [relance, async () => {
+      const res = await envoyerRelancesSemaine();
+      if (!res.ok) return app.log.warn(`Relance automatique ignoree : ${res.message}`);
+      return app.log.info(res, 'relances envoyees');
+    }],
+    resultats: [resultats, async () => {
+      const defi = dernierDefiParu();
+      if (!defi) return app.log.warn('Resultats automatiques ignores : aucun defi paru.');
+      const res = await envoyerResultats(defi.id);
+      return app.log.info(res, 'resultats envoyes');
+    }],
+  };
 
-  tachesPlanifiees.push(cron.schedule(config.cron.resultats, async () => {
-    const id = defiCourant();
-    if (!id) return app.log.warn('Resultats automatiques ignores : aucun defi paru.');
-    app.log.info(`Resultats automatiques - defi ${id}`);
-    const res = await envoyerResultats(id);
-    app.log.info(res, 'resultats envoyes');
-  }, { timezone: config.cron.timezone }));
+  const actifs = [];
+  for (const [nom, [expression, tache]] of Object.entries(taches)) {
+    if (!config.mails?.[nom]) continue;
+    tachesPlanifiees.push(cron.schedule(expression, async () => {
+      try { await tache(); } catch (err) { app.log.error(err, `envoi automatique ${nom} en echec`); }
+    }, { timezone: config.cron.timezone }));
+    actifs.push(`${nom} "${expression}"`);
+  }
 
-  app.log.info(`Planification active - relances "${config.cron.relance}", resultats "${config.cron.resultats}" (${config.cron.timezone})`);
+  app.log.info(`Planification des mails (${config.cron.timezone}) : ${actifs.join(', ') || 'aucun envoi automatique actif'}`);
 }
 
 // Permet aux routes de configuration de replanifier apres modification

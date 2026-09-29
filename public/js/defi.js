@@ -138,7 +138,13 @@ function afficherIntro() {
          survivre a l'echappement, sinon tout se retrouve sur une seule ligne. -->
     <div class="carte" style="margin:1.5rem 0;white-space:pre-line">${echapper(defi.intro)}</div>
 
-    ${defi.video ? blocVideo(defi.video) : ''}
+    ${defi.video ? blocVideo(defi.video)
+      // Decorative : le titre et l'accroche disent deja tout, un lecteur
+      // d'ecran n'a pas a entendre la description d'un dessin en plus.
+      : defi.illustration ? `
+      <figure class="illustration-defi">
+        <img src="${echapper(defi.illustration)}" alt="" width="640" height="360">
+      </figure>` : ''}
 
     ${defi.apercu ? `
       <div class="message message-alerte" style="margin-bottom:1.5rem">

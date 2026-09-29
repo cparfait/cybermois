@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Un RIB falsifié et des euros détournés loin de la banque">
+<title>Un RIB falsifié et des euros détournés loin de la banque</title>
+<rect width="640" height="360" fill="#e6f1ec"/>
+<circle cx="585" cy="35" r="150" fill="#f4f8dd"/>
+<circle cx="35" cy="345" r="105" fill="#d3e6dc"/>
+<circle cx="520" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/>
+<rect x="0" y="300" width="640" height="60" fill="#d3e6dc"/>
+<path d="M60 128 L160 76 L260 128 Z" fill="#006e46"/>
+<rect x="70" y="128" width="180" height="14" fill="#005435"/>
+<rect x="84" y="146" width="20" height="120" fill="#ffffff"/><rect x="126" y="146" width="20" height="120" fill="#ffffff"/><rect x="168" y="146" width="20" height="120" fill="#ffffff"/><rect x="210" y="146" width="20" height="120" fill="#ffffff"/>
+<rect x="62" y="266" width="196" height="16" fill="#005435"/><rect x="54" y="282" width="212" height="18" fill="#006e46"/>
+<circle cx="160" cy="108" r="12" fill="#aec80c"/>
+<rect x="312" y="80" width="250" height="150" rx="12" fill="#ffffff" stroke="#b9c7c0" stroke-width="3"/>
+<text x="334" y="116" font-size="20" fill="#006e46" font-family="Montserrat, Arial, sans-serif" font-weight="800">RIB</text>
+<rect x="334" y="130" width="90" height="8" rx="4" fill="#b9c7c0"/>
+<rect x="334" y="156" width="200" height="16" rx="4" fill="#dfe7e3"/>
+<path d="M330 164 H540" stroke="#d64545" stroke-width="5" stroke-linecap="round"/>
+<rect x="334" y="186" width="200" height="16" rx="4" fill="#fde9a8"/>
+<rect x="470" y="186" width="64" height="16" rx="4" fill="#f2b705"/>
+<circle cx="330" cy="272" r="24" fill="#f2b705" stroke="#14211c" stroke-width="3"/>
+<text x="330" y="280" text-anchor="middle" font-size="22" fill="#14211c" font-family="Montserrat, Arial, sans-serif" font-weight="800">€</text><circle cx="396" cy="262" r="22" fill="#f2b705" stroke="#14211c" stroke-width="3"/>
+<text x="396" y="270" text-anchor="middle" font-size="20" fill="#14211c" font-family="Montserrat, Arial, sans-serif" font-weight="800">€</text><circle cx="462" cy="250" r="20" fill="#f2b705" stroke="#14211c" stroke-width="3"/>
+<text x="462" y="258" text-anchor="middle" font-size="18" fill="#14211c" font-family="Montserrat, Arial, sans-serif" font-weight="800">€</text>
+<path d="M490 246 Q540 226 574 244" fill="none" stroke="#d64545" stroke-width="5" stroke-linecap="round" stroke-dasharray="3 10"/>
+<circle cx="588" cy="262" r="22" fill="#d64545" stroke="#ffffff" stroke-width="4"/>
+<text x="588" y="271.24" text-anchor="middle" font-size="27.5" fill="#14211c" font-family="Montserrat, Arial, sans-serif" font-weight="800">?</text>
+</svg>
