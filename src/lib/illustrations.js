@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 /**
- * Illustration d'un defi, montree a la place de la video quand il n'y en a
- * pas.
+ * Illustration d'un defi. Seule quand le defi n'a pas de video ; sinon elle
+ * sert d'affiche au lecteur, un bouton de lecture pose dessus.
  *
  * Sans video, la page d'un defi n'offrait que du texte avant les questions :
  * rien qui accroche l'oeil, alors que c'est la que l'agent decide s'il joue.

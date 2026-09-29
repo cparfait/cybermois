@@ -166,8 +166,9 @@ export default async function routesJeu(app) {
             transcription: defi.video_transcription || null,
           }
         : null,
-      // Sans video, l'illustration du module prend sa place.
-      illustration: defi.video_url ? null : illustrationDe(defi),
+      // Illustration du module : seule quand il n'y a pas de video, et sinon
+      // affiche de la video, avec le bouton de lecture par-dessus.
+      illustration: illustrationDe(defi),
       // Hebergeurs autorises : l'ecran ne connait le format d'insertion que de
       // YouTube et Dailymotion. Pour une autre plateforme, il insere l'adresse
       // telle quelle - a condition qu'elle figure ici, sinon le navigateur la

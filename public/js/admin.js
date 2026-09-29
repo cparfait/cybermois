@@ -1418,7 +1418,8 @@ function brancherApercuVideo(illustration = null) {
     if (!valeur) {
       zone.innerHTML = illustration
         ? `<p class="discret" style="margin:0 0 .5rem;font-size:.84rem">Aucune vidéo :
-            les agents verront l'illustration du défi à la place.</p>
+            les agents verront l'illustration seule, sans bouton de lecture. Avec une vidéo,
+            elle en devient l'affiche, un bouton de lecture posé dessus.</p>
           <img src="${echapper(illustration)}" alt="" style="width:100%;max-width:520px;border-radius:var(--rayon)">`
         : '<p class="discret" style="margin:0;font-size:.84rem">'
           + 'Aucune vidéo : le défi commence directement par les questions.</p>';
