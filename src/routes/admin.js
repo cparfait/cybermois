@@ -16,6 +16,7 @@ import {
 } from '../lib/mail.js';
 import { decalerJours } from '../lib/dates.js';
 import { illustrationDe } from '../lib/illustrations.js';
+import { lancerTelechargement, lireTache, telechargementDisponible } from '../lib/telechargement-video.js';
 import { creerJetonApercu, revoquerJetonApercu, lienApercu } from '../lib/apercu.js';
 import {
   enregistrerVideo, listerVideos, supprimerVideo, formatsLisibles, TAILLE_MAX,
@@ -155,7 +156,13 @@ export default async function routesAdmin(app) {
     // L'illustration du module s'affiche quand la video est vide : l'editeur
     // la montre pour qu'on sache ce que l'agent verra a la place.
     const brut = db.prepare('SELECT module_code FROM defis WHERE id = ?').get(defi.id);
-    return { ...defi, videoDomaines: config.videoDomaines || [], illustration: illustrationDe(brut) };
+    return {
+      ...defi,
+      videoDomaines: config.videoDomaines || [],
+      illustration: illustrationDe(brut),
+      // Le bouton « Télécharger sur le serveur » ne s'offre que si yt-dlp est la.
+      telechargementVideo: telechargementDisponible(),
+    };
   });
 
   /** Creation d'un defi. Il arrive masque : on le publie une fois redige. */
@@ -600,6 +607,34 @@ export default async function routesAdmin(app) {
       message: `Vidéo déposée (${mo} Mo). Elle est servie depuis le serveur : `
         + "aucun appel à un service extérieur, et le trafic ne sort pas du réseau.",
     };
+  });
+
+  /**
+   * Telechargement sur le serveur d'une video YouTube ou Dailymotion. La
+   * reponse part aussitot avec l'identifiant de la tache : l'editeur
+   * l'interroge ensuite, une requete qui attendrait la fin serait coupee par
+   * le reverse proxy.
+   */
+  app.post('/api/admin/videos/telechargement', async (requete, reponse) => {
+    const lien = String(requete.body?.url || '').trim();
+    const { login } = requete.agent;
+    const { ip } = requete;
+    try {
+      const tache = lancerTelechargement(lien, {
+        fin: (t) => journaliser(login, t.etat === 'termine' ? 'video_telechargee' : 'video_telechargement_echec',
+          `${t.adresse} -> ${t.resultat?.nom || t.message}`, ip),
+      });
+      return reponse.code(202).send(tache);
+    } catch (err) {
+      const statut = { LIEN_REFUSE: 400, OUTIL_ABSENT: 501, ENVOI_EN_COURS: 409, QUOTA_ATTEINT: 507 }[err.code] || 500;
+      return reponse.code(statut).send({ erreur: err.message, code: err.code });
+    }
+  });
+
+  app.get('/api/admin/videos/telechargement/:id', async (requete, reponse) => {
+    const tache = lireTache(requete.params.id);
+    if (!tache) return reponse.code(404).send({ erreur: 'Téléchargement inconnu ou trop ancien.' });
+    return tache;
   });
 
   /** Les fichiers deposes, avec le defi qui s'en sert. */

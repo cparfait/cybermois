@@ -8,6 +8,16 @@ RUN apk add --no-cache tzdata && \
     ln -snf /usr/share/zoneinfo/Europe/Paris /etc/localtime && \
     echo "Europe/Paris" > /etc/timezone
 
+# yt-dlp recupere sur le serveur une video YouTube ou Dailymotion collee dans
+# l'editeur d'un defi, et ffmpeg en assemble l'image et le son en un seul MP4.
+# yt-dlp est volontairement NON epingle : les plateformes changent souvent, et
+# une version de six mois ne sait plus les lire. Reconstruire l'image suffit a
+# le mettre a jour. curl-cffi lui permet de se presenter comme un navigateur :
+# sans lui, Dailymotion coupe la connexion des la demande de jeton.
+RUN apk add --no-cache ffmpeg python3 py3-pip && \
+    pip install --no-cache-dir --break-system-packages "yt-dlp[default,curl-cffi]" && \
+    yt-dlp --version && yt-dlp --list-impersonate-targets | grep -q curl_cffi
+
 WORKDIR /app
 
 # Installation des dependances en couche separee pour profiter du cache Docker.

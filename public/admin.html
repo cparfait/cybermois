@@ -95,7 +95,16 @@
      l'allure d'un bouton. Au clavier, le focus se posait donc sur un element
      de 1 px transparent - il disparaissait purement et simplement. Le label
      porte l'etat de focus a sa place. */
-  .depot-fichier { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  /* La regle generale des champs de theme.css - « input:not(...) x4 », bien
+     plus specifique qu'une classe - lui rendait width:100% : invisible mais
+     large de toute la ligne, le champ interceptait les clics de ses voisins,
+     et « Telecharger sur le serveur » ouvrait le selecteur de fichier. D'ou
+     les !important, et clip-path, qui retire aussi la zone cliquable. */
+  .depot-fichier {
+    position: absolute !important; width: 1px !important; height: 1px !important;
+    padding: 0 !important; border: 0 !important; margin: -1px;
+    overflow: hidden; clip-path: inset(50%); white-space: nowrap; opacity: 0;
+  }
   .depot-fichier:focus-visible + label {
     outline: 3px solid var(--vert-fonce); outline-offset: 2px;
   }

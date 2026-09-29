@@ -555,8 +555,9 @@ async function ouvrirEditeur(id) {
         </p>
         <p class="message message-alerte" style="margin:.6rem 0 0;font-size:.82rem">
           <strong>Dailymotion refuse désormais son lecteur inséré</strong> : l'agent voit
-          « Forbidden » à la place de la vidéo. Déposez plutôt le fichier MP4 ci-dessous —
-          il est servi par le portail, sans dépendre d'un hébergeur.
+          « Forbidden » à la place de la vidéo. Collez le lien puis cliquez sur
+          « Télécharger sur le serveur » : la vidéo est rapatriée et servie par le portail,
+          sans dépendre d'un hébergeur. Vous pouvez aussi déposer un fichier MP4.
         </p>
       </details>
       <div class="grille grille-2">
@@ -593,6 +594,10 @@ async function ouvrirEditeur(id) {
                style="padding:.45rem .9rem;font-size:.85rem;cursor:pointer;margin:0">
           Déposer un fichier vidéo
         </label>
+        <button type="button" class="btn btn-secondaire" id="btn-telecharger-video" hidden
+                style="padding:.45rem .9rem;font-size:.85rem;margin:0">
+          Télécharger sur le serveur
+        </button>
         <span class="discret ui" id="etat-envoi-video" style="font-size:.84rem">
           MP4, WebM ou OGV — servi depuis le serveur, sans passer par Internet.
         </span>
@@ -678,7 +683,7 @@ async function ouvrirEditeur(id) {
 
   document.getElementById('btn-fermer').addEventListener('click', () => { zone.innerHTML = ''; });
 
-  brancherApercuVideo(defi.illustration);
+  brancherApercuVideo(defi.illustration, defi.telechargementVideo);
 
   const boutonEnregistrer = document.getElementById('btn-enregistrer');
   boutonEnregistrer.addEventListener('click', () => pendant(boutonEnregistrer, 'Enregistrement…', async () => {
@@ -1402,9 +1407,10 @@ async function testerDefi(id, bouton) {
  * ouvre le défi — c'est-à-dire trop tard. On dit tout de suite si elle est
  * reconnue, et par quel hébergeur.
  */
-function brancherApercuVideo(illustration = null) {
+function brancherApercuVideo(illustration = null, telechargement = false) {
   const champ = document.getElementById('ed-video-url');
   const zone = document.getElementById('apercu-video-editeur');
+  const boutonTelecharger = document.getElementById('btn-telecharger-video');
   if (!champ || !zone) return;
 
   // Hebergeurs autorises : ils servent a reconnaitre une adresse qui n'est ni
@@ -1415,6 +1421,9 @@ function brancherApercuVideo(illustration = null) {
 
   const majApercu = () => {
     const valeur = champ.value.trim();
+    // Le bouton de telechargement ne vaut que pour un lien YouTube ou
+    // Dailymotion reconnu : cache par defaut, montre plus bas le cas echeant.
+    if (boutonTelecharger) boutonTelecharger.hidden = true;
     if (!valeur) {
       zone.innerHTML = illustration
         ? `<p class="discret" style="margin:0 0 .5rem;font-size:.84rem">Aucune vidéo :
@@ -1460,11 +1469,15 @@ function brancherApercuVideo(illustration = null) {
     // Dailymotion repond « Forbidden » a son lecteur insere sans identifiant
     // de lecteur : l'adresse est bien reconnue, mais l'agent ne verra rien.
     const refusee = v.hebergeur === 'Dailymotion';
+    const rapatriable = telechargement && ['YouTube', 'Dailymotion'].includes(v.hebergeur);
+    if (boutonTelecharger) boutonTelecharger.hidden = !rapatriable;
     zone.innerHTML = `
       <div class="message ${refusee ? 'message-alerte' : 'message-succes'}" style="margin:0">
         Reconnu : <strong>${echapper(v.hebergeur)}</strong> — <code>${echapper(v.id)}</code>
         ${refusee ? `<br>Dailymotion refuse désormais son lecteur inséré : les agents verront
-          « Forbidden ». Déposez plutôt le fichier vidéo ci-dessous.` : ''}
+          « Forbidden ». ${rapatriable
+            ? 'Cliquez sur « Télécharger sur le serveur » pour que le portail la serve lui-même.'
+            : 'Déposez plutôt le fichier vidéo ci-dessous.'}` : ''}
         <button type="button" class="btn btn-secondaire" id="btn-previsualiser-video"
                 style="padding:.25rem .7rem;font-size:.8rem;margin-left:.6rem">Prévisualiser</button>
       </div>
@@ -1482,6 +1495,7 @@ function brancherApercuVideo(illustration = null) {
   };
 
   brancherEnvoiVideo(champ, majApercu);
+  if (telechargement) brancherTelechargementVideo(champ, majApercu);
   champ.addEventListener('input', majApercu);
   majApercu();
 
@@ -1494,6 +1508,48 @@ function brancherApercuVideo(illustration = null) {
       majApercu();
     })
     .catch(() => { /* on se contente des deux hebergeurs connus */ });
+}
+
+/**
+ * Téléchargement par le serveur d'une vidéo YouTube ou Dailymotion.
+ *
+ * Le serveur rapatrie le fichier puis le sert lui-même, comme un fichier
+ * déposé. L'opération prend de quelques secondes à quelques minutes : elle
+ * tourne en tâche de fond, que l'on interroge jusqu'à sa fin.
+ */
+function brancherTelechargementVideo(champUrl, majApercu) {
+  const bouton = document.getElementById('btn-telecharger-video');
+  const etat = document.getElementById('etat-envoi-video');
+  const champTitre = document.getElementById('ed-video-titre');
+  if (!bouton || !etat) return;
+
+  bouton.addEventListener('click', async () => {
+    const lien = champUrl.value.trim();
+    bouton.disabled = true;
+    etat.textContent = 'Téléchargement lancé sur le serveur…';
+    try {
+      let tache = await api('/api/admin/videos/telechargement', { method: 'POST', body: { url: lien } });
+      while (tache.etat === 'en cours') {
+        etat.textContent = `${tache.message}${tache.progression ? ` ${tache.progression} %` : ''}`;
+        await new Promise((r) => { setTimeout(r, 1500); });
+        tache = await api(`/api/admin/videos/telechargement/${tache.id}`);
+      }
+      if (tache.etat !== 'termine') throw new Error(tache.message || 'Téléchargement impossible.');
+
+      champUrl.value = tache.resultat.url;
+      // Le titre d'origine fait un bon repère interne, s'il n'y en a pas déjà un.
+      if (champTitre && !champTitre.value.trim() && tache.titre) champTitre.value = tache.titre;
+      majApercu();
+      const mo = Math.round(tache.resultat.octets / 1024 / 1024);
+      etat.textContent = `Vidéo téléchargée (${mo} Mo) : elle est désormais servie par le portail.`;
+      alerte('alerte', "Vidéo téléchargée sur le serveur. Enregistrez le défi pour qu'elle s'applique.", 'succes');
+    } catch (e) {
+      etat.textContent = `Échec du téléchargement : ${e.message}`;
+      alerte('alerte', etat.textContent);
+    } finally {
+      bouton.disabled = false;
+    }
+  });
 }
 
 /**
