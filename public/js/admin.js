@@ -240,8 +240,7 @@ chargeurs.defis = async () => {
           <th scope="col">État</th><th scope="col">Actions</th></tr></thead>
         <tbody>${defis.map((d) => `
           <tr>
-            <td class="col-numero"${d.publie ? '' : ' title="Numéro qu’il prendra une fois publié"'}>
-              ${d.publie ? d.numero : `<span class="discret">${d.numero}</span>`}</td>
+            <td class="col-numero" title="Numéro du défi, celui de son adresse /defi/${d.id}">${d.id}</td>
             <td style="white-space:nowrap">${echapper(d.ouvre_le)}</td>
             <td>${echapper(d.titre)}</td>
             <td>

@@ -144,15 +144,7 @@ export default async function routesAdmin(app) {
     FROM defis d ORDER BY d.ouvre_le, d.id
   `).all()
     // Le jeton lui-meme ne sort pas d'ici : il n'est rendu qu'a sa creation.
-    // Le numero est celui que voient les agents (rang parmi les defis
-    // publies, cf. numeroDefi dans jeu.js). Un defi masque recoit celui
-    // qu'il prendrait s'il etait publie maintenant.
-    .map(({ jeton_apercu: jeton, ...d }, _i, tous) => ({
-      ...d,
-      apercuOuvert: !!jeton,
-      numero: 1 + tous.filter((a) => a.publie && a.id !== d.id
-        && (a.ouvre_le < d.ouvre_le || (a.ouvre_le === d.ouvre_le && a.id < d.id))).length,
-    })));
+    .map(({ jeton_apercu: jeton, ...d }) => ({ ...d, apercuOuvert: !!jeton })));
 
   app.get('/api/admin/defis/:id', async (requete, reponse) => {
     const defi = exporterDefi(requete.params.id);
