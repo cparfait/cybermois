@@ -51,10 +51,15 @@ CREATE TABLE IF NOT EXISTS modeles_mail (
  * une seule fois.
  */
 (function reformulerOuverture() {
-  const cle = 'modeles_mail_formulations_ouverture_2';
+  const cle = 'modeles_mail_formulations_ouverture_3';
   if (db.prepare("SELECT 1 FROM journal WHERE action = 'migration' AND detail = ?").get(cle)) return;
   const remplacements = [
-    ['Le lundi, un mail annonce les défis de la semaine.', 'Le lundi, un mail annonce les deux défis de la semaine.'],
+    // Les phrases entieres d'abord : l'ancienne, puis la formulation avec
+    // « deux », publiee un temps.
+    ['Le lundi, un mail annonce les défis de la semaine. Le mercredi, un rappel part si vous en avez manqué un.',
+      "Le lundi, un mail annonce les défis de la semaine. Le mercredi, un rappel part si vous n'avez pas fait vos défis."],
+    ['Le lundi, un mail annonce les deux défis de la semaine. Le mercredi, un rappel part si vous en avez manqué un.',
+      "Le lundi, un mail annonce les défis de la semaine. Le mercredi, un rappel part si vous n'avez pas fait vos défis."],
     ['Un défi manqué reste ouvert {{jusqu_a_la_fin}}.', 'Les défis non réalisés restent ouverts {{jusqu_a_la_fin}}.'],
     // Formulation intermediaire, publiee quelques minutes : un texte qui l'aurait
     // recue revient a la phrase voulue.
@@ -111,7 +116,7 @@ export const MODELES = {
 <p>Connectez-vous avec <strong>vos identifiants Windows</strong>. Rien à installer, et vous pouvez jouer depuis un téléphone.</p>
 ${h3('Comment ça marche')}
 <ul>
-<li>Le lundi, un mail annonce les deux défis de la semaine. Le mercredi, un rappel part si vous en avez manqué un.</li>
+<li>Le lundi, un mail annonce les défis de la semaine. Le mercredi, un rappel part si vous n'avez pas fait vos défis.</li>
 <li>Les défis non réalisés restent ouverts {{jusqu_a_la_fin}}.</li>
 <li>Chaque défi terminé rapporte des points à <strong>votre direction</strong>. Les résultats sont diffusés le vendredi.</li>
 </ul>

@@ -34,7 +34,7 @@ test("l'ouverture du mercredi n'annonce que les deux defis de sa semaine", () =>
   assert.ok(contient(m.texte, [s1a, s1b]));
   assert.ok(aucun(m.texte, [s2a, s2b]), 'les defis du lundi 5 sont ceux de la semaine suivante');
   assert.match(m.texte, /Voici les 2 défis de la semaine/);
-  assert.match(m.texte, /Le lundi, un mail annonce les deux défis de la semaine\./);
+  assert.match(m.texte, /Le mercredi, un rappel part si vous n'avez pas fait vos défis\./);
   assert.match(m.texte, /Les défis non réalisés restent ouverts jusqu'au lundi 30 novembre\./);
   assert.doesNotMatch(m.texte, /pas un examen/);
 });

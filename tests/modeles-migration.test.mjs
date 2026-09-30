@@ -25,7 +25,7 @@ const modeles = await import('../src/lib/modeles-mail.js');
 test('le texte enregistre perd la phrase et prend les nouvelles formulations', () => {
   const { corps } = modeles.lireModele('ouverture');
   assert.doesNotMatch(corps, /pas un examen/);
-  assert.match(corps, /les deux défis de la semaine/);
+  assert.match(corps, /Le lundi, un mail annonce les défis de la semaine\. Le mercredi, un rappel part si vous n'avez pas fait vos défis\./);
   assert.match(corps, /Les défis non réalisés restent ouverts \{\{jusqu_a_la_fin\}\}\./);
   assert.doesNotMatch(corps, /manqué reste ouvert/);
   assert.match(corps, /Une phrase ajoutée par la DSI/, 'le reste du texte demeure');
@@ -34,6 +34,6 @@ test('le texte enregistre perd la phrase et prend les nouvelles formulations', (
 test('le texte d’origine porte les nouvelles formulations', () => {
   const { corps } = modeles.MODELES.ouverture;
   assert.doesNotMatch(corps, /pas un examen/);
-  assert.match(corps, /les deux défis de la semaine/);
+  assert.match(corps, /Le lundi, un mail annonce les défis de la semaine\. Le mercredi, un rappel part si vous n'avez pas fait vos défis\./);
   assert.match(corps, /Les défis non réalisés restent ouverts \{\{jusqu_a_la_fin\}\}\./);
 });
