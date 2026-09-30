@@ -7,10 +7,23 @@ import { aujourdhui, decalerJours, dateLisible, lundiDe } from './dates.js';
 import { rendreModele } from './modeles-mail.js';
 import { filtrerDestinataires, membresDuGroupe } from './groupes.js';
 
+/**
+ * La connexion au relais, gardee tant que ses reglages ne changent pas.
+ *
+ * Elle etait creee une fois pour toutes : un serveur SMTP corrige dans
+ * l'onglet Configuration - prise d'effet immediate, annonce l'ecran -
+ * n'etait utilise qu'apres un redemarrage, et les envois continuaient
+ * d'echouer sur l'ancien.
+ */
 let transport = null;
+let reglagesTransport = '';
 function obtenirTransport() {
-  if (transport) return transport;
   if (!config.smtp.host) return null;
+  const reglages = JSON.stringify([config.smtp.host, config.smtp.port, config.smtp.secure,
+    config.smtp.user, config.smtp.password]);
+  if (transport && reglages === reglagesTransport) return transport;
+  transport?.close?.();
+  reglagesTransport = reglages;
   transport = nodemailer.createTransport({
     host: config.smtp.host,
     port: config.smtp.port,
@@ -510,6 +523,29 @@ export function mailsDeLaSemaine(lundi, agent) {
   return liste.sort((a, b) => a.jour.localeCompare(b.jour));
 }
 
+/**
+ * Un exemple de chaque mail de la campagne, pour tout relire d'un coup :
+ * chaque mail automatique pris dans la premiere semaine ou il part, puis le
+ * mail aux elus. Un mail qui ne partirait jamais - aucune semaine ne le
+ * produit - n'y figure pas.
+ */
+export function exemplesDeCampagne(agent) {
+  const exemples = [];
+  const vus = new Set();
+  for (const { lundi } of semainesDeCampagne()) {
+    for (const m of mailsDeLaSemaine(lundi, agent)) {
+      if (m.mail && !vus.has(m.type)) {
+        vus.add(m.type);
+        exemples.push(m);
+      }
+    }
+    if (vus.size === Object.keys(NOMS_ENVOIS).length) break;
+  }
+  exemples.sort((a, b) => a.jour.localeCompare(b.jour));
+  exemples.push({ type: 'elus', nom: 'Mail aux élus', jour: null, mail: mailElus(agent) });
+  return exemples;
+}
+
 /* ---------------------------------------------------------------- Envois */
 
 async function envoyer({ to, objet, html, texte, bcc }) {
@@ -540,14 +576,16 @@ export const adresseValide = (adresse) =>
  * objet. Sans la copie configuree - elle recevrait chaque essai - et sans
  * trace dans « envois », ou il passerait pour le vrai envoi.
  */
-export async function envoyerTest(adresse, m) {
+export async function envoyerTest(adresse, m, etiquette = '') {
   if (!adresseValide(adresse)) throw new Error('Adresse invalide');
   const t = obtenirTransport();
   if (!t) throw new Error('SMTP non configure');
   await t.sendMail({
     from: config.smtp.from,
     to: adresse,
-    subject: `[TEST] ${m.objet}`,
+    // L'etiquette dit de quel envoi il s'agit quand plusieurs tests arrivent
+    // d'un coup : « [TEST mercredi 7 octobre] ».
+    subject: `[TEST${etiquette ? ` ${etiquette}` : ''}] ${m.objet}`,
     html: m.html,
     text: m.texte,
   });

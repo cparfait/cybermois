@@ -68,3 +68,15 @@ test('une annonce envoyee a la main en cours de semaine ne deborde pas non plus'
   assert.deepEqual(mail.defisAVenir('2026-10-01').map((d) => d.titre), [], 'jeudi 1er : plus rien cette semaine');
   assert.deepEqual(mail.defisAVenir('2026-09-28').map((d) => d.titre), [s1a, s1b]);
 });
+
+test('un exemple de chaque mail : chacun dans la premiere semaine ou il part', () => {
+  const exemples = mail.exemplesDeCampagne(agent);
+  assert.deepEqual(exemples.map((m) => [m.type, m.jour]), [
+    ['ouverture', '2026-09-30'],
+    ['resultats', '2026-10-02'],
+    ['annonce', '2026-10-05'],
+    ['relance-semaine', '2026-10-07'],
+    ['elus', null],
+  ]);
+  assert.ok(exemples.every((m) => m.mail?.html), 'chaque exemple a un contenu');
+});

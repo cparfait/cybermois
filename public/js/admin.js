@@ -804,7 +804,21 @@ chargeurs.mails = async () => {
           <label for="mail-semaine">Semaine</label>
           <select id="mail-semaine"><option value="">Chargement…</option></select>
         </div>
+        <div class="champ-admin" style="min-width:280px;margin-bottom:0">
+          <label for="semaine-test-adresse">Adresse de test</label>
+          <input type="email" id="semaine-test-adresse" autocomplete="email" placeholder="prenom.nom@chatillon92.fr">
+        </div>
       </div>
+      <div class="rang" style="margin-top:.8rem">
+        <button type="button" class="btn btn-principal" id="btn-test-semaine">Tester tous les mails de cette semaine</button>
+        <button type="button" class="btn btn-secondaire" id="btn-test-campagne">Tester un exemple de chaque mail</button>
+      </div>
+      <p class="discret" style="margin:.4rem 0 0;font-size:.82rem">
+        Les tests partent à cette seule adresse, avec « [TEST] » et le jour d'envoi dans l'objet. L'exemple de
+        chaque mail prend chaque mail automatique dans la première semaine où il part, plus le mail aux élus.
+        Rien n'est compté comme envoyé.
+      </p>
+      <div id="resultat-test-semaine" style="margin-top:.6rem"></div>
       <div id="zone-semaine" style="margin-top:1rem"></div>
     </section>
 
@@ -1042,6 +1056,31 @@ chargeurs.mails = async () => {
     afficherSemaine();
   }
 
+  /** L'adresse de test de la carte, ou rien - le champ fautif recoit alors le focus. */
+  function adresseTestSemaine() {
+    const champ = document.getElementById('semaine-test-adresse');
+    const adresse = champ.value.trim();
+    if (adresse && champ.checkValidity()) return adresse;
+    champ.focus();
+    alerte('resultat-test-semaine', 'Saisissez une adresse de test valide.');
+    return null;
+  }
+
+  /** Plusieurs tests d'un coup : la semaine choisie, ou un exemple de chaque mail. */
+  async function testerGroupe(bouton, semaine) {
+    const adresse = adresseTestSemaine();
+    if (!adresse) return;
+    const lundi = semaine ? document.getElementById('mail-semaine').value : null;
+    await pendant(bouton, 'Envoi…', async () => {
+      try {
+        const r = await api('/api/admin/mails/test-groupe', { method: 'POST', body: { adresse, lundi } });
+        alerte('resultat-test-semaine', r.message, 'succes');
+      } catch (e) { alerte('resultat-test-semaine', e.message); }
+    });
+  }
+  document.getElementById('btn-test-semaine').addEventListener('click', (e) => testerGroupe(e.currentTarget, true));
+  document.getElementById('btn-test-campagne').addEventListener('click', (e) => testerGroupe(e.currentTarget, false));
+
   async function afficherSemaine() {
     const lundi = document.getElementById('mail-semaine').value;
     const zone = document.getElementById('zone-semaine');
@@ -1071,20 +1110,15 @@ chargeurs.mails = async () => {
       </div>`).join('');
     zone.querySelectorAll('iframe[data-index]').forEach((f) => { f.srcdoc = d.mails[Number(f.dataset.index)].html; });
     zone.querySelectorAll('[data-test-semaine]').forEach((b) => b.addEventListener('click', () => {
-      const champ = document.getElementById('mail-test-adresse');
-      const adresse = champ.value.trim();
-      if (!adresse || !champ.checkValidity()) {
-        champ.focus();
-        alerte('alerte', 'Saisissez une adresse de test valide, dans le champ « Adresse de test ».');
-        return undefined;
-      }
+      const adresse = adresseTestSemaine();
+      if (!adresse) return undefined;
       return pendant(b, 'Envoi…', async () => {
         try {
           const r = await api('/api/admin/mails/test', {
             method: 'POST', body: { type: b.dataset.testSemaine, lundi, adresse },
           });
-          alerte('alerte', r.message, 'succes');
-        } catch (e) { alerte('alerte', e.message); }
+          alerte('resultat-test-semaine', r.message, 'succes');
+        } catch (e) { alerte('resultat-test-semaine', e.message); }
       });
     }));
   }
@@ -1129,8 +1163,10 @@ chargeurs.mails = async () => {
       return;
     }
     // L'adresse de test proposee est la sienne, sans ecraser une saisie.
-    const champTest = document.getElementById('mail-test-adresse');
-    if (champTest && !champTest.value && etat.monAdresse) champTest.value = etat.monAdresse;
+    for (const id of ['mail-test-adresse', 'semaine-test-adresse']) {
+      const champTest = document.getElementById(id);
+      if (champTest && !champTest.value && etat.monAdresse) champTest.value = etat.monAdresse;
+    }
     // L'horodatage est ecrit en UTC par SQLite.
     const quand = (h) => new Date(`${h.replace(' ', 'T')}Z`).toLocaleString('fr-FR', {
       day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',

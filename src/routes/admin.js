@@ -12,7 +12,7 @@ import {
   mailLancement, mailRelance, mailResultats,
   mailBienvenue, mailAnnonce, mailRelanceSemaine, defisAVenir,
   envoyerOuverture, envoyerAnnonce, envoyerRelancesSemaine, dernierDefiParu,
-  envoyerTest, adresseValide, semainesDeCampagne, mailsDeLaSemaine,
+  envoyerTest, adresseValide, semainesDeCampagne, mailsDeLaSemaine, exemplesDeCampagne,
   defisARelancer, mailElus, envoyerElus, dernierEnvoiElus,
 } from '../lib/mail.js';
 import {
@@ -885,6 +885,39 @@ export default async function routesAdmin(app) {
         html: m.mail?.html || null,
       })),
     };
+  });
+
+  /**
+   * Plusieurs tests d'un coup, a une seule adresse : les mails d'une semaine
+   * (`lundi`), ou un exemple de chaque mail de la campagne (sans `lundi`).
+   * Chaque objet porte le jour de l'envoi reel, pour s'y retrouver dans la
+   * boite de reception.
+   */
+  app.post('/api/admin/mails/test-groupe', async (requete, reponse) => {
+    const adresse = String(requete.body?.adresse || '').trim();
+    if (!adresseValide(adresse)) {
+      return reponse.code(400).send({ erreur: 'Adresse de test invalide : une seule adresse attendue.' });
+    }
+    const agent = db.prepare('SELECT * FROM agents WHERE lower(email) = lower(?) LIMIT 1').get(adresse)
+      || agentExemple();
+    const lundi = /^\d{4}-\d{2}-\d{2}$/.test(requete.body?.lundi || '') ? lundiDe(requete.body.lundi) : null;
+    const liste = (lundi ? mailsDeLaSemaine(lundi, agent) : exemplesDeCampagne(agent)).filter((m) => m.mail);
+    if (!liste.length) return reponse.code(404).send({ erreur: 'Aucun mail ne part cette semaine : rien à tester.' });
+
+    const envoyes = [];
+    for (const m of liste) {
+      try {
+        await envoyerTest(adresse, m.mail, m.jour ? dateLisible(m.jour) : m.nom);
+        envoyes.push(m.nom);
+      } catch (err) {
+        return reponse.code(502).send({
+          erreur: `Échec de l'envoi de « ${m.nom} » : ${err.message}`
+            + (envoyes.length ? ` (déjà envoyés : ${envoyes.join(', ')})` : ''),
+        });
+      }
+    }
+    journaliser(requete.agent.login, 'mail_test', `${lundi || 'campagne'} : ${envoyes.join(', ')} -> ${adresse}`, requete.ip);
+    return { ok: true, envoyes, message: `${envoyes.length} mail(s) de test envoyé(s) à ${adresse} : ${envoyes.join(', ')}.` };
   });
 
   /* ------------------------------------------------- Textes des mails */
