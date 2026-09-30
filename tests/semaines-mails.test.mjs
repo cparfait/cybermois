@@ -37,6 +37,7 @@ test("l'ouverture du mercredi n'annonce que les deux defis de sa semaine", () =>
   assert.match(m.texte, /Le mercredi, un rappel part si vous n'avez pas fait vos défis\./);
   assert.match(m.texte, /Les défis non réalisés restent ouverts jusqu'au lundi 30 novembre\./);
   assert.doesNotMatch(m.texte, /pas un examen/);
+  assert.match(m.texte, /Bonne campagne,\nHélène MANTHEY\nDélégué à la protection des données personnelles \(DPO\)\nVille de Châtillon/);
 });
 
 test('semaine du 28 septembre : ouverture, pas de relance le jour meme, resultats des deux defis', () => {

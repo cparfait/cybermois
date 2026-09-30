@@ -18,7 +18,10 @@ db.prepare('INSERT INTO modeles_mail (type, objet, corps) VALUES (?, ?, ?)').run
   "<ul>\n<li>Le lundi, un mail annonce les défis de la semaine. Le mercredi, un rappel part si vous en avez manqué un.</li>\n"
   + "<li>Un défi manqué reste ouvert {{jusqu_a_la_fin}}.</li>\n"
   + "<li>Ce n'est pas un examen : aucun résultat individuel n'est transmis à votre hiérarchie.</li>\n"
-  + '<li>Une phrase ajoutée par la DSI.</li>\n</ul>');
+  + '<li>Une phrase ajoutée par la DSI.</li>\n</ul>\n'
+  + '<p>Bonne campagne,<br>La déléguée à la protection des données<br>Ville de Châtillon</p>');
+db.prepare('INSERT INTO modeles_mail (type, objet, corps) VALUES (?, ?, ?)').run('lancement', 'Objet',
+  '<p>Un nouveau défi.</p>\n<p>Bonne chance,<br>La déléguée à la protection des données</p>');
 
 const modeles = await import('../src/lib/modeles-mail.js');
 
@@ -29,6 +32,17 @@ test('le texte enregistre perd la phrase et prend les nouvelles formulations', (
   assert.match(corps, /Les défis non réalisés restent ouverts \{\{jusqu_a_la_fin\}\}\./);
   assert.doesNotMatch(corps, /manqué reste ouvert/);
   assert.match(corps, /Une phrase ajoutée par la DSI/, 'le reste du texte demeure');
+});
+
+const SIGNATURE = 'Hélène MANTHEY<br>Délégué à la protection des données personnelles (DPO)<br>Ville de Châtillon';
+
+test('les textes enregistres prennent la nouvelle signature de la DPO', () => {
+  assert.ok(modeles.lireModele('ouverture').corps.includes(`<p>Bonne campagne,<br>${SIGNATURE}</p>`));
+  assert.ok(modeles.lireModele('lancement').corps.includes(`<p>Bonne chance,<br>${SIGNATURE}</p>`));
+  for (const type of ['ouverture', 'lancement']) {
+    assert.doesNotMatch(modeles.lireModele(type).corps, /La déléguée/);
+    assert.ok(modeles.MODELES[type].corps.includes(SIGNATURE), `texte d'origine : ${type}`);
+  }
 });
 
 test('le texte d’origine porte les nouvelles formulations', () => {
