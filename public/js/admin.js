@@ -599,8 +599,14 @@ async function ouvrirEditeur(id) {
                 style="padding:.45rem .9rem;font-size:.85rem;margin:0">
           Télécharger sur le serveur
         </button>
+        <button type="button" class="btn btn-secondaire" id="btn-retirer-video" hidden
+                style="padding:.45rem .9rem;font-size:.85rem;margin:0;border-color:var(--erreur);color:var(--erreur)">
+          Retirer la vidéo
+        </button>
         <span class="discret ui" id="etat-envoi-video" style="font-size:.84rem">
           MP4, WebM ou OGV — servi depuis le serveur, sans passer par Internet.
+          En remplaçant ou en retirant une vidéo, l'ancien fichier est effacé du serveur
+          à l'enregistrement du défi.
         </span>
       </div>
 
@@ -1412,6 +1418,7 @@ function brancherApercuVideo(illustration = null, telechargement = false) {
   const champ = document.getElementById('ed-video-url');
   const zone = document.getElementById('apercu-video-editeur');
   const boutonTelecharger = document.getElementById('btn-telecharger-video');
+  const boutonRetirer = document.getElementById('btn-retirer-video');
   if (!champ || !zone) return;
 
   // Hebergeurs autorises : ils servent a reconnaitre une adresse qui n'est ni
@@ -1425,6 +1432,7 @@ function brancherApercuVideo(illustration = null, telechargement = false) {
     // Le bouton de telechargement ne vaut que pour un lien YouTube ou
     // Dailymotion reconnu : cache par defaut, montre plus bas le cas echeant.
     if (boutonTelecharger) boutonTelecharger.hidden = true;
+    if (boutonRetirer) boutonRetirer.hidden = !valeur;
     if (!valeur) {
       zone.innerHTML = illustration
         ? `<p class="discret" style="margin:0 0 .5rem;font-size:.84rem">Aucune vidéo :
@@ -1497,6 +1505,16 @@ function brancherApercuVideo(illustration = null, telechargement = false) {
 
   brancherEnvoiVideo(champ, majApercu);
   if (telechargement) brancherTelechargementVideo(champ, majApercu);
+  // Retirer vide le champ : c'est l'enregistrement du defi qui detache la
+  // video et efface son fichier du serveur, rien ne part avant.
+  boutonRetirer?.addEventListener('click', () => {
+    champ.value = '';
+    majApercu();
+    const etat = document.getElementById('etat-envoi-video');
+    if (etat) etat.textContent = 'Vidéo retirée. Enregistrez le défi pour confirmer : '
+      + 'son fichier sera alors effacé du serveur.';
+    champ.focus();
+  });
   champ.addEventListener('input', majApercu);
   majApercu();
 

@@ -20,9 +20,47 @@ import { lancerTelechargement, lireTache, telechargementDisponible } from '../li
 import { creerJetonApercu, revoquerJetonApercu, lienApercu } from '../lib/apercu.js';
 import {
   enregistrerVideo, listerVideos, supprimerVideo, formatsLisibles, TAILLE_MAX,
-  placeOccupee, QUOTA_TOTAL,
+  placeOccupee, QUOTA_TOTAL, estVideoLocale,
 } from '../lib/videos.js';
 import { csv } from '../lib/csv.js';
+
+// Delai de grace d'un fichier que plus aucun defi n'utilise. Un fichier
+// depose ou telecharge n'est rattache au defi qu'a l'enregistrement : entre
+// les deux, il n'est reference nulle part, et le purger aussitot ferait
+// perdre le travail d'un administrateur qui edite un autre defi en parallele.
+const GRACE_VIDEO_ORPHELINE = 24 * 60 * 60 * 1000;
+
+/**
+ * Efface du disque les videos que plus aucun defi n'utilise.
+ *
+ * Remplacer ou retirer la video d'un defi laissait l'ancien fichier sur le
+ * volume : quelques dizaines de Mo a chaque essai, jusqu'au quota, et rien a
+ * l'ecran pour s'en debarrasser. L'ancien fichier du defi part aussitot ; les
+ * autres fichiers orphelins - un telechargement abandonne sans enregistrer -
+ * apres le delai de grace. Un fichier partage par deux defis reste tant que
+ * l'un d'eux s'en sert.
+ */
+function effacerVideosOrphelines(requete, ancienneUrl = null) {
+  const utilisees = new Set(
+    db.prepare('SELECT video_url FROM defis WHERE video_url IS NOT NULL').all().map((d) => d.video_url)
+  );
+  const limite = Date.now() - GRACE_VIDEO_ORPHELINE;
+  const effacees = [];
+  for (const v of listerVideos()) {
+    if (utilisees.has(v.url)) continue;
+    const ancienne = estVideoLocale(ancienneUrl) && v.url === ancienneUrl;
+    if (!ancienne && Date.parse(v.depose_le) > limite) continue;
+    try {
+      if (supprimerVideo(v.nom)) effacees.push(v.nom);
+    } catch (err) {
+      requete.log.warn(err, `video ${v.nom} non effacee`);
+    }
+  }
+  if (effacees.length) {
+    journaliser(requete.agent.login, 'video_supprimee', `${effacees.join(', ')} (plus utilisee)`, requete.ip);
+  }
+  return effacees;
+}
 
 // L'echappement vit dans son propre module : il neutralise desormais les
 // cellules que le tableur lirait comme des formules, ce qui merite d'etre
@@ -272,6 +310,7 @@ export default async function routesAdmin(app) {
     journaliser(requete.agent.login, 'defi_supprime',
       `defi=${id} (${participations} participations)${deprogramme ? `, module ${defi.module_code} deprogramme` : ''}`,
       requete.ip);
+    effacerVideosOrphelines(requete, defi.video_url);
 
     return {
       ok: true,
@@ -491,6 +530,7 @@ export default async function routesAdmin(app) {
     journaliser(requete.agent.login, 'defi_modifie',
       `defi=${id} questions=${questions.length}${reelles ? ` (maj en place, ${reelles} participations)` : ''}`,
       requete.ip);
+    const videosEffacees = videoUrl !== defi.video_url ? effacerVideosOrphelines(requete, defi.video_url) : [];
     return {
       ok: true,
       message: `Défi « ${corps.titre ?? defi.titre} » enregistré (${questions.length} questions, ${bareme.total} points). `
@@ -499,6 +539,10 @@ export default async function routesAdmin(app) {
         + (reelles
           ? ` Ce défi ayant déjà été joué par ${reelles} agent(s), les textes ont été corrigés `
             + 'sans toucher aux réponses déjà enregistrées.'
+          : '')
+        + (videosEffacees.length
+          ? ` Vidéo${videosEffacees.length > 1 ? 's' : ''} qui ne servai${videosEffacees.length > 1 ? 'en' : ''}t plus `
+            + `effacée${videosEffacees.length > 1 ? 's' : ''} du serveur : ${videosEffacees.join(', ')}.`
           : ''),
     };
   });
