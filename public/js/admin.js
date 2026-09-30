@@ -236,11 +236,13 @@ chargeurs.defis = async () => {
 
       <div class="tableau-defilant"><table class="admin">
         <caption class="sr-only">Défis programmés dans la campagne</caption>
-        <thead><tr><th scope="col">Parution</th><th scope="col">Titre</th>
+        <thead><tr><th scope="col">N°</th><th scope="col">Parution</th><th scope="col">Titre</th>
           <th scope="col">État</th><th scope="col">Actions</th></tr></thead>
         <tbody>${defis.map((d) => `
           <tr>
-            <td>${echapper(d.ouvre_le)}</td>
+            <td class="col-numero"${d.publie ? '' : ' title="Numéro qu’il prendra une fois publié"'}>
+              ${d.publie ? d.numero : `<span class="discret">${d.numero}</span>`}</td>
+            <td style="white-space:nowrap">${echapper(d.ouvre_le)}</td>
             <td>${echapper(d.titre)}</td>
             <td>
               <span class="pastille-etat ${d.publie ? 'etat-ok' : 'etat-ko'}">${d.publie ? 'Publié' : 'Masqué'}</span>
@@ -263,7 +265,7 @@ chargeurs.defis = async () => {
                     d.essais ? `, ${d.essais} essai${d.essais > 1 ? 's' : ''}` : ''}
                 </span>` : ''}
             </td>
-            <td>
+            <td class="col-actions">
               <button class="btn btn-secondaire" style="padding:.35rem .8rem;font-size:.8rem" data-editer="${d.id}">Modifier</button>
               <!-- « data-etat » est lu comme une chaine : ecrire directement
                    l'entier SQLite faisait dependre le bouton du fait que
