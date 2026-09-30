@@ -144,7 +144,7 @@ export const DESCRIPTEUR = [
   { cle: 'mails.annonce', chemin: ['mails', 'annonce'], type: 'booleen', groupe: 'planification',
     libelle: 'Annonce du lundi automatique', aide: 'Les lundis suivants, a chaque agent.' },
   { cle: 'mails.relance', chemin: ['mails', 'relance'], type: 'booleen', groupe: 'planification',
-    libelle: 'Relance du mercredi automatique', aide: 'Aux agents en retard sur la semaine.' },
+    libelle: 'Relance du mercredi automatique', aide: 'Aux agents qui n’ont pas fait tous les défis déjà parus.' },
   { cle: 'mails.resultats', chemin: ['mails', 'resultats'], type: 'booleen', groupe: 'planification',
     libelle: 'Resultats du vendredi automatiques', aide: 'Au groupe de diffusion.' },
   { cle: 'cron.ouverture', chemin: ['cron', 'ouverture'], type: 'texte', groupe: 'planification',
@@ -157,7 +157,7 @@ export const DESCRIPTEUR = [
       + 'a partir de la deuxieme : la premiere est annoncee par le mail d\'ouverture.' },
   { cle: 'cron.relance', chemin: ['cron', 'relance'], type: 'texte', groupe: 'planification',
     libelle: 'Relance des non-joueurs',
-    aide: '0 9 * * 3 = mercredi a 9h. Porte sur les defis parus les sept derniers jours.' },
+    aide: '0 9 * * 3 = mercredi a 9h. Porte sur tous les defis deja parus que l agent n a pas faits.' },
   { cle: 'cron.resultats', chemin: ['cron', 'resultats'], type: 'texte', groupe: 'planification',
     libelle: 'Envoi des resultats', aide: '0 16 * * 5 = vendredi a 16h.' },
 

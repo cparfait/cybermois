@@ -759,8 +759,8 @@ const ENVOIS = {
     confirmer: 'Envoyer maintenant l’annonce des défis de la semaine à tous les agents ?',
   },
   'relance-semaine': {
-    nom: 'Relance', quand: 'Mercredi', cible: 'agents en retard sur la semaine',
-    confirmer: 'Relancer maintenant les agents qui n’ont pas fait tous les défis des sept derniers jours ?',
+    nom: 'Relance', quand: 'Mercredi', cible: 'agents en retard',
+    confirmer: 'Relancer maintenant les agents qui n’ont pas fait tous les défis déjà parus ?',
   },
   resultats: {
     nom: 'Résultats', quand: 'Vendredi', cible: 'groupe de diffusion',
@@ -808,18 +808,51 @@ chargeurs.mails = async () => {
       <div id="zone-semaine" style="margin-top:1rem"></div>
     </section>
 
+    <div class="grille grille-2" style="margin-bottom:1.5rem;align-items:start">
+      <section class="carte" aria-labelledby="titre-mail-elus">
+        <h2 id="titre-mail-elus" style="margin-top:0">Mail aux élus</h2>
+        <p class="discret" style="margin-top:-.3em;font-size:.86rem">
+          Comment participer depuis la mairie : réseau interne, PC du bureau des élus ou VPN.
+          Il part à la main, aux membres du groupe choisi. Son texte se modifie avec
+          « Modifier le texte », type « Mail aux élus ».
+        </p>
+        <div class="champ-admin">
+          <label for="elus-groupe">Groupe destinataire</label>
+          <select id="elus-groupe"><option value="">Chargement…</option></select>
+        </div>
+        <div class="rang">
+          <button type="button" class="btn btn-secondaire" id="elus-simuler">Voir les destinataires</button>
+          <button type="button" class="btn btn-principal" id="elus-envoyer">Envoyer</button>
+        </div>
+        <p class="discret" id="elus-dernier" style="margin:.6rem 0 0;font-size:.82rem"></p>
+        <div id="elus-resultat" style="margin-top:.6rem"></div>
+      </section>
+
+      <section class="carte" aria-labelledby="titre-exclusions">
+        <h2 id="titre-exclusions" style="margin-top:0">Groupes exclus des envois</h2>
+        <p class="discret" style="margin-top:-.3em;font-size:.86rem">
+          Les membres d'un groupe exclu ne reçoivent pas ce mail. Par exemple, les élus pour le mail
+          d'ouverture. Les groupes sont ceux relevés dans l'annuaire à la synchronisation.
+        </p>
+        <div id="zone-exclusions"><p class="discret">Chargement…</p></div>
+      </section>
+    </div>
+
     <details class="aide-admin">
       <summary>Qui envoie quoi</summary>
       <p>Quand les envois automatiques sont actifs (tableau ci-dessus), l'application envoie :</p>
       <ul class="ui" style="font-size:.9rem">
         <li><strong>Ouverture (premier jour)</strong> — à chaque agent, le jour de parution du premier
-          défi : ce qu'est le Cybermois, comment il se déroule, le calendrier, les données. Une seule fois.</li>
+          défi : ce qu'est le Cybermois, comment il se déroule, les défis de la première semaine, les données.
+          Une seule fois.</li>
         <li><strong>Annonce (lundis suivants)</strong> — à chaque agent : les défis de la semaine, et
           ceux d'avant qu'il n'a pas encore faits, toujours ouverts. Une fois par semaine.</li>
         <li><strong>Relance (mercredi)</strong> — aux seuls agents qui n'ont pas terminé tous les défis
-          parus ces sept derniers jours. Un seul message, qui liste ceux qui manquent.</li>
+          déjà parus, ceux de la semaine comme les plus anciens. Un seul message, qui liste ceux qui manquent.</li>
         <li><strong>Résultats (vendredi)</strong> — au groupe de distribution, sur le dernier défi paru.</li>
       </ul>
+      <p>Les mails aux agents ne partent qu'aux directions <strong>actives du référentiel</strong> — celles
+      du classement — et jamais aux membres des groupes exclus de ce mail (carte « Groupes exclus »).</p>
       <p>Chacun se déclenche aussi à la main ci-dessous. Pour les mails de semaine, le défi choisi
       sert à l'aperçu : il montre le message tel qu'il partira la semaine de ce défi.</p>
       <p>Le texte de chaque mail se modifie avec « Modifier le texte ». Testez-le en l'envoyant à
@@ -844,6 +877,7 @@ chargeurs.mails = async () => {
             <option value="relance-semaine">Relance du mercredi</option>
             <option value="resultats">Résultats du vendredi</option>
             <option value="relance">Relance d'un seul défi</option>
+            <option value="elus">Mail aux élus</option>
             <option value="lancement">Texte pour la DPO (copier-coller)</option>
           </select>
         </div>
@@ -890,6 +924,104 @@ chargeurs.mails = async () => {
   majActions();
   afficherEnvois();
   preparerSemaines();
+  afficherGroupes();
+
+  /** Mail aux elus et groupes exclus : tout vient des groupes releves dans l'annuaire. */
+  async function afficherGroupes() {
+    let d;
+    try { d = await api('/api/admin/mails/groupes'); } catch (e) {
+      document.getElementById('zone-exclusions').innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`;
+      return;
+    }
+    const choix = document.getElementById('elus-groupe');
+    const precedent = choix.value;
+    const elus = d.groupes.find((g) => /[eé]lu/i.test(g.groupe));
+    choix.innerHTML = d.groupes.length
+      ? d.groupes.map((g) => `<option value="${echapper(g.groupe)}">${echapper(g.groupe)} — ${g.avec_email} membre(s) avec adresse</option>`).join('')
+      : '<option value="">aucun groupe connu : lancez une synchronisation</option>';
+    choix.value = precedent || elus?.groupe || d.groupes[0]?.groupe || '';
+
+    const e = d.dernierEnvoiElus;
+    document.getElementById('elus-dernier').textContent = e
+      ? `Dernier envoi : ${new Date(`${e.horodatage.replace(' ', 'T')}Z`).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+        + ` au groupe ${e.detail || '?'}, ${e.succes} / ${e.destinataires} envoyé(s).`
+      : 'Jamais envoyé.';
+
+    const listeGroupes = `<datalist id="liste-groupes">${d.groupes.map((g) => `<option value="${echapper(g.groupe)}">`).join('')}</datalist>`;
+    document.getElementById('zone-exclusions').innerHTML = listeGroupes + Object.entries(d.types).map(([type, nom]) => `
+      <div class="exclusion-type" data-type="${echapper(type)}" style="border-top:1px solid var(--bordure);padding:.6rem 0">
+        <p class="ui" style="margin:0 0 .3rem;font-size:.88rem"><strong>${echapper(nom)}</strong></p>
+        <div class="rang" style="gap:.3rem;flex-wrap:wrap;margin-bottom:.4rem">
+          ${(d.exclusions[type] || []).map((g) => `<span class="pastille-etat etat-ko" style="display:inline-flex;gap:.3rem;align-items:center">
+            ${echapper(g)}<button type="button" data-retirer-groupe="${echapper(g)}" aria-label="Retirer ${echapper(g)}"
+              style="border:0;background:none;cursor:pointer;padding:0;font-size:1rem;line-height:1">×</button></span>`).join('')
+            || '<span class="discret" style="font-size:.82rem">aucun groupe exclu</span>'}
+        </div>
+        <div class="rang" style="gap:.4rem;align-items:center">
+          <label class="sr-only" for="ajout-${echapper(type)}">Groupe à exclure de : ${echapper(nom)}</label>
+          <input id="ajout-${echapper(type)}" list="liste-groupes" placeholder="Nom du groupe" style="max-width:220px;font-size:.84rem">
+          <button type="button" class="btn btn-secondaire" data-ajouter-groupe style="padding:.3rem .7rem;font-size:.8rem">Exclure</button>
+        </div>
+      </div>`).join('');
+
+    const enregistrer = async (type, groupes) => {
+      try {
+        const r = await api(`/api/admin/mails/exclusions/${encodeURIComponent(type)}`, { method: 'PUT', body: { groupes } });
+        alerte('alerte', r.message, 'succes');
+      } catch (err) { alerte('alerte', err.message); }
+      afficherGroupes();
+    };
+    document.querySelectorAll('.exclusion-type').forEach((bloc) => {
+      const type = bloc.dataset.type;
+      const actuels = d.exclusions[type] || [];
+      bloc.querySelectorAll('[data-retirer-groupe]').forEach((b) => b.addEventListener('click', () =>
+        enregistrer(type, actuels.filter((g) => g !== b.dataset.retirerGroupe))));
+      const champ = bloc.querySelector('input');
+      const ajouter = () => {
+        const groupe = champ.value.trim();
+        if (!groupe) { champ.focus(); return; }
+        enregistrer(type, [...actuels, groupe]);
+      };
+      bloc.querySelector('[data-ajouter-groupe]').addEventListener('click', ajouter);
+      champ.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); ajouter(); } });
+    });
+  }
+
+  document.getElementById('elus-simuler').addEventListener('click', async () => {
+    const groupe = document.getElementById('elus-groupe').value;
+    const zone = document.getElementById('elus-resultat');
+    if (!groupe) return;
+    try {
+      const r = await api('/api/admin/mails/elus', { method: 'POST', body: { groupe, simulation: true } });
+      zone.innerHTML = `<div class="message message-info">${r.destinataires} destinataire(s)${r.apercu.length
+        ? ` : ${echapper(r.apercu.join(', '))}${r.destinataires > r.apercu.length ? '…' : ''}` : ''}.</div>`;
+    } catch (e) { zone.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`; }
+  });
+
+  document.getElementById('elus-envoyer').addEventListener('click', async (ev) => {
+    const bouton = ev.currentTarget;
+    const groupe = document.getElementById('elus-groupe').value;
+    const zone = document.getElementById('elus-resultat');
+    if (!groupe) return undefined;
+    let compte;
+    try {
+      compte = await api('/api/admin/mails/elus', { method: 'POST', body: { groupe, simulation: true } });
+    } catch (e) { zone.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`; return undefined; }
+    if (!compte.destinataires) {
+      zone.innerHTML = `<div class="message message-alerte">Aucun membre du groupe « ${echapper(groupe)} » n'a d'adresse mail connue.</div>`;
+      return undefined;
+    }
+    if (!confirm(`Envoyer le mail aux élus aux ${compte.destinataires} membre(s) du groupe « ${groupe} » ?`)) return undefined;
+    return pendant(bouton, 'Envoi…', async () => {
+      try {
+        const r = await api('/api/admin/mails/elus', { method: 'POST', body: { groupe } });
+        zone.innerHTML = r.ok && r.succes
+          ? `<div class="message message-succes">Envoi effectué : ${r.succes} / ${r.destinataires} message(s) transmis.${r.erreur ? ` Dernière erreur : ${echapper(r.erreur)}` : ''}</div>`
+          : `<div class="message message-erreur">${echapper(r.message || `Aucun message n'est parti${r.erreur ? ` : ${r.erreur}` : ''}.`)}</div>`;
+      } catch (e) { zone.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`; }
+      afficherGroupes();
+    });
+  });
 
   /** Le choix d'une semaine : la courante si la campagne la couvre, sinon la premiere. */
   async function preparerSemaines() {
@@ -1066,6 +1198,9 @@ chargeurs.mails = async () => {
     if (ENVOIS[type] && type !== 'resultats') {
       zone.innerHTML = `<span class="discret ui">Pour l'envoyer, utilisez « Envoyer maintenant »
         sur la ligne « ${echapper(ENVOIS[type].nom)} » du tableau ci-dessus.</span>`;
+    } else if (type === 'elus') {
+      zone.innerHTML = `<span class="discret ui">Pour l'envoyer, choisissez le groupe dans la carte
+        « Mail aux élus » ci-dessus.</span>`;
     } else if (type === 'lancement') {
       zone.innerHTML = `
         <button class="btn btn-secondaire" id="btn-copier-texte">Copier le texte brut</button>

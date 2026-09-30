@@ -105,16 +105,15 @@ test('un defi annonce avant sa date donne sa date, pas un lien mort', () => {
   assert.match(m.texte, /En ligne à partir du lundi 12 octobre/);
 });
 
-test('la relance du mercredi couvre tous les defis de la semaine', async () => {
-  // Mercredi 14 : le defi du lundi 12, et celui du jeudi 8 - paru il y a moins
-  // de sept jours, il est encore rappele. Personne n'a fait celui du 12.
+test('la relance du mercredi reprend tous les defis deja parus', async () => {
+  // Mercredi 14 : les trois defis sont parus. Alice n'a pas fait celui du 12,
+  // Bruno n'a fait que le premier : tous deux sont relances.
   let r = await mail.envoyerRelancesSemaine({ simulation: true, jour: '2026-10-14' });
-  assert.deepEqual(r.defis, [defi('hameconnage').titre, defi('messagerie').titre]);
+  assert.deepEqual(r.defis, [defi('mots-de-passe').titre, defi('hameconnage').titre, defi('messagerie').titre]);
   assert.equal(r.destinataires, 2);
 
-  // Mercredi 7 + un jour : jeudi 8, les deux defis de la semaine 1 sont dans la
-  // fenetre. Bruno a fait le premier, pas le second : il est relance. Alice a
-  // tout fait : elle ne l'est pas.
+  // Jeudi 8 : deux defis parus. Bruno a fait le premier, pas le second : il
+  // est relance. Alice a tout fait : elle ne l'est pas.
   r = await mail.envoyerRelancesSemaine({ simulation: true, jour: '2026-10-08' });
   assert.equal(r.defis.length, 2);
   assert.equal(r.destinataires, 1);

@@ -297,6 +297,7 @@ export async function listerAgentsAnnuaire({ limite = 20000 } = {}) {
         serviceAd: c.service,
         dn: `CN=${c.nom},OU=${c.service},OU=Agents,DC=ville,DC=local`,
         actif: true,
+        groupes: c.groupes,
       })),
     };
   }
@@ -324,6 +325,7 @@ export async function listerAgentsAnnuaire({ limite = 20000 } = {}) {
         dn: String(e.dn),
         // bit 2 de userAccountControl : compte desactive
         actif: !(Number(e.userAccountControl || 0) & 2),
+        groupes: [].concat(e.memberOf || []).map(String),
       };
     }).filter((a) => a.login);
 

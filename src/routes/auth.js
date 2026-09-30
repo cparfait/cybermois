@@ -1,4 +1,5 @@
 import { authentifier } from '../lib/ldap.js';
+import { enregistrerGroupes } from '../lib/groupes.js';
 import { estModeDemo, authentifierDemo } from '../lib/annuaire-demo.js';
 import { resoudreService } from '../lib/services.js';
 import { verifierAdminLocal, existeAdminLocal } from '../lib/admin-local.js';
@@ -137,6 +138,9 @@ export default async function routesAuth(app) {
            estAdmin, sourceAdmin);
 
     const agent = db.prepare('SELECT * FROM agents WHERE login = ?').get(a.login);
+    // Les groupes servent a cibler ou ecarter des mails : ceux de la connexion
+    // sont les plus frais.
+    if (Array.isArray(a.groupes)) enregistrerGroupes(agent.id, a.groupes);
     const token = creerSession(agent.id);
     journaliser(a.login, 'connexion_ok',
       `service=${agent.service} (annuaire: ${a.service || 'rien'})`, ip);

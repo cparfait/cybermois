@@ -317,6 +317,8 @@ ajouterColonne('defis', 'badge_code', 'TEXT');
 ajouterColonne('defis', 'badge_libelle', 'TEXT');
 ajouterColonne('defis', 'badge_emoji', 'TEXT');
 ajouterColonne('defis', 'badge_description', 'TEXT');
+// Le groupe vise par un envoi cible, comme le mail aux elus.
+ajouterColonne('envois', 'detail', 'TEXT');
 
 export function journaliser(login, action, detail, ip) {
   db.prepare('INSERT INTO journal (login, action, detail, ip) VALUES (?, ?, ?, ?)')

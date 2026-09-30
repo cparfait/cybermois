@@ -5,6 +5,7 @@ import { db } from './db.js';
 import { classementServices, classementAgents, statistiquesGlobales, ligneClassement } from './scoring.js';
 import { aujourdhui, decalerJours, dateLisible, lundiDe } from './dates.js';
 import { rendreModele } from './modeles-mail.js';
+import { filtrerDestinataires, membresDuGroupe } from './groupes.js';
 
 let transport = null;
 function obtenirTransport() {
@@ -98,6 +99,15 @@ export const dernierDefiParu = (jour = aujourdhui()) => db.prepare(
 export const defisDeLaSemaine = (jour = aujourdhui()) => db.prepare(`
   SELECT * FROM defis WHERE publie = 1 AND ouvre_le BETWEEN ? AND ? ORDER BY ouvre_le, id
 `).all(decalerJours(jour, -6), jour);
+
+/**
+ * Tous les defis deja parus. La relance du mercredi les reprend tous : un
+ * defi manque il y a trois semaines se rattrape encore, et la relance
+ * s'en tenait aux sept derniers jours.
+ */
+export const defisParus = (jour = aujourdhui()) => db.prepare(
+  'SELECT * FROM defis WHERE publie = 1 AND ouvre_le <= ? ORDER BY ouvre_le, id'
+).all(jour);
 
 /** Les defis qui paraissent dans les sept jours qui viennent, aujourd'hui compris. */
 export const defisAVenir = (jour = aujourdhui()) => db.prepare(`
@@ -302,6 +312,27 @@ export function mailRelanceSemaine(agent, manquants) {
 }
 
 /**
+ * Mail aux elus, envoye a la main aux membres d'un groupe de l'annuaire.
+ *
+ * Les elus n'ont pas tous un poste sur le reseau de la mairie : le portail
+ * ne s'atteint que de l'interieur. Le mail dit comment y acceder, et c'est
+ * pour cela qu'ils sont en general ecartes du mail d'ouverture, qui ne le
+ * dit pas.
+ */
+export function mailElus(agent) {
+  const { debut, fin } = config.campagne;
+  return composer('elus', {
+    salutation: salutation(agent),
+    prenom: prenomDe(agent),
+    periode: debut && fin
+      ? `du ${dateLisible(debut)} au ${dateLisible(fin)}`
+      : fin ? `jusqu'au ${dateLisible(fin)}` : 'en octobre',
+    lien_portail: `${config.publicUrl}/`,
+    bouton: bouton(`${config.publicUrl}/`, 'Ouvrir le portail Cybermois'),
+  }, { titre: 'Le Cybermois', preheader: 'Comment participer depuis la mairie' });
+}
+
+/**
  * Resultats du vendredi, au groupe de diffusion.
  *
  * Ils nommaient le seul dernier defi paru, alors que chiffres et classement
@@ -449,10 +480,10 @@ export function mailsDeLaSemaine(lundi, agent) {
 
   // La relance : memes conditions que l'envoi du mercredi (envoyerRelancesSemaine).
   const mercredi = jour(2);
-  const aRelancer = close(mercredi) ? [] : defisDeLaSemaine(mercredi);
+  const aRelancer = close(mercredi) ? [] : defisParus(mercredi);
   ajouter('relance-semaine', mercredi, aRelancer.length ? mailRelanceSemaine(agent, aRelancer) : null,
     close(mercredi) ? 'Pas de relance : la campagne est terminée.'
-      : aRelancer.length ? null : 'Pas de relance : aucun défi paru ces sept derniers jours.');
+      : aRelancer.length ? null : 'Pas de relance : aucun défi paru.');
 
   const vendredi = jour(4);
   const dernier = dernierDefiParu(vendredi);
@@ -527,12 +558,11 @@ export async function envoyerRelances(defiId, { simulation = false } = {}) {
   const defi = db.prepare('SELECT id FROM defis WHERE id = ? AND publie = 1').get(Number(defiId));
   if (!defi) return { ok: false, message: `Defi ${defiId} introuvable ou non publie.` };
 
-  const cibles = db.prepare(`
+  const cibles = filtrerDestinataires('relance', db.prepare(`
     SELECT a.* FROM agents a
-    WHERE a.email IS NOT NULL AND a.email <> ''
-      AND a.exclu = 0
+    WHERE ${AGENTS_JOIGNABLES}
       AND NOT EXISTS (SELECT 1 FROM participations p WHERE p.agent_id = a.id AND p.defi_id = ? AND p.entrainement = 0)
-  `).all(defi.id);
+  `).all(defi.id));
 
   if (simulation) return { ok: true, simulation: true, destinataires: cibles.length, apercu: cibles.slice(0, 5).map((a) => a.email) };
 
@@ -584,7 +614,7 @@ export async function envoyerOuverture({ simulation = false, forcer = false } = 
   const defi = premierDefi();
   if (!defi) return { ok: false, message: 'Aucun défi publié : rien à annoncer.' };
 
-  const cibles = db.prepare(`SELECT a.* FROM agents a WHERE ${AGENTS_JOIGNABLES}`).all();
+  const cibles = filtrerDestinataires('ouverture', db.prepare(`SELECT a.* FROM agents a WHERE ${AGENTS_JOIGNABLES}`).all());
   const deja = ouvertureEnvoyee();
 
   if (simulation) {
@@ -659,7 +689,7 @@ export async function envoyerAnnonce({ simulation = false, forcer = false, jour 
   const fait = db.prepare(
     'SELECT 1 FROM participations WHERE agent_id = ? AND defi_id = ? AND entrainement = 0'
   );
-  const cibles = db.prepare(`SELECT a.* FROM agents a WHERE ${AGENTS_JOIGNABLES}`).all();
+  const cibles = filtrerDestinataires('annonce', db.prepare(`SELECT a.* FROM agents a WHERE ${AGENTS_JOIGNABLES}`).all());
   const deja = annonceEnvoyee();
 
   if (simulation) {
@@ -700,24 +730,22 @@ export async function annonceDuJour(jour = aujourdhui()) {
 }
 
 /**
- * Relance du mercredi : chaque agent qui n'a pas termine tous les defis de la
- * semaine recoit un message listant ceux qui lui manquent.
- *
- * Elle ne regardait que le dernier defi paru : quand deux defis sortaient la
- * meme semaine, celui qui avait fait le plus recent n'etait jamais relance
- * pour l'autre.
+ * Relance du mercredi : chaque agent qui n'a pas termine tous les defis deja
+ * parus - ceux de la semaine comme les plus anciens - recoit un message
+ * listant ceux qui lui manquent.
  */
 export async function envoyerRelancesSemaine({ simulation = false, jour = aujourdhui() } = {}) {
   if (config.campagne.fin && jour > config.campagne.fin) {
     return { ok: false, message: 'La campagne est terminée : plus de relance.' };
   }
-  const defis = defisDeLaSemaine(jour);
-  if (!defis.length) return { ok: false, message: 'Aucun défi paru ces sept derniers jours : rien à relancer.' };
+  const defis = defisParus(jour);
+  if (!defis.length) return { ok: false, message: 'Aucun défi paru : rien à relancer.' };
 
   const fait = db.prepare(
     'SELECT 1 FROM participations WHERE agent_id = ? AND defi_id = ? AND entrainement = 0'
   );
-  const cibles = db.prepare(`SELECT a.* FROM agents a WHERE ${AGENTS_JOIGNABLES}`).all()
+  const cibles = filtrerDestinataires('relance-semaine',
+    db.prepare(`SELECT a.* FROM agents a WHERE ${AGENTS_JOIGNABLES}`).all())
     .map((agent) => ({ agent, manquants: defis.filter((d) => !fait.get(agent.id, d.id)) }))
     .filter((c) => c.manquants.length);
 
@@ -773,4 +801,42 @@ export async function envoyerResultats(defiId, { simulation = false, jour = null
   } finally {
     envoisEnCours.delete(cle);
   }
+}
+
+/** Dernier envoi du mail aux elus, pour l'ecran. */
+export const dernierEnvoiElus = () => db.prepare(
+  "SELECT horodatage, destinataires, succes, erreur, detail FROM envois WHERE type = 'elus' ORDER BY id DESC LIMIT 1"
+).get() || null;
+
+/**
+ * Mail aux elus, aux membres du groupe choisi. Rien ne l'empeche de repartir :
+ * un second envoi vise souvent un groupe complete apres coup, et l'ecran le
+ * confirme avant.
+ */
+export async function envoyerElus(groupe, { simulation = false } = {}) {
+  const cibles = membresDuGroupe(groupe);
+  if (!String(groupe || '').trim()) return { ok: false, message: 'Choisissez un groupe.' };
+  if (simulation) {
+    return {
+      ok: true, simulation: true, destinataires: cibles.length,
+      apercu: cibles.slice(0, 10).map((a) => a.nom_complet),
+    };
+  }
+  if (!cibles.length) return { ok: false, message: `Aucun membre joignable par mail dans le groupe « ${groupe} ».` };
+  if (!verrouiller('elus')) return { ok: false, code: 'ENVOI_EN_COURS', message: 'Le mail aux élus est déjà en cours d’envoi.' };
+
+  let succes = 0; let derniereErreur = null;
+  try {
+    for (const agent of cibles) {
+      try {
+        await envoyer({ to: agent.email, ...mailElus(agent) });
+        succes++;
+      } catch (err) { derniereErreur = err.message; }
+    }
+    db.prepare('INSERT INTO envois (type, defi_id, destinataires, succes, erreur, detail) VALUES (?, NULL, ?, ?, ?, ?)')
+      .run('elus', cibles.length, succes, derniereErreur, groupe);
+  } finally {
+    envoisEnCours.delete('elus');
+  }
+  return { ok: true, destinataires: cibles.length, succes, erreur: derniereErreur };
 }

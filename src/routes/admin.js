@@ -10,10 +10,14 @@ import { classementServices, classementAgents, statistiquesGlobales } from '../l
 import {
   testerSmtp, envoyerRelances, envoyerResultats,
   mailLancement, mailRelance, mailResultats,
-  mailBienvenue, mailAnnonce, mailRelanceSemaine, defisAVenir, defisDeLaSemaine,
+  mailBienvenue, mailAnnonce, mailRelanceSemaine, defisAVenir,
   envoyerOuverture, envoyerAnnonce, envoyerRelancesSemaine, dernierDefiParu,
   envoyerTest, adresseValide, semainesDeCampagne, mailsDeLaSemaine,
+  defisParus, mailElus, envoyerElus, dernierEnvoiElus,
 } from '../lib/mail.js';
+import {
+  listerGroupes, lireExclusionsMail, enregistrerExclusionsMail, TYPES_EXCLUSION,
+} from '../lib/groupes.js';
 import { aujourdhui, decalerJours, lundiDe, dateLisible } from '../lib/dates.js';
 import {
   MODELES, listerModeles, verifierModele, enregistrerModele, reinitialiserModele, avecBrouillon,
@@ -797,7 +801,8 @@ export default async function routesAdmin(app) {
         return mailAnnonce(agent, defisAVenir(lundi), anciens, lundi);
       }
       case 'relance-semaine':
-        return defi ? mailRelanceSemaine(agent, defisDeLaSemaine(decalerJours(lundiDe(defi.ouvre_le), 2))) : null;
+        return defi ? mailRelanceSemaine(agent, defisParus(decalerJours(lundiDe(defi.ouvre_le), 2))) : null;
+      case 'elus': return mailElus(agent);
       default: return undefined;
     }
   }
@@ -809,13 +814,45 @@ export default async function routesAdmin(app) {
     "SELECT * FROM agents WHERE exclu = 0 AND origine <> 'local' ORDER BY id LIMIT 1"
   ).get() || { nom_complet: 'Prénom NOM', service: 'Direction exemple' };
 
-  const TYPE_INCONNU = 'Type inconnu (ouverture, lancement, annonce, relance-semaine, relance, resultats).';
+  const TYPE_INCONNU = 'Type inconnu (ouverture, lancement, annonce, relance-semaine, relance, resultats, elus).';
 
   app.get('/api/admin/mails/:type/:id', async (requete, reponse) => {
     const m = construireMail(requete.params.type, Number(requete.params.id), agentExemple());
     if (m === undefined) return reponse.code(400).send({ erreur: TYPE_INCONNU });
     if (!m) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
     return m;
+  });
+
+  /* --------------------------------------- Groupes : ciblage, exclusions */
+
+  app.get('/api/admin/mails/groupes', async () => ({
+    groupes: listerGroupes(),
+    exclusions: lireExclusionsMail(),
+    types: TYPES_EXCLUSION,
+    dernierEnvoiElus: dernierEnvoiElus(),
+  }));
+
+  app.put('/api/admin/mails/exclusions/:type', async (requete, reponse) => {
+    const type = requete.params.type;
+    if (!TYPES_EXCLUSION[type]) return reponse.code(404).send({ erreur: 'Type de mail inconnu.' });
+    const groupes = Array.isArray(requete.body?.groupes) ? requete.body.groupes.map(String) : [];
+    const retenus = enregistrerExclusionsMail(type, groupes, requete.agent.login);
+    return {
+      ok: true,
+      groupes: retenus,
+      message: retenus.length
+        ? `${TYPES_EXCLUSION[type]} : ${retenus.join(', ')} exclu(s).`
+        : `${TYPES_EXCLUSION[type]} : aucun groupe exclu.`,
+    };
+  });
+
+  /** Mail aux elus : aux membres d'un groupe de l'annuaire, a la main. */
+  app.post('/api/admin/mails/elus', async (requete) => {
+    const groupe = String(requete.body?.groupe || '').trim();
+    const simulation = !!requete.body?.simulation;
+    const res = await envoyerElus(groupe, { simulation });
+    if (!simulation) journaliser(requete.agent.login, 'mail_elus_envoye', `${groupe} ${JSON.stringify(res)}`, requete.ip);
+    return res;
   });
 
   /* --------------------------------------------- Mails d'une semaine */

@@ -2,6 +2,7 @@ import { db, journaliser } from './db.js';
 import { config } from './config.js';
 import { listerAgentsAnnuaire } from './ldap.js';
 import { resoudreService, normaliser } from './services.js';
+import { enregistrerGroupes } from './groupes.js';
 
 /**
  * Synchronisation de l'effectif depuis l'Active Directory.
@@ -380,6 +381,14 @@ export async function appliquerSynchronisation({
         exclure.run("Absent de l'annuaire lors de la derniere synchronisation", login);
         retires++;
       }
+    }
+
+    // Les groupes de chaque agent connu, quelle que soit l'option choisie :
+    // ce n'est qu'un releve, qui sert a cibler ou ecarter des mails.
+    const idDe = db.prepare('SELECT id FROM agents WHERE login = ?');
+    for (const a of lecture.agents) {
+      const fiche = Array.isArray(a.groupes) ? idDe.get(a.login) : null;
+      if (fiche) enregistrerGroupes(fiche.id, a.groupes);
     }
 
     db.exec('COMMIT');

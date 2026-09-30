@@ -98,16 +98,16 @@ ${h3('Vos données')}
 
   'relance-semaine': {
     nom: 'Relance du mercredi (plusieurs défis)',
-    aide: "Quand un seul défi manque à l'agent, c'est la relance d'un seul défi qui part.",
+    aide: "Reprend tous les défis déjà parus que l'agent n'a pas terminés. Quand un seul lui manque, c'est la relance d'un seul défi qui part.",
     variables: {
       ...SALUTATION, ...RATTRAPAGE,
       nb_defis_manquants: EN_LIGNE('Nombre de défis qui manquent'),
       defis_manquants: BLOC('Les défis qui manquent, avec leur bouton'),
       participation_service: BLOC('Encadré : participation de la direction'),
     },
-    objet: 'Cybermois — {{nb_defis_manquants}} défis vous attendent cette semaine',
+    objet: 'Cybermois — {{nb_defis_manquants}} défis vous attendent',
     corps: `<p>{{salutation}}</p>
-<p>Cette semaine, <strong>{{nb_defis_manquants}} défis</strong> du Cybermois vous attendent encore :</p>
+<p><strong>{{nb_defis_manquants}} défis</strong> du Cybermois vous attendent encore :</p>
 <p>{{defis_manquants}}</p>
 <p>{{participation_service}}</p>
 <p>{{rattrapage}}</p>`,
@@ -154,6 +154,29 @@ ${h3('Vos données')}
 <p>{{bouton}}</p>
 <p>Les défis déjà parus restent accessibles : il n'est jamais trop tard pour faire gagner des points à votre direction.</p>
 <p>Bon week-end,<br>La Direction des systèmes d'information</p>`,
+  },
+
+  elus: {
+    nom: 'Mail aux élus',
+    aide: "Envoyé à la main aux membres d'un groupe de l'annuaire, depuis la carte « Mail aux élus ».",
+    variables: {
+      ...SALUTATION,
+      periode: EN_LIGNE('Dates de la campagne : « du … au … »'),
+      lien_portail: EN_LIGNE('Adresse du portail'),
+      bouton: BLOC('Bouton vers le portail'),
+    },
+    objet: 'Cybermois : comment participer depuis la mairie',
+    corps: `<p>{{salutation}}</p>
+<p>La Ville de Châtillon organise le <strong>Cybermois</strong>, {{periode}} : des défis courts pour tester ses réflexes face aux pièges numériques du quotidien. Vous pouvez y participer.</p>
+${h3('Comment participer')}
+<p>L'application n'est accessible que <strong>depuis le réseau interne de la mairie</strong>. Deux possibilités :</p>
+<ul>
+<li>utiliser un <strong>PC en libre service du bureau des élus</strong> ;</li>
+<li>si vous avez un <strong>PC de la mairie</strong>, vous connecter au <strong>VPN</strong>, puis ouvrir le portail.</li>
+</ul>
+<p>{{bouton}}</p>
+<p>Connectez-vous avec vos identifiants Windows habituels. Pour toute question, la Direction des systèmes d'information reste à votre disposition.</p>
+<p>La Direction des systèmes d'information</p>`,
   },
 
   lancement: {
