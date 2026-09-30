@@ -51,11 +51,14 @@ CREATE TABLE IF NOT EXISTS modeles_mail (
  * une seule fois.
  */
 (function reformulerOuverture() {
-  const cle = 'modeles_mail_formulations_ouverture';
+  const cle = 'modeles_mail_formulations_ouverture_2';
   if (db.prepare("SELECT 1 FROM journal WHERE action = 'migration' AND detail = ?").get(cle)) return;
   const remplacements = [
     ['Le lundi, un mail annonce les défis de la semaine.', 'Le lundi, un mail annonce les deux défis de la semaine.'],
-    [/Un défi manqué reste ouvert \{\{\s*jusqu_a_la_fin\s*\}\}\./g, "Vous recevez un rappel si vous n'avez pas fait les défis."],
+    ['Un défi manqué reste ouvert {{jusqu_a_la_fin}}.', 'Les défis non réalisés restent ouverts {{jusqu_a_la_fin}}.'],
+    // Formulation intermediaire, publiee quelques minutes : un texte qui l'aurait
+    // recue revient a la phrase voulue.
+    ["Vous recevez un rappel si vous n'avez pas fait les défis.", 'Les défis non réalisés restent ouverts {{jusqu_a_la_fin}}.'],
   ];
   const ligne = db.prepare("SELECT corps FROM modeles_mail WHERE type = 'ouverture'").get();
   if (ligne) {
@@ -109,7 +112,7 @@ export const MODELES = {
 ${h3('Comment ça marche')}
 <ul>
 <li>Le lundi, un mail annonce les deux défis de la semaine. Le mercredi, un rappel part si vous en avez manqué un.</li>
-<li>Vous recevez un rappel si vous n'avez pas fait les défis.</li>
+<li>Les défis non réalisés restent ouverts {{jusqu_a_la_fin}}.</li>
 <li>Chaque défi terminé rapporte des points à <strong>votre direction</strong>. Les résultats sont diffusés le vendredi.</li>
 </ul>
 ${h3('Vos données')}
