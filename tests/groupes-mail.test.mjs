@@ -63,6 +63,13 @@ test("un groupe exclu d'un mail n'en recoit pas, mais recoit les autres", async 
 test('le mail aux elus part aux membres du groupe, direction ou non', async () => {
   const r = await mail.envoyerElus('gg-elus', { simulation: true });
   assert.equal(r.destinataires, 2, 'la casse du nom ne compte pas');
+
+  // Un compte que la synchronisation a ecarte (desactive ou disparu de
+  // l'annuaire) ne recoit rien.
+  db.prepare("UPDATE agents SET exclu = 1, exclu_motif = 'annuaire' WHERE login = 'elu1'").run();
+  assert.equal((await mail.envoyerElus('GG-Elus', { simulation: true })).destinataires, 1);
+  db.prepare("UPDATE agents SET exclu = 0, exclu_motif = NULL WHERE login = 'elu1'").run();
+
   const m = mail.mailElus({ nom_complet: 'Helene LEMAIRE', service: 'Elus' });
   assert.match(m.texte, /réseau interne de la mairie/);
   assert.match(m.texte, /VPN/);

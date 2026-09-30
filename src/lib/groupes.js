@@ -123,12 +123,13 @@ export function filtrerDestinataires(type, agents) {
 /**
  * Les membres d'un groupe, pour un envoi cible. Ni la direction ni les
  * exclusions de campagne ne comptent : on vise ce groupe, et lui seul. Un
- * compte desactive dans l'annuaire, en revanche, ne recoit rien.
+ * compte que l'annuaire a ecarte - desactive ou disparu, motif « annuaire »
+ * pose par la synchronisation - ne recoit rien, en revanche.
  */
 export const membresDuGroupe = (groupe) => db.prepare(`
   SELECT a.* FROM agents a
   JOIN agent_groupes g ON g.agent_id = a.id AND g.groupe = ? COLLATE NOCASE
   WHERE a.email IS NOT NULL AND a.email <> '' AND a.origine <> 'local'
-    AND NOT (a.exclu = 1 AND a.exclu_motif = 'Compte desactive dans l''annuaire')
+    AND NOT (a.exclu = 1 AND a.exclu_motif = 'annuaire')
   ORDER BY a.nom_complet COLLATE NOCASE
 `).all(String(groupe || ''));

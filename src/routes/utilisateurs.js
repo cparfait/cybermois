@@ -625,15 +625,15 @@ export default async function routesUtilisateurs(app) {
     const agents = db.prepare(`
       SELECT id, login, nom_complet, email, service_brut, vu_le
       FROM agents
-      WHERE service = SERVICE_NON_RATTACHE AND exclu = 0 AND origine <> 'local'
+      WHERE service = ? AND exclu = 0 AND origine <> 'local'
       ORDER BY nom_complet
-    `).all();
+    `).all(SERVICE_NON_RATTACHE);
 
     const existants = db.prepare(`
       SELECT service, COUNT(*) AS n FROM agents
-      WHERE exclu = 0 AND service <> SERVICE_NON_RATTACHE
+      WHERE exclu = 0 AND service <> ?
       GROUP BY service ORDER BY service COLLATE NOCASE
-    `).all();
+    `).all(SERVICE_NON_RATTACHE);
 
     // Rapprochement souple : « LUDO-MEDIATHEQUE » dans le DN doit retomber sur
     // « Ludo-Médiathèque » si ce service existe deja.
@@ -676,13 +676,13 @@ export default async function routesUtilisateurs(app) {
     const agents = db.prepare(`
       SELECT login, nom_complet, email, service_brut
       FROM agents
-      WHERE service = SERVICE_NON_RATTACHE AND exclu = 0 AND origine <> 'local'
+      WHERE service = ? AND exclu = 0 AND origine <> 'local'
       ORDER BY nom_complet
-    `).all();
+    `).all(SERVICE_NON_RATTACHE);
 
     const existants = db.prepare(`
-      SELECT DISTINCT service FROM agents WHERE exclu = 0 AND service <> SERVICE_NON_RATTACHE
-    `).all().map((s) => s.service);
+      SELECT DISTINCT service FROM agents WHERE exclu = 0 AND service <> ?
+    `).all(SERVICE_NON_RATTACHE).map((s) => s.service);
     const parCle = new Map(existants.map((e) => [cleComparaison(e), e]));
 
     // Echappement CSV sans expression reguliere : une classe de caracteres
