@@ -54,39 +54,29 @@ const h3 = (t) => `<h3>${t}</h3>`;
 export const MODELES = {
   ouverture: {
     nom: "Mail d'ouverture",
+    // Pas de calendrier : annoncer tous les themes a l'avance gacherait la
+    // surprise, comme sur la page des defis. Chaque lundi annonce la semaine.
     variables: {
       ...SALUTATION, ...DEFI, ...RATTRAPAGE,
-      nb_defis: EN_LIGNE('Nombre de défis de la campagne'),
-      questions_par_defi: EN_LIGNE('Questions par défi'),
-      points_par_defi: EN_LIGNE('Points par défi'),
-      bareme: EN_LIGNE('Barème : 3 faciles à 10 points, …'),
-      jusqu_a_la_fin: EN_LIGNE('« jusqu’à la fin de la campagne, le … »'),
-      calendrier: BLOC('Calendrier des défis'),
+      jusqu_a_la_fin: EN_LIGNE('« jusqu’au lundi 30 novembre »'),
+      phrase_semaine: EN_LIGNE('« Voici le premier défi : » ou « Voici les 2 défis de la semaine : »'),
+      defis_semaine: BLOC('Les défis de la première semaine, avec leur bouton'),
     },
-    objet: 'Cybermois : {{nb_defis}} défis pour aiguiser vos réflexes — le premier est en ligne',
+    objet: 'Le Cybermois commence aujourd’hui',
     corps: `<p>{{salutation}}</p>
-<p>Octobre est le <strong>mois européen de la cybersécurité</strong>. La Ville de Châtillon y participe cette année avec une opération courte, ouverte à tous les agents : <strong>le Cybermois</strong>. Il commence aujourd'hui.</p>
-<p>{{defi}}</p>
-<p><strong>{{nb_defis}} défis au fil du mois, {{duree}} minutes chacun.</strong> Des questions concrètes, tirées de situations qui se produisent vraiment dans une collectivité. Après chaque réponse, la correction vous dit ce que vous avez trouvé, ce qui vous a échappé, et pourquoi.</p>
-<p>{{bouton}}</p>
-<p>Connectez-vous avec <strong>vos identifiants de session Windows</strong> — votre identifiant ou votre adresse professionnelle, au choix. Il n'y a rien à installer, et vous pouvez jouer depuis un téléphone.</p>
+<p>Octobre est le <strong>mois européen de la cybersécurité</strong>. La Ville de Châtillon y participe avec le <strong>Cybermois</strong> : des défis courts pour tester vos réflexes face aux pièges du quotidien. Il commence aujourd'hui. {{phrase_semaine}}</p>
+<p>{{defis_semaine}}</p>
+<p>Connectez-vous avec <strong>vos identifiants Windows</strong>. Rien à installer, et vous pouvez jouer depuis un téléphone.</p>
 ${h3('Comment ça marche')}
 <ul>
-<li><strong>Un défi paraît à chaque date du calendrier</strong> ci-dessous. Il reste ouvert {{jusqu_a_la_fin}} : si vous en manquez un, vous pouvez le rattraper.</li>
-<li><strong>{{questions_par_defi}} questions, {{points_par_defi}} points par défi</strong> : {{bareme}}. Tous les défis pèsent le même poids : aucune semaine ne compte plus qu'une autre.</li>
-<li><strong>Le mercredi</strong>, un rappel est envoyé à celles et ceux qui n'ont pas encore fait les défis de la semaine. Aucun si vous êtes à jour.</li>
-<li><strong>Le vendredi</strong>, les résultats et le classement des directions sont diffusés.</li>
-<li>À la fin de la campagne, une <strong>attestation de participation</strong> est à télécharger depuis votre profil sur le portail.</li>
+<li>Le lundi, un mail annonce les défis de la semaine. Le mercredi, un rappel part si vous en avez manqué un.</li>
+<li>Un défi manqué reste ouvert {{jusqu_a_la_fin}}.</li>
+<li>Chaque défi terminé rapporte des points à <strong>votre direction</strong>. Les résultats sont diffusés le vendredi.</li>
+<li>Ce n'est pas un examen : aucun résultat individuel n'est transmis à votre hiérarchie.</li>
 </ul>
-<p>{{calendrier}}</p>
-${h3("Ce n'est pas un examen")}
-<p>Aucun résultat individuel n'est transmis à votre hiérarchie, et se tromper n'a aucune conséquence : c'est même l'intérêt de l'exercice. Les questions sont conçues pour piéger des gens attentifs, parce que les attaques réelles le sont aussi.</p>
-<p>Le classement se fait <strong>par direction</strong> : chaque défi terminé rapporte des points à la vôtre. Un classement individuel existe aussi ; si vous préférez ne pas y figurer nominativement, écrivez-moi — votre participation continuera de compter pour votre direction, sans que votre nom apparaisse.</p>
 ${h3('Vos données')}
-<p>Le portail utilise votre identifiant, votre nom, votre adresse professionnelle et votre direction, lus dans l'annuaire de la collectivité. Vos réponses et vos scores sont conservés jusqu'à la fin de l'année suivant la campagne ; un décompte du nombre de défis suivis est gardé trois ans comme preuve de l'action de sensibilisation. <strong>Votre mot de passe n'est jamais enregistré</strong> : il sert uniquement à vous authentifier auprès de l'annuaire.</p>
-<p>Vous disposez d'un droit d'accès, de rectification, d'effacement, de limitation et d'opposition sur ces données. Les mentions légales complètes sont accessibles depuis le portail, et je reste à votre disposition pour toute question.</p>
-<p>Bonne campagne à toutes et à tous,</p>
-<p>La déléguée à la protection des données<br>Ville de Châtillon</p>`,
+<p>Le portail utilise votre identifiant, votre nom, votre adresse professionnelle et votre direction, lus dans l'annuaire. <strong>Votre mot de passe n'est jamais enregistré.</strong> Si vous préférez ne pas figurer au classement individuel, écrivez-moi : vos points compteront toujours pour votre direction. Vos droits et la durée de conservation sont détaillés dans les mentions légales du portail.</p>
+<p>Bonne campagne,<br>La déléguée à la protection des données<br>Ville de Châtillon</p>`,
   },
 
   annonce: {
@@ -102,9 +92,7 @@ ${h3('Vos données')}
     corps: `<p>{{salutation}}</p>
 <p>Le <strong>Cybermois</strong> continue. {{phrase_semaine}}</p>
 <p>{{defis_semaine}}</p>
-${h3('Les défis précédents sont toujours ouverts')}
 <p>{{defis_en_retard}}</p>
-<p>{{rattrapage}}</p>
 <p>Bonne semaine,<br>La Direction des systèmes d'information</p>`,
   },
 
@@ -143,8 +131,10 @@ ${h3('Les défis précédents sont toujours ouverts')}
 
   resultats: {
     nom: 'Résultats du vendredi',
+    aide: 'Les chiffres et le classement portent sur toute la campagne à ce jour, pas sur la seule semaine.',
     variables: {
-      titre_defi: EN_LIGNE('Titre du défi'),
+      defis_semaine: EN_LIGNE('Les défis de la semaine : « Titre A et Titre B »'),
+      titre_defi: EN_LIGNE('Titre du dernier défi paru'),
       sujet_resultats: EN_LIGNE('« du défi Titre » ou « de la campagne »'),
       participants: EN_LIGNE('Nombre de participants'),
       chiffres: BLOC('Chiffres clés : participants, participation, points'),
@@ -152,9 +142,9 @@ ${h3('Les défis précédents sont toujours ouverts')}
       classement_individuel: BLOC('Classement individuel (dix premiers)'),
       bouton: BLOC('Bouton vers le classement'),
     },
-    objet: 'Cybermois — Résultats : {{titre_defi}}',
+    objet: 'Cybermois — Les résultats de la semaine',
     corps: `<p>Bonjour à toutes et à tous,</p>
-<p>Voici les résultats {{sujet_resultats}}.</p>
+<p>Cette semaine : {{defis_semaine}}. Voici où en est la campagne.</p>
 <p>{{chiffres}}</p>
 <h2>🏆 Classement des directions</h2>
 <p>Score moyen par agent de la direction, et taux de participation.</p>
@@ -362,14 +352,16 @@ export function rendreModele(type, valeurs) {
   // le bouton vert prenait la couleur verte des liens du texte.
   let corps = styliser(modele.corps).replace(/<p>\s*\{\{(\w+)\}\}\s*<\/p>/g, (tout, nom) =>
     (variables[nom]?.bloc ? valeur(nom) : tout));
+  // Un repere inconnu ne part jamais tel quel chez les agents : c'est le cas
+  // du calendrier, retire, dans un texte modifie avant son retrait.
   corps = corps.replace(/\{\{(\w+)\}\}/g, (tout, nom) => {
-    if (!variables[nom]) return tout;
+    if (!variables[nom]) return '';
     return variables[nom].bloc ? valeur(nom) : echapper(valeur(nom));
   });
 
   const objet = modele.objet
     .replace(/\{\{\s*(\w+)\s*\}\}/g, (tout, nom) => {
-      if (!variables[nom]) return tout;
+      if (!variables[nom]) return '';
       return variables[nom].bloc ? '' : String(valeur(nom));
     })
     .replace(/\s{2,}/g, ' ')

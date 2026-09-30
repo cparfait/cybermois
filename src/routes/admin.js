@@ -14,7 +14,7 @@ import {
   envoyerOuverture, envoyerAnnonce, envoyerRelancesSemaine, dernierDefiParu,
   envoyerTest, adresseValide,
 } from '../lib/mail.js';
-import { decalerJours } from '../lib/dates.js';
+import { aujourdhui, decalerJours, lundiDe } from '../lib/dates.js';
 import {
   MODELES, listerModeles, verifierModele, enregistrerModele, reinitialiserModele, avecBrouillon,
 } from '../lib/modeles-mail.js';
@@ -785,14 +785,19 @@ export default async function routesAdmin(app) {
       case 'resultats': return mailResultats(id);
       case 'relance': return mailRelance(agent, id);
       case 'ouverture': return mailBienvenue(agent);
+      // Les mails de semaine se montrent tels qu'ils partiront la semaine du
+      // defi choisi : l'annonce le lundi, la relance le mercredi. Partir de la
+      // date du defi lui-meme annoncait les sept jours suivants, qui ne sont
+      // pas ceux de l'envoi du lundi.
       case 'annonce': {
         if (!defi) return null;
+        const lundi = lundiDe(defi.ouvre_le);
         const anciens = db.prepare('SELECT * FROM defis WHERE publie = 1 AND ouvre_le < ? ORDER BY ouvre_le, id')
-          .all(defi.ouvre_le);
-        return mailAnnonce(agent, defisAVenir(defi.ouvre_le), anciens, defi.ouvre_le);
+          .all(lundi);
+        return mailAnnonce(agent, defisAVenir(lundi), anciens, lundi);
       }
       case 'relance-semaine':
-        return defi ? mailRelanceSemaine(agent, defisDeLaSemaine(decalerJours(defi.ouvre_le, 2))) : null;
+        return defi ? mailRelanceSemaine(agent, defisDeLaSemaine(decalerJours(lundiDe(defi.ouvre_le), 2))) : null;
       default: return undefined;
     }
   }
@@ -885,7 +890,7 @@ export default async function routesAdmin(app) {
     resultats: async ({ simulation }) => {
       const defi = dernierDefiParu();
       if (!defi) return { ok: false, message: 'Aucun défi paru : pas de résultats à envoyer.' };
-      return { ...(await envoyerResultats(defi.id, { simulation })), defis: [defi.titre] };
+      return { ...(await envoyerResultats(defi.id, { simulation, jour: aujourdhui() })), defis: [defi.titre] };
     },
   };
 

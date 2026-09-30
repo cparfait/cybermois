@@ -16,6 +16,7 @@ import { importerContenus } from './lib/seed.js';
 import {
   envoyerRelancesSemaine, envoyerResultats, ouvertureDuJour, annonceDuJour, dernierDefiParu,
 } from './lib/mail.js';
+import { aujourdhui } from './lib/dates.js';
 import { verifierModeDemo, estModeDemo, motDePasseDemo } from './lib/annuaire-demo.js';
 import { verifierChiffrement } from './lib/ldap.js';
 import { appliquerParametres, configurationUtilisable } from './lib/parametres.js';
@@ -359,7 +360,7 @@ export function planifier() {
     resultats: [resultats, async () => {
       const defi = dernierDefiParu();
       if (!defi) return app.log.warn('Resultats automatiques ignores : aucun defi paru.');
-      const res = await envoyerResultats(defi.id);
+      const res = await envoyerResultats(defi.id, { jour: aujourdhui() });
       return app.log.info(res, 'resultats envoyes');
     }],
   };

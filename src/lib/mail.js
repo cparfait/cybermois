@@ -3,8 +3,7 @@ import { prenomUsuel } from './prenom.js';
 import { config } from './config.js';
 import { db } from './db.js';
 import { classementServices, classementAgents, statistiquesGlobales, ligneClassement } from './scoring.js';
-import { NIVEAUX, QUESTIONS_PAR_DEFI, TOTAL_DEFI } from './bareme.js';
-import { aujourdhui, decalerJours, dateLisible } from './dates.js';
+import { aujourdhui, decalerJours, dateLisible, lundiDe } from './dates.js';
 import { rendreModele } from './modeles-mail.js';
 
 let transport = null;
@@ -205,33 +204,23 @@ export function mailLancement(defiId) {
  *              message s'adresse a tous (copie de la DPO, apercu).
  */
 function mailOuverture(defi, agent = null) {
-  const defis = db.prepare('SELECT titre, ouvre_le FROM defis WHERE publie = 1 ORDER BY ouvre_le, id').all();
-  const nbDefis = defis.length;
-
-  const calendrier = nbDefis > 1 ? `
-<p style="margin:16px 0 6px;"><strong>Le calendrier</strong></p>
-<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:15px;">
-  ${defis.map((d) => `<tr>
-    <td style="padding:4px 14px 4px 0;white-space:nowrap;color:#006e46;font-family:'Montserrat',Arial,sans-serif;font-weight:700;">${echapper(dateLisible(d.ouvre_le))}</td>
-    <td style="padding:4px 0;">${echapper(d.titre)}</td></tr>`).join('')}
-</table>` : '';
-
+  // Tous les defis de la premiere semaine, pas le seul premier : quand
+  // plusieurs paraissent le premier jour, les autres passaient sous silence.
+  // Rien au-dela de la semaine : le programme ne s'annonce pas a l'avance.
+  const semaine = defisAVenir(defi.ouvre_le);
   return composer('ouverture', {
     ...donneesDefi(defi, 'Je relève le premier défi'),
+    phrase_semaine: semaine.length > 1
+      ? `Voici les ${semaine.length} défis de la semaine :`
+      : 'Voici le premier défi :',
+    defis_semaine: semaine.map((d) => blocDefiAvecAction(d, 'Je relève le défi', defi.ouvre_le)).join(''),
     salutation: salutation(agent),
     prenom: prenomDe(agent),
     rattrapage: rattrapage(),
-    nb_defis: String(nbDefis),
-    questions_par_defi: String(QUESTIONS_PAR_DEFI),
-    points_par_defi: String(TOTAL_DEFI),
-    jusqu_a_la_fin: config.campagne.fin
-      ? `jusqu'à la fin de la campagne, le ${dateLisible(config.campagne.fin)}`
-      : "jusqu'à la fin de la campagne",
-    bareme: NIVEAUX.map((n) => `${n.attendues} ${n.libelle.toLowerCase()}${n.attendues > 1 ? 's' : ''} à ${n.points} points`).join(', '),
-    calendrier,
+    jusqu_a_la_fin: rattrapageCourt(),
   }, {
     titre: 'Ouverture du Cybermois',
-    preheader: `${nbDefis} défis, ${defi.duree_minutes} minutes chacun. Le classement se fait par direction.`,
+    preheader: `${defi.duree_minutes} minutes pour le premier défi. Le classement se fait par direction.`,
   });
 }
 
@@ -257,14 +246,16 @@ export function mailRelance(agent, defiId) {
 export function mailAnnonce(agent, semaine, enRetard, jour = aujourdhui()) {
   if (!semaine?.length) return null;
 
+  // Les defis d'avant, toujours ouverts. Rien de ceux qui ne sont pas encore
+  // parus : seule la semaine s'annonce.
   const retard = enRetard?.length ? `
-<p style="margin-top:0;">Il vous en reste ${enRetard.length === 1 ? 'un' : enRetard.length} à faire — chacun fait encore gagner des points à votre direction :</p>
+<p>Les défis précédents sont toujours ouverts. Il vous en reste ${enRetard.length === 1 ? 'un' : enRetard.length} à faire :</p>
 <ul style="padding-left:20px;margin:8px 0 16px;">
   ${enRetard.map((d) => `<li style="margin-bottom:6px;"><a href="${echapper(`${config.publicUrl}/defi/${d.id}`)}" style="color:#006e46;font-weight:700;">${echapper(d.titre)}</a></li>`).join('')}
 </ul>` : `
-<p style="margin-top:0;">${agent
-    ? 'Vous êtes à jour : bravo. Si un collègue a manqué une semaine, dites-lui qu’il peut encore la rattraper.'
-    : 'Vous en avez manqué un ? Il n’est pas trop tard : chaque défi rattrapé fait encore gagner des points à votre direction.'}</p>`;
+<p>${agent
+    ? 'Vous êtes à jour sur les défis précédents : bravo.'
+    : `Un défi manqué ? Les défis précédents sont toujours ouverts ${echapper(rattrapageCourt())}.`}</p>`;
 
   return composer('annonce', {
     salutation: salutation(agent),
@@ -283,6 +274,9 @@ export function mailAnnonce(agent, semaine, enRetard, jour = aujourdhui()) {
 
 // « jusqu'au 31 octobre » etait ecrit en dur : faux des que la campagne
 // changeait de dates. Du texte brut : le modele l'echappe a l'insertion.
+const rattrapageCourt = () => (config.campagne.fin
+  ? `jusqu'au ${dateLisible(config.campagne.fin)}` : "jusqu'à la fin de la campagne");
+
 const rattrapage = () => (config.campagne.fin
   ? `Les défis déjà parus restent ouverts jusqu'au ${dateLisible(config.campagne.fin)} : vous pouvez les rattraper.`
   : 'Les défis déjà parus restent ouverts : vous pouvez les rattraper.');
@@ -307,11 +301,30 @@ export function mailRelanceSemaine(agent, manquants) {
   }, { titre: 'Relance', preheader: manquants.map((d) => d.titre).join(' · ') });
 }
 
-export function mailResultats(defiId) {
+/**
+ * Resultats du vendredi, au groupe de diffusion.
+ *
+ * Ils nommaient le seul dernier defi paru, alors que chiffres et classement
+ * portent sur toute la campagne : avec deux defis dans la semaine, l'autre
+ * n'etait pas cite. Ils nomment desormais les defis de la semaine - celle du
+ * defi donne, jusqu'a son vendredi.
+ */
+export function mailResultats(defiId, { jour = null } = {}) {
   const services = classementServices();
   const agents = classementAgents(10);
   const stats = statistiquesGlobales();
   const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(Number(defiId));
+
+  // Le vendredi de la semaine du defi ; un defi du week-end compte pour la suivante.
+  let vendredi = defi ? decalerJours(lundiDe(defi.ouvre_le), 4) : null;
+  if (vendredi && defi.ouvre_le > vendredi) vendredi = decalerJours(vendredi, 7);
+  // L'envoi du vendredi part de la date du jour : une semaine sans nouveau
+  // defi ne doit pas reprendre les titres d'une semaine passee.
+  const semaine = jour ? defisDeLaSemaine(jour) : vendredi ? defisDeLaSemaine(vendredi) : [];
+  const titres = semaine.map((d) => d.titre);
+  const enumeration = titres.length > 1
+    ? `${titres.slice(0, -1).join(', ')} et ${titres[titres.length - 1]}`
+    : titres[0] || (jour ? 'pas de nouveau défi, les précédents restent ouverts' : defi?.titre || '');
 
   const medaille = ['🥇', '🥈', '🥉'];
   const ligneService = (s, i) => `
@@ -333,6 +346,7 @@ export function mailResultats(defiId) {
   const taux = stats.inscrits ? Math.round((stats.joueurs / stats.inscrits) * 100) : 0;
 
   return composer('resultats', {
+    defis_semaine: enumeration || 'la campagne continue',
     titre_defi: defi?.titre || '',
     sujet_resultats: defi ? `du défi ${defi.titre}` : 'de la campagne',
     participants: String(stats.joueurs),
@@ -646,9 +660,9 @@ export async function envoyerRelancesSemaine({ simulation = false, jour = aujour
 }
 
 /** Resultats d'un defi envoyes au groupe de distribution. */
-export async function envoyerResultats(defiId, { simulation = false } = {}) {
+export async function envoyerResultats(defiId, { simulation = false, jour = null } = {}) {
   const id = Number(defiId) || null;
-  const m = mailResultats(id);
+  const m = mailResultats(id, { jour });
   if (simulation) return { ok: true, simulation: true, destinataires: config.smtp.groupeDiffusion, apercu: m.objet };
   if (!config.smtp.groupeDiffusion) return { ok: false, message: 'MAIL_GROUPE_DIFFUSION non renseigne.' };
 

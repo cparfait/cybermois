@@ -29,6 +29,12 @@ export function decalerJours(jour, jours) {
   return aujourdhui(d);
 }
 
+/** Le lundi de la semaine de `jour` : celui ou part l'annonce. */
+export function lundiDe(jour) {
+  const d = new Date(`${jour}T12:00:00`);
+  return decalerJours(jour, -((d.getDay() + 6) % 7));
+}
+
 /** « lundi 5 octobre », « jeudi 1er octobre », pour les mails. */
 export const dateLisible = (jour) => new Intl.DateTimeFormat('fr-FR', {
   weekday: 'long', day: 'numeric', month: 'long',

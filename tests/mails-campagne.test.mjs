@@ -54,12 +54,16 @@ test("l'ouverture vise les agents, pas le compte d'administration locale", async
   assert.ok(!r.apercu.includes('admin@test.local'));
 });
 
-test("l'ouverture explique le deroulement et donne le calendrier", () => {
+test("l'ouverture annonce la premiere semaine, pas le programme", () => {
   const m = mail.mailBienvenue({ nom_complet: 'Alice ASSIDUE', service: 'Finances' });
   assert.match(m.texte, /Bonjour Alice/);
   assert.match(m.texte, /Comment ça marche/);
   assert.match(m.texte, /mercredi/i);
-  assert.match(m.texte, /lundi 12 octobre/, 'le calendrier des parutions doit y figurer');
+  assert.match(m.texte, new RegExp(defi('mots-de-passe').titre));
+  assert.match(m.texte, new RegExp(defi('hameconnage').titre), 'les defis de la semaine y figurent');
+  assert.match(m.texte, /En ligne à partir du jeudi 8 octobre/, 'un defi du jeudi donne sa date');
+  assert.doesNotMatch(m.texte, new RegExp(defi('messagerie').titre), 'la semaine suivante reste secrete');
+  assert.doesNotMatch(m.texte, /lundi 12 octobre/);
 });
 
 test("l'ouverture deja partie ne repart pas sans le demander", async () => {
@@ -143,4 +147,15 @@ test("l'adresse de test n'accepte qu'un seul destinataire", () => {
 
 test("un envoi de test refuse une adresse invalide avant tout appel SMTP", async () => {
   await assert.rejects(() => mail.envoyerTest('a@b.fr, c@d.fr', { objet: 'x', html: '', texte: '' }), /Adresse invalide/);
+});
+
+test('les resultats du vendredi nomment tous les defis de la semaine', () => {
+  // Semaine du lundi 5 : deux defis, le 5 et le 8.
+  const m = mail.mailResultats(defi('hameconnage').id);
+  assert.match(m.texte, new RegExp(`${defi('mots-de-passe').titre} et ${defi('hameconnage').titre}`));
+
+  // Envoi du vendredi 23 : rien de paru depuis le 17, pas de vieux titres.
+  const creux = mail.mailResultats(defi('messagerie').id, { jour: '2026-10-23' });
+  assert.match(creux.texte, /pas de nouveau défi/);
+  assert.doesNotMatch(creux.texte, new RegExp(defi('messagerie').titre));
 });
