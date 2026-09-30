@@ -17,6 +17,7 @@ import { api, echapper, alerte, animationsReduites } from '/js/commun.js';
  */
 
 let donnees = null;
+let afficherAVenir = true;
 let auTermine = () => {};
 let brouillon = [];
 
@@ -60,7 +61,11 @@ export async function ecranProgramme(cible, onTermine) {
   if (onTermine) auTermine = onTermine;
   cible.innerHTML = '<p class="discret">Chargement du catalogue…</p>';
   try {
-    donnees = await api('/api/admin/modules');
+    const [modules, affichage] = await Promise.all([
+      api('/api/admin/modules'), api('/api/defis/affichage'),
+    ]);
+    donnees = modules;
+    afficherAVenir = affichage.afficherDefisAVenir !== false;
   } catch (e) {
     cible.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`;
     return;
@@ -129,6 +134,13 @@ function rendre(cible) {
         paraître deux le même jour, ou espacer les thèmes comme vous l'entendez.
         <br>Un défi paraît <strong>tout seul à sa date</strong> : il n'y a rien à publier ensuite.
       </p>
+
+      <label class="ui" style="display:flex;gap:.5rem;align-items:flex-start;margin:.8rem 0 0;font-size:.9rem">
+        <input type="checkbox" id="afficher-a-venir"${afficherAVenir ? ' checked' : ''} style="margin-top:.2rem">
+        <span><strong>Afficher les défis pas encore ouverts</strong>
+          <span class="discret">— les agents voient leur date d'ouverture, sans rien de leur contenu.
+          Décoché, un défi n'apparaît qu'à son ouverture. Enregistré dès le clic.</span></span>
+      </label>
 
       <div class="tableau-defilant" style="margin-top:1rem">
         <table class="admin">
@@ -237,6 +249,24 @@ function brancher(cible) {
   }, 0);
   document.getElementById('resume-programme').textContent =
     n ? `${n} défi(s), ${q} questions au total` : 'Aucun module programmé';
+
+  // Reglage d'affichage, independant du programme : il s'enregistre seul,
+  // sans attendre « Enregistrer le programme ».
+  document.getElementById('afficher-a-venir').addEventListener('change', async (e) => {
+    const coche = e.target.checked;
+    try {
+      await api('/api/admin/configuration', {
+        method: 'PUT', body: { valeurs: { afficherDefisAVenir: coche } },
+      });
+      afficherAVenir = coche;
+      alerte('alerte', coche
+        ? 'Les défis pas encore ouverts sont affichés aux agents.'
+        : "Les défis n'apparaissent plus aux agents avant leur ouverture.", 'succes');
+    } catch (erreur) {
+      e.target.checked = !coche;
+      alerte('alerte', erreur.message);
+    }
+  });
 
   cible.querySelectorAll('.module-defi').forEach((sel) => sel.addEventListener('change', () => {
     const i = Number(sel.closest('tr').dataset.index);

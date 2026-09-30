@@ -10,7 +10,7 @@ import {
   progression, repondre, totaux, effacerTentative, detailTentative, effacerTentatives,
 } from '../lib/tentatives.js';
 import { jetonValide } from '../lib/apercu.js';
-import { aujourdhui } from '../lib/dates.js';
+import { aujourdhui, dateLisible } from '../lib/dates.js';
 import { illustrationDe } from '../lib/illustrations.js';
 
 // La date du jour vient d'un module partage : le calcul des scores l'emploie
@@ -40,6 +40,16 @@ function estParu(defi) {
 }
 
 /**
+ * Le meme message partout ou un defi a venir est refuse, et le meme que sur
+ * sa carte. Un defi masque n'a pas de date d'ouverture a annoncer.
+ */
+function pasEncoreOuvert(defi) {
+  return defi.publie === 1
+    ? `Ce défi n'est pas encore ouvert. Il ouvrira le ${dateLisible(defi.ouvre_le)}.`
+    : "Ce défi n'est pas encore ouvert.";
+}
+
+/**
  * Rang d'un defi dans la campagne : « Défi n°3 ».
  *
  * Une date de parution situe un defi dans le calendrier, elle ne le nomme pas.
@@ -66,6 +76,7 @@ export default async function routesJeu(app) {
   /** Reglages d'affichage de la page des defis, modifiables sans redemarrage. */
   app.get('/api/defis/affichage', async () => ({
     defisParLigne: Math.min(4, Math.max(1, Number(config.defisParLigne) || 2)),
+    afficherDefisAVenir: config.afficherDefisAVenir !== false,
   }));
 
   app.get('/api/defis', async (requete) => {
@@ -134,7 +145,7 @@ export default async function routesJeu(app) {
     // chemin de code - aucune participation n'est ecrite plus bas.
     const apercu = jetonValide(defi, requete.query?.apercu);
     if (!apercu && !estParu(defi)) {
-      return reponse.code(403).send({ erreur: `Ce défi ouvre le ${defi.ouvre_le}.` });
+      return reponse.code(403).send({ erreur: pasEncoreOuvert(defi) });
     }
 
     const dejaFait = db.prepare(
@@ -209,7 +220,7 @@ export default async function routesJeu(app) {
     }
     const apercu = jetonValide(defi, requete.query?.apercu);
     if (!apercu && !estOuvert(defi)) {
-      return reponse.code(403).send({ erreur: "Ce défi n'est pas ouvert." });
+      return reponse.code(403).send({ erreur: pasEncoreOuvert(defi) });
     }
 
     const question = db.prepare('SELECT * FROM questions WHERE id = ? AND defi_id = ?')
@@ -283,7 +294,7 @@ export default async function routesJeu(app) {
     // encore scelle - ou jamais publie.
     if (!apercu && !estOuvert(defi)) {
       return reponse.code(403).send({
-        erreur: "Ce défi n'est pas ouvert : aucun résultat ne peut y être enregistré.",
+        erreur: pasEncoreOuvert(defi),
         code: 'DEFI_FERME',
       });
     }

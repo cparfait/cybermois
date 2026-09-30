@@ -91,6 +91,10 @@ export const config = {
   // quatre semaines.
   defisParLigne: num(process.env.DEFIS_PAR_LIGNE, 2),
 
+  // Les defis a venir figurent sur la page des defis, sous forme de carte
+  // fermee. Se regle dans le programme de la campagne.
+  afficherDefisAVenir: bool(process.env.AFFICHER_DEFIS_A_VENIR, true),
+
   // Hebergeurs autorises a fournir une video d'introduction. La liste alimente
   // la politique de securite de contenu : un domaine absent d'ici verra son
   // lecteur bloque par le navigateur. Elle se modifie dans l'administration -

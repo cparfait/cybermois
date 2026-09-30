@@ -67,6 +67,10 @@ export const DESCRIPTEUR = [
     aide: "Sur la page des défis. Quatre defis sur une seule ligne se lisent mal ; "
       + 'deux colonnes les presentent par paires. Valeur ignoree sur un ecran '
       + "etroit, ou l'affichage repasse sur une colonne quoi qu'il arrive." },
+  // Groupe a part : le reglage se fait depuis l'onglet Programme, pas depuis
+  // la page de configuration, qui n'affiche que ses propres groupes.
+  { cle: 'afficherDefisAVenir', chemin: ['afficherDefisAVenir'], type: 'booleen', groupe: 'programme',
+    libelle: 'Afficher les défis pas encore ouverts' },
   { cle: 'videoDomaines', chemin: ['videoDomaines'], type: 'liste', groupe: 'general',
     libelle: 'Hébergeurs vidéo autorisés',
     aide: "Séparés par des virgules. Un hébergeur absent d'ici verra son lecteur bloqué "
