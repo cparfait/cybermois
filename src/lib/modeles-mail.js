@@ -112,6 +112,23 @@ export const SIGNATURE = 'Hélène MANTHEY<br>Déléguée à la Protection des D
   journaliser('migration', 'migration', cle, null);
 }());
 
+/*
+ * « Score moyen par agent de la direction, et taux de participation. » ne
+ * disait pas lequel des deux pourcentages etait lequel. Un texte de resultats
+ * deja modifie qui la porte encore recoit l'explication, une fois.
+ */
+(function expliquerPourcentages() {
+  const cle = 'modeles_mail_resultats_pourcentages';
+  if (db.prepare("SELECT 1 FROM journal WHERE action = 'migration' AND detail = ?").get(cle)) return;
+  const ligne = db.prepare("SELECT corps FROM modeles_mail WHERE type = 'resultats'").get();
+  const avant = 'Score moyen par agent de la direction, et taux de participation.';
+  if (ligne?.corps.includes(avant)) {
+    db.prepare("UPDATE modeles_mail SET corps = ? WHERE type = 'resultats'")
+      .run(ligne.corps.replace(avant, '<strong>Réussite</strong> : les points obtenus par les agents de la direction, sur le maximum qu’ils pouvaient obtenir à ce jour. <strong>Participation</strong> : la part des agents de la direction qui ont fait au moins un défi.'));
+  }
+  journaliser('migration', 'migration', cle, null);
+}());
+
 /* ------------------------------------------------------------ Reperes */
 
 const EN_LIGNE = (libelle) => ({ libelle, bloc: false });
@@ -249,7 +266,7 @@ ${OUVERTURE_FIN}`,
 <p>Cette semaine : {{defis_semaine}}. Voici où en est la campagne.</p>
 <p>{{chiffres}}</p>
 <h2>🏆 Classement des directions</h2>
-<p>Score moyen par agent de la direction, et taux de participation.</p>
+<p><strong>Réussite</strong> : les points obtenus par les agents de la direction, sur le maximum qu’ils pouvaient obtenir à ce jour. <strong>Participation</strong> : la part des agents de la direction qui ont fait au moins un défi.</p>
 <p>{{classement_services}}</p>
 <h2>⭐ Classement individuel</h2>
 <p>{{classement_individuel}}</p>

@@ -100,3 +100,11 @@ test("le mail aux elus reprend l'ouverture et dit comment participer depuis la m
   assert.doesNotMatch(elus.texte, /téléphone/, 'le portail ne s’atteint pas depuis un telephone');
   assert.doesNotMatch(ouverture.texte, /Comment participer/, "l'ouverture des agents ne change pas");
 });
+
+test('les resultats disent ce que mesurent les deux pourcentages', () => {
+  const m = mail.mailResultats(defis[1].id, { jour: '2026-10-02' });
+  assert.match(m.html, />Réussite<\/th>/);
+  assert.match(m.html, />Participation<\/th>/);
+  assert.match(m.texte, /Réussite : les points obtenus par les agents de la direction/);
+  assert.match(m.texte, /Participation : la part des agents de la direction qui ont fait au moins un défi/);
+});

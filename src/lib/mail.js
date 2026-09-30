@@ -428,7 +428,13 @@ export function mailResultats(defiId, { jour = null } = {}) {
     chiffres: `<table role="presentation" width="100%" style="background:#e6f1ec;border-radius:10px;padding:4px;margin:20px 0;"><tr>
   ${chiffre(stats.joueurs, 'participants')}${chiffre(`${taux} %`, 'de participation')}${chiffre(stats.points_cumules, 'points cumulés')}
 </tr></table>`,
-    classement_services: `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px;">${services.slice(0, 10).map(ligneService).join('')}</table>`,
+    // Deux pourcentages sans titre ne se lisaient pas : l'en-tete les nomme.
+    classement_services: `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px;">
+    <tr>
+      <th colspan="2"></th>
+      <th style="padding:0 6px 6px;text-align:right;font-family:'Montserrat',Arial,sans-serif;font-size:12px;font-weight:700;color:#006e46;">Réussite</th>
+      <th style="padding:0 6px 6px;text-align:right;font-family:'Montserrat',Arial,sans-serif;font-size:12px;font-weight:700;color:#4a5a53;">Participation</th>
+    </tr>${services.slice(0, 10).map(ligneService).join('')}</table>`,
     classement_individuel: `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px;">${agents.map(ligneAgent).join('')}</table>`,
     bouton: bouton(`${config.publicUrl}/classement`, 'Voir le classement complet'),
   }, { titre: 'Résultats', preheader: `${stats.joueurs} participants, classement des directions` });
