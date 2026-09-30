@@ -137,10 +137,16 @@ export default async function routesAdmin(app) {
    * Ecrire vingt questionnaires et n'en jouer que quatre suppose de pouvoir
    * choisir : c'est ce que cet ecran permet.
    */
-  app.get('/api/admin/modules', async () => ({
-    modules: listerModules(),
-    programme: etatProgramme(),
-  }));
+  app.get('/api/admin/modules', async () => {
+    // Le numero d'un module est celui de son defi - celui de l'onglet Defis et
+    // de l'adresse /defi/N. Un module jamais programme n'a pas encore de defi.
+    const defiDe = new Map(db.prepare('SELECT id, module_code FROM defis WHERE module_code IS NOT NULL')
+      .all().map((d) => [d.module_code, d.id]));
+    return {
+      modules: listerModules().map((m) => ({ ...m, defi_id: defiDe.get(m.code) || null })),
+      programme: etatProgramme(),
+    };
+  });
 
   /** Le detail d'un module, reponses comprises, pour le relire avant de le programmer. */
   app.get('/api/admin/modules/:code', async (requete, reponse) => {
