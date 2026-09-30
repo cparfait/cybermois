@@ -85,7 +85,18 @@ test('un exemple de chaque mail : chacun dans la premiere semaine ou il part', (
   assert.ok(exemples.every((m) => m.mail?.html), 'chaque exemple a un contenu');
 });
 
-test('le mail aux elus date la campagne de son premier defi', () => {
-  const m = mail.mailElus(agent);
-  assert.match(m.texte, /le Cybermois, du mercredi 30 septembre au lundi 30 novembre/);
+test("le mail aux elus reprend l'ouverture et dit comment participer depuis la mairie", () => {
+  const ouverture = mail.mailBienvenue(agent);
+  const elus = mail.mailElus(agent);
+  assert.equal(elus.objet, ouverture.objet);
+  assert.ok(contient(elus.texte, [s1a, s1b]), 'les defis de la premiere semaine');
+  assert.ok(aucun(elus.texte, [s2a, s2b]));
+  assert.match(elus.texte, /Comment participer/);
+  assert.match(elus.texte, /réseau interne de la mairie/);
+  assert.match(elus.texte, /PC en libre service du bureau des élus/);
+  assert.match(elus.texte, /VPN/);
+  assert.match(elus.texte, /Comment ça marche/);
+  assert.match(elus.texte, /Hélène MANTHEY/);
+  assert.doesNotMatch(elus.texte, /téléphone/, 'le portail ne s’atteint pas depuis un telephone');
+  assert.doesNotMatch(ouverture.texte, /Comment participer/, "l'ouverture des agents ne change pas");
 });

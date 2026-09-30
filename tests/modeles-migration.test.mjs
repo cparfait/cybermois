@@ -23,6 +23,22 @@ db.prepare('INSERT INTO modeles_mail (type, objet, corps) VALUES (?, ?, ?)').run
 db.prepare('INSERT INTO modeles_mail (type, objet, corps) VALUES (?, ?, ?)').run('lancement', 'Objet',
   // Une des signatures essayees un temps, publiee quelques minutes.
   '<p>Un nouveau défi.</p>\n<p>Bonne chance,<br>Hélène MANTHEY<br>Délégué à la protection des données personnelles (DPO)<br>Ville de Châtillon</p>');
+// Une annonce modifiee, encore signee de la DSI.
+db.prepare('INSERT INTO modeles_mail (type, objet, corps) VALUES (?, ?, ?)').run('annonce', 'Objet',
+  "<p>Une annonce retouchée.</p>\n<p>Bonne semaine,<br>La Direction des systèmes d'information</p>");
+// L'ancien mail aux elus, enregistre depuis l'editeur sans retouche.
+db.prepare('INSERT INTO modeles_mail (type, objet, corps) VALUES (?, ?, ?)').run('elus',
+  'Cybermois : comment participer depuis la mairie', `<p>{{salutation}}</p>
+<p>La Ville de Châtillon organise le <strong>Cybermois</strong>, {{periode}} : des défis courts pour tester ses réflexes face aux pièges numériques du quotidien. Vous pouvez y participer.</p>
+<h3>Comment participer</h3>
+<p>L'application n'est accessible que <strong>depuis le réseau interne de la mairie</strong>. Deux possibilités :</p>
+<ul>
+<li>utiliser un <strong>PC en libre service du bureau des élus</strong> ;</li>
+<li>si vous avez un <strong>PC de la mairie</strong>, vous connecter au <strong>VPN</strong>, puis ouvrir le portail.</li>
+</ul>
+<p>{{bouton}}</p>
+<p>Connectez-vous avec vos identifiants Windows habituels. Pour toute question, la Direction des systèmes d'information reste à votre disposition.</p>
+<p>La Direction des systèmes d'information</p>`);
 
 const modeles = await import('../src/lib/modeles-mail.js');
 
@@ -51,4 +67,20 @@ test('le texte d’origine porte les nouvelles formulations', () => {
   assert.doesNotMatch(corps, /pas un examen/);
   assert.match(corps, /Le lundi, un mail annonce les défis de la semaine\. Le mercredi, un rappel part si vous n'avez pas fait vos défis\./);
   assert.match(corps, /Les défis non réalisés restent ouverts \{\{jusqu_a_la_fin\}\}\./);
+});
+
+test("un mail aux elus enregistre sans retouche revient au texte d'origine", () => {
+  assert.equal(modeles.lireModele('elus').personnalise, false);
+  assert.match(modeles.lireModele('elus').corps, /Comment participer/);
+  assert.match(modeles.lireModele('elus').corps, /\{\{defis_semaine\}\}/);
+});
+
+test('tous les mails sont signes de la DPO, textes enregistres compris', () => {
+  for (const [type, m] of Object.entries(modeles.MODELES)) {
+    assert.ok(m.corps.includes(modeles.SIGNATURE), `texte d'origine : ${type}`);
+  }
+  const annonce = modeles.lireModele('annonce').corps;
+  assert.ok(annonce.includes(`<p>Bonne semaine,<br>${modeles.SIGNATURE}</p>`));
+  assert.match(annonce, /Une annonce retouchée/, 'le reste du texte demeure');
+  assert.doesNotMatch(annonce, /La Direction des systèmes/);
 });

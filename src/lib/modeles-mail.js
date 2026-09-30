@@ -28,6 +28,9 @@ CREATE TABLE IF NOT EXISTS modeles_mail (
 );
 `);
 
+/** La signature de tous les mails : celle de la DPO, qui porte la campagne. */
+export const SIGNATURE = 'Hélène MANTHEY<br>Déléguée à la Protection des Données<br>Ville de Châtillon';
+
 /**
  * « Ce n'est pas un examen : aucun resultat individuel n'est transmis a votre
  * hierarchie. » a ete retire du mail d'ouverture. Un texte deja modifie la
@@ -53,7 +56,7 @@ CREATE TABLE IF NOT EXISTS modeles_mail (
 (function signerDpo() {
   const cle = 'modeles_mail_signature_dpo_3';
   if (db.prepare("SELECT 1 FROM journal WHERE action = 'migration' AND detail = ?").get(cle)) return;
-  const signature = 'Hélène MANTHEY<br>Déléguée à la Protection des Données<br>Ville de Châtillon';
+  const signature = SIGNATURE;
   // L'ancienne signature, et les deux essais publies un temps (« Direction… »,
   // « Délégué… personnelles (DPO) »).
   const ancienne = /(?:Hélène MANTHEY<br>\s*)?(?:La déléguée à la protection des données|(?:Direction|Délégué) à la protection des données personnelles \(DPO\))(?:<br>\s*Ville de Châtillon)?(?=\s*<\/p>)/g;
@@ -94,6 +97,21 @@ CREATE TABLE IF NOT EXISTS modeles_mail (
   journaliser('migration', 'migration', cle, null);
 }());
 
+/*
+ * Tous les mails signes de la DPO. L'annonce et les resultats signaient « La
+ * Direction des systèmes d'information », les relances rien du tout. Un
+ * texte deja modifie qui signait de la DSI recoit la signature, une fois.
+ */
+(function signerTousLesMails() {
+  const cle = 'modeles_mail_signature_partout';
+  if (db.prepare("SELECT 1 FROM journal WHERE action = 'migration' AND detail = ?").get(cle)) return;
+  for (const m of db.prepare('SELECT type, corps FROM modeles_mail').all()) {
+    const propre = m.corps.replace(/<br>\s*La Direction des systèmes d'information(?=\s*<\/p>)/g, `<br>${SIGNATURE}`);
+    if (propre !== m.corps) db.prepare('UPDATE modeles_mail SET corps = ? WHERE type = ?').run(propre, m.type);
+  }
+  journaliser('migration', 'migration', cle, null);
+}());
+
 /* ------------------------------------------------------------ Reperes */
 
 const EN_LIGNE = (libelle) => ({ libelle, bloc: false });
@@ -113,6 +131,33 @@ const RATTRAPAGE = { rattrapage: EN_LIGNE('Phrase : les défis restent ouverts j
 
 const h3 = (t) => `<h3>${t}</h3>`;
 
+/*
+ * Le mail d'ouverture en morceaux : le mail aux elus le reprend tel quel, en y
+ * ajoutant la maniere d'acceder au portail depuis la mairie.
+ */
+const OUVERTURE_DEBUT = `<p>{{salutation}}</p>
+<p>Octobre est le <strong>mois européen de la cybersécurité</strong>. La Ville de Châtillon y participe avec le <strong>Cybermois</strong> : des défis courts pour tester vos réflexes face aux pièges du quotidien. Il commence aujourd'hui. {{phrase_semaine}}</p>
+<p>{{defis_semaine}}</p>`;
+const OUVERTURE_CONNEXION = `<p>Connectez-vous avec <strong>vos identifiants Windows</strong>. Rien à installer, et vous pouvez jouer depuis un téléphone.</p>`;
+const OUVERTURE_FIN = `${h3('Comment ça marche')}
+<ul>
+<li>Le lundi, un mail annonce les défis de la semaine. Le mercredi, un rappel part si vous n'avez pas fait vos défis.</li>
+<li>Les défis non réalisés restent ouverts {{jusqu_a_la_fin}}.</li>
+<li>Chaque défi terminé rapporte des points à <strong>votre direction</strong>. Les résultats sont diffusés le vendredi.</li>
+</ul>
+${h3('Vos données')}
+<p>Le portail utilise votre identifiant, votre nom, votre adresse professionnelle et votre direction, lus dans l'annuaire. <strong>Votre mot de passe n'est jamais enregistré.</strong> Si vous préférez ne pas figurer au classement individuel, écrivez-moi : vos points compteront toujours pour votre direction. Vos droits et la durée de conservation sont détaillés dans les mentions légales du portail.</p>
+<p>Bonne campagne,<br>${SIGNATURE}</p>`;
+
+// Pas de telephone pour les elus : le portail ne s'atteint que du reseau interne.
+const ELUS_PARTICIPER = `${h3('Comment participer')}
+<p>L'application n'est accessible que <strong>depuis le réseau interne de la mairie</strong>. Deux possibilités :</p>
+<ul>
+<li>utiliser un <strong>PC en libre service du bureau des élus</strong> ;</li>
+<li>si vous avez un <strong>PC de la mairie</strong>, vous connecter au <strong>VPN</strong>, puis ouvrir le portail.</li>
+</ul>
+<p>Connectez-vous avec <strong>vos identifiants Windows</strong>. Rien à installer.</p>`;
+
 /**
  * Les textes d'origine. Ils reprennent mot pour mot les mails ecrits en dur
  * jusqu'ici : passer a l'editeur ne change rien a ce que recoivent les agents.
@@ -129,19 +174,9 @@ export const MODELES = {
       defis_semaine: BLOC('Les défis de la première semaine, avec leur bouton'),
     },
     objet: 'Le Cybermois commence aujourd’hui',
-    corps: `<p>{{salutation}}</p>
-<p>Octobre est le <strong>mois européen de la cybersécurité</strong>. La Ville de Châtillon y participe avec le <strong>Cybermois</strong> : des défis courts pour tester vos réflexes face aux pièges du quotidien. Il commence aujourd'hui. {{phrase_semaine}}</p>
-<p>{{defis_semaine}}</p>
-<p>Connectez-vous avec <strong>vos identifiants Windows</strong>. Rien à installer, et vous pouvez jouer depuis un téléphone.</p>
-${h3('Comment ça marche')}
-<ul>
-<li>Le lundi, un mail annonce les défis de la semaine. Le mercredi, un rappel part si vous n'avez pas fait vos défis.</li>
-<li>Les défis non réalisés restent ouverts {{jusqu_a_la_fin}}.</li>
-<li>Chaque défi terminé rapporte des points à <strong>votre direction</strong>. Les résultats sont diffusés le vendredi.</li>
-</ul>
-${h3('Vos données')}
-<p>Le portail utilise votre identifiant, votre nom, votre adresse professionnelle et votre direction, lus dans l'annuaire. <strong>Votre mot de passe n'est jamais enregistré.</strong> Si vous préférez ne pas figurer au classement individuel, écrivez-moi : vos points compteront toujours pour votre direction. Vos droits et la durée de conservation sont détaillés dans les mentions légales du portail.</p>
-<p>Bonne campagne,<br>Hélène MANTHEY<br>Déléguée à la Protection des Données<br>Ville de Châtillon</p>`,
+    corps: `${OUVERTURE_DEBUT}
+${OUVERTURE_CONNEXION}
+${OUVERTURE_FIN}`,
   },
 
   annonce: {
@@ -158,7 +193,7 @@ ${h3('Vos données')}
 <p>Le <strong>Cybermois</strong> continue. {{phrase_semaine}}</p>
 <p>{{defis_semaine}}</p>
 <p>{{defis_en_retard}}</p>
-<p>Bonne semaine,<br>La Direction des systèmes d'information</p>`,
+<p>Bonne semaine,<br>${SIGNATURE}</p>`,
   },
 
   'relance-semaine': {
@@ -175,7 +210,8 @@ ${h3('Vos données')}
 <p><strong>{{nb_defis_manquants}} défis</strong> du Cybermois vous attendent encore :</p>
 <p>{{defis_manquants}}</p>
 <p>{{participation_service}}</p>
-<p>{{rattrapage}}</p>`,
+<p>{{rattrapage}}</p>
+<p>Bonne journée,<br>${SIGNATURE}</p>`,
   },
 
   relance: {
@@ -191,7 +227,8 @@ ${h3('Vos données')}
 <p>{{participation_service}}</p>
 <p><strong>{{duree}} minutes</strong>, pas plus. Et il n'y a rien à installer.</p>
 <p>{{bouton}}</p>
-<p>{{rattrapage}}</p>`,
+<p>{{rattrapage}}</p>
+<p>Bonne journée,<br>${SIGNATURE}</p>`,
   },
 
   resultats: {
@@ -218,30 +255,27 @@ ${h3('Vos données')}
 <p>{{classement_individuel}}</p>
 <p>{{bouton}}</p>
 <p>Les défis déjà parus restent accessibles : il n'est jamais trop tard pour faire gagner des points à votre direction.</p>
-<p>Bon week-end,<br>La Direction des systèmes d'information</p>`,
+<p>Bon week-end,<br>${SIGNATURE}</p>`,
   },
 
   elus: {
     nom: 'Mail aux élus',
-    aide: "Envoyé à la main aux membres d'un groupe de l'annuaire, depuis la carte « Mail aux élus ».",
+    aide: "Le mail d'ouverture, avec la manière d'accéder au portail depuis la mairie. Envoyé à la main aux "
+      + "membres d'un groupe de l'annuaire, depuis la carte « Mail aux élus ».",
     variables: {
-      ...SALUTATION,
+      ...SALUTATION, ...RATTRAPAGE,
+      titre_defi: DEFI.titre_defi, duree: DEFI.duree, lien_defi: DEFI.lien_defi, defi: DEFI.defi,
+      jusqu_a_la_fin: EN_LIGNE('« jusqu’au lundi 30 novembre »'),
+      phrase_semaine: EN_LIGNE('« Voici le premier défi : » ou « Voici les 2 défis de la semaine : »'),
+      defis_semaine: BLOC('Les défis de la première semaine, avec leur bouton'),
       periode: EN_LIGNE('Dates de la campagne : « du … au … »'),
       lien_portail: EN_LIGNE('Adresse du portail'),
       bouton: BLOC('Bouton vers le portail'),
     },
-    objet: 'Cybermois : comment participer depuis la mairie',
-    corps: `<p>{{salutation}}</p>
-<p>La Ville de Châtillon organise le <strong>Cybermois</strong>, {{periode}} : des défis courts pour tester ses réflexes face aux pièges numériques du quotidien. Vous pouvez y participer.</p>
-${h3('Comment participer')}
-<p>L'application n'est accessible que <strong>depuis le réseau interne de la mairie</strong>. Deux possibilités :</p>
-<ul>
-<li>utiliser un <strong>PC en libre service du bureau des élus</strong> ;</li>
-<li>si vous avez un <strong>PC de la mairie</strong>, vous connecter au <strong>VPN</strong>, puis ouvrir le portail.</li>
-</ul>
-<p>{{bouton}}</p>
-<p>Connectez-vous avec vos identifiants Windows habituels. Pour toute question, la Direction des systèmes d'information reste à votre disposition.</p>
-<p>La Direction des systèmes d'information</p>`,
+    objet: 'Le Cybermois commence aujourd’hui',
+    corps: `${OUVERTURE_DEBUT}
+${ELUS_PARTICIPER}
+${OUVERTURE_FIN}`,
   },
 
   lancement: {
@@ -260,7 +294,7 @@ ${h3('Comment participer')}
 <p><strong>{{duree}} minutes suffisent.</strong> Connectez-vous avec vos identifiants habituels de session Windows.</p>
 <p>{{bouton}}</p>
 <p>Chaque bonne réponse rapporte des points à <strong>votre direction</strong>. Le classement est mis à jour en direct : allez voir où vous en êtes.</p>
-<p>Bonne chance,<br>Hélène MANTHEY<br>Déléguée à la Protection des Données<br>Ville de Châtillon</p>`,
+<p>Bonne chance,<br>${SIGNATURE}</p>`,
   },
 };
 
@@ -313,6 +347,33 @@ export function nettoyerHtml(brut) {
     .replace(/<p>(\s|<br>|&nbsp;)*<\/p>/g, '')
     .trim();
 }
+
+/**
+ * Le mail aux elus reprend desormais le mail d'ouverture. Un texte enregistre
+ * qui n'etait que l'ancien texte d'origine - enregistre sans retouche -
+ * revient au nouveau ; un texte vraiment retouche reste tel quel.
+ */
+function elusRevientAuTexteDOrigine() {
+  const cle = 'modeles_mail_elus_ouverture';
+  if (db.prepare("SELECT 1 FROM journal WHERE action = 'migration' AND detail = ?").get(cle)) return;
+  const ancien = nettoyerHtml(`<p>{{salutation}}</p>
+<p>La Ville de Châtillon organise le <strong>Cybermois</strong>, {{periode}} : des défis courts pour tester ses réflexes face aux pièges numériques du quotidien. Vous pouvez y participer.</p>
+<h3>Comment participer</h3>
+<p>L'application n'est accessible que <strong>depuis le réseau interne de la mairie</strong>. Deux possibilités :</p>
+<ul>
+<li>utiliser un <strong>PC en libre service du bureau des élus</strong> ;</li>
+<li>si vous avez un <strong>PC de la mairie</strong>, vous connecter au <strong>VPN</strong>, puis ouvrir le portail.</li>
+</ul>
+<p>{{bouton}}</p>
+<p>Connectez-vous avec vos identifiants Windows habituels. Pour toute question, la Direction des systèmes d'information reste à votre disposition.</p>
+<p>La Direction des systèmes d'information</p>`);
+  const ligne = db.prepare("SELECT objet, corps FROM modeles_mail WHERE type = 'elus'").get();
+  if (ligne && ligne.corps === ancien && ligne.objet === 'Cybermois : comment participer depuis la mairie') {
+    db.prepare("DELETE FROM modeles_mail WHERE type = 'elus'").run();
+  }
+  journaliser('migration', 'migration', cle, null);
+}
+elusRevientAuTexteDOrigine();
 
 /* ---------------------------------------------------------- Lecture */
 

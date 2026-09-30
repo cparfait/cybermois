@@ -4,7 +4,7 @@ import { config } from './config.js';
 import { db } from './db.js';
 import { classementServices, classementAgents, statistiquesGlobales, ligneClassement } from './scoring.js';
 import { aujourdhui, decalerJours, dateLisible, lundiDe } from './dates.js';
-import { rendreModele } from './modeles-mail.js';
+import { rendreModele, SIGNATURE } from './modeles-mail.js';
 import { filtrerDestinataires, membresDuGroupe } from './groupes.js';
 
 /**
@@ -243,12 +243,16 @@ export function mailLancement(defiId) {
  * @param agent destinataire, pour le saluer par son prenom ; absent, le
  *              message s'adresse a tous (copie de la DPO, apercu).
  */
-function mailOuverture(defi, agent = null) {
-  // Tous les defis de la premiere semaine, pas le seul premier : quand
-  // plusieurs paraissent le premier jour, les autres passaient sous silence.
-  // Rien au-dela de la semaine : le programme ne s'annonce pas a l'avance.
+/**
+ * Les donnees du mail d'ouverture, que reprend le mail aux elus.
+ *
+ * Tous les defis de la premiere semaine, pas le seul premier : quand
+ * plusieurs paraissent le premier jour, les autres passaient sous silence.
+ * Rien au-dela de la semaine : le programme ne s'annonce pas a l'avance.
+ */
+function donneesOuverture(defi, agent) {
   const semaine = defisAVenir(defi.ouvre_le);
-  return composer('ouverture', {
+  return {
     ...donneesDefi(defi, 'Je relève le premier défi'),
     phrase_semaine: semaine.length > 1
       ? `Voici les ${semaine.length} défis de la semaine :`
@@ -258,7 +262,11 @@ function mailOuverture(defi, agent = null) {
     prenom: prenomDe(agent),
     rattrapage: rattrapage(),
     jusqu_a_la_fin: rattrapageCourt(),
-  }, {
+  };
+}
+
+function mailOuverture(defi, agent = null) {
+  return composer('ouverture', donneesOuverture(defi, agent), {
     titre: 'Ouverture du Cybermois',
     preheader: `${defi.duree_minutes} minutes pour le premier défi. Le classement se fait par direction.`,
   });
@@ -353,17 +361,19 @@ export function mailElus(agent) {
   // Le debut, c'est le premier defi : le reglage « Debut de campagne » restait
   // au lundi 5 octobre quand le programme commencait le jeudi 1er. Il ne sert
   // plus que tant qu'aucun defi n'est programme.
-  const debut = premierDefi()?.ouvre_le || config.campagne.debut;
+  const premier = premierDefi();
+  const debut = premier?.ouvre_le || config.campagne.debut;
   const { fin } = config.campagne;
+  // Le mail d'ouverture, avec en plus la maniere d'acceder au portail : les
+  // donnees sont les siennes, le bouton « portail » vient s'y ajouter.
   return composer('elus', {
-    salutation: salutation(agent),
-    prenom: prenomDe(agent),
+    ...(premier ? donneesOuverture(premier, agent) : { salutation: salutation(agent), prenom: prenomDe(agent) }),
     periode: debut && fin
       ? `du ${dateLisible(debut)} au ${dateLisible(fin)}`
       : fin ? `jusqu'au ${dateLisible(fin)}` : 'en octobre',
     lien_portail: `${config.publicUrl}/`,
     bouton: bouton(`${config.publicUrl}/`, 'Ouvrir le portail Cybermois'),
-  }, { titre: 'Le Cybermois', preheader: 'Comment participer depuis la mairie' });
+  }, { titre: 'Ouverture du Cybermois', preheader: 'Comment participer depuis la mairie : réseau interne, PC du bureau des élus ou VPN.' });
 }
 
 /**
@@ -431,7 +441,7 @@ export function mailDiplome(agent) {
 <p>Votre attestation de participation est disponible sur le portail : vous pouvez la télécharger et l'imprimer.</p>
 ${bouton(`${config.publicUrl}/profil`, 'Récupérer mon attestation')}
 <p>Merci pour le temps que vous y avez consacré. La sécurité de la collectivité repose largement sur ces réflexes du quotidien.</p>
-<p>La Direction des systèmes d'information</p>`;
+<p>${SIGNATURE}</p>`;
   return {
     objet: 'Bravo — vous avez terminé le Cybermois',
     html: gabarit({ titre: 'Félicitations', preheader: 'Votre attestation vous attend', corps }),
