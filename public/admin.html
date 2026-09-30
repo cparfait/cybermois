@@ -125,6 +125,29 @@
   .ligne-reponse input[type="checkbox"] { width: 20px; height: 20px; flex: 0 0 auto; accent-color: var(--vert-fonce); }
   .champ-admin { margin-bottom: .9rem; }
   .apercu-mail { border: 1px solid var(--bordure); border-radius: var(--rayon); width: 100%; height: 620px; background: #fff; }
+
+  /* Editeur des textes de mail : l'aspect du mail, pas celui de l'admin. */
+  .barre-editeur { display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; padding: .4rem;
+    border: 1px solid var(--bordure); border-bottom: 0; border-radius: var(--rayon) var(--rayon) 0 0; background: var(--fond-doux); }
+  .barre-editeur button { font: inherit; font-size: .8rem; padding: .3rem .6rem; border: 1px solid var(--bordure);
+    border-radius: 6px; background: #fff; color: #14211c; cursor: pointer; }
+  .barre-editeur button:hover { border-color: var(--vert-fonce); }
+  .barre-editeur select { font-size: .8rem; padding: .3rem .4rem; width: auto; }
+  .barre-editeur .separateur { width: 1px; align-self: stretch; background: var(--bordure); margin: 0 .2rem; }
+  .editeur-mail { min-height: 360px; max-height: 70vh; overflow-y: auto; padding: 1rem 1.4rem;
+    border: 1px solid var(--bordure); border-radius: 0 0 var(--rayon) var(--rayon); background: #fff; color: #14211c;
+    font-family: Georgia, 'Times New Roman', serif; font-size: 16px; line-height: 1.6; }
+  .editeur-mail:focus { outline: 2px solid var(--vert-fonce); outline-offset: 1px; }
+  .editeur-mail h2 { font-family: 'Montserrat', Arial, sans-serif; font-size: 19px; color: #006e46; margin: 1.2em 0 .4em; }
+  .editeur-mail h3 { font-family: 'Montserrat', Arial, sans-serif; font-size: 17px; color: #006e46; margin: 1.2em 0 .3em; }
+  .editeur-mail a { color: #006e46; font-weight: 700; }
+  .editeur-mail .donnee { display: inline-block; padding: 0 .35em; border-radius: 4px; background: #e6f1ec;
+    border: 1px dashed #7aa892; font-family: 'Montserrat', Arial, sans-serif; font-size: .8em; color: #245c44; user-select: all; }
+  .editeur-mail .donnee-bloc { margin: .6em 0; padding: .6em .8em; border-radius: 6px; background: #e6f1ec;
+    border: 1px dashed #7aa892; font-family: 'Montserrat', Arial, sans-serif; font-size: .82em; color: #245c44; user-select: all; }
+  .editeur-mail .donnee-bloc::before { content: '▦ '; }
+  .lien-donnee { font: inherit; font-size: .78rem; padding: 0 .3em; border: 1px dashed #7aa892; border-radius: 4px;
+    background: #e6f1ec; color: #245c44; cursor: pointer; }
   details.aide-admin { background: var(--vert-fonce-clair); border-radius: var(--rayon-sm); padding: .9rem 1.1rem; margin-bottom: 1.2rem; font-family: var(--police-ui); font-size: .88rem; }
   details.aide-admin summary { cursor: pointer; font-weight: 700; }
   code.bloc { display: block; background: var(--vert-fonce-clair); padding: .8rem; border-radius: var(--rayon-sm); font-size: .82rem; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }

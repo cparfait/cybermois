@@ -15,6 +15,9 @@ import {
   envoyerTest, adresseValide,
 } from '../lib/mail.js';
 import { decalerJours } from '../lib/dates.js';
+import {
+  MODELES, listerModeles, verifierModele, enregistrerModele, reinitialiserModele, avecBrouillon,
+} from '../lib/modeles-mail.js';
 import { illustrationDe } from '../lib/illustrations.js';
 import { lancerTelechargement, lireTache, telechargementDisponible } from '../lib/telechargement-video.js';
 import { creerJetonApercu, revoquerJetonApercu, lienApercu } from '../lib/apercu.js';
@@ -769,7 +772,13 @@ export default async function routesAdmin(app) {
    *
    * @returns le mail, `null` si le defi manque, `undefined` si le type est inconnu
    */
-  function construireMail(type, id, agent) {
+  function construireMail(type, id, agent, brouillon = null) {
+    // Un brouillon de l'editeur remplace le texte enregistre, le temps de
+    // construire ce seul message : apercu et test montrent ce qu'on ecrit.
+    return avecBrouillon(type, brouillon, () => construireMailEnregistre(type, id, agent));
+  }
+
+  function construireMailEnregistre(type, id, agent) {
     const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(id);
     switch (type) {
       case 'lancement': return mailLancement(id);
@@ -804,6 +813,36 @@ export default async function routesAdmin(app) {
     return m;
   });
 
+  /* ------------------------------------------------- Textes des mails */
+
+  app.get('/api/admin/modeles-mail', async () => listerModeles());
+
+  /** Apercu d'un texte en cours de modification, sans l'enregistrer. */
+  app.post('/api/admin/mails/apercu', async (requete, reponse) => {
+    const { type, defiId, modele } = requete.body || {};
+    const m = construireMail(String(type || ''), Number(defiId), agentExemple(), modele || null);
+    if (m === undefined) return reponse.code(400).send({ erreur: TYPE_INCONNU });
+    if (!m) return reponse.code(404).send({ erreur: 'Défi introuvable, ou rien à montrer pour cette semaine.' });
+    return m;
+  });
+
+  app.put('/api/admin/modeles-mail/:type', async (requete, reponse) => {
+    const type = requete.params.type;
+    if (!MODELES[type]) return reponse.code(404).send({ erreur: 'Type de mail inconnu.' });
+    const modele = { objet: requete.body?.objet, corps: requete.body?.corps };
+    const erreurs = verifierModele(type, modele);
+    if (erreurs.length) return reponse.code(400).send({ erreur: erreurs.join(' ') });
+    enregistrerModele(type, modele, requete.agent.login);
+    return { ok: true, message: `Texte « ${MODELES[type].nom} » enregistré : les prochains envois l'utiliseront.` };
+  });
+
+  app.delete('/api/admin/modeles-mail/:type', async (requete, reponse) => {
+    const type = requete.params.type;
+    if (!MODELES[type]) return reponse.code(404).send({ erreur: 'Type de mail inconnu.' });
+    reinitialiserModele(type, requete.agent.login);
+    return { ok: true, message: `Texte d'origine rétabli pour « ${MODELES[type].nom} ».` };
+  });
+
   /**
    * Envoi de test a une seule adresse, pour valider un message dans une vraie
    * boite avant de l'envoyer a cinq cents agents.
@@ -822,7 +861,7 @@ export default async function routesAdmin(app) {
 
     const agent = db.prepare('SELECT * FROM agents WHERE lower(email) = lower(?) LIMIT 1').get(adresse)
       || agentExemple();
-    const m = construireMail(String(type || ''), Number(defiId), agent);
+    const m = construireMail(String(type || ''), Number(defiId), agent, requete.body?.modele || null);
     if (m === undefined) return reponse.code(400).send({ erreur: TYPE_INCONNU });
     if (!m) return reponse.code(404).send({ erreur: 'Défi introuvable, ou rien à envoyer pour cette semaine.' });
 

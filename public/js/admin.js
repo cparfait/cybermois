@@ -6,6 +6,7 @@ import { chargerAgents, filtrerAgents } from '/js/admin-agents.js';
 import { chargerConfiguration } from '/js/admin-config.js';
 import { formulaireRecalcul, chargerRegistre } from '/js/admin-corrections.js';
 import { ecranProgramme } from '/js/admin-programme.js';
+import { ouvrirEditeur as ouvrirEditeurMail } from '/js/admin-mails-editeur.js';
 import { formulaireServices } from '/js/admin-services.js';
 import { reconnaitreVideo } from '/js/video.js';
 import { NIVEAUX, niveauDe, verifierBareme, QUESTIONS_PAR_DEFI, TOTAL_DEFI } from '/js/bareme.js';
@@ -806,6 +807,8 @@ chargeurs.mails = async () => {
       </ul>
       <p>Chacun se déclenche aussi à la main ci-dessous. Pour les mails de semaine, le défi choisi
       sert à l'aperçu : il montre le message tel qu'il partira la semaine de ce défi.</p>
+      <p>Le texte de chaque mail se modifie avec « Modifier le texte ». Testez-le en l'envoyant à
+      votre adresse avant de laisser partir l'envoi automatique : c'est le texte enregistré qui part.</p>
     </details>
 
     <div class="carte" style="margin-bottom:1.5rem">
@@ -830,6 +833,7 @@ chargeurs.mails = async () => {
           </select>
         </div>
         <div class="champ-admin"><button class="btn btn-principal" id="btn-apercu">Prévisualiser</button></div>
+        <div class="champ-admin"><button class="btn btn-secondaire" id="btn-modifier-mail">Modifier le texte</button></div>
       </div>
 
       <div id="zone-actions" class="rang" style="border-top:1px solid var(--bordure);padding-top:1rem"></div>
@@ -850,9 +854,22 @@ chargeurs.mails = async () => {
       </p>
     </div>
 
+    <div id="zone-editeur-mail" style="margin-bottom:1.5rem"></div>
     <div id="zone-apercu"></div>`;
 
   document.getElementById('btn-apercu').addEventListener('click', apercu);
+  document.getElementById('btn-modifier-mail').addEventListener('click', () => {
+    if (!defiChoisi()) return;
+    const zone = document.getElementById('zone-editeur-mail');
+    ouvrirEditeurMail(zone, document.getElementById('mail-type').value, {
+      defiId: () => document.getElementById('mail-defi').value,
+      adresseTest: () => {
+        const champ = document.getElementById('mail-test-adresse');
+        return champ.value.trim() && champ.checkValidity() ? champ.value.trim() : null;
+      },
+      zoneApercu: document.getElementById('zone-apercu'),
+    }).then(() => zone.scrollIntoView({ block: 'start' }));
+  });
   document.getElementById('mail-type').addEventListener('change', majActions);
   document.getElementById('btn-test-mail').addEventListener('click', envoyerTest);
   majActions();

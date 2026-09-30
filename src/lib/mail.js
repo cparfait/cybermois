@@ -5,6 +5,7 @@ import { db } from './db.js';
 import { classementServices, classementAgents, statistiquesGlobales, ligneClassement } from './scoring.js';
 import { NIVEAUX, QUESTIONS_PAR_DEFI, TOTAL_DEFI } from './bareme.js';
 import { aujourdhui, decalerJours, dateLisible } from './dates.js';
+import { rendreModele } from './modeles-mail.js';
 
 let transport = null;
 function obtenirTransport() {
@@ -110,6 +111,59 @@ export function mailBienvenue(agent) {
   return defi ? mailOuverture(defi, agent) : null;
 }
 
+/* -------------------------------------------------- Blocs de donnees */
+
+// Ce qui change d'un agent ou d'une semaine a l'autre. Le texte autour se
+// modifie dans l'onglet Mails (modeles-mail.js) ; ces blocs, eux, sont des
+// donnees mises en forme, et restent dans le code.
+
+const salutation = (agent) => (agent
+  ? `Bonjour ${prenomUsuel(agent.nom_complet, agent.prenom)},`
+  : 'Bonjour à toutes et à tous,');
+
+const blocDefi = (defi) => `
+<h2 style="font-family:'Montserrat',Arial,sans-serif;font-size:21px;color:#006e46;margin:22px 0 6px;">${echapper(defi.titre)}</h2>
+<p style="font-style:italic;color:#4a5a53;margin-top:0;">${echapper(defi.accroche)}</p>`;
+
+/**
+ * Titre, accroche, duree, puis bouton. Avec `jour`, un defi pas encore paru a
+ * la place sa date d'ouverture : le lien ne s'ouvrirait pas.
+ */
+const blocDefiAvecAction = (d, libelle, jour = null) => `
+<h2 style="font-family:'Montserrat',Arial,sans-serif;font-size:19px;color:#006e46;margin:22px 0 4px;">${echapper(d.titre)}</h2>
+<p style="font-style:italic;color:#4a5a53;margin:0;">${echapper(d.accroche)} — ${d.duree_minutes} minutes</p>
+${!jour || d.ouvre_le <= jour
+    ? bouton(`${config.publicUrl}/defi/${d.id}`, libelle)
+    : `<p style="margin:10px 0 18px;"><strong>En ligne à partir du ${echapper(dateLisible(d.ouvre_le))}.</strong></p>`}`;
+
+function blocParticipation(agent) {
+  const stats = ligneClassement(agent.service);
+  return `<p style="background:#f4f8dd;border-left:4px solid #aec80c;padding:12px 16px;margin:20px 0;">
+  ${stats
+    ? `Votre service — <strong>${echapper(agent.service)}</strong> — affiche <strong>${stats.taux_participation} %</strong> de participation. Chaque défi terminé fait monter votre service au classement.`
+    : `Votre participation fera monter <strong>${echapper(agent.service)}</strong> au classement.`}
+</p>`;
+}
+
+/** Les reperes communs a tous les mails qui portent sur un defi. */
+const donneesDefi = (defi, libelleBouton) => ({
+  titre_defi: defi.titre,
+  accroche_defi: defi.accroche,
+  intro_defi: defi.intro,
+  duree: String(defi.duree_minutes),
+  lien_defi: `${config.publicUrl}/defi/${defi.id}`,
+  defi: blocDefi(defi),
+  bouton: bouton(`${config.publicUrl}/defi/${defi.id}`, libelleBouton),
+});
+
+const prenomDe = (agent) => (agent ? prenomUsuel(agent.nom_complet, agent.prenom) : '');
+
+/** Le mail pret a partir : texte du modele, donnees remplacees, gabarit. */
+function composer(type, valeurs, { titre, preheader }) {
+  const { objet, corps } = rendreModele(type, valeurs);
+  return { objet, html: gabarit({ titre, preheader, corps }), texte: versTexte(corps) };
+}
+
 /**
  * Mail de lancement : destine a etre copie-colle par la DPO depuis sa propre boite.
  *
@@ -122,7 +176,6 @@ export function mailBienvenue(agent) {
 export function mailLancement(defiId) {
   const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(Number(defiId));
   if (!defi) return null;
-  const lien = `${config.publicUrl}/defi/${defi.id}`;
 
   // Le premier defi de la campagne se reconnait a sa date de parution, non a
   // un rang : rien n'empeche d'en faire paraitre deux le meme jour, mais le
@@ -130,22 +183,8 @@ export function mailLancement(defiId) {
   const premier = premierDefi();
   if (premier && premier.id === defi.id) return mailOuverture(defi);
 
-  const corps = `
-<p>Bonjour à toutes et à tous,</p>
-<p>Le <strong>Cybermois</strong> se poursuit à la Ville de Châtillon. Un nouveau défi est en ligne :</p>
-<h2 style="font-family:'Montserrat',Arial,sans-serif;font-size:21px;color:#006e46;margin:22px 0 6px;">${echapper(defi.titre)}</h2>
-<p style="font-style:italic;color:#4a5a53;margin-top:0;">${echapper(defi.accroche)}</p>
-<p>${echapper(defi.intro)}</p>
-<p><strong>${defi.duree_minutes} minutes suffisent.</strong> Connectez-vous avec vos identifiants habituels de session Windows.</p>
-${bouton(lien, 'Je relève le défi')}
-<p>Chaque bonne réponse rapporte des points à <strong>votre service</strong>. Le classement est mis à jour en direct : allez voir où vous en êtes.</p>
-<p>Bonne chance,<br>La déléguée à la protection des données</p>`;
-
-  return {
-    objet: `Cybermois — Nouveau défi : ${defi.titre}`,
-    html: gabarit({ titre: defi.titre, preheader: defi.accroche, corps }),
-    texte: versTexte(corps),
-  };
+  return composer('lancement', donneesDefi(defi, 'Je relève le défi'),
+    { titre: defi.titre, preheader: defi.accroche });
 }
 
 /**
@@ -166,119 +205,46 @@ ${bouton(lien, 'Je relève le défi')}
  *              message s'adresse a tous (copie de la DPO, apercu).
  */
 function mailOuverture(defi, agent = null) {
-  const lien = `${config.publicUrl}/defi/${defi.id}`;
   const defis = db.prepare('SELECT titre, ouvre_le FROM defis WHERE publie = 1 ORDER BY ouvre_le, id').all();
   const nbDefis = defis.length;
-  const h3 = "font-family:'Montserrat',Arial,sans-serif;font-size:17px;color:#006e46;margin:26px 0 6px;";
-  const salutation = agent
-    ? `Bonjour ${echapper(prenomUsuel(agent.nom_complet, agent.prenom))},`
-    : 'Bonjour à toutes et à tous,';
 
-  const corps = `
-<p>${salutation}</p>
-
-<p>Octobre est le <strong>mois européen de la cybersécurité</strong>. La Ville de Châtillon
-y participe cette année avec une opération courte, ouverte à tous les agents :
-<strong>le Cybermois</strong>. Il commence aujourd'hui.</p>
-
-<h2 style="font-family:'Montserrat',Arial,sans-serif;font-size:21px;color:#006e46;margin:22px 0 6px;">${echapper(defi.titre)}</h2>
-<p style="font-style:italic;color:#4a5a53;margin-top:0;">${echapper(defi.accroche)}</p>
-
-<p><strong>${nbDefis} défis au fil du mois, ${defi.duree_minutes} minutes chacun.</strong>
-Des questions concrètes, tirées de situations qui se produisent vraiment dans une
-collectivité. Après chaque réponse, la correction vous dit ce que vous avez trouvé,
-ce qui vous a échappé, et pourquoi.</p>
-
-${bouton(lien, 'Je relève le premier défi')}
-
-<p>Connectez-vous avec <strong>vos identifiants de session Windows</strong> — votre
-identifiant ou votre adresse professionnelle, au choix. Il n'y a rien à installer,
-et vous pouvez jouer depuis un téléphone.</p>
-
-<h3 style="${h3}">Comment ça marche</h3>
-<ul style="padding-left:20px;margin:8px 0;">
-  <li style="margin-bottom:8px;"><strong>Un défi paraît à chaque date du calendrier</strong>
-    ci-dessous. Il reste ouvert jusqu'à la fin de la campagne${config.campagne.fin
-      ? `, le ${echapper(dateLisible(config.campagne.fin))}` : ''} : si vous en manquez un,
-    vous pouvez le rattraper.</li>
-  <li style="margin-bottom:8px;"><strong>${QUESTIONS_PAR_DEFI} questions, ${TOTAL_DEFI} points par défi</strong> :
-    ${NIVEAUX.map((n) => `${n.attendues} ${n.libelle.toLowerCase()}${n.attendues > 1 ? 's' : ''} à ${n.points} points`).join(', ')}.
-    Tous les défis pèsent le même poids : aucune semaine ne compte plus qu'une autre.</li>
-  <li style="margin-bottom:8px;"><strong>Le mercredi</strong>, un rappel est envoyé à celles
-    et ceux qui n'ont pas encore fait les défis de la semaine. Aucun si vous êtes à jour.</li>
-  <li style="margin-bottom:8px;"><strong>Le vendredi</strong>, les résultats et le classement
-    des services sont diffusés.</li>
-  <li>À la fin de la campagne, une <strong>attestation de participation</strong> est à
-    télécharger depuis votre profil sur le portail.</li>
-</ul>
-
-${nbDefis > 1 ? `
+  const calendrier = nbDefis > 1 ? `
 <p style="margin:16px 0 6px;"><strong>Le calendrier</strong></p>
 <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:15px;">
   ${defis.map((d) => `<tr>
     <td style="padding:4px 14px 4px 0;white-space:nowrap;color:#006e46;font-family:'Montserrat',Arial,sans-serif;font-weight:700;">${echapper(dateLisible(d.ouvre_le))}</td>
     <td style="padding:4px 0;">${echapper(d.titre)}</td></tr>`).join('')}
-</table>` : ''}
+</table>` : '';
 
-<h3 style="font-family:'Montserrat',Arial,sans-serif;font-size:17px;color:#006e46;margin:26px 0 6px;">Ce n'est pas un examen</h3>
-<p>Aucun résultat individuel n'est transmis à votre hiérarchie, et se tromper n'a
-aucune conséquence : c'est même l'intérêt de l'exercice. Les questions sont conçues
-pour piéger des gens attentifs, parce que les attaques réelles le sont aussi.</p>
-
-<p>Le classement se fait <strong>par service</strong> : chaque défi terminé rapporte des
-points au vôtre. Un classement individuel existe aussi ; si vous préférez ne pas y
-figurer nominativement, écrivez-moi — votre participation continuera de compter pour
-votre service, sans que votre nom apparaisse.</p>
-
-<h3 style="font-family:'Montserrat',Arial,sans-serif;font-size:17px;color:#006e46;margin:26px 0 6px;">Vos données</h3>
-<p>Le portail utilise votre identifiant, votre nom, votre adresse professionnelle et
-votre service, lus dans l'annuaire de la collectivité. Vos réponses et vos scores sont
-conservés jusqu'à la fin de l'année suivant la campagne ; un décompte du nombre de
-défis suivis est gardé trois ans comme preuve de l'action de sensibilisation.
-<strong>Votre mot de passe n'est jamais enregistré</strong> : il sert uniquement à vous
-authentifier auprès de l'annuaire.</p>
-
-<p>Vous disposez d'un droit d'accès, de rectification, d'effacement, de limitation et
-d'opposition sur ces données. Les mentions légales complètes sont accessibles depuis le
-portail, et je reste à votre disposition pour toute question.</p>
-
-<p>Bonne campagne à toutes et à tous,</p>
-<p>La déléguée à la protection des données<br>Ville de Châtillon</p>`;
-
-  return {
-    objet: `Cybermois : ${nbDefis} défis pour aiguiser vos réflexes — le premier est en ligne`,
-    html: gabarit({
-      titre: 'Ouverture du Cybermois',
-      preheader: `${nbDefis} défis, ${defi.duree_minutes} minutes chacun. Le classement se fait par service.`,
-      corps,
-    }),
-    texte: versTexte(corps),
-  };
+  return composer('ouverture', {
+    ...donneesDefi(defi, 'Je relève le premier défi'),
+    salutation: salutation(agent),
+    prenom: prenomDe(agent),
+    rattrapage: rattrapage(),
+    nb_defis: String(nbDefis),
+    questions_par_defi: String(QUESTIONS_PAR_DEFI),
+    points_par_defi: String(TOTAL_DEFI),
+    jusqu_a_la_fin: config.campagne.fin
+      ? `jusqu'à la fin de la campagne, le ${dateLisible(config.campagne.fin)}`
+      : "jusqu'à la fin de la campagne",
+    bareme: NIVEAUX.map((n) => `${n.attendues} ${n.libelle.toLowerCase()}${n.attendues > 1 ? 's' : ''} à ${n.points} points`).join(', '),
+    calendrier,
+  }, {
+    titre: 'Ouverture du Cybermois',
+    preheader: `${nbDefis} défis, ${defi.duree_minutes} minutes chacun. Le classement se fait par service.`,
+  });
 }
 
 export function mailRelance(agent, defiId) {
   const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(Number(defiId));
   if (!defi) return null;
-  const lien = `${config.publicUrl}/defi/${defi.id}`;
-  const stats = ligneClassement(agent.service);
-
-  const corps = `
-<p>Bonjour ${echapper(prenomUsuel(agent.nom_complet, agent.prenom))},</p>
-<p>Le défi <strong>${echapper(defi.titre)}</strong> vous attend toujours.</p>
-<p style="background:#f4f8dd;border-left:4px solid #aec80c;padding:12px 16px;margin:20px 0;">
-  ${stats
-    ? `Votre service — <strong>${echapper(agent.service)}</strong> — affiche <strong>${stats.taux_participation} %</strong> de participation. Chaque défi terminé fait monter votre service au classement.`
-    : `Votre participation fera monter <strong>${echapper(agent.service)}</strong> au classement.`}
-</p>
-<p><strong>${defi.duree_minutes} minutes</strong>, pas plus. Et il n'y a rien à installer.</p>
-${bouton(lien, 'Faire le défi maintenant')}
-<p style="font-size:14px;color:#4a5a53;">${rattrapage()}</p>`;
-
-  return {
-    objet: `Il vous reste 5 minutes ? Le défi « ${defi.titre} » vous attend`,
-    html: gabarit({ titre: 'Relance', preheader: defi.accroche, corps }),
-    texte: versTexte(corps),
-  };
+  return composer('relance', {
+    ...donneesDefi(defi, 'Faire le défi maintenant'),
+    salutation: salutation(agent),
+    prenom: prenomDe(agent),
+    rattrapage: rattrapage(),
+    participation_service: blocParticipation(agent),
+  }, { titre: 'Relance', preheader: defi.accroche });
 }
 
 /**
@@ -290,53 +256,35 @@ ${bouton(lien, 'Faire le défi maintenant')}
  */
 export function mailAnnonce(agent, semaine, enRetard, jour = aujourdhui()) {
   if (!semaine?.length) return null;
-  const h2 = "font-family:'Montserrat',Arial,sans-serif;font-size:19px;color:#006e46;margin:22px 0 4px;";
-  const salutation = agent
-    ? `Bonjour ${echapper(prenomUsuel(agent.nom_complet, agent.prenom))},`
-    : 'Bonjour à toutes et à tous,';
 
-  const blocDefi = (d) => {
-    const ouvert = d.ouvre_le <= jour;
-    return `
-<h2 style="${h2}">${echapper(d.titre)}</h2>
-<p style="font-style:italic;color:#4a5a53;margin:0;">${echapper(d.accroche)} — ${d.duree_minutes} minutes</p>
-${ouvert
-    ? bouton(`${config.publicUrl}/defi/${d.id}`, 'Je relève le défi')
-    : `<p style="margin:10px 0 18px;"><strong>En ligne à partir du ${echapper(dateLisible(d.ouvre_le))}.</strong></p>`}`;
-  };
-
-  const corps = `
-<p>${salutation}</p>
-<p>Le <strong>Cybermois</strong> continue. ${semaine.length > 1
-    ? `Voici les <strong>${semaine.length} défis</strong> de la semaine :`
-    : 'Voici le défi de la semaine :'}</p>
-${semaine.map(blocDefi).join('')}
-
-<h3 style="font-family:'Montserrat',Arial,sans-serif;font-size:17px;color:#006e46;margin:26px 0 6px;">Les défis précédents sont toujours ouverts</h3>
-${enRetard?.length ? `
+  const retard = enRetard?.length ? `
 <p style="margin-top:0;">Il vous en reste ${enRetard.length === 1 ? 'un' : enRetard.length} à faire — chacun fait encore gagner des points à votre service :</p>
 <ul style="padding-left:20px;margin:8px 0 16px;">
   ${enRetard.map((d) => `<li style="margin-bottom:6px;"><a href="${echapper(`${config.publicUrl}/defi/${d.id}`)}" style="color:#006e46;font-weight:700;">${echapper(d.titre)}</a></li>`).join('')}
 </ul>` : `
 <p style="margin-top:0;">${agent
     ? 'Vous êtes à jour : bravo. Si un collègue a manqué une semaine, dites-lui qu’il peut encore la rattraper.'
-    : 'Vous en avez manqué un ? Il n’est pas trop tard : chaque défi rattrapé fait encore gagner des points à votre service.'}</p>`}
-<p style="font-size:14px;color:#4a5a53;">${rattrapage()}</p>
-<p>Bonne semaine,<br>La Direction des systèmes d'information</p>`;
+    : 'Vous en avez manqué un ? Il n’est pas trop tard : chaque défi rattrapé fait encore gagner des points à votre service.'}</p>`;
 
-  return {
-    objet: semaine.length > 1
-      ? `Cybermois — ${semaine.length} nouveaux défis cette semaine`
-      : `Cybermois — Nouveau défi : ${semaine[0].titre}`,
-    html: gabarit({ titre: 'Les défis de la semaine', preheader: semaine.map((d) => d.titre).join(' · '), corps }),
-    texte: versTexte(corps),
-  };
+  return composer('annonce', {
+    salutation: salutation(agent),
+    prenom: prenomDe(agent),
+    rattrapage: rattrapage(),
+    nouveautes: semaine.length > 1
+      ? `${semaine.length} nouveaux défis cette semaine`
+      : `Nouveau défi : ${semaine[0].titre}`,
+    phrase_semaine: semaine.length > 1
+      ? `Voici les ${semaine.length} défis de la semaine :`
+      : 'Voici le défi de la semaine :',
+    defis_semaine: semaine.map((d) => blocDefiAvecAction(d, 'Je relève le défi', jour)).join(''),
+    defis_en_retard: retard,
+  }, { titre: 'Les défis de la semaine', preheader: semaine.map((d) => d.titre).join(' · ') });
 }
 
 // « jusqu'au 31 octobre » etait ecrit en dur : faux des que la campagne
-// changeait de dates.
+// changeait de dates. Du texte brut : le modele l'echappe a l'insertion.
 const rattrapage = () => (config.campagne.fin
-  ? `Les défis déjà parus restent ouverts jusqu'au ${echapper(dateLisible(config.campagne.fin))} : vous pouvez les rattraper.`
+  ? `Les défis déjà parus restent ouverts jusqu'au ${dateLisible(config.campagne.fin)} : vous pouvez les rattraper.`
   : 'Les défis déjà parus restent ouverts : vous pouvez les rattraper.');
 
 /**
@@ -349,26 +297,14 @@ export function mailRelanceSemaine(agent, manquants) {
   if (!manquants?.length) return null;
   if (manquants.length === 1) return mailRelance(agent, manquants[0].id);
 
-  const stats = ligneClassement(agent.service);
-  const corps = `
-<p>Bonjour ${echapper(prenomUsuel(agent.nom_complet, agent.prenom))},</p>
-<p>Cette semaine, <strong>${manquants.length} défis</strong> du Cybermois vous attendent encore :</p>
-${manquants.map((d) => `
-<h2 style="font-family:'Montserrat',Arial,sans-serif;font-size:18px;color:#006e46;margin:22px 0 4px;">${echapper(d.titre)}</h2>
-<p style="font-style:italic;color:#4a5a53;margin:0;">${echapper(d.accroche)} — ${d.duree_minutes} minutes</p>
-${bouton(`${config.publicUrl}/defi/${d.id}`, 'Faire ce défi')}`).join('')}
-<p style="background:#f4f8dd;border-left:4px solid #aec80c;padding:12px 16px;margin:20px 0;">
-  ${stats
-    ? `Votre service — <strong>${echapper(agent.service)}</strong> — affiche <strong>${stats.taux_participation} %</strong> de participation. Chaque défi terminé fait monter votre service au classement.`
-    : `Votre participation fera monter <strong>${echapper(agent.service)}</strong> au classement.`}
-</p>
-<p style="font-size:14px;color:#4a5a53;">${rattrapage()}</p>`;
-
-  return {
-    objet: `Cybermois — ${manquants.length} défis vous attendent cette semaine`,
-    html: gabarit({ titre: 'Relance', preheader: manquants.map((d) => d.titre).join(' · '), corps }),
-    texte: versTexte(corps),
-  };
+  return composer('relance-semaine', {
+    salutation: salutation(agent),
+    prenom: prenomDe(agent),
+    rattrapage: rattrapage(),
+    nb_defis_manquants: String(manquants.length),
+    defis_manquants: manquants.map((d) => blocDefiAvecAction(d, 'Faire ce défi')).join(''),
+    participation_service: blocParticipation(agent),
+  }, { titre: 'Relance', preheader: manquants.map((d) => d.titre).join(' · ') });
 }
 
 export function mailResultats(defiId) {
@@ -393,32 +329,20 @@ export function mailResultats(defiId) {
       <td style="padding:9px 6px;text-align:right;font-family:'Montserrat',Arial,sans-serif;font-weight:700;color:#006e46;white-space:nowrap;">${a.score_total} pts</td>
     </tr>`;
 
-  const corps = `
-<p>Bonjour à toutes et à tous,</p>
-<p>Voici les résultats${defi ? ` du défi <strong>${echapper(defi.titre)}</strong>` : ' de la campagne'}.</p>
+  const chiffre = (valeur, libelle) => `<td align="center" style="padding:14px 6px;"><div style="font-family:'Montserrat',Arial,sans-serif;font-size:26px;font-weight:900;color:#006e46;">${valeur}</div><div style="font-size:13px;color:#4a5a53;">${libelle}</div></td>`;
+  const taux = stats.inscrits ? Math.round((stats.joueurs / stats.inscrits) * 100) : 0;
 
-<table role="presentation" width="100%" style="background:#e6f1ec;border-radius:10px;padding:4px;margin:20px 0;"><tr>
-  <td align="center" style="padding:14px 6px;"><div style="font-family:'Montserrat',Arial,sans-serif;font-size:26px;font-weight:900;color:#006e46;">${stats.joueurs}</div><div style="font-size:13px;color:#4a5a53;">participants</div></td>
-  <td align="center" style="padding:14px 6px;"><div style="font-family:'Montserrat',Arial,sans-serif;font-size:26px;font-weight:900;color:#006e46;">${stats.inscrits ? Math.round((stats.joueurs / stats.inscrits) * 100) : 0} %</div><div style="font-size:13px;color:#4a5a53;">de participation</div></td>
-  <td align="center" style="padding:14px 6px;"><div style="font-family:'Montserrat',Arial,sans-serif;font-size:26px;font-weight:900;color:#006e46;">${stats.points_cumules}</div><div style="font-size:13px;color:#4a5a53;">points cumulés</div></td>
-</tr></table>
-
-<h2 style="font-family:'Montserrat',Arial,sans-serif;font-size:19px;color:#006e46;margin:26px 0 8px;">🏆 Classement des services</h2>
-<p style="font-size:13px;color:#4a5a53;margin-top:0;">Score moyen par agent du service, et taux de participation.</p>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px;">${services.slice(0, 10).map(ligneService).join('')}</table>
-
-<h2 style="font-family:'Montserrat',Arial,sans-serif;font-size:19px;color:#006e46;margin:26px 0 8px;">⭐ Classement individuel</h2>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px;">${agents.map(ligneAgent).join('')}</table>
-
-${bouton(`${config.publicUrl}/classement`, 'Voir le classement complet')}
-<p>Les défis déjà parus restent accessibles : il n'est jamais trop tard pour faire gagner des points à votre service.</p>
-<p>Bon week-end,<br>La Direction des systèmes d'information</p>`;
-
-  return {
-    objet: `Cybermois — Résultats${defi ? ` : ${defi.titre}` : ''}`,
-    html: gabarit({ titre: 'Résultats', preheader: `${stats.joueurs} participants, classement des services`, corps }),
-    texte: versTexte(corps),
-  };
+  return composer('resultats', {
+    titre_defi: defi?.titre || '',
+    sujet_resultats: defi ? `du défi ${defi.titre}` : 'de la campagne',
+    participants: String(stats.joueurs),
+    chiffres: `<table role="presentation" width="100%" style="background:#e6f1ec;border-radius:10px;padding:4px;margin:20px 0;"><tr>
+  ${chiffre(stats.joueurs, 'participants')}${chiffre(`${taux} %`, 'de participation')}${chiffre(stats.points_cumules, 'points cumulés')}
+</tr></table>`,
+    classement_services: `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px;">${services.slice(0, 10).map(ligneService).join('')}</table>`,
+    classement_individuel: `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px;">${agents.map(ligneAgent).join('')}</table>`,
+    bouton: bouton(`${config.publicUrl}/classement`, 'Voir le classement complet'),
+  }, { titre: 'Résultats', preheader: `${stats.joueurs} participants, classement des services` });
 }
 
 export function mailDiplome(agent) {
