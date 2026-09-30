@@ -90,29 +90,46 @@ export const dernierDefiParu = (jour = aujourdhui()) => db.prepare(
   'SELECT * FROM defis WHERE publie = 1 AND ouvre_le <= ? ORDER BY ouvre_le DESC, id DESC LIMIT 1'
 ).get(jour) || null;
 
+/*
+ * Trois periodes, une par mail. La « semaine » est celle du calendrier, du
+ * lundi au dimanche : une fenetre de sept jours glissante debordait sur la
+ * semaine suivante - une ouverture un mercredi annoncait les defis du lundi
+ * d'apres, que l'annonce de ce lundi-la reprenait une seconde fois.
+ */
+
+const dimancheDe = (jour) => decalerJours(lundiDe(jour), 6);
+
 /**
- * Les defis de la semaine : parus dans les sept derniers jours, aujourd'hui
- * compris. Une fenetre glissante plutot que la semaine du calendrier : un
- * defi paru un jeudi doit encore etre rappele le mercredi suivant, alors
- * qu'il appartient a la semaine d'avant.
+ * Les defis qui paraissent de `jour` a la fin de sa semaine : ceux qu'annoncent
+ * l'ouverture (a partir du premier jour) et l'annonce du lundi.
+ */
+export const defisAVenir = (jour = aujourdhui()) => db.prepare(`
+  SELECT * FROM defis WHERE publie = 1 AND ouvre_le BETWEEN ? AND ? ORDER BY ouvre_le, id
+`).all(jour, dimancheDe(jour));
+
+/**
+ * Les defis dont parlent les resultats envoyes `jour` : parus depuis le
+ * samedi precedant sa semaine. Un vendredi, c'est du samedi au vendredi :
+ * un defi du week-end compte ainsi dans les resultats suivants, et chaque
+ * defi est nomme une fois, par un seul vendredi.
  */
 export const defisDeLaSemaine = (jour = aujourdhui()) => db.prepare(`
   SELECT * FROM defis WHERE publie = 1 AND ouvre_le BETWEEN ? AND ? ORDER BY ouvre_le, id
-`).all(decalerJours(jour, -6), jour);
+`).all(decalerJours(lundiDe(jour), -2), jour);
 
-/**
- * Tous les defis deja parus. La relance du mercredi les reprend tous : un
- * defi manque il y a trois semaines se rattrape encore, et la relance
- * s'en tenait aux sept derniers jours.
- */
+/** Tous les defis parus a `jour`. */
 export const defisParus = (jour = aujourdhui()) => db.prepare(
   'SELECT * FROM defis WHERE publie = 1 AND ouvre_le <= ? ORDER BY ouvre_le, id'
 ).all(jour);
 
-/** Les defis qui paraissent dans les sept jours qui viennent, aujourd'hui compris. */
-export const defisAVenir = (jour = aujourdhui()) => db.prepare(`
-  SELECT * FROM defis WHERE publie = 1 AND ouvre_le BETWEEN ? AND ? ORDER BY ouvre_le, id
-`).all(jour, decalerJours(jour, 6));
+/**
+ * Les defis que reprend la relance du mercredi : tous ceux parus depuis au
+ * moins deux jours, les plus anciens compris. Un defi paru le matin meme -
+ * ou la veille - n'a pas encore ete manque : la relance partait le jour
+ * meme de l'ouverture quand celle-ci tombait un mercredi.
+ */
+export const DELAI_RELANCE = 2;
+export const defisARelancer = (jour = aujourdhui()) => defisParus(decalerJours(jour, -DELAI_RELANCE));
 
 /** Mail d'ouverture adresse a un agent. `null` si aucun defi n'est publie. */
 export function mailBienvenue(agent) {
@@ -480,10 +497,10 @@ export function mailsDeLaSemaine(lundi, agent) {
 
   // La relance : memes conditions que l'envoi du mercredi (envoyerRelancesSemaine).
   const mercredi = jour(2);
-  const aRelancer = close(mercredi) ? [] : defisParus(mercredi);
+  const aRelancer = close(mercredi) ? [] : defisARelancer(mercredi);
   ajouter('relance-semaine', mercredi, aRelancer.length ? mailRelanceSemaine(agent, aRelancer) : null,
     close(mercredi) ? 'Pas de relance : la campagne est terminée.'
-      : aRelancer.length ? null : 'Pas de relance : aucun défi paru.');
+      : aRelancer.length ? null : `Pas de relance : aucun défi paru depuis au moins ${DELAI_RELANCE} jours.`);
 
   const vendredi = jour(4);
   const dernier = dernierDefiParu(vendredi);
@@ -738,8 +755,10 @@ export async function envoyerRelancesSemaine({ simulation = false, jour = aujour
   if (config.campagne.fin && jour > config.campagne.fin) {
     return { ok: false, message: 'La campagne est terminée : plus de relance.' };
   }
-  const defis = defisParus(jour);
-  if (!defis.length) return { ok: false, message: 'Aucun défi paru : rien à relancer.' };
+  const defis = defisARelancer(jour);
+  if (!defis.length) {
+    return { ok: false, message: `Aucun défi paru depuis au moins ${DELAI_RELANCE} jours : rien à relancer.` };
+  }
 
   const fait = db.prepare(
     'SELECT 1 FROM participations WHERE agent_id = ? AND defi_id = ? AND entrainement = 0'

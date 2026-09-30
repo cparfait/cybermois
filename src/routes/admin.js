@@ -13,7 +13,7 @@ import {
   mailBienvenue, mailAnnonce, mailRelanceSemaine, defisAVenir,
   envoyerOuverture, envoyerAnnonce, envoyerRelancesSemaine, dernierDefiParu,
   envoyerTest, adresseValide, semainesDeCampagne, mailsDeLaSemaine,
-  defisParus, mailElus, envoyerElus, dernierEnvoiElus,
+  defisARelancer, mailElus, envoyerElus, dernierEnvoiElus,
 } from '../lib/mail.js';
 import {
   listerGroupes, lireExclusionsMail, enregistrerExclusionsMail, TYPES_EXCLUSION,
@@ -801,7 +801,7 @@ export default async function routesAdmin(app) {
         return mailAnnonce(agent, defisAVenir(lundi), anciens, lundi);
       }
       case 'relance-semaine':
-        return defi ? mailRelanceSemaine(agent, defisParus(decalerJours(lundiDe(defi.ouvre_le), 2))) : null;
+        return defi ? mailRelanceSemaine(agent, defisARelancer(decalerJours(lundiDe(defi.ouvre_le), 2))) : null;
       case 'elus': return mailElus(agent);
       default: return undefined;
     }

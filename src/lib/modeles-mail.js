@@ -98,7 +98,7 @@ ${h3('Vos données')}
 
   'relance-semaine': {
     nom: 'Relance du mercredi (plusieurs défis)',
-    aide: "Reprend tous les défis déjà parus que l'agent n'a pas terminés. Quand un seul lui manque, c'est la relance d'un seul défi qui part.",
+    aide: "Reprend tous les défis parus depuis au moins deux jours que l'agent n'a pas terminés. Quand un seul lui manque, c'est la relance d'un seul défi qui part.",
     variables: {
       ...SALUTATION, ...RATTRAPAGE,
       nb_defis_manquants: EN_LIGNE('Nombre de défis qui manquent'),

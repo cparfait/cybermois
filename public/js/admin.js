@@ -848,7 +848,8 @@ chargeurs.mails = async () => {
         <li><strong>Annonce (lundis suivants)</strong> — à chaque agent : les défis de la semaine, et
           ceux d'avant qu'il n'a pas encore faits, toujours ouverts. Une fois par semaine.</li>
         <li><strong>Relance (mercredi)</strong> — aux seuls agents qui n'ont pas terminé tous les défis
-          déjà parus, ceux de la semaine comme les plus anciens. Un seul message, qui liste ceux qui manquent.</li>
+          parus depuis au moins deux jours, ceux de la semaine comme les plus anciens. Un seul message,
+          qui liste ceux qui manquent.</li>
         <li><strong>Résultats (vendredi)</strong> — au groupe de distribution, sur le dernier défi paru.</li>
       </ul>
       <p>Les mails aux agents ne partent qu'aux directions <strong>actives du référentiel</strong> — celles

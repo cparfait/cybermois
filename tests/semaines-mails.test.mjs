@@ -1,0 +1,70 @@
+/**
+ * Le programme reel de la campagne 2026 : deux defis le mercredi 30
+ * septembre, deux le lundi 5 octobre. Chaque mail ne doit parler que de sa
+ * semaine du calendrier.
+ */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { baseJetable, nettoyerALaFin } from './base-jetable.mjs';
+
+baseJetable('semaines-mails', import.meta.url);
+process.env.CAMPAGNE_FIN = '2026-11-30';
+
+const { db } = await import('../src/lib/db.js');
+const { enregistrerProgramme } = await import('../src/lib/modules.js');
+const { importerContenus } = await import('../src/lib/seed.js');
+const mail = await import('../src/lib/mail.js');
+nettoyerALaFin(db);
+
+enregistrerProgramme([
+  { module_code: 'mots-de-passe', ouvre_le: '2026-09-30' },
+  { module_code: 'hameconnage', ouvre_le: '2026-09-30' },
+  { module_code: 'messagerie', ouvre_le: '2026-10-05' },
+  { module_code: 'reseaux-sociaux', ouvre_le: '2026-10-05' },
+], 'test');
+importerContenus();
+const defis = db.prepare('SELECT * FROM defis ORDER BY ouvre_le, id').all();
+const [s1a, s1b, s2a, s2b] = defis.map((d) => d.titre);
+const agent = { nom_complet: 'Christophe TEST', service: 'Finances' };
+const contient = (texte, titres) => titres.every((t) => texte.includes(t));
+const aucun = (texte, titres) => titres.every((t) => !texte.includes(t));
+
+test("l'ouverture du mercredi n'annonce que les deux defis de sa semaine", () => {
+  const m = mail.mailBienvenue(agent);
+  assert.ok(contient(m.texte, [s1a, s1b]));
+  assert.ok(aucun(m.texte, [s2a, s2b]), 'les defis du lundi 5 sont ceux de la semaine suivante');
+  assert.match(m.texte, /Voici les 2 défis de la semaine/);
+});
+
+test('semaine du 28 septembre : ouverture, pas de relance le jour meme, resultats des deux defis', () => {
+  const semaine = mail.mailsDeLaSemaine('2026-09-28', agent);
+  const par = Object.fromEntries(semaine.map((m) => [m.type, m]));
+  assert.equal(par.ouverture.jour, '2026-09-30');
+  assert.match(par.annonce.absent, /ouverture en tient lieu/);
+  assert.ok(par['relance-semaine'].absent, "aucune relance le jour de l'ouverture");
+  assert.ok(contient(par.resultats.mail.texte, [s1a, s1b]));
+  assert.ok(aucun(par.resultats.mail.texte, [s2a, s2b]));
+});
+
+test('semaine du 5 octobre : annonce des deux nouveaux, relance de tout, resultats des deux nouveaux', () => {
+  const semaine = mail.mailsDeLaSemaine('2026-10-05', agent);
+  const par = Object.fromEntries(semaine.map((m) => [m.type, m]));
+  assert.ok(!par.ouverture);
+
+  const annonce = par.annonce.mail.texte;
+  assert.match(annonce, /Voici les 2 défis de la semaine/);
+  assert.ok(contient(annonce, [s2a, s2b]));
+  assert.match(annonce, /Les défis précédents sont toujours ouverts/);
+
+  assert.ok(contient(par['relance-semaine'].mail.texte, [s1a, s1b, s2a, s2b]),
+    'la relance du mercredi 7 reprend tout ce qui a deux jours');
+
+  const resultats = par.resultats.mail.texte;
+  assert.ok(contient(resultats, [s2a, s2b]));
+  assert.ok(aucun(resultats, [s1a, s1b]), 'deja nommes le vendredi precedent');
+});
+
+test('une annonce envoyee a la main en cours de semaine ne deborde pas non plus', () => {
+  assert.deepEqual(mail.defisAVenir('2026-10-01').map((d) => d.titre), [], 'jeudi 1er : plus rien cette semaine');
+  assert.deepEqual(mail.defisAVenir('2026-09-28').map((d) => d.titre), [s1a, s1b]);
+});
