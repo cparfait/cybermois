@@ -37,7 +37,7 @@ test("l'ouverture du mercredi n'annonce que les deux defis de sa semaine", () =>
   assert.match(m.texte, /Le mercredi, un rappel part si vous n'avez pas fait vos défis\./);
   assert.match(m.texte, /Les défis non réalisés restent ouverts jusqu'au lundi 30 novembre\./);
   assert.doesNotMatch(m.texte, /pas un examen/);
-  assert.match(m.texte, /Bonne campagne,\nHélène MANTHEY\nDélégué à la protection des données personnelles \(DPO\)\nVille de Châtillon/);
+  assert.match(m.texte, /Bonne campagne,\nHélène MANTHEY\nDéléguée à la Protection des Données\nVille de Châtillon/);
 });
 
 test('semaine du 28 septembre : ouverture, pas de relance le jour meme, resultats des deux defis', () => {
@@ -83,4 +83,9 @@ test('un exemple de chaque mail : chacun dans la premiere semaine ou il part', (
     ['elus', null],
   ]);
   assert.ok(exemples.every((m) => m.mail?.html), 'chaque exemple a un contenu');
+});
+
+test('le mail aux elus date la campagne de son premier defi', () => {
+  const m = mail.mailElus(agent);
+  assert.match(m.texte, /le Cybermois, du mercredi 30 septembre au lundi 30 novembre/);
 });

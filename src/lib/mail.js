@@ -350,7 +350,11 @@ export function mailRelanceSemaine(agent, manquants) {
  * dit pas.
  */
 export function mailElus(agent) {
-  const { debut, fin } = config.campagne;
+  // Le debut, c'est le premier defi : le reglage « Debut de campagne » restait
+  // au lundi 5 octobre quand le programme commencait le jeudi 1er. Il ne sert
+  // plus que tant qu'aucun defi n'est programme.
+  const debut = premierDefi()?.ouvre_le || config.campagne.debut;
+  const { fin } = config.campagne;
   return composer('elus', {
     salutation: salutation(agent),
     prenom: prenomDe(agent),

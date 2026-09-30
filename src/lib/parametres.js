@@ -163,8 +163,8 @@ export const DESCRIPTEUR = [
 
   { cle: 'campagne.debut', chemin: ['campagne', 'debut'], type: 'texte', groupe: 'planification',
     libelle: 'Debut de campagne',
-    aide: 'AAAA-MM-JJ. Date de reference affichee aux agents. Chaque defi porte '
-      + 'sa propre date de parution, fixee dans le programme.' },
+    aide: 'AAAA-MM-JJ. Les mails datent la campagne de son premier defi programme ; '
+      + 'cette date ne sert que tant qu aucun defi n est programme.' },
   { cle: 'campagne.fin', chemin: ['campagne', 'fin'], type: 'texte', groupe: 'planification',
     libelle: 'Fin de campagne',
     aide: "AAAA-MM-JJ. Dernier jour de saisie : le lendemain, plus aucune reponse "

@@ -838,6 +838,14 @@ chargeurs.mails = async () => {
           <button type="button" class="btn btn-secondaire" id="elus-simuler">Voir les destinataires</button>
           <button type="button" class="btn btn-principal" id="elus-envoyer">Envoyer</button>
         </div>
+        <div class="rang" style="align-items:flex-end;margin-top:.8rem;border-top:1px solid var(--bordure);padding-top:.8rem">
+          <div class="champ-admin" style="min-width:220px;margin-bottom:0">
+            <label for="elus-test-adresse">Adresse de test</label>
+            <input type="email" id="elus-test-adresse" autocomplete="email" placeholder="prenom.nom@chatillon92.fr">
+          </div>
+          <button type="button" class="btn btn-secondaire" id="elus-tester">Envoyer un test</button>
+          <button type="button" class="btn btn-secondaire" id="elus-modifier">Modifier le texte</button>
+        </div>
         <p class="discret" id="elus-dernier" style="margin:.6rem 0 0;font-size:.82rem"></p>
         <div id="elus-resultat" style="margin-top:.6rem"></div>
       </section>
@@ -1002,6 +1010,38 @@ chargeurs.mails = async () => {
     });
   }
 
+  // Son texte s'ouvre dans l'editeur, comme depuis « Modifier le texte » plus bas.
+  document.getElementById('elus-modifier').addEventListener('click', () => {
+    const zone = document.getElementById('zone-editeur-mail');
+    ouvrirEditeurMail(zone, 'elus', {
+      defiId: () => document.getElementById('mail-defi').value,
+      adresseTest: () => {
+        const champ = document.getElementById('elus-test-adresse');
+        return champ.value.trim() && champ.checkValidity() ? champ.value.trim() : null;
+      },
+      zoneApercu: document.getElementById('zone-apercu'),
+    }).then(() => zone.scrollIntoView({ block: 'start' }));
+  });
+
+  // Le mail aux elus, a une seule adresse, avec « [TEST] » dans l'objet.
+  document.getElementById('elus-tester').addEventListener('click', async (ev) => {
+    const bouton = ev.currentTarget;
+    const champ = document.getElementById('elus-test-adresse');
+    const zone = document.getElementById('elus-resultat');
+    const adresse = champ.value.trim();
+    if (!adresse || !champ.checkValidity()) {
+      champ.focus();
+      zone.innerHTML = '<div class="message message-alerte">Saisissez une adresse de test valide.</div>';
+      return;
+    }
+    await pendant(bouton, 'Envoi…', async () => {
+      try {
+        const r = await api('/api/admin/mails/test', { method: 'POST', body: { type: 'elus', adresse } });
+        zone.innerHTML = `<div class="message message-succes">${echapper(r.message)}</div>`;
+      } catch (e) { zone.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`; }
+    });
+  });
+
   document.getElementById('elus-simuler').addEventListener('click', async () => {
     const groupe = document.getElementById('elus-groupe').value;
     const zone = document.getElementById('elus-resultat');
@@ -1163,7 +1203,7 @@ chargeurs.mails = async () => {
       return;
     }
     // L'adresse de test proposee est la sienne, sans ecraser une saisie.
-    for (const id of ['mail-test-adresse', 'semaine-test-adresse']) {
+    for (const id of ['mail-test-adresse', 'semaine-test-adresse', 'elus-test-adresse']) {
       const champTest = document.getElementById(id);
       if (champTest && !champTest.value && etat.monAdresse) champTest.value = etat.monAdresse;
     }

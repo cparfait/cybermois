@@ -51,10 +51,12 @@ CREATE TABLE IF NOT EXISTS modeles_mail (
  * données » - ouverture, texte pour la DPO - la recoit aussi, une seule fois.
  */
 (function signerDpo() {
-  const cle = 'modeles_mail_signature_dpo';
+  const cle = 'modeles_mail_signature_dpo_3';
   if (db.prepare("SELECT 1 FROM journal WHERE action = 'migration' AND detail = ?").get(cle)) return;
-  const signature = 'Hélène MANTHEY<br>Délégué à la protection des données personnelles (DPO)<br>Ville de Châtillon';
-  const ancienne = /La déléguée à la protection des données(?:<br>\s*Ville de Châtillon)?(?=\s*<\/p>)/g;
+  const signature = 'Hélène MANTHEY<br>Déléguée à la Protection des Données<br>Ville de Châtillon';
+  // L'ancienne signature, et les deux essais publies un temps (« Direction… »,
+  // « Délégué… personnelles (DPO) »).
+  const ancienne = /(?:Hélène MANTHEY<br>\s*)?(?:La déléguée à la protection des données|(?:Direction|Délégué) à la protection des données personnelles \(DPO\))(?:<br>\s*Ville de Châtillon)?(?=\s*<\/p>)/g;
   for (const m of db.prepare("SELECT type, corps FROM modeles_mail WHERE type IN ('ouverture', 'lancement')").all()) {
     const propre = m.corps.replace(ancienne, signature);
     if (propre !== m.corps) db.prepare('UPDATE modeles_mail SET corps = ? WHERE type = ?').run(propre, m.type);
@@ -139,7 +141,7 @@ ${h3('Comment ça marche')}
 </ul>
 ${h3('Vos données')}
 <p>Le portail utilise votre identifiant, votre nom, votre adresse professionnelle et votre direction, lus dans l'annuaire. <strong>Votre mot de passe n'est jamais enregistré.</strong> Si vous préférez ne pas figurer au classement individuel, écrivez-moi : vos points compteront toujours pour votre direction. Vos droits et la durée de conservation sont détaillés dans les mentions légales du portail.</p>
-<p>Bonne campagne,<br>Hélène MANTHEY<br>Délégué à la protection des données personnelles (DPO)<br>Ville de Châtillon</p>`,
+<p>Bonne campagne,<br>Hélène MANTHEY<br>Déléguée à la Protection des Données<br>Ville de Châtillon</p>`,
   },
 
   annonce: {
@@ -258,7 +260,7 @@ ${h3('Comment participer')}
 <p><strong>{{duree}} minutes suffisent.</strong> Connectez-vous avec vos identifiants habituels de session Windows.</p>
 <p>{{bouton}}</p>
 <p>Chaque bonne réponse rapporte des points à <strong>votre direction</strong>. Le classement est mis à jour en direct : allez voir où vous en êtes.</p>
-<p>Bonne chance,<br>Hélène MANTHEY<br>Délégué à la protection des données personnelles (DPO)<br>Ville de Châtillon</p>`,
+<p>Bonne chance,<br>Hélène MANTHEY<br>Déléguée à la Protection des Données<br>Ville de Châtillon</p>`,
   },
 };
 
