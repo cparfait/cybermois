@@ -76,6 +76,21 @@ export async function ouvrirEditeur(zone, type, { defiId, adresseTest, zoneAperc
     return;
   }
 
+  // Un texte modifie avant qu'une donnee ne disparaisse - le calendrier, le
+  // nombre de defis - la cite encore. Elle ne s'affiche deja plus dans les
+  // mails, mais l'enregistrement la refusait : on ne pouvait plus changer un
+  // mot. On la retire ici, et on le dit.
+  const connues = new Set(modele.variables.map((v) => v.nom));
+  const obsoletes = [...new Set([...`${modele.objet} ${modele.corps}`.matchAll(/\{\{\s*(\w+)\s*\}\}/g)]
+    .map((m) => m[1]).filter((nom) => !connues.has(nom)))];
+  if (obsoletes.length) {
+    const retirer = (texte) => obsoletes.reduce((t, nom) => t
+      .replace(new RegExp(`<p>\\s*\\{\\{\\s*${nom}\\s*\\}\\}\\s*</p>`, 'g'), '')
+      .replace(new RegExp(`\\{\\{\\s*${nom}\\s*\\}\\}`, 'g'), ''), texte);
+    modele.objet = retirer(modele.objet).replace(/\s{2,}/g, ' ').trim();
+    modele.corps = retirer(modele.corps);
+  }
+
   const enLigne = modele.variables.filter((v) => !v.bloc);
   const quand = (h) => new Date(`${h.replace(' ', 'T')}Z`)
     .toLocaleString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
@@ -96,6 +111,11 @@ export async function ouvrirEditeur(zone, type, { defiId, adresseTest, zoneAperc
         <button type="button" class="btn btn-secondaire" id="em-fermer" style="padding:.35rem .8rem;font-size:.8rem">Fermer</button>
       </div>
 
+      ${obsoletes.length ? `<div class="message message-alerte" style="margin:1rem 0 0">
+        Ce texte citait des données qui n'existent plus : ${obsoletes.map((n) => `<code>{{${echapper(n)}}}</code>`).join(', ')}.
+        Elles ont été retirées ci-dessous — elles ne s'affichaient déjà plus dans les mails. Relisez les
+        phrases qui les contenaient, puis enregistrez.
+      </div>` : ''}
       <div class="champ-admin" style="margin-top:1rem">
         <label for="em-objet">Objet</label>
         <input type="text" id="em-objet" value="${echapper(modele.objet)}" maxlength="250">

@@ -28,6 +28,23 @@ CREATE TABLE IF NOT EXISTS modeles_mail (
 );
 `);
 
+/**
+ * « Ce n'est pas un examen : aucun resultat individuel n'est transmis a votre
+ * hierarchie. » a ete retire du mail d'ouverture. Un texte deja modifie la
+ * portait encore : on l'en retire une fois, et une seule - la remettre
+ * ensuite, a la main, reste possible.
+ */
+(function retirerPhraseExamen() {
+  const cle = 'modeles_mail_sans_examen';
+  if (db.prepare("SELECT 1 FROM journal WHERE action = 'migration' AND detail = ?").get(cle)) return;
+  const phrase = /<(li|p)>[^<]*pas un examen[^<]*hiérarchie\.?\s*<\/\1>\s*/g;
+  for (const m of db.prepare('SELECT type, corps FROM modeles_mail').all()) {
+    const propre = m.corps.replace(phrase, '');
+    if (propre !== m.corps) db.prepare('UPDATE modeles_mail SET corps = ? WHERE type = ?').run(propre, m.type);
+  }
+  journaliser('migration', 'migration', cle, null);
+}());
+
 /* ------------------------------------------------------------ Reperes */
 
 const EN_LIGNE = (libelle) => ({ libelle, bloc: false });
@@ -72,7 +89,6 @@ ${h3('Comment ça marche')}
 <li>Le lundi, un mail annonce les défis de la semaine. Le mercredi, un rappel part si vous en avez manqué un.</li>
 <li>Un défi manqué reste ouvert {{jusqu_a_la_fin}}.</li>
 <li>Chaque défi terminé rapporte des points à <strong>votre direction</strong>. Les résultats sont diffusés le vendredi.</li>
-<li>Ce n'est pas un examen : aucun résultat individuel n'est transmis à votre hiérarchie.</li>
 </ul>
 ${h3('Vos données')}
 <p>Le portail utilise votre identifiant, votre nom, votre adresse professionnelle et votre direction, lus dans l'annuaire. <strong>Votre mot de passe n'est jamais enregistré.</strong> Si vous préférez ne pas figurer au classement individuel, écrivez-moi : vos points compteront toujours pour votre direction. Vos droits et la durée de conservation sont détaillés dans les mentions légales du portail.</p>
