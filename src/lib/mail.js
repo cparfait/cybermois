@@ -140,7 +140,7 @@ function blocParticipation(agent) {
   const stats = ligneClassement(agent.service);
   return `<p style="background:#f4f8dd;border-left:4px solid #aec80c;padding:12px 16px;margin:20px 0;">
   ${stats
-    ? `Votre service — <strong>${echapper(agent.service)}</strong> — affiche <strong>${stats.taux_participation} %</strong> de participation. Chaque défi terminé fait monter votre service au classement.`
+    ? `Votre direction — <strong>${echapper(agent.service)}</strong> — affiche <strong>${stats.taux_participation} %</strong> de participation. Chaque défi terminé la fait monter au classement.`
     : `Votre participation fera monter <strong>${echapper(agent.service)}</strong> au classement.`}
 </p>`;
 }
@@ -231,7 +231,7 @@ function mailOuverture(defi, agent = null) {
     calendrier,
   }, {
     titre: 'Ouverture du Cybermois',
-    preheader: `${nbDefis} défis, ${defi.duree_minutes} minutes chacun. Le classement se fait par service.`,
+    preheader: `${nbDefis} défis, ${defi.duree_minutes} minutes chacun. Le classement se fait par direction.`,
   });
 }
 
@@ -258,13 +258,13 @@ export function mailAnnonce(agent, semaine, enRetard, jour = aujourdhui()) {
   if (!semaine?.length) return null;
 
   const retard = enRetard?.length ? `
-<p style="margin-top:0;">Il vous en reste ${enRetard.length === 1 ? 'un' : enRetard.length} à faire — chacun fait encore gagner des points à votre service :</p>
+<p style="margin-top:0;">Il vous en reste ${enRetard.length === 1 ? 'un' : enRetard.length} à faire — chacun fait encore gagner des points à votre direction :</p>
 <ul style="padding-left:20px;margin:8px 0 16px;">
   ${enRetard.map((d) => `<li style="margin-bottom:6px;"><a href="${echapper(`${config.publicUrl}/defi/${d.id}`)}" style="color:#006e46;font-weight:700;">${echapper(d.titre)}</a></li>`).join('')}
 </ul>` : `
 <p style="margin-top:0;">${agent
     ? 'Vous êtes à jour : bravo. Si un collègue a manqué une semaine, dites-lui qu’il peut encore la rattraper.'
-    : 'Vous en avez manqué un ? Il n’est pas trop tard : chaque défi rattrapé fait encore gagner des points à votre service.'}</p>`;
+    : 'Vous en avez manqué un ? Il n’est pas trop tard : chaque défi rattrapé fait encore gagner des points à votre direction.'}</p>`;
 
   return composer('annonce', {
     salutation: salutation(agent),
@@ -342,7 +342,7 @@ export function mailResultats(defiId) {
     classement_services: `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px;">${services.slice(0, 10).map(ligneService).join('')}</table>`,
     classement_individuel: `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px;">${agents.map(ligneAgent).join('')}</table>`,
     bouton: bouton(`${config.publicUrl}/classement`, 'Voir le classement complet'),
-  }, { titre: 'Résultats', preheader: `${stats.joueurs} participants, classement des services` });
+  }, { titre: 'Résultats', preheader: `${stats.joueurs} participants, classement des directions` });
 }
 
 export function mailDiplome(agent) {

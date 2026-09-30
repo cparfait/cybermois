@@ -75,15 +75,15 @@ ${h3('Comment ça marche')}
 <li><strong>Un défi paraît à chaque date du calendrier</strong> ci-dessous. Il reste ouvert {{jusqu_a_la_fin}} : si vous en manquez un, vous pouvez le rattraper.</li>
 <li><strong>{{questions_par_defi}} questions, {{points_par_defi}} points par défi</strong> : {{bareme}}. Tous les défis pèsent le même poids : aucune semaine ne compte plus qu'une autre.</li>
 <li><strong>Le mercredi</strong>, un rappel est envoyé à celles et ceux qui n'ont pas encore fait les défis de la semaine. Aucun si vous êtes à jour.</li>
-<li><strong>Le vendredi</strong>, les résultats et le classement des services sont diffusés.</li>
+<li><strong>Le vendredi</strong>, les résultats et le classement des directions sont diffusés.</li>
 <li>À la fin de la campagne, une <strong>attestation de participation</strong> est à télécharger depuis votre profil sur le portail.</li>
 </ul>
 <p>{{calendrier}}</p>
 ${h3("Ce n'est pas un examen")}
 <p>Aucun résultat individuel n'est transmis à votre hiérarchie, et se tromper n'a aucune conséquence : c'est même l'intérêt de l'exercice. Les questions sont conçues pour piéger des gens attentifs, parce que les attaques réelles le sont aussi.</p>
-<p>Le classement se fait <strong>par service</strong> : chaque défi terminé rapporte des points au vôtre. Un classement individuel existe aussi ; si vous préférez ne pas y figurer nominativement, écrivez-moi — votre participation continuera de compter pour votre service, sans que votre nom apparaisse.</p>
+<p>Le classement se fait <strong>par direction</strong> : chaque défi terminé rapporte des points à la vôtre. Un classement individuel existe aussi ; si vous préférez ne pas y figurer nominativement, écrivez-moi — votre participation continuera de compter pour votre direction, sans que votre nom apparaisse.</p>
 ${h3('Vos données')}
-<p>Le portail utilise votre identifiant, votre nom, votre adresse professionnelle et votre service, lus dans l'annuaire de la collectivité. Vos réponses et vos scores sont conservés jusqu'à la fin de l'année suivant la campagne ; un décompte du nombre de défis suivis est gardé trois ans comme preuve de l'action de sensibilisation. <strong>Votre mot de passe n'est jamais enregistré</strong> : il sert uniquement à vous authentifier auprès de l'annuaire.</p>
+<p>Le portail utilise votre identifiant, votre nom, votre adresse professionnelle et votre direction, lus dans l'annuaire de la collectivité. Vos réponses et vos scores sont conservés jusqu'à la fin de l'année suivant la campagne ; un décompte du nombre de défis suivis est gardé trois ans comme preuve de l'action de sensibilisation. <strong>Votre mot de passe n'est jamais enregistré</strong> : il sert uniquement à vous authentifier auprès de l'annuaire.</p>
 <p>Vous disposez d'un droit d'accès, de rectification, d'effacement, de limitation et d'opposition sur ces données. Les mentions légales complètes sont accessibles depuis le portail, et je reste à votre disposition pour toute question.</p>
 <p>Bonne campagne à toutes et à tous,</p>
 <p>La déléguée à la protection des données<br>Ville de Châtillon</p>`,
@@ -115,7 +115,7 @@ ${h3('Les défis précédents sont toujours ouverts')}
       ...SALUTATION, ...RATTRAPAGE,
       nb_defis_manquants: EN_LIGNE('Nombre de défis qui manquent'),
       defis_manquants: BLOC('Les défis qui manquent, avec leur bouton'),
-      participation_service: BLOC('Encadré : participation du service'),
+      participation_service: BLOC('Encadré : participation de la direction'),
     },
     objet: 'Cybermois — {{nb_defis_manquants}} défis vous attendent cette semaine',
     corps: `<p>{{salutation}}</p>
@@ -130,7 +130,7 @@ ${h3('Les défis précédents sont toujours ouverts')}
     aide: 'Part aussi le mercredi, quand un seul défi de la semaine manque à l’agent.',
     variables: {
       ...SALUTATION, ...DEFI, ...RATTRAPAGE,
-      participation_service: BLOC('Encadré : participation du service'),
+      participation_service: BLOC('Encadré : participation de la direction'),
     },
     objet: 'Il vous reste 5 minutes ? Le défi « {{titre_defi}} » vous attend',
     corps: `<p>{{salutation}}</p>
@@ -148,7 +148,7 @@ ${h3('Les défis précédents sont toujours ouverts')}
       sujet_resultats: EN_LIGNE('« du défi Titre » ou « de la campagne »'),
       participants: EN_LIGNE('Nombre de participants'),
       chiffres: BLOC('Chiffres clés : participants, participation, points'),
-      classement_services: BLOC('Classement des services'),
+      classement_services: BLOC('Classement des directions'),
       classement_individuel: BLOC('Classement individuel (dix premiers)'),
       bouton: BLOC('Bouton vers le classement'),
     },
@@ -156,13 +156,13 @@ ${h3('Les défis précédents sont toujours ouverts')}
     corps: `<p>Bonjour à toutes et à tous,</p>
 <p>Voici les résultats {{sujet_resultats}}.</p>
 <p>{{chiffres}}</p>
-<h2>🏆 Classement des services</h2>
-<p>Score moyen par agent du service, et taux de participation.</p>
+<h2>🏆 Classement des directions</h2>
+<p>Score moyen par agent de la direction, et taux de participation.</p>
 <p>{{classement_services}}</p>
 <h2>⭐ Classement individuel</h2>
 <p>{{classement_individuel}}</p>
 <p>{{bouton}}</p>
-<p>Les défis déjà parus restent accessibles : il n'est jamais trop tard pour faire gagner des points à votre service.</p>
+<p>Les défis déjà parus restent accessibles : il n'est jamais trop tard pour faire gagner des points à votre direction.</p>
 <p>Bon week-end,<br>La Direction des systèmes d'information</p>`,
   },
 
@@ -181,7 +181,7 @@ ${h3('Les défis précédents sont toujours ouverts')}
 <p>{{intro_defi}}</p>
 <p><strong>{{duree}} minutes suffisent.</strong> Connectez-vous avec vos identifiants habituels de session Windows.</p>
 <p>{{bouton}}</p>
-<p>Chaque bonne réponse rapporte des points à <strong>votre service</strong>. Le classement est mis à jour en direct : allez voir où vous en êtes.</p>
+<p>Chaque bonne réponse rapporte des points à <strong>votre direction</strong>. Le classement est mis à jour en direct : allez voir où vous en êtes.</p>
 <p>Bonne chance,<br>La déléguée à la protection des données</p>`,
   },
 };
