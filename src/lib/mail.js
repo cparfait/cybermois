@@ -374,6 +374,94 @@ ${bouton(`${config.publicUrl}/profil`, 'Récupérer mon attestation')}
   };
 }
 
+/* ------------------------------------------------- Mails d'une semaine */
+
+const NOMS_ENVOIS = {
+  ouverture: "Mail d'ouverture",
+  annonce: 'Annonce du lundi',
+  'relance-semaine': 'Relance du mercredi',
+  resultats: 'Résultats du vendredi',
+};
+const CLE_REGLAGE = { ouverture: 'ouverture', annonce: 'annonce', 'relance-semaine': 'relance', resultats: 'resultats' };
+
+/**
+ * Les semaines de la campagne, du lundi du premier defi a celui du dernier -
+ * ou de la fin de campagne, si elle vient apres : relances et resultats
+ * continuent de partir tant que la campagne dure.
+ */
+export function semainesDeCampagne() {
+  const defis = db.prepare('SELECT titre, ouvre_le FROM defis WHERE publie = 1 ORDER BY ouvre_le, id').all();
+  if (!defis.length) return [];
+  let lundi = lundiDe(defis[0].ouvre_le);
+  const dernier = [lundiDe(defis[defis.length - 1].ouvre_le), config.campagne.fin ? lundiDe(config.campagne.fin) : '']
+    .sort().pop();
+  const semaines = [];
+  for (; lundi <= dernier && semaines.length < 60; lundi = decalerJours(lundi, 7)) {
+    const dimanche = decalerJours(lundi, 6);
+    semaines.push({
+      lundi,
+      libelle: `Semaine du ${dateLisible(lundi)}`,
+      defis: defis.filter((d) => d.ouvre_le >= lundi && d.ouvre_le <= dimanche).map((d) => d.titre),
+    });
+  }
+  return semaines;
+}
+
+/**
+ * Les mails automatiques d'une semaine, tels qu'ils partiront : chacun a son
+ * jour, avec le contenu de ce jour-la. Un mail qui ne partira pas figure
+ * aussi, avec la raison : c'est ce qu'on cherche en relisant une semaine.
+ *
+ * Les mails individuels sont montres pour `agent`, suppose n'avoir encore
+ * fait aucun defi : c'est la version la plus longue, celle qui liste tout.
+ */
+export function mailsDeLaSemaine(lundi, agent) {
+  const jour = (n) => decalerJours(lundi, n);
+  const close = (j) => !!config.campagne.fin && j > config.campagne.fin;
+  const premier = premierDefi();
+  const liste = [];
+  const ajouter = (type, date, mail, absent = null) => liste.push({
+    type,
+    nom: NOMS_ENVOIS[type],
+    jour: date,
+    automatique: !!config.mails?.[CLE_REGLAGE[type]],
+    mail: absent ? null : mail,
+    absent,
+  });
+
+  if (premier && premier.ouvre_le >= lundi && premier.ouvre_le <= jour(6)) {
+    ajouter('ouverture', premier.ouvre_le, mailOuverture(premier, agent));
+  }
+
+  // L'annonce : memes conditions que l'envoi du lundi (envoyerAnnonce).
+  if (!premier || premier.ouvre_le >= lundi) {
+    ajouter('annonce', lundi, null, premier && premier.ouvre_le <= jour(6)
+      ? "Pas d'annonce cette semaine : le mail d'ouverture en tient lieu."
+      : "Pas d'annonce : la campagne n'a pas encore commencé.");
+  } else if (close(lundi)) {
+    ajouter('annonce', lundi, null, "Pas d'annonce : la campagne est terminée.");
+  } else {
+    const semaine = defisAVenir(lundi);
+    const anciens = db.prepare('SELECT * FROM defis WHERE publie = 1 AND ouvre_le < ? ORDER BY ouvre_le, id').all(lundi);
+    ajouter('annonce', lundi, mailAnnonce(agent, semaine, anciens, lundi),
+      semaine.length ? null : "Pas d'annonce : aucun défi ne paraît cette semaine.");
+  }
+
+  // La relance : memes conditions que l'envoi du mercredi (envoyerRelancesSemaine).
+  const mercredi = jour(2);
+  const aRelancer = close(mercredi) ? [] : defisDeLaSemaine(mercredi);
+  ajouter('relance-semaine', mercredi, aRelancer.length ? mailRelanceSemaine(agent, aRelancer) : null,
+    close(mercredi) ? 'Pas de relance : la campagne est terminée.'
+      : aRelancer.length ? null : 'Pas de relance : aucun défi paru ces sept derniers jours.');
+
+  const vendredi = jour(4);
+  const dernier = dernierDefiParu(vendredi);
+  ajouter('resultats', vendredi, dernier ? mailResultats(dernier.id, { jour: vendredi }) : null,
+    dernier ? null : 'Pas de résultats : aucun défi paru.');
+
+  return liste.sort((a, b) => a.jour.localeCompare(b.jour));
+}
+
 /* ---------------------------------------------------------------- Envois */
 
 async function envoyer({ to, objet, html, texte, bcc }) {

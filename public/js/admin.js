@@ -793,6 +793,21 @@ chargeurs.mails = async () => {
       <p class="discret">Chargement…</p>
     </div>
 
+    <section class="carte" style="margin-bottom:1.5rem" aria-labelledby="titre-semaine-mails">
+      <h2 id="titre-semaine-mails" style="margin-top:0">Les mails d'une semaine</h2>
+      <p class="discret" style="margin-top:-.3em;font-size:.86rem">
+        Tout ce qui part automatiquement la semaine choisie, jour par jour, avec le contenu de ce
+        jour-là. Les mails aux agents sont montrés pour un agent qui n'a encore fait aucun défi.
+      </p>
+      <div class="rang" style="align-items:flex-end">
+        <div class="champ-admin" style="min-width:320px;margin-bottom:0">
+          <label for="mail-semaine">Semaine</label>
+          <select id="mail-semaine"><option value="">Chargement…</option></select>
+        </div>
+      </div>
+      <div id="zone-semaine" style="margin-top:1rem"></div>
+    </section>
+
     <details class="aide-admin">
       <summary>Qui envoie quoi</summary>
       <p>Quand les envois automatiques sont actifs (tableau ci-dessus), l'application envoie :</p>
@@ -874,6 +889,72 @@ chargeurs.mails = async () => {
   document.getElementById('btn-test-mail').addEventListener('click', envoyerTest);
   majActions();
   afficherEnvois();
+  preparerSemaines();
+
+  /** Le choix d'une semaine : la courante si la campagne la couvre, sinon la premiere. */
+  async function preparerSemaines() {
+    const choix = document.getElementById('mail-semaine');
+    let d;
+    try { d = await api('/api/admin/mails/semaines'); } catch (e) {
+      document.getElementById('zone-semaine').innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`;
+      return;
+    }
+    if (!d.semaines.length) {
+      choix.innerHTML = '<option value="">aucun défi programmé</option>';
+      return;
+    }
+    choix.innerHTML = d.semaines.map((w) => `<option value="${echapper(w.lundi)}"${w.lundi === d.courante ? ' selected' : ''}>
+      ${echapper(w.libelle)}${w.defis.length ? ` — ${echapper(w.defis.join(', '))}` : ' — aucun nouveau défi'}</option>`).join('');
+    choix.addEventListener('change', afficherSemaine);
+    afficherSemaine();
+  }
+
+  async function afficherSemaine() {
+    const lundi = document.getElementById('mail-semaine').value;
+    const zone = document.getElementById('zone-semaine');
+    if (!lundi) return;
+    zone.innerHTML = '<p class="discret">Chargement…</p>';
+    let d;
+    try { d = await api(`/api/admin/mails/semaine/${lundi}`); } catch (e) {
+      zone.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`;
+      return;
+    }
+    zone.innerHTML = d.mails.map((m, i) => `
+      <div class="mail-semaine" style="border-top:1px solid var(--bordure);padding:.8rem 0">
+        <div class="rang" style="justify-content:space-between;align-items:baseline">
+          <p class="ui" style="margin:0"><strong>${echapper(m.jourLisible.charAt(0).toUpperCase() + m.jourLisible.slice(1))}</strong>
+            — ${echapper(m.nom)}
+            ${m.absent ? '' : `<span class="pastille-etat ${m.automatique ? 'etat-ok' : ''}" style="margin-left:.4rem">${
+              m.automatique ? 'automatique' : 'à envoyer à la main'}</span>`}</p>
+          ${m.absent ? '' : `<button type="button" class="btn btn-secondaire" data-test-semaine="${echapper(m.type)}"
+            style="padding:.3rem .7rem;font-size:.8rem">Envoyer un test</button>`}
+        </div>
+        ${m.absent
+          ? `<p class="discret" style="margin:.3rem 0 0;font-size:.86rem">${echapper(m.absent)}</p>`
+          : `<p class="ui" style="margin:.3rem 0 .5rem;font-size:.9rem"><strong>Objet :</strong> ${echapper(m.objet)}</p>
+             <details${i === 0 ? ' open' : ''}><summary class="ui" style="cursor:pointer;font-size:.86rem">Voir le mail</summary>
+               <iframe class="apercu-mail" title="${echapper(`${m.nom}, ${m.jourLisible}`)}" sandbox data-index="${i}"></iframe>
+             </details>`}
+      </div>`).join('');
+    zone.querySelectorAll('iframe[data-index]').forEach((f) => { f.srcdoc = d.mails[Number(f.dataset.index)].html; });
+    zone.querySelectorAll('[data-test-semaine]').forEach((b) => b.addEventListener('click', () => {
+      const champ = document.getElementById('mail-test-adresse');
+      const adresse = champ.value.trim();
+      if (!adresse || !champ.checkValidity()) {
+        champ.focus();
+        alerte('alerte', 'Saisissez une adresse de test valide, dans le champ « Adresse de test ».');
+        return undefined;
+      }
+      return pendant(b, 'Envoi…', async () => {
+        try {
+          const r = await api('/api/admin/mails/test', {
+            method: 'POST', body: { type: b.dataset.testSemaine, lundi, adresse },
+          });
+          alerte('alerte', r.message, 'succes');
+        } catch (e) { alerte('alerte', e.message); }
+      });
+    }));
+  }
 
   /**
    * Un message a une seule adresse, pour le valider avant l'envoi reel. Le

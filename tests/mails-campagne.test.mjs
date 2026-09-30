@@ -159,3 +159,25 @@ test('les resultats du vendredi nomment tous les defis de la semaine', () => {
   assert.match(creux.texte, /pas de nouveau défi/);
   assert.doesNotMatch(creux.texte, new RegExp(defi('messagerie').titre));
 });
+
+test("les mails d'une semaine suivent les regles de l'envoi reel", () => {
+  const alice = { nom_complet: 'Alice ASSIDUE', service: 'Finances' };
+  const premiere = mail.mailsDeLaSemaine('2026-10-05', alice);
+  assert.deepEqual(premiere.map((m) => [m.type, m.jour]), [
+    ['ouverture', '2026-10-05'], ['annonce', '2026-10-05'],
+    ['relance-semaine', '2026-10-07'], ['resultats', '2026-10-09'],
+  ]);
+  assert.match(premiere.find((m) => m.type === 'annonce').absent, /ouverture en tient lieu/);
+  assert.ok(premiere.find((m) => m.type === 'ouverture').mail);
+
+  const seconde = mail.mailsDeLaSemaine('2026-10-12', alice);
+  assert.ok(!seconde.some((m) => m.type === 'ouverture'));
+  assert.match(seconde.find((m) => m.type === 'annonce').mail.texte, new RegExp(defi('messagerie').titre));
+  const relance = seconde.find((m) => m.type === 'relance-semaine').mail;
+  assert.match(relance.texte, new RegExp(defi('hameconnage').titre));
+  assert.match(relance.texte, new RegExp(defi('messagerie').titre));
+
+  const semaines = mail.semainesDeCampagne();
+  assert.equal(semaines[0].lundi, '2026-10-05');
+  assert.deepEqual(semaines[0].defis, [defi('mots-de-passe').titre, defi('hameconnage').titre]);
+});

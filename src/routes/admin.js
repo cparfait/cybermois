@@ -12,9 +12,9 @@ import {
   mailLancement, mailRelance, mailResultats,
   mailBienvenue, mailAnnonce, mailRelanceSemaine, defisAVenir, defisDeLaSemaine,
   envoyerOuverture, envoyerAnnonce, envoyerRelancesSemaine, dernierDefiParu,
-  envoyerTest, adresseValide,
+  envoyerTest, adresseValide, semainesDeCampagne, mailsDeLaSemaine,
 } from '../lib/mail.js';
-import { aujourdhui, decalerJours, lundiDe } from '../lib/dates.js';
+import { aujourdhui, decalerJours, lundiDe, dateLisible } from '../lib/dates.js';
 import {
   MODELES, listerModeles, verifierModele, enregistrerModele, reinitialiserModele, avecBrouillon,
 } from '../lib/modeles-mail.js';
@@ -818,6 +818,32 @@ export default async function routesAdmin(app) {
     return m;
   });
 
+  /* --------------------------------------------- Mails d'une semaine */
+
+  app.get('/api/admin/mails/semaines', async () => ({
+    semaines: semainesDeCampagne(),
+    courante: lundiDe(aujourdhui()),
+  }));
+
+  /** Tout ce qui part une semaine donnee, jour par jour, pour relecture. */
+  app.get('/api/admin/mails/semaine/:lundi', async (requete, reponse) => {
+    const lundi = String(requete.params.lundi);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(lundi)) return reponse.code(400).send({ erreur: 'Date attendue : AAAA-MM-JJ.' });
+    return {
+      lundi: lundiDe(lundi),
+      mails: mailsDeLaSemaine(lundiDe(lundi), agentExemple()).map((m) => ({
+        type: m.type,
+        nom: m.nom,
+        jour: m.jour,
+        jourLisible: dateLisible(m.jour),
+        automatique: m.automatique,
+        absent: m.absent,
+        objet: m.mail?.objet || null,
+        html: m.mail?.html || null,
+      })),
+    };
+  });
+
   /* ------------------------------------------------- Textes des mails */
 
   app.get('/api/admin/modeles-mail', async () => listerModeles());
@@ -866,7 +892,11 @@ export default async function routesAdmin(app) {
 
     const agent = db.prepare('SELECT * FROM agents WHERE lower(email) = lower(?) LIMIT 1').get(adresse)
       || agentExemple();
-    const m = construireMail(String(type || ''), Number(defiId), agent, requete.body?.modele || null);
+    // Avec une semaine, le mail de ce type tel qu'il partira cette semaine-la.
+    const lundi = /^\d{4}-\d{2}-\d{2}$/.test(requete.body?.lundi || '') ? lundiDe(requete.body.lundi) : null;
+    const m = lundi
+      ? mailsDeLaSemaine(lundi, agent).find((x) => x.type === type)?.mail || null
+      : construireMail(String(type || ''), Number(defiId), agent, requete.body?.modele || null);
     if (m === undefined) return reponse.code(400).send({ erreur: TYPE_INCONNU });
     if (!m) return reponse.code(404).send({ erreur: 'Défi introuvable, ou rien à envoyer pour cette semaine.' });
 
