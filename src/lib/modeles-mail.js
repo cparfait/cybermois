@@ -45,6 +45,28 @@ CREATE TABLE IF NOT EXISTS modeles_mail (
   journaliser('migration', 'migration', cle, null);
 }());
 
+/**
+ * Deux formulations du mail d'ouverture revues a la demande de la DSI. Un
+ * texte deja modifie qui les porte encore mot pour mot les recoit aussi,
+ * une seule fois.
+ */
+(function reformulerOuverture() {
+  const cle = 'modeles_mail_formulations_ouverture';
+  if (db.prepare("SELECT 1 FROM journal WHERE action = 'migration' AND detail = ?").get(cle)) return;
+  const remplacements = [
+    ['Le lundi, un mail annonce les défis de la semaine.', 'Le lundi, un mail annonce les deux défis de la semaine.'],
+    [/Un défi manqué reste ouvert \{\{\s*jusqu_a_la_fin\s*\}\}\./g, "Vous recevez un rappel si vous n'avez pas fait les défis."],
+  ];
+  const ligne = db.prepare("SELECT corps FROM modeles_mail WHERE type = 'ouverture'").get();
+  if (ligne) {
+    const nouveau = remplacements.reduce((t, [avant, apres]) => t.replace(avant, apres), ligne.corps);
+    if (nouveau !== ligne.corps) {
+      db.prepare("UPDATE modeles_mail SET corps = ? WHERE type = 'ouverture'").run(nouveau);
+    }
+  }
+  journaliser('migration', 'migration', cle, null);
+}());
+
 /* ------------------------------------------------------------ Reperes */
 
 const EN_LIGNE = (libelle) => ({ libelle, bloc: false });
@@ -86,8 +108,8 @@ export const MODELES = {
 <p>Connectez-vous avec <strong>vos identifiants Windows</strong>. Rien à installer, et vous pouvez jouer depuis un téléphone.</p>
 ${h3('Comment ça marche')}
 <ul>
-<li>Le lundi, un mail annonce les défis de la semaine. Le mercredi, un rappel part si vous en avez manqué un.</li>
-<li>Un défi manqué reste ouvert {{jusqu_a_la_fin}}.</li>
+<li>Le lundi, un mail annonce les deux défis de la semaine. Le mercredi, un rappel part si vous en avez manqué un.</li>
+<li>Vous recevez un rappel si vous n'avez pas fait les défis.</li>
 <li>Chaque défi terminé rapporte des points à <strong>votre direction</strong>. Les résultats sont diffusés le vendredi.</li>
 </ul>
 ${h3('Vos données')}
