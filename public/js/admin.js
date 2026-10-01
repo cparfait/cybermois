@@ -825,6 +825,19 @@ chargeurs.mails = async () => {
           <button type="button" class="btn btn-secondaire" id="rattrapage-importer">Importer</button>
         </div>
       </details>
+      <details style="margin-top:.8rem">
+        <summary class="ui" style="cursor:pointer;font-size:.88rem">Renvoyer à une personne qui ne le trouve pas</summary>
+        <p class="discret" style="font-size:.84rem;margin:.5rem 0">
+          Le mail lui a peut-être été remis ailleurs : courrier indésirable, onglet « Autres »,
+          quarantaine. Il lui est renvoyé quand même, à son adresse. Jusqu'à 10 adresses à la fois,
+          séparées par des virgules.
+        </p>
+        <div class="rang" style="align-items:center">
+          <label class="sr-only" for="rattrapage-adresses">Adresses à qui renvoyer le mail</label>
+          <input type="text" id="rattrapage-adresses" placeholder="prenom.nom@chatillon92.fr, …" style="min-width:320px">
+          <button type="button" class="btn btn-secondaire" id="rattrapage-renvoyer">Renvoyer</button>
+        </div>
+      </details>
       <div id="rattrapage-resultat" aria-live="polite" style="margin-top:.8rem"></div>
     </section>
 
@@ -1183,6 +1196,24 @@ chargeurs.mails = async () => {
     });
   }
   document.getElementById('rattrapage-voir').addEventListener('click', voirRattrapage);
+  document.getElementById('rattrapage-renvoyer').addEventListener('click', async (ev) => {
+    const type = document.getElementById('rattrapage-type').value;
+    const champ = document.getElementById('rattrapage-adresses');
+    const zone = document.getElementById('rattrapage-resultat');
+    if (!champ.value.trim()) { champ.focus(); return; }
+    const nom = document.getElementById('rattrapage-type').selectedOptions[0].textContent;
+    if (!confirm(`Renvoyer « ${nom} » à : ${champ.value.trim()} ?`)) return;
+    await pendant(ev.currentTarget, 'Envoi…', async () => {
+      try {
+        const r = await api(`/api/admin/mails/rattrapage/${type}/renvoyer`, { method: 'POST', body: { adresses: champ.value } });
+        const libelle = { envoye: 'renvoyé', inconnue: 'aucun agent avec cette adresse', erreur: 'échec' };
+        zone.innerHTML = `<div class="message ${r.envoyes ? 'message-succes' : 'message-alerte'}">
+          <ul style="margin:0;padding-left:1.2rem">${r.resultats.map((x) => `<li>${echapper(x.adresse)}${x.nom ? ` (${echapper(x.nom)})` : ''} :
+            ${libelle[x.statut]}${x.erreur ? ` — ${echapper(x.erreur)}` : ''}</li>`).join('')}</ul></div>`;
+        if (r.envoyes) champ.value = '';
+      } catch (e) { zone.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`; }
+    });
+  });
   // Par defaut, les envois du jour.
   {
     const p = (n) => String(n).padStart(2, '0');

@@ -189,3 +189,15 @@ test("l'import ne retient que l'envoi du jour : ni tests, ni reponses, ni autres
   assert.deepEqual(r.adresses.sort(), ['agent1@test.local', 'agent2@test.local']);
   assert.deepEqual(r.ecartees, { date: 1, objet: 3, expediteur: 1 });
 });
+
+test('un agent qui ne trouve pas le mail se le fait renvoyer, meme marque comme servi', async () => {
+  recus.length = 0;
+  assert.equal(mail.etatRattrapage('ouverture').manquants.some((a) => a.email === 'agent1@test.local'), false,
+    'agent1 compte deja comme servi');
+  const r = await mail.renvoyerA('ouverture', 'Agent1@test.local, inconnu@test.local');
+  assert.deepEqual(r.resultats.map((x) => x.statut), ['envoye', 'inconnue']);
+  assert.deepEqual(recus, ['agent1@test.local']);
+
+  const trop = Array.from({ length: 11 }, (_, i) => `a${i}@test.local`).join(',');
+  assert.equal((await mail.renvoyerA('ouverture', trop)).ok, false, 'dix adresses au plus');
+});

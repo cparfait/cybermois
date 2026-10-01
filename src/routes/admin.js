@@ -14,7 +14,7 @@ import {
   envoyerOuverture, envoyerAnnonce, envoyerRelancesSemaine, dernierDefiParu,
   envoyerTest, adresseValide, semainesDeCampagne, mailsDeLaSemaine, exemplesDeCampagne,
   defisARelancer, mailElus, envoyerElus, dernierEnvoiElus, envoisEnCoursDetail,
-  TYPES_RATTRAPAGE, etatRattrapage, importerRecus,
+  TYPES_RATTRAPAGE, etatRattrapage, importerRecus, renvoyerA,
 } from '../lib/mail.js';
 import {
   listerGroupes, lireExclusionsMail, enregistrerExclusionsMail, TYPES_EXCLUSION,
@@ -870,6 +870,17 @@ export default async function routesAdmin(app) {
     const etat = etatRattrapage(requete.params.type);
     if (!etat) return reponse.code(404).send({ erreur: 'Type de mail inconnu.' });
     return { ...etat, types: TYPES_RATTRAPAGE };
+  });
+
+  /** Renvoi du vrai mail a quelques agents nommes, recu ou non. */
+  app.post('/api/admin/mails/rattrapage/:type/renvoyer', async (requete, reponse) => {
+    const type = requete.params.type;
+    if (!TYPES_RATTRAPAGE[type]) return reponse.code(404).send({ erreur: 'Type de mail inconnu.' });
+    const r = await renvoyerA(type, requete.body?.adresses);
+    if (!r.ok) return reponse.code(400).send({ erreur: r.message });
+    journaliser(requete.agent.login, 'mail_renvoye',
+      `${type} : ${r.resultats.map((x) => `${x.adresse} ${x.statut}`).join(', ')}`, requete.ip);
+    return r;
   });
 
   /** Un export de la messagerie : ses destinataires comptent comme servis. */

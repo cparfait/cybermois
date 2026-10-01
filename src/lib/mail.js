@@ -1228,3 +1228,57 @@ export function importerRecus(type, texte, { jour = null } = {}) {
     lignes: lecture.lignes, retenues: lecture.retenues, ecartees: lecture.ecartees,
   };
 }
+
+/**
+ * Renvoie le vrai mail a quelques agents nommes, qu'ils l'aient recu ou non.
+ *
+ * Un agent peut ne pas trouver un mail que la messagerie lui a bien remis :
+ * courrier indesirable, onglet « Autres », quarantaine, regle de sa boite. Il
+ * figure alors parmi les servis, et le rattrapage ne le vise plus. Ce renvoi
+ * cible est fait pour lui. Une dizaine d'adresses au plus : il part tout de
+ * suite, au debit regle, et rend compte adresse par adresse.
+ */
+export const RENVOI_MAX = 10;
+
+export async function renvoyerA(type, adresses) {
+  const r = RATTRAPAGES[type];
+  if (!r) return { ok: false, message: 'Type de mail inconnu.' };
+  const liste = [...new Set(String(adresses || '').toLowerCase()
+    .match(/[a-z0-9._%+'-]+@[a-z0-9.-]+\.[a-z]{2,}/g) || [])];
+  if (!liste.length) return { ok: false, message: 'Saisissez au moins une adresse.' };
+  if (liste.length > RENVOI_MAX) {
+    return { ok: false, message: `${RENVOI_MAX} adresses au plus à la fois : pour davantage, utilisez le rattrapage.` };
+  }
+
+  // Le mail tel qu'il est parti a cet agent.
+  let construire;
+  if (type === 'ouverture') {
+    const defi = premierDefi();
+    if (!defi) return { ok: false, message: 'Aucun défi publié.' };
+    construire = (agent) => mailOuverture(defi, agent);
+  } else {
+    const jour = aujourdhui();
+    const semaine = defisAVenir(lundiDe(jour));
+    if (!semaine.length) return { ok: false, message: 'Aucun défi cette semaine : pas d’annonce à renvoyer.' };
+    const anciens = db.prepare('SELECT * FROM defis WHERE publie = 1 AND ouvre_le < ? ORDER BY ouvre_le, id').all(lundiDe(jour));
+    const fait = db.prepare('SELECT 1 FROM participations WHERE agent_id = ? AND defi_id = ? AND entrainement = 0');
+    construire = (agent) => mailAnnonce(agent, semaine, anciens.filter((d) => !fait.get(agent.id, d.id)), lundiDe(jour));
+  }
+
+  const parAdresse = db.prepare("SELECT * FROM agents WHERE lower(email) = ? AND origine <> 'local' ORDER BY exclu, id LIMIT 1");
+  const resultats = [];
+  for (const adresse of liste) {
+    const agent = parAdresse.get(adresse);
+    if (!agent) { resultats.push({ adresse, statut: 'inconnue' }); continue; }
+    if (resultats.some((x) => x.statut === 'envoye') && intervalleEnvoi()) await pause(intervalleEnvoi());
+    try {
+      await envoyerAvecReprise({ to: agent.email, ...construire(agent) });
+      noterServi(r.lot(), agent.id);
+      resultats.push({ adresse, nom: agent.nom_complet, statut: 'envoye' });
+    } catch (err) {
+      resultats.push({ adresse, nom: agent.nom_complet, statut: 'erreur', erreur: err.message });
+    }
+  }
+  const envoyes = resultats.filter((x) => x.statut === 'envoye');
+  return { ok: true, resultats, envoyes: envoyes.length };
+}
