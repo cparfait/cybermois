@@ -228,10 +228,13 @@ export function pointsPossibles(jour = aujourdhui()) {
  * Referentiel vide : il n'y a rien a quoi comparer, on classe tout. Sinon
  * l'ecran serait vide avant meme qu'on ait pu renseigner la liste.
  *
- * Le score retenu est la MOYENNE par agent inscrit de la direction, pas le
- * total : sinon une direction de 40 agents ecraserait mecaniquement une
- * direction de 4. Le taux de participation est affiche a cote, c'est le vrai
- * levier de mobilisation.
+ * La reussite est la MOYENNE des resultats de ceux qui ont joue : leurs
+ * points sur le maximum des defis qu'ils ont faits. Elle etait rapportee aux
+ * points que TOUS les agents auraient pu gagner : une direction ou 2 % des
+ * agents jouaient plafonnait a 2 % de reussite, quels que soient leurs
+ * resultats. La participation dit desormais seule combien jouent.
+ *
+ * Classement : la reussite d'abord, la participation ensuite pour departager.
  */
 export function classementServices() {
   const possible = pointsPossibles();
@@ -242,12 +245,16 @@ export function classementServices() {
       COUNT(DISTINCT a.id)       AS inscrits,
       COUNT(DISTINCT p.agent_id) AS joueurs,
       COALESCE(SUM(p.score), 0)  AS score_total,
+      COALESCE(SUM(p.score_max), 0) AS score_max_joue,
       COUNT(p.id)                AS defis_joues
     FROM agents a
+    -- Les defis publies et deja parus seulement : les memes que ceux dont
+    -- les points sont atteignables (pointsPossibles).
     LEFT JOIN participations p ON p.agent_id = a.id AND p.entrainement = 0
+      AND p.defi_id IN (SELECT id FROM defis WHERE publie = 1 AND ouvre_le <= ?)
     WHERE a.exclu = 0
     GROUP BY a.service
-  `).all();
+  `).all(aujourdhui());
 
   // Deux graphies d'une meme direction comptaient pour deux. On les ramene a
   // l'orthographe du referentiel, qui fait foi, et leurs agents se rejoignent.
@@ -259,10 +266,11 @@ export function classementServices() {
     const nom = reference.length ? canonique.get(cleComparaison(l.service)) : l.service;
     if (!nom) continue; // direction absente du referentiel : hors classement
     const c = cumul.get(nom)
-      || { service: nom, inscrits: 0, joueurs: 0, score_total: 0, defis_joues: 0 };
+      || { service: nom, inscrits: 0, joueurs: 0, score_total: 0, score_max_joue: 0, defis_joues: 0 };
     c.inscrits += l.inscrits;
     c.joueurs += l.joueurs;
     c.score_total += l.score_total;
+    c.score_max_joue += l.score_max_joue;
     c.defis_joues += l.defis_joues;
     cumul.set(nom, c);
   }
@@ -270,19 +278,21 @@ export function classementServices() {
   // « 27 pts » ne dit rien sans son maximum : le meme chiffre vaut un sans-faute
   // sur un defi et un resultat mediocre sur quatre. Le pourcentage se lit
   // seul, et le total possible est rappele a cote.
+  // Le tri se fait sur les valeurs exactes : arrondies, deux directions a
+  // 66,4 % et 66,6 % se retrouvaient a egalite.
+  const reussite = (c) => (c.score_max_joue ? c.score_total / c.score_max_joue : 0);
+  const participation = (c) => (c.inscrits ? c.joueurs / c.inscrits : 0);
   return [...cumul.values()]
+    .sort((a, b) => reussite(b) - reussite(a)
+      || participation(b) - participation(a)
+      || a.service.localeCompare(b.service, 'fr'))
     .map((c) => ({
       ...c,
       score_moyen: c.inscrits ? Math.round((c.score_total * 10) / c.inscrits) / 10 : 0,
-      taux_participation: c.inscrits ? Math.round((c.joueurs * 100) / c.inscrits) : 0,
+      taux_participation: Math.round(participation(c) * 100),
       points_possibles: possible * c.inscrits,
-      pourcentage_moyen: possible && c.inscrits
-        ? Math.round((c.score_total * 100) / (possible * c.inscrits))
-        : 0,
-    }))
-    .sort((a, b) => b.score_moyen - a.score_moyen
-      || b.taux_participation - a.taux_participation
-      || a.service.localeCompare(b.service, 'fr'));
+      pourcentage_moyen: Math.round(reussite(c) * 100),
+    }));
 }
 
 /**

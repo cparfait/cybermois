@@ -51,18 +51,24 @@ test('seuls les defis deja parus entrent dans le total', () => {
   assert.equal(pointsPossibles(), 100);
 });
 
-test('la reussite d un service rapporte ses points a ceux de TOUS ses agents', () => {
+test('la reussite d un service est la moyenne de ceux qui ont joue', () => {
+  // Rapportee aux points de TOUS ses agents, la reussite de A tombait a 20 % :
+  // un seul de ses cinq agents a joue, mais il a fait un sans-faute.
   const s = Object.fromEntries(classementServices().map((x) => [x.service, x]));
-  assert.equal(s.A.points_possibles, 500); // 5 agents x 100 points
-  assert.equal(s.A.pourcentage_moyen, 20); // 100 / 500
-  assert.equal(s.B.points_possibles, 200);
-  assert.equal(s.B.pourcentage_moyen, 50); // 100 / 200
+  assert.equal(s.A.pourcentage_moyen, 100); // 100 / 100
+  assert.equal(s.A.taux_participation, 20); // 1 joueur sur 5
+  assert.equal(s.B.pourcentage_moyen, 50); // (50 + 50) / 200
+  assert.equal(s.B.taux_participation, 100);
 });
 
-test('l ordre du classement des services est inchange', () => {
-  // Le denominateur est proportionnel au nombre d'inscrits : le pourcentage
-  // classe donc exactement comme la moyenne par agent qu'il remplace.
-  assert.deepEqual(classementServices().map((s) => s.service), ['B', 'A']);
+test('le classement suit la reussite, puis la participation', () => {
+  assert.deepEqual(classementServices().map((s) => s.service), ['A', 'B']);
+
+  // A egalite de reussite, la meilleure participation passe devant.
+  agent(8, 'C');
+  agent(9, 'C');
+  jouer(8, 1, 50, 100); // C : 50 % de reussite, 1 joueur sur 2
+  assert.deepEqual(classementServices().map((s) => s.service), ['A', 'B', 'C']);
 });
 
 test('un agent voit ses points sur le total atteignable', () => {

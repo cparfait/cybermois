@@ -118,13 +118,15 @@ export const SIGNATURE = 'Hélène MANTHEY<br>Déléguée à la Protection des D
  * deja modifie qui la porte encore recoit l'explication, une fois.
  */
 (function expliquerPourcentages() {
-  const cle = 'modeles_mail_resultats_pourcentages';
+  const cle = 'modeles_mail_resultats_pourcentages_2';
   if (db.prepare("SELECT 1 FROM journal WHERE action = 'migration' AND detail = ?").get(cle)) return;
   const ligne = db.prepare("SELECT corps FROM modeles_mail WHERE type = 'resultats'").get();
-  const avant = 'Score moyen par agent de la direction, et taux de participation.';
+  const premiere = '<strong>Réussite</strong> : les points obtenus par les agents de la direction, sur le maximum qu’ils pouvaient obtenir à ce jour. <strong>Participation</strong> : la part des agents de la direction qui ont fait au moins un défi.';
+  const avant = ligne?.corps.includes(premiere) ? premiere
+    : 'Score moyen par agent de la direction, et taux de participation.';
   if (ligne?.corps.includes(avant)) {
     db.prepare("UPDATE modeles_mail SET corps = ? WHERE type = 'resultats'")
-      .run(ligne.corps.replace(avant, '<strong>Réussite</strong> : les points obtenus par les agents de la direction, sur le maximum qu’ils pouvaient obtenir à ce jour. <strong>Participation</strong> : la part des agents de la direction qui ont fait au moins un défi.'));
+      .run(ligne.corps.replace(avant, '<strong>Réussite</strong> : la moyenne des résultats des agents de la direction qui ont joué. <strong>Participation</strong> : la part des agents de la direction qui ont fait au moins un défi. Le classement suit la réussite, puis la participation.'));
   }
   journaliser('migration', 'migration', cle, null);
 }());
@@ -266,7 +268,7 @@ ${OUVERTURE_FIN}`,
 <p>Cette semaine : {{defis_semaine}}. Voici où en est la campagne.</p>
 <p>{{chiffres}}</p>
 <h2>🏆 Classement des directions</h2>
-<p><strong>Réussite</strong> : les points obtenus par les agents de la direction, sur le maximum qu’ils pouvaient obtenir à ce jour. <strong>Participation</strong> : la part des agents de la direction qui ont fait au moins un défi.</p>
+<p><strong>Réussite</strong> : la moyenne des résultats des agents de la direction qui ont joué. <strong>Participation</strong> : la part des agents de la direction qui ont fait au moins un défi. Le classement suit la réussite, puis la participation.</p>
 <p>{{classement_services}}</p>
 <h2>⭐ Classement individuel</h2>
 <p>{{classement_individuel}}</p>

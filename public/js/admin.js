@@ -142,7 +142,7 @@ chargeurs.suivi = async () => {
         <tbody>${d.services.map((x, i) => `
           <tr><td>${i + 1}</td><td>${echapper(x.service)}</td>
           <td class="num">${x.pourcentage_moyen} %</td>
-          <td class="num discret">${x.score_total} / ${x.points_possibles}</td>
+          <td class="num discret">${x.score_max_joue ? `${x.score_total} / ${x.score_max_joue}` : '—'}</td>
           <td class="num">${x.taux_participation} %</td>
           <td class="num">${x.joueurs} / ${x.inscrits}</td></tr>`).join('')}
         </tbody></table></div>

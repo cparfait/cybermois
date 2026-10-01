@@ -96,7 +96,7 @@ function rendreServices(donnees) {
     <div class="sr-only">${i + 1}<sup>${i === 0 ? 're' : 'e'}</sup> place</div>
     <div class="nom">${echapper(s.service)}</div>
     <div class="points">${s.pourcentage_moyen} %</div>
-    <div class="sous">${s.score_total} / ${s.points_possibles} pts · ${s.taux_participation} % de participation</div>`);
+    <div class="sous">${s.score_max_joue ? `${s.score_total} / ${s.score_max_joue} pts` : 'aucun défi joué'} · ${s.taux_participation} % de participation</div>`);
 
   document.getElementById('table-services').innerHTML = `
     <caption class="sr-only">Classement des directions par taux de réussite</caption>
@@ -112,7 +112,7 @@ function rendreServices(donnees) {
         <td class="rang-cell">${celluleRang(i + 1)}</td>
         <td>${echapper(s.service)}${s.service === maDirection ? ' <span class="discret">(ma direction)</span>' : ''}</td>
         <td class="num"><strong>${s.pourcentage_moyen} %</strong></td>
-        <td class="num discret" style="white-space:nowrap">${s.score_total} / ${s.points_possibles}</td>
+        <td class="num discret" style="white-space:nowrap">${s.score_max_joue ? `${s.score_total} / ${s.score_max_joue}` : '—'}</td>
         <td class="num">
           <div class="rang" style="justify-content:flex-end;gap:.5rem;flex-wrap:nowrap">
             <span>${s.taux_participation} %</span>

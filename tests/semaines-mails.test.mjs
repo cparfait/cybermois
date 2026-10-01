@@ -105,6 +105,7 @@ test('les resultats disent ce que mesurent les deux pourcentages', () => {
   const m = mail.mailResultats(defis[1].id, { jour: '2026-10-02' });
   assert.match(m.html, />Réussite<\/th>/);
   assert.match(m.html, />Participation<\/th>/);
-  assert.match(m.texte, /Réussite : les points obtenus par les agents de la direction/);
+  assert.match(m.texte, /Réussite : la moyenne des résultats des agents de la direction qui ont joué/);
+  assert.match(m.texte, /Le classement suit la réussite, puis la participation/);
   assert.match(m.texte, /Participation : la part des agents de la direction qui ont fait au moins un défi/);
 });
