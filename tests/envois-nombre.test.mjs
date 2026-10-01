@@ -155,3 +155,37 @@ test('une adresse portee par deux comptes ne recoit qu’un mail', async () => {
   assert.equal(etat.manquants.length, 0, 'les deux comptes sont servis');
   assert.deepEqual(etat.partagees, [{ email: 'relais@test.local', noms: ['Relais UN', 'Relais DEUX'] }]);
 });
+
+test('un export enregistre dans Excel (.xlsx) se lit aussi', async () => {
+  const fs = await import('node:fs');
+  const { estArchiveZip, csvDuClasseur } = await import('../src/lib/classeur.js');
+  const octets = fs.readFileSync(new URL('./fixtures/export-messagerie.xlsx', import.meta.url));
+  assert.ok(estArchiveZip(octets));
+  const adresses = mail.adressesDeLExport(csvDuClasseur(octets));
+  assert.ok(adresses.includes('agent1@test.local'));
+  assert.ok(adresses.includes('agent2@test.local'));
+
+  db.prepare("DELETE FROM envois_agents WHERE lot = 'ouverture'").run();
+  const r = mail.importerRecus('ouverture', csvDuClasseur(octets));
+  assert.equal(r.reconnus, 2, "l'expediteur, inconnu, est simplement ignore");
+  assert.deepEqual(mail.etatRattrapage('ouverture').manquants.map((a) => a.email).slice(0, 2),
+    ['agent3@test.local', 'agent4@test.local']);
+});
+
+test("l'import ne retient que l'envoi du jour : ni tests, ni reponses, ni autres jours", () => {
+  const ligne = (date, de, a, objet) => `${date},${de},X <${de}>,${a},${objet},,,LEGIT,NOTHING,,initial`;
+  const exporte = [
+    'Date & Time,Sender,Sender Header,To,Subject,URL,Attachments,Status,Action,Folder,Remediation',
+    ligne('10/01/2026 07:20 AM', 'cybermois@x.fr', 'agent1@test.local', 'Le Cybermois commence aujourd’hui'),
+    ligne('10/01/2026 07:21 AM', 'cybermois@x.fr', 'agent2@test.local', 'Le Cybermois commence aujourd’hui'),
+    ligne('09/30/2026 05:57 AM', 'cybermois@x.fr', 'agent3@test.local', 'Le Cybermois commence aujourd’hui'),
+    ligne('10/01/2026 09:00 AM', 'cybermois@x.fr', 'agent3@test.local', '[TEST] Le Cybermois commence aujourd’hui'),
+    ligne('10/01/2026 11:54 AM', 'informatique@x.fr', 'agent4@test.local', 'RE: [REPORTING] Le Cybermois commence aujourd’hui'),
+    ligne('10/01/2026 12:05 PM', 'agent1@test.local', 'cybermois@x.fr', 'Réponse automatique : Le Cybermois commence aujourd’hui'),
+    ligne('10/01/2026 10:00 AM', 'com@x.fr', 'agent4@test.local', 'Cybermois 2026 : découvrez les visuels'),
+  ].join('\r\n');
+
+  const r = mail.lireExport(exporte, { jour: '2026-10-01' });
+  assert.deepEqual(r.adresses.sort(), ['agent1@test.local', 'agent2@test.local']);
+  assert.deepEqual(r.ecartees, { date: 1, objet: 3, expediteur: 1 });
+});

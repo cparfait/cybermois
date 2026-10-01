@@ -25,6 +25,7 @@ import {
 } from '../lib/modeles-mail.js';
 import { illustrationDe } from '../lib/illustrations.js';
 import { lancerTelechargement, lireTache, telechargementDisponible } from '../lib/telechargement-video.js';
+import { estArchiveZip, csvDuClasseur } from '../lib/classeur.js';
 import { creerJetonApercu, revoquerJetonApercu, lienApercu } from '../lib/apercu.js';
 import {
   enregistrerVideo, listerVideos, supprimerVideo, formatsLisibles, TAILLE_MAX,
@@ -875,15 +876,39 @@ export default async function routesAdmin(app) {
   app.post('/api/admin/mails/rattrapage/:type/recus', { bodyLimit: 10 * 1024 * 1024 }, async (requete, reponse) => {
     const type = requete.params.type;
     if (!TYPES_RATTRAPAGE[type]) return reponse.code(404).send({ erreur: 'Type de mail inconnu.' });
-    const texte = String(requete.body?.texte || '');
+    // Le fichier arrive tel quel, en base64 : CSV, ou classeur Excel (.xlsx),
+    // qui n'est pas du texte. Un CSV enregistre par Excel est souvent en
+    // Windows-1252 : lu en UTF-8, ses accents se brouillent, pas ses adresses.
+    let texte = String(requete.body?.texte || '');
+    if (requete.body?.contenu) {
+      const octets = Buffer.from(String(requete.body.contenu), 'base64');
+      try {
+        texte = estArchiveZip(octets) ? csvDuClasseur(octets) : octets.toString('utf8');
+      } catch (err) {
+        return reponse.code(400).send({ erreur: err.message });
+      }
+    }
     if (!texte.trim()) return reponse.code(400).send({ erreur: 'Fichier vide.' });
-    const r = importerRecus(type, texte);
+    // Seules les lignes du jour de l'envoi : l'export contient aussi les tests
+    // et les messages des autres jours.
+    const jour = /^\d{4}-\d{2}-\d{2}$/.test(requete.body?.jour || '') ? requete.body.jour : null;
+    const r = importerRecus(type, texte, { jour });
+    if (!r.adresses) {
+      return reponse.code(400).send({
+        erreur: 'Aucune adresse mail trouvée dans ce fichier. Importez l’export de la messagerie, '
+          + 'en CSV ou en Excel (.xlsx) ; un ancien classeur .xls doit d’abord être enregistré en .xlsx ou en CSV.',
+      });
+    }
     journaliser(requete.agent.login, 'mail_recus_importes',
       `${type} : ${r.reconnus} agent(s) sur ${r.adresses} adresse(s)`, requete.ip);
     return {
       ok: true,
       ...r,
-      message: `${r.adresses} adresse(s) lue(s), ${r.reconnus} reconnue(s) : leurs agents sont marqués comme l'ayant reçu.`
+      message: `${r.retenues} envoi(s) retenu(s) sur ${r.lignes} ligne(s)`
+        + `${r.ecartees.date ? `, ${r.ecartees.date} d'un autre jour` : ''}`
+        + `${r.ecartees.objet ? `, ${r.ecartees.objet} test(s), réponse(s) ou transfert(s)` : ''}`
+        + `${r.ecartees.expediteur ? `, ${r.ecartees.expediteur} d'un autre expéditeur` : ''} écarté(s). `
+        + `${r.adresses} adresse(s), dont ${r.reconnus} reconnue(s) : leurs agents sont marqués comme l'ayant reçu.`
         + (r.inconnues.length ? ` ${r.inconnues.length} adresse(s) ne correspondent à aucun agent.` : ''),
     };
   });

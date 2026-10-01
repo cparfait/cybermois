@@ -1091,66 +1091,128 @@ export function etatRattrapage(type) {
 }
 
 /**
- * Les adresses d'un export de messagerie : la colonne des destinataires si
- * l'en-tete la nomme (« To », « Destinataire », « Recipient »), sinon toute
- * adresse du texte - moins celle de l'expediteur, presente sur chaque ligne.
+ * Les destinataires d'un envoi, d'apres un export de la messagerie.
+ *
+ * L'export ne contient pas que l'envoi : tests (« [TEST] … »), reponses et
+ * transferts des agents, reponses automatiques, messages d'autres jours. Ils
+ * sont ecartes, sans quoi un agent qui a recu un « RE: » passait pour servi :
+ *   - la date, si une colonne la porte : seules les lignes du `jour` voulu ;
+ *   - l'expediteur, si une colonne le porte : celui de l'envoi, c'est-a-dire
+ *     le plus frequent parmi les lignes retenues ;
+ *   - l'objet, si une colonne le porte : ni test, ni reponse, ni transfert.
+ * Sans colonne de destinataire, toute adresse du texte est prise, moins
+ * celle de l'expediteur configure.
+ *
+ * @returns { adresses, lignes, retenues, ecartees: { date, objet, expediteur } }
  */
-export function adressesDeLExport(texte) {
+export function lireExport(texte, { jour = null } = {}) {
   const lignes = String(texte || '').replace(/^﻿/, '').split(/\r?\n/).filter((l) => l.trim());
-  // Certains exports entourent chaque ligne de guillemets et doublent ceux de
-  // l'interieur : on les retire avant de decouper.
   const decouper = (l) => {
     const sortie = []; let courant = ''; let guillemets = false;
     for (const c of l) {
       if (c === '"') { guillemets = !guillemets; continue; }
-      if ((c === ',' || c === ';') && !guillemets) { sortie.push(courant.trim()); courant = ''; continue; }
+      if ((c === ',' || c === ';' || c === '\t') && !guillemets) { sortie.push(courant.trim()); courant = ''; continue; }
       courant += c;
     }
     sortie.push(courant.trim());
     return sortie;
   };
+  // Certains exports entourent chaque ligne de guillemets et doublent ceux de
+  // l'interieur : une telle ligne ne donne qu'un champ, on la deballe.
   const champs = (ligne) => {
     const l = ligne.trim();
     const sortie = decouper(l);
-    // Une ligne entiere entre guillemets ne donne qu'un champ : on la deballe.
     return sortie.length === 1 && l.startsWith('"') && l.endsWith('"')
       ? decouper(l.slice(1, -1).replace(/""/g, '"'))
       : sortie;
   };
   const motif = /[A-Z0-9._%+'-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
-  const entete = lignes.length ? champs(lignes[0]).map((c) => c.toLowerCase()) : [];
-  const colonne = entete.findIndex((c) => ['to', 'destinataire', 'destinataires', 'recipient', 'recipients',
-    'recipient address', 'adresse du destinataire'].includes(c));
+  const premiere = (v) => (String(v || '').match(motif) || [])[0]?.toLowerCase() || '';
 
-  const adresses = new Set();
-  if (colonne >= 0) {
-    for (const l of lignes.slice(1)) {
-      for (const a of (champs(l)[colonne] || '').match(motif) || []) adresses.add(a.toLowerCase());
-    }
-  } else {
+  const entete = lignes.length ? champs(lignes[0]).map((c) => c.toLowerCase().trim()) : [];
+  const colonne = (...noms) => entete.findIndex((c) => noms.includes(c));
+  const cDestinataire = colonne('to', 'destinataire', 'destinataires', 'recipient', 'recipients',
+    'recipient address', 'adresse du destinataire', 'à');
+  const cDate = colonne('date & time', 'date', 'date/heure', 'date et heure', 'received', 'date de réception');
+  const cExpediteur = colonne('sender', 'from', 'expéditeur', 'expediteur', 'sender address');
+  const cObjet = colonne('subject', 'objet');
+
+  if (cDestinataire < 0) {
     const expediteurs = new Set([config.smtp.from, config.smtp.user]
       .flatMap((v) => String(v || '').match(motif) || []).map((a) => a.toLowerCase()));
-    for (const a of String(texte || '').match(motif) || []) {
-      if (!expediteurs.has(a.toLowerCase())) adresses.add(a.toLowerCase());
-    }
+    const adresses = [...new Set((String(texte || '').match(motif) || []).map((a) => a.toLowerCase()))]
+      .filter((a) => !expediteurs.has(a));
+    return { adresses, lignes: lignes.length, retenues: lignes.length, ecartees: { date: 0, objet: 0, expediteur: 0 } };
   }
-  return [...adresses];
+
+  const rangs = lignes.slice(1).map(champs);
+
+  // Les dates : JJ/MM ou MM/JJ selon l'export, nombre de jours si Excel l'a
+  // converti. Excel francais lit un export americain « 10/01/2026 » comme le
+  // 10 janvier : on accepte donc aussi le jour et le mois inverses.
+  const iso = (a, m, j) => `${a}-${String(m).padStart(2, '0')}-${String(j).padStart(2, '0')}`;
+  const formatAmericain = rangs.some((r) => /\b(AM|PM)\b/i.test(r[cDate] || ''))
+    || rangs.some((r) => Number(/^(\d{1,2})\/(\d{1,2})\//.exec(r[cDate] || '')?.[2]) > 12);
+  const datesDe = (valeur) => {
+    const v = String(valeur || '').trim();
+    let m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v);
+    if (m) return [iso(m[1], m[2], m[3])];
+    m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(v);
+    if (m) return formatAmericain ? [iso(m[3], m[1], m[2])] : [iso(m[3], m[2], m[1])];
+    if (/^\d{5}(\.\d+)?$/.test(v)) {
+      const d = new Date(Date.UTC(1899, 11, 30) + Math.floor(Number(v)) * 86400000);
+      const a = d.getUTCFullYear(); const mo = d.getUTCMonth() + 1; const j = d.getUTCDate();
+      return j <= 12 ? [iso(a, mo, j), iso(a, j, mo)] : [iso(a, mo, j)];
+    }
+    return [];
+  };
+
+  const ecartees = { date: 0, objet: 0, expediteur: 0 };
+  let retenues = rangs.filter((r) => premiere(r[cDestinataire]));
+  if (jour && cDate >= 0) {
+    const avant = retenues.length;
+    retenues = retenues.filter((r) => datesDe(r[cDate]).includes(jour));
+    ecartees.date = avant - retenues.length;
+  }
+  if (cObjet >= 0) {
+    const avant = retenues.length;
+    const pasLEnvoi = /^\s*(\[test|\[reporting\]|re\s*:|tr\s*:|fw\s*:|fwd\s*:|réponse automatique|reponse automatique|automatic reply|absence)/i;
+    retenues = retenues.filter((r) => !pasLEnvoi.test(r[cObjet] || ''));
+    ecartees.objet = avant - retenues.length;
+  }
+  if (cExpediteur >= 0 && retenues.length) {
+    const compte = new Map();
+    for (const r of retenues) {
+      const e = premiere(r[cExpediteur]);
+      compte.set(e, (compte.get(e) || 0) + 1);
+    }
+    const principal = [...compte].sort((a, b) => b[1] - a[1])[0][0];
+    const avant = retenues.length;
+    retenues = retenues.filter((r) => premiere(r[cExpediteur]) === principal);
+    ecartees.expediteur = avant - retenues.length;
+  }
+
+  const adresses = [...new Set(retenues.map((r) => premiere(r[cDestinataire])))];
+  return { adresses, lignes: rangs.length, retenues: retenues.length, ecartees };
 }
+
+/** Les adresses seules : l'export entier, sans filtre de date. */
+export const adressesDeLExport = (texte, options) => lireExport(texte, options).adresses;
 
 /**
  * Declare comme servis, pour ce mail, les agents dont l'adresse figure dans
  * l'export. Les adresses inconnues sont comptees, pas creees.
  */
-export function importerRecus(type, texte) {
+export function importerRecus(type, texte, { jour = null } = {}) {
   const r = RATTRAPAGES[type];
   if (!r) throw new Error('Type de mail inconnu.');
-  const adresses = adressesDeLExport(texte);
+  const lecture = lireExport(texte, { jour });
   const parAdresse = db.prepare('SELECT id FROM agents WHERE lower(email) = ?');
   let reconnus = 0;
   const inconnues = [];
   db.exec('BEGIN');
   try {
-    for (const adresse of adresses) {
+    for (const adresse of lecture.adresses) {
       const agent = parAdresse.get(adresse);
       if (!agent) { inconnues.push(adresse); continue; }
       noterServi(r.lot(), agent.id);
@@ -1161,5 +1223,8 @@ export function importerRecus(type, texte) {
     db.exec('ROLLBACK');
     throw err;
   }
-  return { adresses: adresses.length, reconnus, inconnues };
+  return {
+    adresses: lecture.adresses.length, reconnus, inconnues,
+    lignes: lecture.lignes, retenues: lecture.retenues, ecartees: lecture.ecartees,
+  };
 }

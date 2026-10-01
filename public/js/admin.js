@@ -813,12 +813,15 @@ chargeurs.mails = async () => {
         <summary class="ui" style="cursor:pointer;font-size:.88rem">Déclarer ceux qui l'ont déjà reçu (export de la messagerie)</summary>
         <p class="discret" style="font-size:.84rem;margin:.5rem 0">
           Un envoi fait avant cette version n'a pas laissé la liste de ses destinataires. Importez
-          l'export de la messagerie (fichier CSV avec une colonne « To ») : les agents qui y figurent
-          comptent comme l'ayant reçu.
+          l'export de la messagerie, en CSV ou en Excel (.xlsx), puis cliquez sur « Importer » : les
+          agents dont l'adresse y figure comptent comme l'ayant reçu. Seules les lignes du jour indiqué
+          sont prises en compte, hors tests (« [TEST] »), réponses, transferts et réponses automatiques.
         </p>
         <div class="rang" style="align-items:center">
+          <label class="ui" for="rattrapage-jour" style="font-size:.86rem">Envois du</label>
+          <input type="date" id="rattrapage-jour" style="max-width:170px">
           <label class="sr-only" for="rattrapage-fichier">Export de la messagerie</label>
-          <input type="file" id="rattrapage-fichier" accept=".csv,.txt,text/csv,text/plain">
+          <input type="file" id="rattrapage-fichier" accept=".csv,.txt,.xlsx,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
           <button type="button" class="btn btn-secondaire" id="rattrapage-importer">Importer</button>
         </div>
       </details>
@@ -1180,6 +1183,12 @@ chargeurs.mails = async () => {
     });
   }
   document.getElementById('rattrapage-voir').addEventListener('click', voirRattrapage);
+  // Par defaut, les envois du jour.
+  {
+    const p = (n) => String(n).padStart(2, '0');
+    const d = new Date();
+    document.getElementById('rattrapage-jour').value = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
   document.getElementById('rattrapage-type').addEventListener('change', () => {
     document.getElementById('rattrapage-resultat').innerHTML = '';
   });
@@ -1190,7 +1199,12 @@ chargeurs.mails = async () => {
     const type = document.getElementById('rattrapage-type').value;
     await pendant(ev.currentTarget, 'Import…', async () => {
       try {
-        const r = await api(`/api/admin/mails/rattrapage/${type}/recus`, { method: 'POST', body: { texte: await fichier.text() } });
+        // Le fichier part tel quel : un classeur Excel n'est pas du texte.
+        const octets = new Uint8Array(await fichier.arrayBuffer());
+        let binaire = '';
+        for (let i = 0; i < octets.length; i += 0x8000) binaire += String.fromCharCode(...octets.subarray(i, i + 0x8000));
+        const jour = document.getElementById('rattrapage-jour').value || null;
+        const r = await api(`/api/admin/mails/rattrapage/${type}/recus`, { method: 'POST', body: { contenu: btoa(binaire), jour } });
         await voirRattrapage();
         zone.insertAdjacentHTML('afterbegin', `<div class="message message-succes">${echapper(r.message)}</div>`);
       } catch (e) { zone.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`; }
