@@ -793,6 +793,38 @@ chargeurs.mails = async () => {
       <p class="discret">Chargement…</p>
     </div>
 
+    <section class="carte" style="margin-bottom:1.5rem" aria-labelledby="titre-rattrapage">
+      <h2 id="titre-rattrapage" style="margin-top:0">Rattrapage</h2>
+      <p class="discret" style="margin-top:-.3em;font-size:.86rem">
+        Les agents qui devaient recevoir un mail et ne l'ont pas eu : envoi interrompu, limite de
+        Microsoft 365 dépassée… Ils reçoivent le mail, eux seuls : personne ne le reçoit deux fois.
+      </p>
+      <div class="rang" style="align-items:flex-end">
+        <div class="champ-admin" style="min-width:260px;margin-bottom:0">
+          <label for="rattrapage-type">Mail</label>
+          <select id="rattrapage-type">
+            <option value="ouverture">Mail d'ouverture</option>
+            <option value="annonce">Annonce de cette semaine</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-secondaire" id="rattrapage-voir">Voir qui ne l'a pas reçu</button>
+      </div>
+      <details style="margin-top:.8rem">
+        <summary class="ui" style="cursor:pointer;font-size:.88rem">Déclarer ceux qui l'ont déjà reçu (export de la messagerie)</summary>
+        <p class="discret" style="font-size:.84rem;margin:.5rem 0">
+          Un envoi fait avant cette version n'a pas laissé la liste de ses destinataires. Importez
+          l'export de la messagerie (fichier CSV avec une colonne « To ») : les agents qui y figurent
+          comptent comme l'ayant reçu.
+        </p>
+        <div class="rang" style="align-items:center">
+          <label class="sr-only" for="rattrapage-fichier">Export de la messagerie</label>
+          <input type="file" id="rattrapage-fichier" accept=".csv,.txt,text/csv,text/plain">
+          <button type="button" class="btn btn-secondaire" id="rattrapage-importer">Importer</button>
+        </div>
+      </details>
+      <div id="rattrapage-resultat" aria-live="polite" style="margin-top:.8rem"></div>
+    </section>
+
     <section class="carte" style="margin-bottom:1.5rem" aria-labelledby="titre-semaine-mails">
       <h2 id="titre-semaine-mails" style="margin-top:0">Les mails d'une semaine</h2>
       <p class="discret" style="margin-top:-.3em;font-size:.86rem">
@@ -944,6 +976,8 @@ chargeurs.mails = async () => {
   });
   document.getElementById('mail-type').addEventListener('change', majActions);
   document.getElementById('btn-test-mail').addEventListener('click', envoyerTest);
+  let minuterieEnvois = null;
+  let suiviElus = false;
   majActions();
   afficherEnvois();
   preparerSemaines();
@@ -1063,13 +1097,22 @@ chargeurs.mails = async () => {
       compte = await api('/api/admin/mails/elus', { method: 'POST', body: { groupe, simulation: true } });
     } catch (e) { zone.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`; return undefined; }
     if (!compte.destinataires) {
-      zone.innerHTML = `<div class="message message-alerte">Aucun membre du groupe « ${echapper(groupe)} » n'a d'adresse mail connue.</div>`;
+      zone.innerHTML = `<div class="message message-alerte">${compte.membres
+        ? `Les ${compte.membres} membre(s) du groupe « ${echapper(groupe)} » ont déjà reçu le mail.`
+        : `Aucun membre du groupe « ${echapper(groupe)} » n'a d'adresse mail connue.`}</div>`;
       return undefined;
     }
-    if (!confirm(`Envoyer le mail aux élus aux ${compte.destinataires} membre(s) du groupe « ${groupe} » ?`)) return undefined;
+    const dejaServis = (compte.membres || 0) - compte.destinataires;
+    if (!confirm(`Envoyer le mail aux élus aux ${compte.destinataires} membre(s) du groupe « ${groupe} »`
+      + `${dejaServis > 0 ? ` qui ne l'ont pas encore reçu (${dejaServis} l'ont déjà)` : ''} ?`)) return undefined;
     return pendant(bouton, 'Envoi…', async () => {
       try {
         const r = await api('/api/admin/mails/elus', { method: 'POST', body: { groupe } });
+        if (r.lance) {
+          zone.innerHTML = `<div class="message message-succes">${echapper(r.message)}</div>`;
+          afficherEnvois();
+          return;
+        }
         zone.innerHTML = r.ok && r.succes
           ? `<div class="message message-succes">Envoi effectué : ${r.succes} / ${r.destinataires} message(s) transmis.${r.erreur ? ` Dernière erreur : ${echapper(r.erreur)}` : ''}</div>`
           : `<div class="message message-erreur">${echapper(r.message || `Aucun message n'est parti${r.erreur ? ` : ${r.erreur}` : ''}.`)}</div>`;
@@ -1095,6 +1138,59 @@ chargeurs.mails = async () => {
     choix.addEventListener('change', afficherSemaine);
     afficherSemaine();
   }
+
+  /* ---- Rattrapage : qui ne l'a pas recu, et le leur envoyer */
+  async function voirRattrapage() {
+    const type = document.getElementById('rattrapage-type').value;
+    const zone = document.getElementById('rattrapage-resultat');
+    let d;
+    try { d = await api(`/api/admin/mails/rattrapage/${type}`); } catch (e) {
+      zone.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`;
+      return;
+    }
+    zone.innerHTML = `
+      <p class="ui" style="margin:.2rem 0 .6rem"><strong>${d.manquants.length}</strong> agent(s) ne l'ont pas reçu,
+        sur ${d.prevus} prévu(s) — ${d.recus} l'ont reçu.</p>
+      ${d.manquants.length ? `
+        <button type="button" class="btn btn-principal" id="rattrapage-envoyer">
+          Envoyer à ces ${d.manquants.length} agent(s)</button>
+        <div class="tableau-defilant" style="margin-top:.8rem;max-height:420px;overflow-y:auto">
+          <table class="admin">
+            <caption class="sr-only">Agents qui n'ont pas reçu : ${echapper(d.nom)}</caption>
+            <thead><tr><th scope="col">Agent</th><th scope="col">Direction</th><th scope="col">Adresse</th></tr></thead>
+            <tbody>${d.manquants.map((a) => `<tr><td>${echapper(a.nom)}</td>
+              <td class="discret">${echapper(a.direction)}</td><td>${echapper(a.email)}</td></tr>`).join('')}</tbody>
+          </table>
+        </div>` : '<div class="message message-succes">Tous les agents prévus l’ont reçu.</div>'}`;
+    document.getElementById('rattrapage-envoyer')?.addEventListener('click', async (ev) => {
+      if (!confirm(`Envoyer « ${d.nom} » aux ${d.manquants.length} agent(s) qui ne l'ont pas reçu ?`)) return;
+      await pendant(ev.currentTarget, 'Envoi…', async () => {
+        try {
+          // Deja parti : « forcer » ne l'envoie qu'a ceux qui ne l'ont pas recu.
+          const r = await api(`/api/admin/mails/campagne/${type}`, { method: 'POST', body: { forcer: true } });
+          zone.innerHTML = `<div class="message ${r.ok ? 'message-succes' : 'message-erreur'}">${echapper(r.message || 'Envoi impossible.')}</div>`;
+          afficherEnvois();
+        } catch (e) { zone.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`; }
+      });
+    });
+  }
+  document.getElementById('rattrapage-voir').addEventListener('click', voirRattrapage);
+  document.getElementById('rattrapage-type').addEventListener('change', () => {
+    document.getElementById('rattrapage-resultat').innerHTML = '';
+  });
+  document.getElementById('rattrapage-importer').addEventListener('click', async (ev) => {
+    const fichier = document.getElementById('rattrapage-fichier').files[0];
+    const zone = document.getElementById('rattrapage-resultat');
+    if (!fichier) { zone.innerHTML = '<div class="message message-alerte">Choisissez le fichier exporté.</div>'; return; }
+    const type = document.getElementById('rattrapage-type').value;
+    await pendant(ev.currentTarget, 'Import…', async () => {
+      try {
+        const r = await api(`/api/admin/mails/rattrapage/${type}/recus`, { method: 'POST', body: { texte: await fichier.text() } });
+        await voirRattrapage();
+        zone.insertAdjacentHTML('afterbegin', `<div class="message message-succes">${echapper(r.message)}</div>`);
+      } catch (e) { zone.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`; }
+    });
+  });
 
   /** L'adresse de test de la carte, ou rien - le champ fautif recoit alors le focus. */
   function adresseTestSemaine() {
@@ -1197,6 +1293,7 @@ chargeurs.mails = async () => {
    */
   async function afficherEnvois() {
     const zone = document.getElementById('zone-envois');
+    if (!zone) return;
     let etat;
     try { etat = await api('/api/admin/mails/etat'); } catch (e) {
       zone.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`;
@@ -1211,9 +1308,11 @@ chargeurs.mails = async () => {
     const quand = (h) => new Date(`${h.replace(' ', 'T')}Z`).toLocaleString('fr-FR', {
       day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
     });
+    const enCours = Object.fromEntries((etat.enCours || []).map((x) => [x.type, x]));
     const ligne = (m) => {
       const d = ENVOIS[m.type];
       const e = m.dernierEnvoi;
+      const c = enCours[m.type];
       return `<tr>
         <td><strong>${echapper(d.nom)}</strong><br>
           <span class="discret" style="font-size:.78rem">${echapper(d.quand)} — ${echapper(d.cible)}</span></td>
@@ -1221,13 +1320,16 @@ chargeurs.mails = async () => {
             <input type="checkbox" data-reglage="${echapper(m.cle)}" ${m.actif ? 'checked' : ''}>
             ${m.actif ? (etat.automatique ? 'oui' : 'oui, en pause') : 'non'}</label>
           <code style="font-size:.74rem">${echapper(m.planification)}</code></td>
-        <td style="font-size:.84rem">${e
-          ? `${echapper(quand(e.horodatage))}<br><span class="discret">${e.succes} / ${e.destinataires} envoyé(s)</span>${
-            e.erreur ? `<br><span style="color:var(--erreur)">${echapper(e.erreur)}</span>` : ''}`
-          : '<span class="discret">jamais</span>'}</td>
+        <td style="font-size:.84rem">${c
+          ? `<strong>En cours : ${c.faits} / ${c.total}</strong><br><span class="discret">environ ${c.minutesRestantes} min restante(s)</span>${
+            c.erreur ? `<br><span style="color:var(--erreur)">${echapper(c.erreur)}</span>` : ''}`
+          : e
+            ? `${echapper(quand(e.horodatage))}<br><span class="discret">${e.succes} / ${e.destinataires} envoyé(s)</span>${
+              e.erreur ? `<br><span style="color:var(--erreur)">${echapper(e.erreur)}</span>` : ''}`
+            : '<span class="discret">jamais</span>'}</td>
         <td style="white-space:nowrap">
           <button class="btn btn-secondaire" style="padding:.3rem .7rem;font-size:.8rem" data-simuler="${m.type}">Simuler</button>
-          <button class="btn btn-principal" style="padding:.3rem .7rem;font-size:.8rem" data-envoyer="${m.type}">Envoyer maintenant</button>
+          <button class="btn btn-principal" style="padding:.3rem .7rem;font-size:.8rem" data-envoyer="${m.type}"${c ? ' disabled' : ''}>Envoyer maintenant</button>
         </td></tr>`;
     };
 
@@ -1247,6 +1349,17 @@ chargeurs.mails = async () => {
         <thead><tr><th scope="col">Mail</th><th scope="col">Automatique</th>
           <th scope="col">Dernier envoi</th><th scope="col">À la main</th></tr></thead>
         <tbody>${etat.mails.map(ligne).join('')}</tbody></table></div>`;
+
+    // Un envoi en nombre dure plusieurs minutes : l'ecran le suit seul.
+    const elus = enCours.elus;
+    const ligneElus = document.getElementById('elus-dernier');
+    if (ligneElus && elus) ligneElus.textContent = `Envoi en cours : ${elus.faits} / ${elus.total}, environ ${elus.minutesRestantes} min restante(s).`;
+    if (suiviElus && !elus) afficherGroupes();
+    suiviElus = !!elus;
+    clearTimeout(minuterieEnvois);
+    if ((etat.enCours || []).length && document.getElementById('zone-envois')) {
+      minuterieEnvois = setTimeout(afficherEnvois, 5000);
+    }
 
     zone.querySelectorAll('[data-reglage]').forEach((c) => c.addEventListener('change', async () => {
       c.disabled = true;
@@ -1351,11 +1464,19 @@ chargeurs.mails = async () => {
   async function envoyerCampagne(type, simulation, forcer = false) {
     try {
       const r = await api(`/api/admin/mails/campagne/${type}`, { method: 'POST', body: { simulation, forcer } });
+      // Deja parti : on ne le renvoie qu'a ceux qui ne l'ont pas recu - un
+      // envoi interrompu, ou des agents arrives depuis.
       if (r.code === 'DEJA_ENVOYE' && !forcer) {
-        if (confirm(`${r.message}\n\nLe renvoyer quand même à tous les agents ?`)) envoyerCampagne(type, false, true);
+        if (confirm(`${r.message}\n\nLe leur envoyer maintenant ? Ceux qui l'ont déjà reçu ne le recevront pas une seconde fois.`)) {
+          await envoyerCampagne(type, false, true);
+        }
         return undefined;
       }
       if (!r.ok) return alerte('alerte', r.message || 'Envoi impossible.');
+      if (r.lance) {
+        alerte('alerte', r.message, 'succes');
+        return afficherEnvois();
+      }
       // « Envoi effectué : 0 / 1 » se lisait comme un succes.
       if (!simulation && r.destinataires && !r.succes) {
         return alerte('alerte', `Aucun message n'est parti${r.erreur ? ` : ${r.erreur}` : ''}.`);
@@ -1374,6 +1495,10 @@ chargeurs.mails = async () => {
     try {
       const r = await api(`/api/admin/mails/${quoi}/${defiId}`, { method: 'POST', body: { simulation } });
       if (!r.ok) return alerte('alerte', r.message || 'Envoi impossible.');
+      if (r.lance) {
+        alerte('alerte', r.message, 'succes');
+        return afficherEnvois();
+      }
       alerte('alerte', simulation
         ? `Simulation : ${r.destinataires} destinataire(s) seraient concernés.`
         : `Envoi effectué : ${r.succes} / ${r.destinataires} message(s) transmis.${r.erreur ? ` Dernière erreur : ${r.erreur}` : ''}`,

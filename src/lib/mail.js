@@ -611,16 +611,80 @@ export async function envoyerTest(adresse, m, etiquette = '') {
   });
 }
 
+/* ------------------------------------------------- Envois en nombre */
+
+/*
+ * Un envoi a quatre cents agents ne tient pas dans une requete web : le
+ * proxy coupe au bout d'une minute (« 504 »), alors que la boucle continue
+ * sur le serveur sans que personne ne sache ou elle en est. Et Microsoft 365
+ * n'accepte que trente messages par minute d'un meme compte : envoyes d'une
+ * traite, tous ceux d'apres etaient refuses.
+ *
+ * Desormais un envoi en nombre part en arriere-plan, au debit regle
+ * (smtp.parMinute), reessaie un message refuse pour cause de limite, et note
+ * chaque destinataire servi : le relancer ne part qu'a ceux qui ne l'ont pas
+ * encore recu.
+ */
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS envois_agents (
+  lot        TEXT NOT NULL,
+  agent_id   INTEGER NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+  horodatage TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (lot, agent_id)
+);
+`);
+
+const servis = (lot) => new Set(
+  db.prepare('SELECT agent_id FROM envois_agents WHERE lot = ?').all(lot).map((l) => l.agent_id)
+);
+const noterServi = (lot, agentId) =>
+  db.prepare('INSERT OR IGNORE INTO envois_agents (lot, agent_id) VALUES (?, ?)').run(lot, agentId);
+
+/** Les cibles qui n'ont pas encore recu ce lot. */
+const nonServis = (lot, cibles, agentDe = (c) => c) => {
+  const deja = servis(lot);
+  return cibles.filter((c) => !deja.has(agentDe(c).id));
+};
+
+const pause = (ms) => new Promise((r) => { setTimeout(r, ms); });
+
+/** Millisecondes entre deux messages ; 0 si le debit n'est pas limite. */
+export const intervalleEnvoi = () => {
+  const n = Number(config.smtp.parMinute) || 0;
+  return n > 0 ? Math.ceil(60000 / n) : 0;
+};
+
+/** Duree estimee d'un envoi, en minutes, pour l'annoncer a l'ecran. */
+const minutesPour = (n) => Math.max(1, Math.ceil((n * intervalleEnvoi()) / 60000));
+
+/** Un refus passager : limite de debit, serveur occupe. Il vaut la peine d'attendre. */
+const passager = (err) => /\b4\d\d\b|\b4\.\d+\.\d+\b|rate|throttl|too many|exceed|limit/i
+  .test(`${err?.responseCode || ''} ${err?.message || err}`);
+
+/** Le temps d'attente avant de reessayer un message refuse pour cause de limite. */
+export const reglagesReprise = { attente: 60000, essais: 3 };
+
+async function envoyerAvecReprise(message) {
+  for (let essai = 1; ; essai++) {
+    try {
+      return await envoyer(message);
+    } catch (err) {
+      if (essai >= reglagesReprise.essais || !passager(err)) throw err;
+      await pause(reglagesReprise.attente);
+    }
+  }
+}
+
 /**
- * Un envoi en masse a la fois.
+ * Un envoi en nombre a la fois par cle.
  *
  * Rien n'empechait deux envois simultanes sur le meme defi : un double clic,
  * ou la tache planifiee qui tombe pendant un envoi manuel, et cinq cents
- * agents recevaient la relance en double. La trace dans « envois » n'etant
- * ecrite qu'a la fin de la boucle, le second appel ne pouvait meme pas
- * s'apercevoir que le premier etait en cours.
+ * agents recevaient la relance en double.
  */
 const envoisEnCours = new Set();
+const progression = new Map();
 
 function verrouiller(cle) {
   if (envoisEnCours.has(cle)) return false;
@@ -628,50 +692,92 @@ function verrouiller(cle) {
   return true;
 }
 
-/** Relance des agents n'ayant pas encore joue le defi donne. */
-export async function envoyerRelances(defiId, { simulation = false } = {}) {
-  const defi = db.prepare('SELECT id FROM defis WHERE id = ? AND publie = 1').get(Number(defiId));
-  if (!defi) return { ok: false, message: `Defi ${defiId} introuvable ou non publie.` };
+/** Les envois en cours, pour l'ecran : ou ils en sont, et combien de temps il reste. */
+export const envoisEnCoursDetail = () => [...progression.values()].map((e) => ({
+  type: e.type,
+  total: e.total,
+  faits: e.faits,
+  succes: e.succes,
+  erreur: e.erreur,
+  minutesRestantes: minutesPour(e.total - e.faits),
+}));
 
-  const cibles = filtrerDestinataires('relance', db.prepare(`
-    SELECT a.* FROM agents a
-    WHERE ${AGENTS_JOIGNABLES}
-      AND NOT EXISTS (SELECT 1 FROM participations p WHERE p.agent_id = a.id AND p.defi_id = ? AND p.entrainement = 0)
-  `).all(defi.id));
-
-  if (simulation) return { ok: true, simulation: true, destinataires: cibles.length, apercu: cibles.slice(0, 5).map((a) => a.email) };
-
-  const cle = `relance:${defi.id}`;
-  if (!verrouiller(cle)) {
-    return {
-      ok: false,
-      code: 'ENVOI_EN_COURS',
-      message: 'Une relance est deja en cours d\'envoi pour ce defi. Attendez qu\'elle se termine.',
-    };
-  }
-
-  let succes = 0; let derniereErreur = null;
-  try {
-    for (const agent of cibles) {
-      try {
-        const m = mailRelance(agent, defi.id);
-        await envoyer({ to: agent.email, ...m });
-        succes++;
-      } catch (err) { derniereErreur = err.message; }
+/**
+ * La boucle commune : un message par cible, au debit regle. Chaque succes est
+ * note dans le lot ; la trace finale va dans « envois ».
+ *
+ * @param attendre faux : l'envoi part en arriere-plan, la fonction rend la
+ *                 main aussitot avec une estimation de duree.
+ */
+function lancerEnvoi({ cle, type, lot, cibles, agentDe = (c) => c, message, tracer, attendre }) {
+  const etat = { type, total: cibles.length, faits: 0, succes: 0, erreur: null };
+  progression.set(cle, etat);
+  const travail = (async () => {
+    try {
+      for (const c of cibles) {
+        if (etat.faits && intervalleEnvoi()) await pause(intervalleEnvoi());
+        try {
+          await envoyerAvecReprise(message(c));
+          etat.succes++;
+          if (lot) noterServi(lot, agentDe(c).id);
+        } catch (err) { etat.erreur = err.message; }
+        etat.faits++;
+      }
+      tracer(etat);
+    } finally {
+      progression.delete(cle);
+      envoisEnCours.delete(cle);
     }
+    return { ok: true, destinataires: etat.total, succes: etat.succes, erreur: etat.erreur };
+  })();
 
-    db.prepare('INSERT INTO envois (type, defi_id, destinataires, succes, erreur) VALUES (?, ?, ?, ?, ?)')
-      .run('relance', defi.id, cibles.length, succes, derniereErreur);
-  } finally {
-    envoisEnCours.delete(cle);
-  }
-
-  return { ok: true, destinataires: cibles.length, succes, erreur: derniereErreur };
+  if (attendre) return travail;
+  travail.catch((err) => console.error(`Envoi ${type} interrompu :`, err)); // eslint-disable-line no-console
+  return {
+    ok: true,
+    lance: true,
+    destinataires: etat.total,
+    minutes: minutesPour(etat.total),
+    message: `Envoi lancé : ${etat.total} mail(s), environ ${minutesPour(etat.total)} minute(s). `
+      + 'Vous pouvez quitter la page : il continue sur le serveur.',
+  };
 }
+
+const tracer = (type, defiId, detail = null) => (etat) => db.prepare(
+  'INSERT INTO envois (type, defi_id, destinataires, succes, erreur, detail) VALUES (?, ?, ?, ?, ?, ?)'
+).run(type, defiId, etat.total, etat.succes, etat.erreur, detail);
 
 // Agents qui recoivent les mails individuels. Le compte d'administration
 // locale n'est pas un agent : il ne joue pas et n'a rien a recevoir.
 const AGENTS_JOIGNABLES = `a.email IS NOT NULL AND a.email <> '' AND a.exclu = 0 AND a.origine <> 'local'`;
+
+/** Relance des agents n'ayant pas encore joue le defi donne. */
+export async function envoyerRelances(defiId, { simulation = false, attendre = true } = {}) {
+  const defi = db.prepare('SELECT id FROM defis WHERE id = ? AND publie = 1').get(Number(defiId));
+  if (!defi) return { ok: false, message: `Defi ${defiId} introuvable ou non publie.` };
+
+  // Une relance par jour et par defi : la relancer le meme jour ne reprend que
+  // ceux qu'elle n'a pas encore atteints.
+  const lot = `relance:${defi.id}:${aujourdhui()}`;
+  const cibles = nonServis(lot, filtrerDestinataires('relance', db.prepare(`
+    SELECT a.* FROM agents a
+    WHERE ${AGENTS_JOIGNABLES}
+      AND NOT EXISTS (SELECT 1 FROM participations p WHERE p.agent_id = a.id AND p.defi_id = ? AND p.entrainement = 0)
+  `).all(defi.id)));
+
+  if (simulation) return { ok: true, simulation: true, destinataires: cibles.length, apercu: cibles.slice(0, 5).map((a) => a.email) };
+  if (!cibles.length) return { ok: false, message: 'Personne à relancer pour ce défi aujourd’hui.' };
+
+  const cle = `relance:${defi.id}`;
+  if (!verrouiller(cle)) {
+    return { ok: false, code: 'ENVOI_EN_COURS', message: 'Une relance est déjà en cours d’envoi pour ce défi.' };
+  }
+  return lancerEnvoi({
+    cle, type: 'relance', lot, cibles, attendre,
+    message: (agent) => ({ to: agent.email, ...mailRelance(agent, defi.id) }),
+    tracer: tracer('relance', defi.id),
+  });
+}
 
 /** Le mail d'ouverture est-il deja parti ? Une remise a zero l'oublie. */
 export const ouvertureEnvoyee = () =>
@@ -682,14 +788,16 @@ export const ouvertureEnvoyee = () =>
  *
  * Il ne part qu'une fois : la tache planifiee passe plusieurs fois le premier
  * jour, pour rattraper un serveur arrete a l'heure prevue, et un envoi manuel
- * peut tomber apres elle. `forcer` le renvoie quand meme - a un effectif
- * complete apres coup, par exemple.
+ * peut tomber apres elle. `forcer` le complete : il part aux seuls agents qui
+ * ne l'ont pas encore recu - un envoi interrompu, un effectif complete apres
+ * coup.
  */
-export async function envoyerOuverture({ simulation = false, forcer = false } = {}) {
+export async function envoyerOuverture({ simulation = false, forcer = false, attendre = true } = {}) {
   const defi = premierDefi();
   if (!defi) return { ok: false, message: 'Aucun défi publié : rien à annoncer.' };
 
-  const cibles = filtrerDestinataires('ouverture', db.prepare(`SELECT a.* FROM agents a WHERE ${AGENTS_JOIGNABLES}`).all());
+  const tous = filtrerDestinataires('ouverture', db.prepare(`SELECT a.* FROM agents a WHERE ${AGENTS_JOIGNABLES}`).all());
+  const cibles = nonServis('ouverture', tous);
   const deja = ouvertureEnvoyee();
 
   if (simulation) {
@@ -698,30 +806,23 @@ export async function envoyerOuverture({ simulation = false, forcer = false } = 
       premierJour: defi.ouvre_le, apercu: cibles.slice(0, 5).map((a) => a.email),
     };
   }
+  if (!cibles.length) {
+    return { ok: false, code: 'TOUS_SERVIS', message: "Tous les agents ont déjà reçu le mail d'ouverture." };
+  }
   if (deja && !forcer) {
     return {
-      ok: false, code: 'DEJA_ENVOYE',
-      message: "Le mail d'ouverture a déjà été envoyé pour cette campagne.",
+      ok: false, code: 'DEJA_ENVOYE', restants: cibles.length,
+      message: `Le mail d'ouverture est déjà parti. ${cibles.length} agent(s) ne l'ont pas encore reçu.`,
     };
   }
   if (!verrouiller('ouverture')) {
     return { ok: false, code: 'ENVOI_EN_COURS', message: "Le mail d'ouverture est déjà en cours d'envoi." };
   }
-
-  let succes = 0; let derniereErreur = null;
-  try {
-    for (const agent of cibles) {
-      try {
-        await envoyer({ to: agent.email, ...mailOuverture(defi, agent) });
-        succes++;
-      } catch (err) { derniereErreur = err.message; }
-    }
-    db.prepare('INSERT INTO envois (type, defi_id, destinataires, succes, erreur) VALUES (?, ?, ?, ?, ?)')
-      .run('ouverture', defi.id, cibles.length, succes, derniereErreur);
-  } finally {
-    envoisEnCours.delete('ouverture');
-  }
-  return { ok: true, destinataires: cibles.length, succes, erreur: derniereErreur };
+  return lancerEnvoi({
+    cle: 'ouverture', type: 'ouverture', lot: 'ouverture', cibles, attendre,
+    message: (agent) => ({ to: agent.email, ...mailOuverture(defi, agent) }),
+    tracer: tracer('ouverture', defi.id),
+  });
 }
 
 /**
@@ -746,7 +847,7 @@ const annonceEnvoyee = () => !!db.prepare(
  * Pas d'annonce avant ni pendant le premier jour : le mail d'ouverture la
  * remplace, et deux messages le meme matin se feraient concurrence.
  */
-export async function envoyerAnnonce({ simulation = false, forcer = false, jour = aujourdhui() } = {}) {
+export async function envoyerAnnonce({ simulation = false, forcer = false, jour = aujourdhui(), attendre = true } = {}) {
   if (config.campagne.fin && jour > config.campagne.fin) {
     return { ok: false, message: 'La campagne est terminée : plus d\'annonce.' };
   }
@@ -764,7 +865,8 @@ export async function envoyerAnnonce({ simulation = false, forcer = false, jour 
   const fait = db.prepare(
     'SELECT 1 FROM participations WHERE agent_id = ? AND defi_id = ? AND entrainement = 0'
   );
-  const cibles = filtrerDestinataires('annonce', db.prepare(`SELECT a.* FROM agents a WHERE ${AGENTS_JOIGNABLES}`).all());
+  const lot = `annonce:${lundiDe(jour)}`;
+  const cibles = nonServis(lot, filtrerDestinataires('annonce', db.prepare(`SELECT a.* FROM agents a WHERE ${AGENTS_JOIGNABLES}`).all()));
   const deja = annonceEnvoyee();
 
   if (simulation) {
@@ -773,28 +875,28 @@ export async function envoyerAnnonce({ simulation = false, forcer = false, jour 
       defis: semaine.map((d) => d.titre), apercu: cibles.slice(0, 5).map((a) => a.email),
     };
   }
+  if (!cibles.length) {
+    return { ok: false, code: 'TOUS_SERVIS', message: "Tous les agents ont déjà reçu l'annonce de cette semaine." };
+  }
   if (deja && !forcer) {
-    return { ok: false, code: 'DEJA_ENVOYE', message: "L'annonce de la semaine a déjà été envoyée." };
+    return {
+      ok: false, code: 'DEJA_ENVOYE', restants: cibles.length,
+      message: `L'annonce de la semaine est déjà partie. ${cibles.length} agent(s) ne l'ont pas encore reçue.`,
+    };
   }
   if (!verrouiller('annonce')) {
     return { ok: false, code: 'ENVOI_EN_COURS', message: "L'annonce est déjà en cours d'envoi." };
   }
-
-  let succes = 0; let derniereErreur = null;
-  try {
-    for (const agent of cibles) {
-      try {
-        const enRetard = anciens.filter((d) => !fait.get(agent.id, d.id));
-        await envoyer({ to: agent.email, ...mailAnnonce(agent, semaine, enRetard, jour) });
-        succes++;
-      } catch (err) { derniereErreur = err.message; }
-    }
-    db.prepare('INSERT INTO envois (type, defi_id, destinataires, succes, erreur) VALUES (?, ?, ?, ?, ?)')
-      .run('annonce', semaine[0].id, cibles.length, succes, derniereErreur);
-  } finally {
-    envoisEnCours.delete('annonce');
-  }
-  return { ok: true, destinataires: cibles.length, succes, erreur: derniereErreur, defis: semaine.map((d) => d.titre) };
+  const res = lancerEnvoi({
+    cle: 'annonce', type: 'annonce', lot, cibles, attendre,
+    message: (agent) => ({
+      to: agent.email,
+      ...mailAnnonce(agent, semaine, anciens.filter((d) => !fait.get(agent.id, d.id)), jour),
+    }),
+    tracer: tracer('annonce', semaine[0].id),
+  });
+  const defis = semaine.map((d) => d.titre);
+  return attendre ? { ...(await res), defis } : { ...res, defis };
 }
 
 /** Tache du lundi : `null` quand il n'y a rien a faire, ou que c'est deja fait. */
@@ -807,9 +909,10 @@ export async function annonceDuJour(jour = aujourdhui()) {
 /**
  * Relance du mercredi : chaque agent qui n'a pas termine tous les defis deja
  * parus - ceux de la semaine comme les plus anciens - recoit un message
- * listant ceux qui lui manquent.
+ * listant ceux qui lui manquent. La relancer le meme jour ne reprend que ceux
+ * qu'elle n'a pas encore atteints.
  */
-export async function envoyerRelancesSemaine({ simulation = false, jour = aujourdhui() } = {}) {
+export async function envoyerRelancesSemaine({ simulation = false, jour = aujourdhui(), attendre = true } = {}) {
   if (config.campagne.fin && jour > config.campagne.fin) {
     return { ok: false, message: 'La campagne est terminée : plus de relance.' };
   }
@@ -821,10 +924,11 @@ export async function envoyerRelancesSemaine({ simulation = false, jour = aujour
   const fait = db.prepare(
     'SELECT 1 FROM participations WHERE agent_id = ? AND defi_id = ? AND entrainement = 0'
   );
-  const cibles = filtrerDestinataires('relance-semaine',
+  const lot = `relance-semaine:${jour}`;
+  const cibles = nonServis(lot, filtrerDestinataires('relance-semaine',
     db.prepare(`SELECT a.* FROM agents a WHERE ${AGENTS_JOIGNABLES}`).all())
     .map((agent) => ({ agent, manquants: defis.filter((d) => !fait.get(agent.id, d.id)) }))
-    .filter((c) => c.manquants.length);
+    .filter((c) => c.manquants.length), (c) => c.agent);
 
   if (simulation) {
     return {
@@ -832,27 +936,20 @@ export async function envoyerRelancesSemaine({ simulation = false, jour = aujour
       defis: defis.map((d) => d.titre), apercu: cibles.slice(0, 5).map((c) => c.agent.email),
     };
   }
+  if (!cibles.length) return { ok: false, code: 'TOUS_SERVIS', message: 'Personne à relancer aujourd’hui.' };
   if (!verrouiller('relance-semaine')) {
     return { ok: false, code: 'ENVOI_EN_COURS', message: 'Une relance est déjà en cours d\'envoi.' };
   }
-
-  let succes = 0; let derniereErreur = null;
-  try {
-    for (const { agent, manquants } of cibles) {
-      try {
-        await envoyer({ to: agent.email, ...mailRelanceSemaine(agent, manquants) });
-        succes++;
-      } catch (err) { derniereErreur = err.message; }
-    }
-    db.prepare('INSERT INTO envois (type, defi_id, destinataires, succes, erreur) VALUES (?, NULL, ?, ?, ?)')
-      .run('relance_semaine', cibles.length, succes, derniereErreur);
-  } finally {
-    envoisEnCours.delete('relance-semaine');
-  }
-  return { ok: true, destinataires: cibles.length, succes, erreur: derniereErreur, defis: defis.map((d) => d.titre) };
+  const res = lancerEnvoi({
+    cle: 'relance-semaine', type: 'relance-semaine', lot, cibles, attendre, agentDe: (c) => c.agent,
+    message: ({ agent, manquants }) => ({ to: agent.email, ...mailRelanceSemaine(agent, manquants) }),
+    tracer: tracer('relance_semaine', null),
+  });
+  const titres = defis.map((d) => d.titre);
+  return attendre ? { ...(await res), defis: titres } : { ...res, defis: titres };
 }
 
-/** Resultats d'un defi envoyes au groupe de distribution. */
+/** Resultats d'un defi envoyes au groupe de distribution : un seul message. */
 export async function envoyerResultats(defiId, { simulation = false, jour = null } = {}) {
   const id = Number(defiId) || null;
   const m = mailResultats(id, { jour });
@@ -861,15 +958,11 @@ export async function envoyerResultats(defiId, { simulation = false, jour = null
 
   const cle = `resultats:${id}`;
   if (!verrouiller(cle)) {
-    return {
-      ok: false,
-      code: 'ENVOI_EN_COURS',
-      message: 'Un envoi de resultats est deja en cours pour ce defi.',
-    };
+    return { ok: false, code: 'ENVOI_EN_COURS', message: 'Un envoi de resultats est deja en cours pour ce defi.' };
   }
 
   try {
-    await envoyer({ to: config.smtp.groupeDiffusion, ...m });
+    await envoyerAvecReprise({ to: config.smtp.groupeDiffusion, ...m });
     db.prepare('INSERT INTO envois (type, defi_id, destinataires, succes) VALUES (?, ?, 1, 1)').run('resultats', id);
     return { ok: true, destinataires: 1, succes: 1 };
   } catch (err) {
@@ -886,34 +979,146 @@ export const dernierEnvoiElus = () => db.prepare(
 ).get() || null;
 
 /**
- * Mail aux elus, aux membres du groupe choisi. Rien ne l'empeche de repartir :
- * un second envoi vise souvent un groupe complete apres coup, et l'ecran le
- * confirme avant.
+ * Mail aux elus, aux membres du groupe choisi. Le relancer ne part qu'aux
+ * membres qui ne l'ont pas encore recu : un groupe complete apres coup, ou un
+ * envoi interrompu.
  */
-export async function envoyerElus(groupe, { simulation = false } = {}) {
-  const cibles = membresDuGroupe(groupe);
+export async function envoyerElus(groupe, { simulation = false, attendre = true } = {}) {
   if (!String(groupe || '').trim()) return { ok: false, message: 'Choisissez un groupe.' };
+  const membres = membresDuGroupe(groupe);
+  const cibles = nonServis('elus', membres);
   if (simulation) {
     return {
-      ok: true, simulation: true, destinataires: cibles.length,
+      ok: true, simulation: true, destinataires: cibles.length, membres: membres.length,
       apercu: cibles.slice(0, 10).map((a) => a.nom_complet),
     };
   }
-  if (!cibles.length) return { ok: false, message: `Aucun membre joignable par mail dans le groupe « ${groupe} ».` };
+  if (!membres.length) return { ok: false, message: `Aucun membre joignable par mail dans le groupe « ${groupe} ».` };
+  if (!cibles.length) return { ok: false, code: 'TOUS_SERVIS', message: `Tous les membres de « ${groupe} » ont déjà reçu le mail.` };
   if (!verrouiller('elus')) return { ok: false, code: 'ENVOI_EN_COURS', message: 'Le mail aux élus est déjà en cours d’envoi.' };
 
-  let succes = 0; let derniereErreur = null;
-  try {
-    for (const agent of cibles) {
-      try {
-        await envoyer({ to: agent.email, ...mailElus(agent) });
-        succes++;
-      } catch (err) { derniereErreur = err.message; }
+  return lancerEnvoi({
+    cle: 'elus', type: 'elus', lot: 'elus', cibles, attendre,
+    message: (agent) => ({ to: agent.email, ...mailElus(agent) }),
+    tracer: tracer('elus', null, groupe),
+  });
+}
+
+/* ---------------------------------------------------------- Rattrapage */
+
+/*
+ * Un envoi interrompu - limite de debit depassee, serveur arrete - laisse des
+ * agents sans le mail, et rien ne disait lesquels. Le rattrapage les montre
+ * et leur envoie le mail, a eux seuls.
+ *
+ * Les envois faits avant que l'application ne note chaque destinataire n'ont
+ * laisse aucune trace : un export de la messagerie (journal des messages
+ * remis) se declare ici, et ses destinataires comptent comme servis.
+ */
+
+/** Les mails qui se rattrapent, avec leur lot et leurs destinataires prevus. */
+const RATTRAPAGES = {
+  ouverture: {
+    nom: "Mail d'ouverture",
+    lot: () => 'ouverture',
+    prevus: () => filtrerDestinataires('ouverture', db.prepare(`SELECT a.* FROM agents a WHERE ${AGENTS_JOIGNABLES}`).all()),
+  },
+  annonce: {
+    nom: 'Annonce de cette semaine',
+    lot: () => `annonce:${lundiDe(aujourdhui())}`,
+    prevus: () => filtrerDestinataires('annonce', db.prepare(`SELECT a.* FROM agents a WHERE ${AGENTS_JOIGNABLES}`).all()),
+  },
+};
+export const TYPES_RATTRAPAGE = Object.fromEntries(Object.entries(RATTRAPAGES).map(([t, r]) => [t, r.nom]));
+
+/** Qui devait recevoir ce mail, qui l'a recu, qui l'attend encore. */
+export function etatRattrapage(type) {
+  const r = RATTRAPAGES[type];
+  if (!r) return null;
+  const prevus = r.prevus();
+  const deja = servis(r.lot());
+  const manquants = prevus.filter((a) => !deja.has(a.id));
+  return {
+    type,
+    nom: r.nom,
+    prevus: prevus.length,
+    recus: prevus.length - manquants.length,
+    manquants: manquants
+      .map((a) => ({ nom: a.nom_complet, direction: a.service, email: a.email }))
+      .sort((x, y) => x.nom.localeCompare(y.nom, 'fr', { sensitivity: 'base' })),
+  };
+}
+
+/**
+ * Les adresses d'un export de messagerie : la colonne des destinataires si
+ * l'en-tete la nomme (« To », « Destinataire », « Recipient »), sinon toute
+ * adresse du texte - moins celle de l'expediteur, presente sur chaque ligne.
+ */
+export function adressesDeLExport(texte) {
+  const lignes = String(texte || '').replace(/^﻿/, '').split(/\r?\n/).filter((l) => l.trim());
+  // Certains exports entourent chaque ligne de guillemets et doublent ceux de
+  // l'interieur : on les retire avant de decouper.
+  const decouper = (l) => {
+    const sortie = []; let courant = ''; let guillemets = false;
+    for (const c of l) {
+      if (c === '"') { guillemets = !guillemets; continue; }
+      if ((c === ',' || c === ';') && !guillemets) { sortie.push(courant.trim()); courant = ''; continue; }
+      courant += c;
     }
-    db.prepare('INSERT INTO envois (type, defi_id, destinataires, succes, erreur, detail) VALUES (?, NULL, ?, ?, ?, ?)')
-      .run('elus', cibles.length, succes, derniereErreur, groupe);
-  } finally {
-    envoisEnCours.delete('elus');
+    sortie.push(courant.trim());
+    return sortie;
+  };
+  const champs = (ligne) => {
+    const l = ligne.trim();
+    const sortie = decouper(l);
+    // Une ligne entiere entre guillemets ne donne qu'un champ : on la deballe.
+    return sortie.length === 1 && l.startsWith('"') && l.endsWith('"')
+      ? decouper(l.slice(1, -1).replace(/""/g, '"'))
+      : sortie;
+  };
+  const motif = /[A-Z0-9._%+'-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+  const entete = lignes.length ? champs(lignes[0]).map((c) => c.toLowerCase()) : [];
+  const colonne = entete.findIndex((c) => ['to', 'destinataire', 'destinataires', 'recipient', 'recipients',
+    'recipient address', 'adresse du destinataire'].includes(c));
+
+  const adresses = new Set();
+  if (colonne >= 0) {
+    for (const l of lignes.slice(1)) {
+      for (const a of (champs(l)[colonne] || '').match(motif) || []) adresses.add(a.toLowerCase());
+    }
+  } else {
+    const expediteurs = new Set([config.smtp.from, config.smtp.user]
+      .flatMap((v) => String(v || '').match(motif) || []).map((a) => a.toLowerCase()));
+    for (const a of String(texte || '').match(motif) || []) {
+      if (!expediteurs.has(a.toLowerCase())) adresses.add(a.toLowerCase());
+    }
   }
-  return { ok: true, destinataires: cibles.length, succes, erreur: derniereErreur };
+  return [...adresses];
+}
+
+/**
+ * Declare comme servis, pour ce mail, les agents dont l'adresse figure dans
+ * l'export. Les adresses inconnues sont comptees, pas creees.
+ */
+export function importerRecus(type, texte) {
+  const r = RATTRAPAGES[type];
+  if (!r) throw new Error('Type de mail inconnu.');
+  const adresses = adressesDeLExport(texte);
+  const parAdresse = db.prepare('SELECT id FROM agents WHERE lower(email) = ?');
+  let reconnus = 0;
+  const inconnues = [];
+  db.exec('BEGIN');
+  try {
+    for (const adresse of adresses) {
+      const agent = parAdresse.get(adresse);
+      if (!agent) { inconnues.push(adresse); continue; }
+      noterServi(r.lot(), agent.id);
+      reconnus++;
+    }
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
+  return { adresses: adresses.length, reconnus, inconnues };
 }

@@ -125,6 +125,9 @@ export const config = {
     groupeDiffusion: process.env.MAIL_GROUPE_DIFFUSION || '',
     copie: process.env.MAIL_COPIE || '',
     actif: bool(process.env.MAIL_ENVOI_ACTIF, false),
+    // Microsoft 365 n'accepte que 30 messages par minute d'un meme compte :
+    // 25 laisse une marge. 0 = sans limite, pour un relais interne.
+    parMinute: num(process.env.SMTP_PAR_MINUTE, 25),
   },
 
   // Chaque mail automatique s'active ou se coupe seul, sous l'interrupteur

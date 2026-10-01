@@ -134,6 +134,10 @@ export const DESCRIPTEUR = [
   { cle: 'smtp.groupeDiffusion', chemin: ['smtp', 'groupeDiffusion'], type: 'texte', groupe: 'smtp',
     libelle: 'Groupe de diffusion', aide: 'Destinataire du mail de resultats du vendredi.' },
   { cle: 'smtp.copie', chemin: ['smtp', 'copie'], type: 'texte', groupe: 'smtp', libelle: 'En copie' },
+  { cle: 'smtp.parMinute', chemin: ['smtp', 'parMinute'], type: 'entier', groupe: 'smtp',
+    libelle: 'Mails par minute',
+    aide: 'Debit des envois en nombre. Microsoft 365 refuse au-dela de 30 messages par minute '
+      + "d'un meme compte : 25 laisse une marge. 0 = sans limite (relais interne)." },
   { cle: 'smtp.actif', chemin: ['smtp', 'actif'], type: 'booleen', groupe: 'smtp',
     libelle: 'Envois automatiques actifs',
     aide: 'Interrupteur general des envois planifies. A laisser inactif jusqu\'a la fin de la '

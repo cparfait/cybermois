@@ -13,7 +13,8 @@ import {
   mailBienvenue, mailAnnonce, mailRelanceSemaine, defisAVenir,
   envoyerOuverture, envoyerAnnonce, envoyerRelancesSemaine, dernierDefiParu,
   envoyerTest, adresseValide, semainesDeCampagne, mailsDeLaSemaine, exemplesDeCampagne,
-  defisARelancer, mailElus, envoyerElus, dernierEnvoiElus,
+  defisARelancer, mailElus, envoyerElus, dernierEnvoiElus, envoisEnCoursDetail,
+  TYPES_RATTRAPAGE, etatRattrapage, importerRecus,
 } from '../lib/mail.js';
 import {
   listerGroupes, lireExclusionsMail, enregistrerExclusionsMail, TYPES_EXCLUSION,
@@ -856,9 +857,35 @@ export default async function routesAdmin(app) {
   app.post('/api/admin/mails/elus', async (requete) => {
     const groupe = String(requete.body?.groupe || '').trim();
     const simulation = !!requete.body?.simulation;
-    const res = await envoyerElus(groupe, { simulation });
+    const res = await envoyerElus(groupe, { simulation, attendre: false });
     if (!simulation) journaliser(requete.agent.login, 'mail_elus_envoye', `${groupe} ${JSON.stringify(res)}`, requete.ip);
     return res;
+  });
+
+  /* --------------------------------------------------------- Rattrapage */
+
+  /** Qui devait recevoir ce mail et ne l'a pas recu. */
+  app.get('/api/admin/mails/rattrapage/:type', async (requete, reponse) => {
+    const etat = etatRattrapage(requete.params.type);
+    if (!etat) return reponse.code(404).send({ erreur: 'Type de mail inconnu.' });
+    return { ...etat, types: TYPES_RATTRAPAGE };
+  });
+
+  /** Un export de la messagerie : ses destinataires comptent comme servis. */
+  app.post('/api/admin/mails/rattrapage/:type/recus', { bodyLimit: 10 * 1024 * 1024 }, async (requete, reponse) => {
+    const type = requete.params.type;
+    if (!TYPES_RATTRAPAGE[type]) return reponse.code(404).send({ erreur: 'Type de mail inconnu.' });
+    const texte = String(requete.body?.texte || '');
+    if (!texte.trim()) return reponse.code(400).send({ erreur: 'Fichier vide.' });
+    const r = importerRecus(type, texte);
+    journaliser(requete.agent.login, 'mail_recus_importes',
+      `${type} : ${r.reconnus} agent(s) sur ${r.adresses} adresse(s)`, requete.ip);
+    return {
+      ok: true,
+      ...r,
+      message: `${r.adresses} adresse(s) lue(s), ${r.reconnus} agent(s) marqué(s) comme l'ayant reçu.`
+        + (r.inconnues.length ? ` ${r.inconnues.length} adresse(s) ne correspondent à aucun agent.` : ''),
+    };
   });
 
   /* --------------------------------------------- Mails d'une semaine */
@@ -1021,6 +1048,8 @@ export default async function routesAdmin(app) {
       groupeDiffusion: config.smtp.groupeDiffusion || null,
       // Adresse proposee par defaut pour les envois de test : la sienne.
       monAdresse: requete.agent.email || null,
+      // Les envois en nombre en cours, que l'ecran suit jusqu'a la fin.
+      enCours: envoisEnCoursDetail(),
       mails: types.map(([type, cle, trace]) => ({
         type,
         cle: `mails.${cle}`,
@@ -1035,7 +1064,9 @@ export default async function routesAdmin(app) {
     const envoi = envoisCampagne[requete.params.type];
     if (!envoi) return reponse.code(400).send({ erreur: 'Type inconnu (ouverture, annonce, relance-semaine, resultats).' });
     const simulation = !!requete.body?.simulation;
-    const res = await envoi({ simulation, forcer: !!requete.body?.forcer });
+    // Un envoi en nombre part en arriere-plan : attendu ici, il depassait le
+    // delai du proxy (504) bien avant la fin de la boucle.
+    const res = await envoi({ simulation, forcer: !!requete.body?.forcer, attendre: false });
     if (!simulation) {
       journaliser(requete.agent.login, `mail_${requete.params.type}_envoye`, JSON.stringify(res), requete.ip);
     }
@@ -1045,7 +1076,7 @@ export default async function routesAdmin(app) {
   app.post('/api/admin/mails/relances/:id', async (requete) => {
     const id = Number(requete.params.id);
     const simulation = !!requete.body?.simulation;
-    const res = await envoyerRelances(id, { simulation });
+    const res = await envoyerRelances(id, { simulation, attendre: false });
     if (!simulation) journaliser(requete.agent.login, 'relances_envoyees', `defi=${id} ${JSON.stringify(res)}`, requete.ip);
     return res;
   });
@@ -1182,7 +1213,7 @@ export default async function routesAdmin(app) {
     db.exec('BEGIN');
     try {
       db.exec('DELETE FROM reponses_agent; DELETE FROM participations; '
-        + 'DELETE FROM tentatives; DELETE FROM badges_agent; DELETE FROM envois;');
+        + 'DELETE FROM tentatives; DELETE FROM badges_agent; DELETE FROM envois; DELETE FROM envois_agents;');
       oublies = db.prepare('UPDATE agents SET vu_le = NULL').run().changes;
       if (viderProgramme) deprogrammes = db.prepare('DELETE FROM programme').run().changes;
       db.exec('COMMIT');
