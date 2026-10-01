@@ -920,7 +920,11 @@ export default async function routesAdmin(app) {
         + `${r.ecartees.objet ? `, ${r.ecartees.objet} test(s), réponse(s) ou transfert(s)` : ''}`
         + `${r.ecartees.expediteur ? `, ${r.ecartees.expediteur} d'un autre expéditeur` : ''} écarté(s). `
         + `${r.adresses} adresse(s), dont ${r.reconnus} reconnue(s) : leurs agents sont marqués comme l'ayant reçu.`
-        + (r.inconnues.length ? ` ${r.inconnues.length} adresse(s) ne correspondent à aucun agent.` : ''),
+        // Les adresses sans agent se nomment : une poignee se verifie d'un coup d'oeil.
+        + (r.inconnues.length
+          ? ` ${r.inconnues.length} adresse(s) ne correspondent à aucun agent${r.inconnues.length <= 20
+            ? ` : ${r.inconnues.join(', ')}` : ''}.`
+          : ''),
     };
   });
 
