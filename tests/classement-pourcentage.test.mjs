@@ -78,6 +78,27 @@ test('un agent voit ses points sur le total atteignable', () => {
   assert.equal(a[1].pourcentage, 50);
 });
 
+test('la reussite individuelle se lit sur les defis faits, et range le classement', () => {
+  // Un deuxieme defi paru : l'agent 10 fait les deux a 70 %, l'agent 11 un
+  // seul a 90 %. Rapportee aux defis parus, sa reussite tombait a 45 %.
+  db.prepare("UPDATE defis SET ouvre_le = date('now', '-1 day')").run();
+  agent(10, 'D'); agent(11, 'D');
+  jouer(10, 1, 70, 100); jouer(10, 2, 70, 100);
+  jouer(11, 1, 90, 100);
+  const a = Object.fromEntries(classementAgents().map((x) => [x.id, x]));
+  assert.equal(a[11].pourcentage, 90);
+  assert.equal(a[11].score_max_joue, 100);
+  assert.equal(a[10].pourcentage, 70);
+  const ordre = classementAgents().map((x) => x.id);
+  assert.ok(ordre.indexOf(11) < ordre.indexOf(10), 'la reussite range avant le nombre de points');
+
+  // A reussite egale, le plus de defis faits passe devant.
+  agent(12, 'D');
+  jouer(12, 1, 70, 100);
+  const ordre2 = classementAgents().map((x) => x.id);
+  assert.ok(ordre2.indexOf(10) < ordre2.indexOf(12));
+});
+
 test('sans aucun defi paru, aucun pourcentage ne part en division par zero', () => {
   db.prepare("UPDATE defis SET ouvre_le = date('now', '+30 day')").run();
   assert.equal(pointsPossibles(), 0);

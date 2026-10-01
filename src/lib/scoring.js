@@ -317,24 +317,32 @@ export function classementAgents(limite = 100) {
       a.anonyme,
       a.service,
       COALESCE(SUM(p.score), 0)  AS score_total,
+      COALESCE(SUM(p.score_max), 0) AS score_max_joue,
       COUNT(p.id)                AS defis_joues,
       COALESCE(SUM(p.bonnes), 0) AS bonnes_total,
       MIN(p.termine_le)          AS premiere_participation
     FROM agents a
     JOIN participations p ON p.agent_id = a.id AND p.entrainement = 0
+      AND p.defi_id IN (SELECT id FROM defis WHERE publie = 1 AND ouvre_le <= ?)
     WHERE a.exclu = 0
     GROUP BY a.id
-    ORDER BY score_total DESC, defis_joues DESC, premiere_participation ASC
-    LIMIT ?
-  `).all(limite);
+  `).all(aujourdhui());
 
-  // Meme lecture que pour les services : un pourcentage, et les points
-  // rapportes au total atteignable a ce jour.
-  return lignes.map((l) => ({
-    ...l,
-    points_possibles: possible,
-    pourcentage: possible ? Math.round((l.score_total * 100) / possible) : 0,
-  }));
+  // Meme lecture que pour les directions : la reussite sur les defis faits.
+  // Rapportee a tous les defis parus, elle donnait 45 % a un agent qui avait
+  // fait un seul des deux defis, a 90 %. Classement : la reussite d'abord,
+  // le nombre de defis faits ensuite, puis l'anteriorite.
+  const reussite = (l) => (l.score_max_joue ? l.score_total / l.score_max_joue : 0);
+  return lignes
+    .sort((a, b) => reussite(b) - reussite(a)
+      || b.defis_joues - a.defis_joues
+      || String(a.premiere_participation).localeCompare(String(b.premiere_participation)))
+    .slice(0, limite)
+    .map((l) => ({
+      ...l,
+      points_possibles: possible,
+      pourcentage: Math.round(reussite(l) * 100),
+    }));
 }
 
 /** Position d'un agent dans le classement individuel. */

@@ -545,8 +545,9 @@ export default async function routesJeu(app) {
         bonnes: p.bonnes, total: p.total_questions, termineLe: p.termine_le,
       })),
       scoreTotal: participations.reduce((s, p) => s + p.score, 0),
-      // Le total atteignable a ce jour, pour dire « 62 % » plutot que « 430
-      // points » - un nombre de points ne se situe pas tout seul.
+      // Le maximum des defis faits : la reussite se lit sur eux, comme au
+      // classement. Le total atteignable a ce jour reste servi a part.
+      scoreMaxJoue: participations.reduce((s, p) => s + p.score_max, 0),
       pointsPossibles: pointsPossibles(),
       badges: tousLesBadges({ agentId: requete.agent.id }).map((b) => ({
         ...b, obtenu: !!codesObtenus[b.code], obtenuLe: codesObtenus[b.code] || null,

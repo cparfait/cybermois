@@ -137,7 +137,7 @@ function rendreAgents(donnees) {
     <div class="sr-only">${i + 1}<sup>${i === 0 ? 'er' : 'e'}</sup></div>
     <div class="nom">${echapper(a.nom_complet)}</div>
     <div class="points">${a.pourcentage} %</div>
-    <div class="sous">${a.score_total} / ${a.points_possibles} pts · ${echapper(a.service)}</div>`);
+    <div class="sous">${a.score_total} / ${a.score_max_joue} pts · ${echapper(a.service)}</div>`);
 
   document.getElementById('table-agents').innerHTML = `
     <caption class="sr-only">Classement individuel des agents</caption>
@@ -155,7 +155,7 @@ function rendreAgents(donnees) {
         <td>${echapper(a.nom_complet)}${a.moi ? ' <span class="discret">(moi)</span>' : ''}</td>
         <td>${echapper(a.service)}</td>
         <td class="num"><strong>${a.pourcentage} %</strong></td>
-        <td class="num discret" style="white-space:nowrap">${a.score_total} / ${a.points_possibles}</td>
+        <td class="num discret" style="white-space:nowrap">${a.score_total} / ${a.score_max_joue}</td>
         <td class="num">${a.defis_joues}</td>
       </tr>`).join('')}</tbody>`;
 

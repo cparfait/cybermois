@@ -414,7 +414,7 @@ export function mailResultats(defiId, { jour = null } = {}) {
     <tr style="border-bottom:1px solid #d9e4de;">
       <td style="padding:9px 6px;font-family:'Montserrat',Arial,sans-serif;font-weight:700;width:38px;">${medaille[i] || `${i + 1}.`}</td>
       <td style="padding:9px 6px;">${echapper(a.nom_complet)}<br><span style="font-size:13px;color:#4a5a53;">${echapper(a.service)}</span></td>
-      <td style="padding:9px 6px;text-align:right;font-family:'Montserrat',Arial,sans-serif;font-weight:700;color:#006e46;white-space:nowrap;">${a.score_total} pts</td>
+      <td style="padding:9px 6px;text-align:right;font-family:'Montserrat',Arial,sans-serif;font-weight:700;color:#006e46;white-space:nowrap;">${a.pourcentage} %<br><span style="font-size:12px;font-weight:400;color:#4a5a53;">${a.defis_joues} défi${a.defis_joues > 1 ? 's' : ''}</span></td>
     </tr>`;
 
   const chiffre = (valeur, libelle) => `<td align="center" style="padding:14px 6px;"><div style="font-family:'Montserrat',Arial,sans-serif;font-size:26px;font-weight:900;color:#006e46;">${valeur}</div><div style="font-size:13px;color:#4a5a53;">${libelle}</div></td>`;

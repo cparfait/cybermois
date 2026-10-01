@@ -34,8 +34,8 @@ try {
   // Points rapportes au total atteignable a ce jour - la meme lecture que
   // sur la page de classement, pour ne pas donner deux chiffres du meme
   // resultat.
-  const reussite = profil.pointsPossibles
-    ? Math.round((profil.scoreTotal * 100) / profil.pointsPossibles) : 0;
+  const reussite = profil.scoreMaxJoue
+    ? Math.round((profil.scoreTotal * 100) / profil.scoreMaxJoue) : 0;
   // « Ouvert » dit ce qui se joue, « paru » ce qui est sorti. Apres la cloture
   // de la campagne plus rien n'est ouvert, mais tout ce qui a paru reste
   // consultable : compter les ouverts faisait retomber la progression a zero
@@ -63,8 +63,8 @@ try {
       <div class="compteurs">
         <div>
           <div class="compteur-valeur">${reussite} <span style="font-size:1.1rem;opacity:.75">%</span></div>
-          <div class="compteur-libelle">de réussite${profil.pointsPossibles
-            ? ` · ${profil.scoreTotal}/${profil.pointsPossibles} pts` : ''}</div>
+          <div class="compteur-libelle">de réussite${profil.scoreMaxJoue
+            ? ` · ${profil.scoreTotal}/${profil.scoreMaxJoue} pts` : ''}</div>
         </div>
         <div>
           <div class="compteur-valeur">${faits}<span style="font-size:1.1rem;opacity:.75">/${visibles.length}</span></div>

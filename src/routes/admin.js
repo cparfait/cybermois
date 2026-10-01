@@ -1112,14 +1112,14 @@ export default async function routesAdmin(app) {
     return reponse.type('text/csv; charset=utf-8')
       .header('Content-Disposition', 'attachment; filename="cybermois-services.csv"')
       .send(csv(lignes, ['service', 'inscrits', 'joueurs', 'taux_participation', 'pourcentage_moyen',
-        'score_total', 'points_possibles', 'score_moyen', 'defis_joues']));
+        'score_total', 'score_max_joue', 'score_moyen', 'defis_joues']));
   });
 
   app.get('/api/admin/export/agents.csv', async (requete, reponse) => {
     const lignes = classementAgents(100000);
     return reponse.type('text/csv; charset=utf-8')
       .header('Content-Disposition', 'attachment; filename="cybermois-agents.csv"')
-      .send(csv(lignes, ['nom_complet', 'service', 'score_total', 'defis_joues', 'bonnes_total']));
+      .send(csv(lignes, ['nom_complet', 'service', 'pourcentage', 'score_total', 'score_max_joue', 'defis_joues', 'bonnes_total']));
   });
 
   /** Preuve de participation exploitable en audit SSI */
