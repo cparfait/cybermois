@@ -1156,6 +1156,36 @@ chargeurs.mails = async () => {
   }
 
   /* ---- Rattrapage : qui ne l'a pas recu, et le leur envoyer */
+  /**
+   * Le suivi d'un rattrapage lance : sa progression, puis son resultat - les
+   * envois reussis et la derniere erreur. « Envoi lancé » suivi de rien ne
+   * disait pas si les mails etaient partis.
+   */
+  async function suivreRattrapage(type, zone) {
+    const suivi = document.createElement('div');
+    suivi.className = 'message message-info';
+    suivi.style.marginTop = '.6rem';
+    zone.append(suivi);
+    for (;;) {
+      let etat;
+      try { etat = await api('/api/admin/mails/etat'); } catch { return; }
+      const enCours = (etat.enCours || []).find((x) => x.type === type);
+      if (enCours) {
+        suivi.textContent = `Envoi en cours : ${enCours.faits} / ${enCours.total}, dont ${enCours.succes} accepté(s) par la messagerie.`
+          + (enCours.erreur ? ` Dernière erreur : ${enCours.erreur}` : '');
+        await new Promise((r) => { setTimeout(r, 3000); });
+        continue;
+      }
+      const e = etat.mails.find((m) => m.type === type)?.dernierEnvoi;
+      suivi.className = `message ${e && e.succes === e.destinataires ? 'message-succes' : 'message-erreur'}`;
+      suivi.textContent = e
+        ? `Terminé : ${e.succes} / ${e.destinataires} mail(s) accepté(s) par la messagerie.`
+          + (e.erreur ? ` Dernière erreur : ${e.erreur}` : '')
+        : 'Terminé.';
+      return;
+    }
+  }
+
   async function voirRattrapage() {
     const type = document.getElementById('rattrapage-type').value;
     const zone = document.getElementById('rattrapage-resultat');
@@ -1191,6 +1221,7 @@ chargeurs.mails = async () => {
           const r = await api(`/api/admin/mails/campagne/${type}`, { method: 'POST', body: { forcer: true } });
           zone.innerHTML = `<div class="message ${r.ok ? 'message-succes' : 'message-erreur'}">${echapper(r.message || 'Envoi impossible.')}</div>`;
           afficherEnvois();
+          if (r.lance) suivreRattrapage(type, zone);
         } catch (e) { zone.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`; }
       });
     });

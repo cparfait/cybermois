@@ -745,7 +745,11 @@ function lancerEnvoi({ cle, type, lot, cibles, agentDe = (c) => c, message, trac
           await envoyerAvecReprise(message(c));
           etat.succes++;
           if (lot) noterServi(lot, agentDe(c).id);
-        } catch (err) { etat.erreur = err.message; }
+        } catch (err) {
+          etat.erreur = err.message;
+          // Dans le journal du conteneur aussi : c'est la qu'on cherche apres coup.
+          console.warn(`Envoi ${type} refusé pour ${agentDe(c).email} : ${err.message}`); // eslint-disable-line no-console
+        }
         etat.faits++;
       }
       tracer(etat);
