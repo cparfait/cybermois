@@ -638,13 +638,38 @@ CREATE TABLE IF NOT EXISTS envois_agents (
 const servis = (lot) => new Set(
   db.prepare('SELECT agent_id FROM envois_agents WHERE lot = ?').all(lot).map((l) => l.agent_id)
 );
-const noterServi = (lot, agentId) =>
+/*
+ * Une adresse, un mail. Certaines adresses sont portees par deux comptes :
+ * boite partagee (relais.petite-enfance@), agent qui a deux comptes dans
+ * l'annuaire. L'envoi d'ouverture leur en a remis deux, a quelques secondes
+ * d'intervalle. Un envoi marque donc servis tous les comptes de l'adresse, et
+ * n'ecrit qu'une fois a chacune.
+ */
+const noterServi = (lot, agentId) => {
   db.prepare('INSERT OR IGNORE INTO envois_agents (lot, agent_id) VALUES (?, ?)').run(lot, agentId);
+  db.prepare(`
+    INSERT OR IGNORE INTO envois_agents (lot, agent_id)
+    SELECT ?, b.id FROM agents a
+    JOIN agents b ON lower(b.email) = lower(a.email) AND b.id <> a.id
+    WHERE a.id = ? AND a.email IS NOT NULL AND a.email <> ''
+  `).run(lot, agentId);
+};
 
-/** Les cibles qui n'ont pas encore recu ce lot. */
+/** Une seule cible par adresse : la premiere rencontree. */
+const uneParAdresse = (cibles, agentDe = (c) => c) => {
+  const vues = new Set();
+  return cibles.filter((c) => {
+    const adresse = String(agentDe(c).email || '').toLowerCase();
+    if (!adresse || vues.has(adresse)) return false;
+    vues.add(adresse);
+    return true;
+  });
+};
+
+/** Les cibles qui n'ont pas encore recu ce lot, une par adresse. */
 const nonServis = (lot, cibles, agentDe = (c) => c) => {
   const deja = servis(lot);
-  return cibles.filter((c) => !deja.has(agentDe(c).id));
+  return uneParAdresse(cibles.filter((c) => !deja.has(agentDe(c).id)), agentDe);
 };
 
 const pause = (ms) => new Promise((r) => { setTimeout(r, ms); });
@@ -1035,14 +1060,30 @@ export const TYPES_RATTRAPAGE = Object.fromEntries(Object.entries(RATTRAPAGES).m
 export function etatRattrapage(type) {
   const r = RATTRAPAGES[type];
   if (!r) return null;
-  const prevus = r.prevus();
-  const deja = servis(r.lot());
-  const manquants = prevus.filter((a) => !deja.has(a.id));
+  const tous = r.prevus();
+  // On compte des adresses, pas des comptes : c'est a elles que part le mail.
+  const prevus = uneParAdresse(tous);
+  const manquants = nonServis(r.lot(), tous);
+
+  // Les adresses portees par plusieurs comptes : elles expliquent un ecart
+  // entre le nombre d'agents et le nombre de mails partis.
+  const parAdresse = new Map();
+  for (const a of tous) {
+    const cle = a.email.toLowerCase();
+    if (!parAdresse.has(cle)) parAdresse.set(cle, []);
+    parAdresse.get(cle).push(a.nom_complet);
+  }
+  const partagees = [...parAdresse].filter(([, noms]) => noms.length > 1)
+    .map(([email, noms]) => ({ email, noms }))
+    .sort((x, y) => x.email.localeCompare(y.email));
+
   return {
     type,
     nom: r.nom,
+    agents: tous.length,
     prevus: prevus.length,
     recus: prevus.length - manquants.length,
+    partagees,
     manquants: manquants
       .map((a) => ({ nom: a.nom_complet, direction: a.service, email: a.email }))
       .sort((x, y) => x.nom.localeCompare(y.nom, 'fr', { sensitivity: 'base' })),

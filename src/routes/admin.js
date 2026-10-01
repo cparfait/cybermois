@@ -883,7 +883,7 @@ export default async function routesAdmin(app) {
     return {
       ok: true,
       ...r,
-      message: `${r.adresses} adresse(s) lue(s), ${r.reconnus} agent(s) marqué(s) comme l'ayant reçu.`
+      message: `${r.adresses} adresse(s) lue(s), ${r.reconnus} reconnue(s) : leurs agents sont marqués comme l'ayant reçu.`
         + (r.inconnues.length ? ` ${r.inconnues.length} adresse(s) ne correspondent à aucun agent.` : ''),
     };
   });

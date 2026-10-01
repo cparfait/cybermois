@@ -1149,11 +1149,16 @@ chargeurs.mails = async () => {
       return;
     }
     zone.innerHTML = `
-      <p class="ui" style="margin:.2rem 0 .6rem"><strong>${d.manquants.length}</strong> agent(s) ne l'ont pas reçu,
-        sur ${d.prevus} prévu(s) — ${d.recus} l'ont reçu.</p>
+      <p class="ui" style="margin:.2rem 0 .6rem"><strong>${d.manquants.length}</strong> adresse(s) ne l'ont pas reçu,
+        sur ${d.prevus} prévue(s) — ${d.recus} l'ont reçu.${d.agents !== d.prevus
+          ? ` <span class="discret">(${d.agents} agents : certaines adresses sont portées par plusieurs comptes, elles ne reçoivent qu'un mail.)</span>` : ''}</p>
+      ${d.partagees.length ? `<details style="margin:0 0 .8rem"><summary class="ui" style="cursor:pointer;font-size:.86rem">
+        ${d.partagees.length} adresse(s) portée(s) par plusieurs comptes</summary>
+        <ul class="ui" style="font-size:.84rem;margin:.4rem 0">${d.partagees.map((p) =>
+          `<li>${echapper(p.email)} : ${echapper(p.noms.join(', '))}</li>`).join('')}</ul></details>` : ''}
       ${d.manquants.length ? `
         <button type="button" class="btn btn-principal" id="rattrapage-envoyer">
-          Envoyer à ces ${d.manquants.length} agent(s)</button>
+          Envoyer à ces ${d.manquants.length} adresse(s)</button>
         <div class="tableau-defilant" style="margin-top:.8rem;max-height:420px;overflow-y:auto">
           <table class="admin">
             <caption class="sr-only">Agents qui n'ont pas reçu : ${echapper(d.nom)}</caption>
@@ -1163,7 +1168,7 @@ chargeurs.mails = async () => {
           </table>
         </div>` : '<div class="message message-succes">Tous les agents prévus l’ont reçu.</div>'}`;
     document.getElementById('rattrapage-envoyer')?.addEventListener('click', async (ev) => {
-      if (!confirm(`Envoyer « ${d.nom} » aux ${d.manquants.length} agent(s) qui ne l'ont pas reçu ?`)) return;
+      if (!confirm(`Envoyer « ${d.nom} » aux ${d.manquants.length} adresse(s) qui ne l'ont pas reçu ?`)) return;
       await pendant(ev.currentTarget, 'Envoi…', async () => {
         try {
           // Deja parti : « forcer » ne l'envoie qu'a ceux qui ne l'ont pas recu.

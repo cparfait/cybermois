@@ -140,3 +140,18 @@ test("l'export de la messagerie declare les recus, et le rattrapage vise les aut
   assert.deepEqual(recus.sort(), ['agent3@test.local', 'agent4@test.local'], 'seuls ceux qui ne l’avaient pas');
   assert.equal(mail.etatRattrapage('ouverture').manquants.length, 0);
 });
+
+test('une adresse portee par deux comptes ne recoit qu’un mail', async () => {
+  // Une boite partagee, portee par deux comptes de l'annuaire.
+  creer.run('relais1', 'Relais UN', 'relais@test.local');
+  creer.run('relais2', 'Relais DEUX', 'RELAIS@test.local');
+  recus.length = 0;
+  const r = await mail.envoyerOuverture({ forcer: true, attendre: false });
+  assert.equal(r.destinataires, 1, 'une adresse, un mail');
+  await fin();
+  assert.deepEqual(recus, ['relais@test.local']);
+
+  const etat = mail.etatRattrapage('ouverture');
+  assert.equal(etat.manquants.length, 0, 'les deux comptes sont servis');
+  assert.deepEqual(etat.partagees, [{ email: 'relais@test.local', noms: ['Relais UN', 'Relais DEUX'] }]);
+});
