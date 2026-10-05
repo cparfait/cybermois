@@ -46,6 +46,12 @@
   }
   .carte-defi.termine { border-top-color: var(--succes); }
 
+  /* Un defi fait n'attend plus rien : grise, il laisse les autres en avant.
+     Il reprend ses couleurs au survol, le temps d'aller revoir ses reponses. */
+  .carte-defi.termine { filter: grayscale(1); opacity: .7; box-shadow: none;
+    transition: filter .2s, opacity .2s; }
+  .carte-defi.termine:hover, .carte-defi.termine:focus-within { filter: none; opacity: 1; }
+
   /* Le defi a relever : un reflet aux couleurs de la Ville glisse le long
      du bord. Le filet precedent tournait franchement et tirait l'oeil hors de
      la carte ; celui-ci se contente de la signaler.

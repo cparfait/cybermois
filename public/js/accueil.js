@@ -82,10 +82,15 @@ try {
       <div class="jauge" role="img" aria-label="Progression : ${progression} pour cent"><span style="width:${progression}%"></span></div>
     </section>`;
 
+  // Les defis faits passent sous les autres : sur quatre cartes, ceux qui
+  // attendent encore quelque chose doivent se voir sans faire defiler. Le tri
+  // est stable, l'ordre des numeros se garde a l'interieur de chaque groupe.
+  const rang = (d) => d.participation ? 3 : !d.paru ? 2 : d.ouvert ? 0 : 1;
+
   if (!visibles.length) {
     document.getElementById('defis').innerHTML = `
       <p class="discret" style="grid-column:1/-1;text-align:center">Aucun défi n'est encore ouvert.</p>`;
-  } else document.getElementById('defis').innerHTML = visibles.map((defi) => {
+  } else document.getElementById('defis').innerHTML = [...visibles].sort((a, b) => rang(a) - rang(b)).map((defi) => {
     const p = defi.participation;
     // Le defi jouable se signale : sur quatre cartes, il faut voir d'un
     // regard laquelle attend quelque chose.
