@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { db, journaliser } from './db.js';
 import { ajouterColonne } from './db.js';
+import { niveauDe, verifierBareme } from './bareme.js';
 
 /**
  * Catalogue de modules et programmation des parutions.
@@ -48,12 +49,24 @@ ajouterColonne('defis', 'video_titre', 'TEXT');
  * redemarrage suivant, sans que rien ne le signale : on retrouvait le texte du
  * module, et on croyait avoir mal enregistre.
  *
- * Ce drapeau rend la correction plus forte que le fichier. Il ne se leve que
- * par un rechargement force, qui dit explicitement vouloir revenir au module.
+ * Ce drapeau rend la correction plus forte que le fichier. Plus aucun
+ * rechargement ne le leve, pas meme force : seule la suppression du defi
+ * revient au module.
  */
 const drapeauInexistant = !db.prepare('PRAGMA table_info(defis)').all()
   .some((c) => c.name === 'contenu_modifie');
 ajouterColonne('defis', 'contenu_modifie', 'INTEGER NOT NULL DEFAULT 0');
+
+/**
+ * Le module du defi a ete retire du programme.
+ *
+ * Deprogrammer supprimait le questionnaire des lors que personne ne l'avait
+ * joue. Apres une remise a zero, plus aucun ne l'est : vider le programme
+ * pour replanifier emportait donc tous les defis. Il est desormais masque et
+ * conserve, et reprend sa place - publie, a sa nouvelle date - quand son
+ * module est reprogramme.
+ */
+ajouterColonne('defis', 'hors_programme', 'INTEGER NOT NULL DEFAULT 0');
 
 /** Lit un module du catalogue. Renvoie null s'il n'existe pas. */
 export function lireModule(code) {
@@ -76,7 +89,7 @@ export function marquerLesDefisDejaRetouches() {
     String(q.enonce || '').trim(),
     String(q.contexte || '').trim(),
     q.multiple ? 1 : 0,
-    Number(q.points) || 10,
+    niveauDe(q).points,
     String(q.explication || '').trim(),
     (q.reponses || []).map((r) => [String(r.libelle || '').trim(), r.correcte ? 1 : 0]),
   ]));
@@ -121,7 +134,10 @@ export function listerModules() {
       badge: m.badge || null,
       video: m.video || null,
       questions: m.questions.length,
-      points: m.questions.reduce((n, q) => n + (q.points || 10), 0),
+      points: m.questions.reduce((n, q) => n + niveauDe(q).points, 0),
+      // Un module qui ne tient pas le bareme se voit des l'ecran de
+      // programmation : le corriger apres l'ouverture n'est plus possible.
+      bareme: verifierBareme(m.questions),
     }))
     .sort((a, b) => a.theme.localeCompare(b.theme, 'fr') || a.titre.localeCompare(b.titre, 'fr'));
 }

@@ -20,7 +20,7 @@
     {
       "enonce": "Vous quittez votre bureau 5 minutes pour aller chercher un café. Que faites-vous ?",
       "multiple": false,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "Le verrouillage de session — touche Windows + L, ou Ctrl+Alt+Suppr puis « Verrouiller » — prend une seconde et doit devenir un réflexe, même pour une absence très courte. La mise en veille automatique se déclenche trop tard, et un bureau « avec du monde autour » n'est pas un contrôle d'accès : un agent d'entretien, un prestataire ou un administré de passage peut consulter votre écran. Sur un poste non verrouillé, tout ce qui est fait l'est sous votre identité. Fermer les applications ne change rien : la session ouverte donne accès à la messagerie et aux lecteurs réseau. Verrouiller ne ferme rien, votre travail reste tel quel.",
       "reponses": [
         {
@@ -44,7 +44,7 @@
     {
       "enonce": "Vous trouvez une clé USB sur le parking de la mairie. Que faites-vous ?",
       "multiple": true,
-      "points": 15,
+      "difficulte": "moyen",
       "explication": "La clé USB abandonnée est un grand classique de l'intrusion : elle peut contenir un logiciel malveillant qui s'exécute à l'insertion, ou se faire passer pour un clavier et taper des commandes toute seule. On ne la branche jamais, ni sur un poste professionnel, ni sur son ordinateur personnel, ni « pour voir à qui elle appartient ». La remettre à l'accueil ou à la DSI est la seule bonne réponse — et signaler l'endroit exact où elle a été trouvée aide à qualifier l'incident. Un poste isolé n'est pas une protection : une clé qui se fait passer pour un clavier ne s'analyse pas, elle agit. Et les objets trouvés ne sont pas la bonne adresse : une clé trouvée sur le parking de la mairie est un incident potentiel, pas un parapluie.",
       "reponses": [
         {
@@ -72,7 +72,7 @@
     {
       "enonce": "Quelles pratiques respectent la protection des données des administrés ?",
       "multiple": true,
-      "points": 15,
+      "difficulte": "moyen",
       "explication": "Trois bonnes pratiques ici. Le principe de minimisation du RGPD impose de ne consulter que les dossiers nécessaires à votre mission — chaque consultation est tracée. Les documents contenant des données personnelles se détruisent au broyeur, jamais dans la corbeille à papier. Et les échanges passent par les outils validés par la collectivité, pas par une messagerie personnelle ni par un service de stockage grand public qui héberge les données hors de tout cadre contractuel. Supprimer le message après coup n'annule rien : le fichier est passé par un serveur étranger à la Ville et y reste en sauvegarde ; un lien à mot de passe sur un service grand public ne change pas davantage l'hébergeur.",
       "reponses": [
         {
@@ -100,7 +100,7 @@
     {
       "enonce": "Vous imprimez une liste nominative d'aides sociales sur l'imprimante partagée du couloir. Quels réflexes ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "L'impression partagée est un point de fuite très banal et très sous-estimé. Récupérer immédiatement son tirage, utiliser l'impression sécurisée par code si votre parc le permet, et vérifier qu'aucune page n'est restée dans le bac : ce sont trois gestes de dix secondes. Laisser un document nominatif traîner une demi-journée, c'est une violation de données au sens du RGPD, potentiellement notifiable à la CNIL. Un couloir réservé aux agents reste un couloir : prestataires, stagiaires, élus et collègues d'autres services y passent, et aucun d'eux n'a à connaître ces noms. Imprimer à l'avance, c'est laisser le document attendre dans le bac.",
       "reponses": [
         {
@@ -128,7 +128,7 @@
     {
       "enonce": "En télétravail ou en déplacement, quelles précautions s'imposent ?",
       "multiple": true,
-      "points": 15,
+      "difficulte": "difficile",
       "explication": "Le VPN de la collectivité protège vos échanges sur un réseau que vous ne maîtrisez pas. Dans un lieu public — train, café, salle d'attente — un filtre de confidentialité empêche la lecture par-dessus l'épaule, et le poste ne se laisse jamais sans surveillance, même « deux minutes ». En revanche, un wifi public ouvert reste à éviter quand un partage de connexion depuis votre téléphone est possible, et le poste professionnel n'est pas un ordinateur familial : il ne se prête pas. Le VPN se lance avant toute chose, y compris pour relever la messagerie : c'est justement sur un wifi public que les mots de passe s'interceptent. Et session invité ou pas, ce qu'un tiers ouvre ou branche sur le poste engage la Ville, et la DSI ne peut plus garantir l'état de la machine.",
       "reponses": [
         {
@@ -156,7 +156,7 @@
     {
       "enonce": "Votre poste devient très lent, des fenêtres s'ouvrent seules et des fichiers portent des noms bizarres. Que faites-vous ?",
       "multiple": true,
-      "points": 15,
+      "difficulte": "difficile",
       "explication": "Ces signes évoquent une infection en cours, possiblement un rançongiciel. Deux gestes comptent : débrancher le câble réseau ou couper le wifi pour stopper la propagation vers les serveurs, et appeler la DSI immédiatement. En revanche on n'éteint pas le poste — cela détruit des éléments d'analyse — et on ne tente surtout pas de « nettoyer » soi-même. Pour une collectivité, une heure gagnée sur la détection d'un rançongiciel peut représenter la différence entre quelques postes et tout le système d'information. L'analyse antivirus maison fait perdre du temps et modifie les traces que la DSI cherche.",
       "reponses": [
         {
@@ -184,7 +184,7 @@
     {
       "enonce": "Qui doit être prévenu en cas de fuite de données personnelles d'administrés ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "Votre rôle s'arrête au signalement : prévenir votre hiérarchie, la DSI et la déléguée à la protection des données (DPO). C'est elle qui apprécie si la violation doit être notifiée à la CNIL — le RGPD impose 72 heures pour le faire, d'où l'importance de ne pas attendre. En revanche, ce n'est jamais à l'agent de contacter la CNIL ou les personnes concernées de sa propre initiative, ni de communiquer à l'extérieur.",
       "reponses": [
         {
@@ -206,6 +206,90 @@
         {
           "libelle": "Les administrés concernés, par un message immédiat pour qu'ils changent leurs mots de passe",
           "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "En quittant votre bureau le soir, que devrait-on ne plus trouver sur votre plan de travail ?",
+      "multiple": true,
+      "difficulte": "facile",
+      "explication": "Le bureau vide n'est pas une question d'ordre mais de confidentialité : entre le départ des agents et l'arrivée du premier collègue passent les équipes d'entretien, les prestataires, parfois des visiteurs. Ce qui reste à découvert est lisible par tous. Trois catégories doivent disparaître : les dossiers nominatifs, qui retournent dans une armoire fermée ; les post-it et carnets portant des identifiants, qui ne devraient jamais exister ; et les documents oubliés sur l'imprimante partagée. La session se verrouille, l'écran s'éteint. En revanche, ranger le poste téléphonique ou débrancher l'écran ne protège rien du tout : ce n'est pas le matériel qui est en cause, c'est ce qui est écrit dessus ou à côté.",
+      "reponses": [
+        {
+          "libelle": "Des dossiers nominatifs laissés à découvert",
+          "correcte": true
+        },
+        {
+          "libelle": "Un post-it ou un carnet portant des identifiants",
+          "correcte": true
+        },
+        {
+          "libelle": "Des impressions oubliées sur l'imprimante partagée",
+          "correcte": true
+        },
+        {
+          "libelle": "Le téléphone fixe, qu'il faudrait ranger dans un tiroir",
+          "correcte": false
+        },
+        {
+          "libelle": "L'écran, qu'il faudrait débrancher chaque soir",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Un collègue vous demande d'utiliser votre session, déjà ouverte, « deux minutes, le temps d'imprimer un document ». Que faites-vous ?",
+      "multiple": true,
+      "difficulte": "moyen",
+      "explication": "Tout ce qui sera fait pendant ces deux minutes sera enregistré sous votre nom : les fichiers ouverts, les accès aux applications métier, l'impression elle-même. Si un problème survient — un dossier consulté sans motif, un document envoyé au mauvais endroit —, c'est vous qui devrez l'expliquer. La demande vient presque toujours d'une contrainte réelle : session bloquée, poste en panne, droits manquants. On traite donc le besoin plutôt que la demande : verrouiller et laisser le collègue ouvrir sa propre session, l'orienter vers un poste libre, ou appeler la DSI si ses accès sont en cause. Le fait qu'il s'agisse d'une impression anodine et de deux minutes ne change rien : c'est l'identité utilisée qui pose problème, pas la durée. Et rester à côté pour surveiller ne rétablit pas la traçabilité — le journal, lui, ne verra que votre compte.",
+      "reponses": [
+        {
+          "libelle": "Je verrouille et je le laisse ouvrir sa propre session",
+          "correcte": true
+        },
+        {
+          "libelle": "Je l'oriente vers un poste libre ou vers la DSI si ses accès sont bloqués",
+          "correcte": true
+        },
+        {
+          "libelle": "J'accepte : ce n'est qu'une impression, et cela prend deux minutes",
+          "correcte": false
+        },
+        {
+          "libelle": "J'accepte mais je reste à côté pour surveiller ce qu'il fait",
+          "correcte": false
+        },
+        {
+          "libelle": "Je lui explique que tout ce qui sera fait le sera sous mon nom",
+          "correcte": true
+        }
+      ]
+    },
+    {
+      "enonce": "Un petit logiciel gratuit trouvé sur Internet vous ferait gagner un temps précieux sur une tâche répétitive. Comment procédez-vous ?",
+      "multiple": true,
+      "difficulte": "difficile",
+      "explication": "L'intention est bonne, et c'est justement ce qui rend le sujet délicat : l'informatique parallèle installée par des agents pleins de bonne volonté est aujourd'hui l'une des principales portes d'entrée. Un utilitaire gratuit peut être honnête, racheté, modifié, ou simplement distribué depuis un site qui a ajouté sa propre surcouche au programme d'installation. La marche à suivre est donc de décrire le besoin à la DSI, qui connaît souvent un outil déjà en place ou déjà acheté, et de la laisser valider la source et la licence — car « gratuit » ne signifie pas « utilisable par une collectivité » : beaucoup de licences excluent l'usage professionnel. Installer soi-même en se disant qu'on désinstallera si cela pose problème suppose de pouvoir constater le problème, ce qui n'est presque jamais le cas. Et le fait que le poste ne demande pas de mot de passe administrateur pour installer le programme n'est pas une autorisation : c'est une lacune à signaler.",
+      "reponses": [
+        {
+          "libelle": "Je décris le besoin à la DSI : un outil équivalent existe peut-être déjà",
+          "correcte": true
+        },
+        {
+          "libelle": "Je laisse la DSI valider la source et la licence avant toute installation",
+          "correcte": true
+        },
+        {
+          "libelle": "J'installe et je désinstallerai si cela pose problème",
+          "correcte": false
+        },
+        {
+          "libelle": "L'installation n'a pas demandé de mot de passe administrateur : c'est donc autorisé",
+          "correcte": false
+        },
+        {
+          "libelle": "Je vérifie que le besoin ne se règle pas avec les outils déjà déployés",
+          "correcte": true
         }
       ]
     }

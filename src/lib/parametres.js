@@ -67,6 +67,10 @@ export const DESCRIPTEUR = [
     aide: "Sur la page des défis. Quatre defis sur une seule ligne se lisent mal ; "
       + 'deux colonnes les presentent par paires. Valeur ignoree sur un ecran '
       + "etroit, ou l'affichage repasse sur une colonne quoi qu'il arrive." },
+  // Groupe a part : le reglage se fait depuis l'onglet Programme, pas depuis
+  // la page de configuration, qui n'affiche que ses propres groupes.
+  { cle: 'afficherDefisAVenir', chemin: ['afficherDefisAVenir'], type: 'booleen', groupe: 'programme',
+    libelle: 'Afficher les défis pas encore ouverts' },
   { cle: 'videoDomaines', chemin: ['videoDomaines'], type: 'liste', groupe: 'general',
     libelle: 'Hébergeurs vidéo autorisés',
     aide: "Séparés par des virgules. Un hébergeur absent d'ici verra son lecteur bloqué "
@@ -130,18 +134,41 @@ export const DESCRIPTEUR = [
   { cle: 'smtp.groupeDiffusion', chemin: ['smtp', 'groupeDiffusion'], type: 'texte', groupe: 'smtp',
     libelle: 'Groupe de diffusion', aide: 'Destinataire du mail de resultats du vendredi.' },
   { cle: 'smtp.copie', chemin: ['smtp', 'copie'], type: 'texte', groupe: 'smtp', libelle: 'En copie' },
+  { cle: 'smtp.parMinute', chemin: ['smtp', 'parMinute'], type: 'entier', groupe: 'smtp',
+    libelle: 'Mails par minute',
+    aide: 'Debit des envois en nombre. Microsoft 365 refuse au-dela de 30 messages par minute '
+      + "d'un meme compte : 25 laisse une marge. 0 = sans limite (relais interne)." },
   { cle: 'smtp.actif', chemin: ['smtp', 'actif'], type: 'booleen', groupe: 'smtp',
-    libelle: 'Envois automatiques actifs', aide: 'A laisser inactif jusqu\'a la fin de la recette.' },
+    libelle: 'Envois automatiques actifs',
+    aide: 'Interrupteur general des envois planifies. A laisser inactif jusqu\'a la fin de la '
+      + 'recette. Les envois faits a la main depuis l\'onglet Mails restent possibles.' },
 
+  { cle: 'mails.ouverture', chemin: ['mails', 'ouverture'], type: 'booleen', groupe: 'planification',
+    libelle: "Mail d'ouverture automatique", aide: 'Le premier jour, a chaque agent.' },
+  { cle: 'mails.annonce', chemin: ['mails', 'annonce'], type: 'booleen', groupe: 'planification',
+    libelle: 'Annonce du lundi automatique', aide: 'Les lundis suivants, a chaque agent.' },
+  { cle: 'mails.relance', chemin: ['mails', 'relance'], type: 'booleen', groupe: 'planification',
+    libelle: 'Relance du mercredi automatique', aide: 'Aux agents qui n’ont pas fait tous les défis parus depuis au moins deux jours.' },
+  { cle: 'mails.resultats', chemin: ['mails', 'resultats'], type: 'booleen', groupe: 'planification',
+    libelle: 'Resultats du vendredi automatiques', aide: 'Au groupe de diffusion.' },
+  { cle: 'cron.ouverture', chemin: ['cron', 'ouverture'], type: 'texte', groupe: 'planification',
+    libelle: "Mail d'ouverture",
+    aide: '0 8-17 * * * = chaque heure de 8h a 17h. Le mail ne part que le jour du premier '
+      + 'defi, une seule fois : les passages suivants rattrapent un serveur arrete a 8h.' },
+  { cle: 'cron.annonce', chemin: ['cron', 'annonce'], type: 'texte', groupe: 'planification',
+    libelle: 'Annonce des defis de la semaine',
+    aide: '0 8-17 * * 1 = le lundi, chaque heure de 8h a 17h. Un seul envoi par semaine, '
+      + 'a partir de la deuxieme : la premiere est annoncee par le mail d\'ouverture.' },
   { cle: 'cron.relance', chemin: ['cron', 'relance'], type: 'texte', groupe: 'planification',
-    libelle: 'Relance des non-joueurs', aide: '0 9 * * 3 = mercredi a 9h.' },
+    libelle: 'Relance des non-joueurs',
+    aide: '0 9 * * 3 = mercredi a 9h. Porte sur les defis parus depuis au moins deux jours que l agent n a pas faits.' },
   { cle: 'cron.resultats', chemin: ['cron', 'resultats'], type: 'texte', groupe: 'planification',
     libelle: 'Envoi des resultats', aide: '0 16 * * 5 = vendredi a 16h.' },
 
   { cle: 'campagne.debut', chemin: ['campagne', 'debut'], type: 'texte', groupe: 'planification',
     libelle: 'Debut de campagne',
-    aide: 'AAAA-MM-JJ. Date de reference affichee aux agents. Chaque defi porte '
-      + 'sa propre date de parution, fixee dans le programme.' },
+    aide: 'AAAA-MM-JJ. Les mails datent la campagne de son premier defi programme ; '
+      + 'cette date ne sert que tant qu aucun defi n est programme.' },
   { cle: 'campagne.fin', chemin: ['campagne', 'fin'], type: 'texte', groupe: 'planification',
     libelle: 'Fin de campagne',
     aide: "AAAA-MM-JJ. Dernier jour de saisie : le lendemain, plus aucune reponse "
@@ -311,7 +338,7 @@ export function validerParametres(valeurs) {
     erreurs.push('La fin de campagne ne peut pas preceder son debut.');
   }
 
-  for (const cle of ['cron.relance', 'cron.resultats']) {
+  for (const cle of ['cron.ouverture', 'cron.annonce', 'cron.relance', 'cron.resultats']) {
     if (v(cle) !== undefined && !cron.validate(String(v(cle)).trim())) {
       erreurs.push(`${PAR_CLE[cle].libelle} : expression de planification invalide `
         + '(exemple : « 0 9 * * 3 » pour le mercredi a 9 h).');

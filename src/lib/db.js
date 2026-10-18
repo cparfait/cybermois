@@ -306,12 +306,19 @@ ajouterColonne('defis', 'video_transcription', 'TEXT');
 // le nom complet, et « NOM Prenom » donne alors « Bonjour DUPONT ».
 ajouterColonne('agents', 'prenom', 'TEXT');
 
+// Niveau de difficulte de la question, d'ou decoulent ses points. Le nombre
+// de points reste stocke - c'est lui que lit la notation - mais il ne se
+// saisit plus : le bareme le calcule.
+ajouterColonne('questions', 'difficulte', 'TEXT');
+
 // Chaque defi porte son badge : cable sur un numero d'ordre, il devenait faux
 // des qu'on changeait de theme ou qu'on inserait un defi.
 ajouterColonne('defis', 'badge_code', 'TEXT');
 ajouterColonne('defis', 'badge_libelle', 'TEXT');
 ajouterColonne('defis', 'badge_emoji', 'TEXT');
 ajouterColonne('defis', 'badge_description', 'TEXT');
+// Le groupe vise par un envoi cible, comme le mail aux elus.
+ajouterColonne('envois', 'detail', 'TEXT');
 
 export function journaliser(login, action, detail, ip) {
   db.prepare('INSERT INTO journal (login, action, detail, ip) VALUES (?, ?, ?, ?)')

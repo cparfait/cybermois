@@ -266,26 +266,20 @@ Onglet **Details** :
 Onglet **SSL** : sélectionnez votre certificat, activez **Force SSL** et **HTTP/2 Support**.
 Laissez HSTS désactivé tant que vous testez.
 
-Onglet **Advanced**, collez ceci :
+Onglet **Advanced** : **laissez-le vide.** nginx-proxy-manager fait déjà ce qu'il faut :
 
-```
-proxy_set_header Host $host;
-proxy_set_header X-Real-IP $remote_addr;
-proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-proxy_set_header X-Forwarded-Proto $scheme;
-client_max_body_size 8m;
-proxy_read_timeout 120s;
-```
+- il transmet `Host`, `X-Real-IP`, `X-Forwarded-For` et `X-Forwarded-Proto`, sans
+  lesquels le journal de sécurité porterait l'adresse du proxy pour tous les agents et
+  l'application ne saurait pas qu'elle est servie en HTTPS ;
+- il accepte des envois jusqu'à 2000 Mo, largement au-delà des 300 Mo d'une vidéo
+  déposée dans un défi. Le lecteur Dailymotion refusant désormais d'être inséré sans
+  identifiant de lecteur, ce dépôt est la seule façon fiable de montrer une vidéo.
 
-Ces en-têtes ne sont pas cosmétiques :
+Une version précédente de ce guide faisait coller ici un bloc de directives, dont
+`client_max_body_size 8m` : loin d'être nécessaire, il **abaissait** la limite et faisait
+échouer le dépôt des vidéos (erreur 413). Si ce bloc a été collé, retirez-le.
 
-- sans `X-Forwarded-For`, le journal de sécurité enregistrera l'adresse du proxy pour tous
-  les agents, ce qui le rend inexploitable en cas d'incident ;
-- sans `X-Forwarded-Proto`, l'application ne saura pas qu'elle est servie en HTTPS ;
-- `client_max_body_size 8m` est nécessaire pour l'import de l'effectif complet, un export
-  de 500 agents pesant quelques centaines de kilo-octets.
-
-> **Les envoyer ne suffit pas : il faut aussi que l'application ait le droit de les
+> **Transmettre ces en-têtes ne suffit pas : il faut aussi que l'application ait le droit de les
 > croire.** Sans `PROXY_DE_CONFIANCE` renseignée dans la pile, ces en-têtes sont ignorés et
 > le journal portera l'adresse du proxy quoi qu'il arrive. Voir la section
 > [`PROXY_DE_CONFIANCE`](#proxy_de_confiance) plus haut.

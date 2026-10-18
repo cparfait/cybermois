@@ -15,7 +15,7 @@ Campagne visée : **lundi 5 octobre au samedi 31 octobre 2026**, quatre défis h
 | J-14 | Relecture des contenus des 4 défis | DSI + DPO |
 | J-10 | Test avec 5 à 6 agents de services différents | DSI |
 | J-7 | Corriger ce que remonte le test, réinitialiser les participations | DSI |
-| J-3 | Préparer le mail de lancement de la semaine 1 | DPO |
+| J-3 | Relire l'aperçu du mail d'ouverture (onglet Mails) | DPO |
 | J-1 | Passer `MAIL_ENVOI_ACTIF=true`, vérifier les tâches planifiées | DSI |
 
 ## Pendant la campagne
@@ -29,9 +29,17 @@ Campagne visée : **lundi 5 octobre au samedi 31 octobre 2026**, quatre défis h
 
 Rythme hebdomadaire :
 
-- **lundi matin** — la DPO envoie le mail de lancement (texte fourni par le back-office) ;
-- **mercredi 9h** — relance automatique des agents n'ayant pas joué ;
-- **vendredi 16h** — résultats et classement envoyés automatiquement.
+- **premier jour, 8h** — mail d'ouverture à chaque agent : ce qu'est le Cybermois, comment
+  il se déroule, le calendrier des défis et l'information sur les données ;
+- **lundis suivants, 8h** — annonce des défis de la semaine à chaque agent, avec les défis
+  précédents qu'il n'a pas encore faits, toujours ouverts ;
+- **mercredi 9h** — relance des seuls agents qui n'ont pas fait tous les défis des sept
+  derniers jours, en un seul message ;
+- **vendredi 16h** — résultats et classement envoyés au groupe de distribution.
+
+Tout se pilote depuis l'onglet Mails du back-office : un interrupteur général des envois
+automatiques, un interrupteur par mail, et pour chacun un bouton « Envoyer maintenant » qui
+fonctionne même quand l'automatique est coupé.
 
 Deux points de vigilance en cours de campagne :
 

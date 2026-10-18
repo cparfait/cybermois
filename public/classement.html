@@ -81,10 +81,10 @@
 
     <div role="tabpanel" id="panneau-services" aria-labelledby="onglet-services" tabindex="0">
       <p class="discret" style="margin-top:1rem">
-        Les directions se classent d'abord au <strong>nombre moyen de défis terminés par agent</strong>,
-        puis à la <strong>réussite</strong> : les points gagnés rapportés à ceux que <strong>tous</strong>
-        ses agents auraient pu gagner sur les défis déjà ouverts. Un agent qui ne joue pas compte donc :
-        c'est ce qui met sur le même pied une direction de 4 et une direction de 40.
+        La <strong>réussite</strong> est la moyenne des résultats des agents de la direction qui ont joué.
+        La <strong>participation</strong> est la part de ses agents qui ont fait au moins un défi.
+        Les directions sont classées d'abord au <strong>nombre moyen de défis terminés par agent</strong>,
+        tous inscrits compris, puis par réussite, puis par participation en cas d'égalité.
       </p>
       <div id="podium-services"></div>
       <div class="tableau-defilant"><table class="classement" id="table-services"></table></div>
@@ -93,9 +93,9 @@
 
     <div role="tabpanel" id="panneau-agents" aria-labelledby="onglet-agents" tabindex="0" hidden>
       <p class="discret" style="margin-top:1rem">
-        Le classement compte d'abord le <strong>nombre de défis terminés</strong>, puis les points :
-        qui va au bout de la campagne passe devant qui n'en a fait qu'une partie, même sans faute.
-        La réussite rapporte vos points à ceux que vous pouviez gagner sur les défis déjà ouverts.
+        La réussite est la moyenne de vos résultats sur les défis que vous avez faits. Le classement
+        compte d'abord le <strong>nombre de défis terminés</strong>, puis la réussite : qui va au bout
+        de la campagne passe devant qui n'en a fait qu'une partie, même sans faute.
       </p>
       <div id="podium-agents"></div>
       <div class="tableau-defilant"><table class="classement" id="table-agents"></table></div>

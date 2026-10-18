@@ -155,6 +155,27 @@ existe déjà côté données, il ne manque que son exposition dans le profil de
 
 ---
 
+## Quand l'annuaire ne dit pas le service
+
+Aucun annuaire de collectivité n'est renseigné à 100 %. Deux règles protègent les
+rattachements de ce qui manque :
+
+- **Repli d'une source sur l'autre.** La source configurée — l'attribut `department`, ou
+  l'OU du DN — reste prioritaire, mais l'autre prend le relais quand elle est vide. Un agent
+  dont le `department` n'est pas rempli est donc rattaché d'après son OU, au lieu de tomber
+  dans « Non rattaché ».
+- **Le silence n'écrase rien.** Quand l'annuaire ne dit rien du tout — ni attribut, ni OU —
+  la synchronisation et la connexion **laissent la fiche telle quelle**. Un agent déjà
+  rattaché garde sa direction ; seul un compte inconnu arrive en « Non rattaché ».
+
+Le sas de synchronisation affiche le nombre de comptes concernés, sous l'intitulé
+« sans service dans l'annuaire ». C'est le chiffre à surveiller : il désigne les fiches à
+compléter dans l'AD, et **Administration → Agents → Rattachement** permet en attendant de
+les affecter à la main — un rattachement manuel résiste ensuite à toutes les
+synchronisations.
+
+---
+
 ## Vérifier avant l'ouverture
 
 Un outil de diagnostic lit votre configuration et contrôle tout ce qui peut coincer, sans

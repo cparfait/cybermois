@@ -236,14 +236,17 @@ export function defisParus(jour = aujourdhui()) {
  * Referentiel vide : il n'y a rien a quoi comparer, on classe tout. Sinon
  * l'ecran serait vide avant meme qu'on ait pu renseigner la liste.
  *
- * Tout se rapporte a l'agent INSCRIT, pas au total : sinon une direction de
- * 40 agents ecraserait mecaniquement une direction de 4.
+ * La reussite est la MOYENNE des resultats de ceux qui ont joue : leurs
+ * points sur le maximum des defis qu'ils ont faits. Elle etait rapportee aux
+ * points que TOUS les agents auraient pu gagner : une direction ou 2 % des
+ * agents jouaient plafonnait a 2 % de reussite, quels que soient leurs
+ * resultats. La participation dit desormais seule combien jouent.
  *
- * Comme pour les agents, la participation passe d'abord : les directions se
- * classent au nombre moyen de defis termines par agent inscrit, puis a la
- * reussite. Classees aux seuls points, deux agents brillants sur deux defis
- * lourds faisaient passer leur direction devant une autre ou chacun avait
- * tout fait - l'inverse de ce que la campagne cherche a obtenir.
+ * Classement : la participation passe d'abord, comme pour les agents. Les
+ * directions se classent au nombre moyen de defis termines par agent INSCRIT,
+ * puis a la reussite, puis a la part d'agents ayant joue. Classees a la seule
+ * reussite, une direction ou deux agents avaient fait deux defis sans faute
+ * passait devant une autre ou chacun avait tout fait a 90 %.
  */
 export function classementServices() {
   const possible = pointsPossibles();
@@ -255,12 +258,16 @@ export function classementServices() {
       COUNT(DISTINCT a.id)       AS inscrits,
       COUNT(DISTINCT p.agent_id) AS joueurs,
       COALESCE(SUM(p.score), 0)  AS score_total,
+      COALESCE(SUM(p.score_max), 0) AS score_max_joue,
       COUNT(p.id)                AS defis_joues
     FROM agents a
+    -- Les defis publies et deja parus seulement : les memes que ceux dont
+    -- les points sont atteignables (pointsPossibles).
     LEFT JOIN participations p ON p.agent_id = a.id AND p.entrainement = 0
+      AND p.defi_id IN (SELECT id FROM defis WHERE publie = 1 AND ouvre_le <= ?)
     WHERE a.exclu = 0
     GROUP BY a.service
-  `).all();
+  `).all(aujourdhui());
 
   // Deux graphies d'une meme direction comptaient pour deux. On les ramene a
   // l'orthographe du referentiel, qui fait foi, et leurs agents se rejoignent.
@@ -272,10 +279,11 @@ export function classementServices() {
     const nom = reference.length ? canonique.get(cleComparaison(l.service)) : l.service;
     if (!nom) continue; // direction absente du referentiel : hors classement
     const c = cumul.get(nom)
-      || { service: nom, inscrits: 0, joueurs: 0, score_total: 0, defis_joues: 0 };
+      || { service: nom, inscrits: 0, joueurs: 0, score_total: 0, score_max_joue: 0, defis_joues: 0 };
     c.inscrits += l.inscrits;
     c.joueurs += l.joueurs;
     c.score_total += l.score_total;
+    c.score_max_joue += l.score_max_joue;
     c.defis_joues += l.defis_joues;
     cumul.set(nom, c);
   }
@@ -283,24 +291,25 @@ export function classementServices() {
   // « 27 pts » ne dit rien sans son maximum : le meme chiffre vaut un sans-faute
   // sur un defi et un resultat mediocre sur quatre. Le pourcentage se lit
   // seul, et le total possible est rappele a cote.
+  // Le tri se fait sur les valeurs exactes : arrondies, deux directions a
+  // 66,4 % et 66,6 % se retrouvaient a egalite.
+  const reussite = (c) => (c.score_max_joue ? c.score_total / c.score_max_joue : 0);
+  const participation = (c) => (c.inscrits ? c.joueurs / c.inscrits : 0);
+  const defisParAgent = (c) => (c.inscrits ? c.defis_joues / c.inscrits : 0);
   return [...cumul.values()]
+    .sort((a, b) => defisParAgent(b) - defisParAgent(a)
+      || reussite(b) - reussite(a)
+      || participation(b) - participation(a)
+      || a.service.localeCompare(b.service, 'fr'))
     .map((c) => ({
       ...c,
       score_moyen: c.inscrits ? Math.round((c.score_total * 10) / c.inscrits) / 10 : 0,
-      taux_participation: c.inscrits ? Math.round((c.joueurs * 100) / c.inscrits) : 0,
+      taux_participation: Math.round(participation(c) * 100),
       points_possibles: possible * c.inscrits,
-      pourcentage_moyen: possible && c.inscrits
-        ? Math.round((c.score_total * 100) / (possible * c.inscrits))
-        : 0,
-      defis_par_agent: c.inscrits ? Math.round((c.defis_joues * 10) / c.inscrits) / 10 : 0,
+      pourcentage_moyen: Math.round(reussite(c) * 100),
+      defis_par_agent: Math.round(defisParAgent(c) * 10) / 10,
       defis_parus: parus,
-    }))
-    // Les rapports exacts, et non les valeurs arrondies pour l'affichage :
-    // deux directions a « 2,6 » peuvent ne pas etre a egalite.
-    .sort((a, b) => b.defis_joues / (b.inscrits || 1) - a.defis_joues / (a.inscrits || 1)
-      || b.score_total / (b.inscrits || 1) - a.score_total / (a.inscrits || 1)
-      || b.taux_participation - a.taux_participation
-      || a.service.localeCompare(b.service, 'fr'));
+    }));
 }
 
 /**
@@ -313,15 +322,7 @@ export function ligneClassement(service, lignes = classementServices()) {
   return lignes.find((s) => cleComparaison(s.service) === cle) || null;
 }
 
-/**
- * Classement individuel nominatif.
- *
- * La participation passe d'abord : on classe au nombre de defis termines,
- * puis aux points. Classe aux seuls points, un agent qui n'avait fait que les
- * deux defis les mieux dotes, sans faute, passait devant un collegue qui les
- * avait tous faits - les baremes vont de 70 a 115 points selon le defi. Une
- * campagne de sensibilisation recompense d'abord celui qui va au bout.
- */
+/** Classement individuel nominatif. */
 export function classementAgents(limite = 100) {
   const possible = pointsPossibles();
   const parus = defisParus();
@@ -334,25 +335,38 @@ export function classementAgents(limite = 100) {
       a.anonyme,
       a.service,
       COALESCE(SUM(p.score), 0)  AS score_total,
+      COALESCE(SUM(p.score_max), 0) AS score_max_joue,
       COUNT(p.id)                AS defis_joues,
       COALESCE(SUM(p.bonnes), 0) AS bonnes_total,
       MIN(p.termine_le)          AS premiere_participation
     FROM agents a
     JOIN participations p ON p.agent_id = a.id AND p.entrainement = 0
+      AND p.defi_id IN (SELECT id FROM defis WHERE publie = 1 AND ouvre_le <= ?)
     WHERE a.exclu = 0
     GROUP BY a.id
-    ORDER BY defis_joues DESC, score_total DESC, premiere_participation ASC
-    LIMIT ?
-  `).all(limite);
+  `).all(aujourdhui());
 
-  // Meme lecture que pour les services : un pourcentage, et les points
-  // rapportes au total atteignable a ce jour.
-  return lignes.map((l) => ({
-    ...l,
-    defis_parus: parus,
-    points_possibles: possible,
-    pourcentage: possible ? Math.round((l.score_total * 100) / possible) : 0,
-  }));
+  // Meme lecture que pour les directions : la reussite sur les defis faits.
+  // Rapportee a tous les defis parus, elle donnait 45 % a un agent qui avait
+  // fait un seul des deux defis, a 90 %.
+  //
+  // Classement : le nombre de defis faits d'abord, la reussite ensuite, puis
+  // l'anteriorite. Classe a la reussite d'abord, un agent qui n'avait fait que
+  // deux defis, sans faute, passait devant un collegue qui les avait tous
+  // faits a 90 % : une campagne de sensibilisation recompense d'abord celui
+  // qui va au bout.
+  const reussite = (l) => (l.score_max_joue ? l.score_total / l.score_max_joue : 0);
+  return lignes
+    .sort((a, b) => b.defis_joues - a.defis_joues
+      || reussite(b) - reussite(a)
+      || String(a.premiere_participation).localeCompare(String(b.premiere_participation)))
+    .slice(0, limite)
+    .map((l) => ({
+      ...l,
+      defis_parus: parus,
+      points_possibles: possible,
+      pourcentage: Math.round(reussite(l) * 100),
+    }));
 }
 
 /** Position d'un agent dans le classement individuel. */

@@ -1,5 +1,6 @@
 import { api, echapper, initialiserPage, alerte, confettis, animationsReduites } from '/js/commun.js';
 import { reconnaitreVideo, lienVideoSur } from '/js/video.js';
+import { libelleNiveau } from '/js/bareme.js';
 
 await initialiserPage('/accueil');
 
@@ -137,7 +138,13 @@ function afficherIntro() {
          survivre a l'echappement, sinon tout se retrouve sur une seule ligne. -->
     <div class="carte" style="margin:1.5rem 0;white-space:pre-line">${echapper(defi.intro)}</div>
 
-    ${defi.video ? blocVideo(defi.video) : ''}
+    ${defi.video ? blocVideo(defi.video)
+      // Decorative : le titre et l'accroche disent deja tout, un lecteur
+      // d'ecran n'a pas a entendre la description d'un dessin en plus.
+      : defi.illustration ? `
+      <figure class="illustration-defi">
+        <img src="${echapper(defi.illustration)}" alt="" width="640" height="360">
+      </figure>` : ''}
 
     ${defi.apercu ? `
       <div class="message message-alerte" style="margin-bottom:1.5rem">
@@ -224,6 +231,28 @@ function blocVideo(video) {
       ${blocTranscription(video)}`;
   }
 
+  // Avec une illustration, elle sert d'affiche : un bouton de lecture pose
+  // dessus lance la video, locale ou hebergee. Rien n'est charge avant le
+  // clic - ni le fichier, ni le lecteur du tiers.
+  if (defi.illustration) {
+    return `
+      <section class="bloc-video" style="margin:1.5rem 0">
+        <div id="lecteur-video" class="affiche-video"
+             ${v.local ? `data-source="${echapper(v.source)}"` : `data-embed="${echapper(v.embed)}"`}>
+          <img src="${echapper(defi.illustration)}" alt="" width="640" height="360">
+          <button type="button" class="bouton-lecture" id="btn-lire-video">
+            <svg viewBox="0 0 24 24" width="50" height="50" aria-hidden="true" focusable="false">
+              <path d="M7 4v16l14-8z" fill="currentColor"/></svg>
+            <span class="sr-only">Regarder la vidéo d’introduction</span>
+          </button>
+        </div>
+        ${v.local ? '' : `<p class="discret" style="margin:.5rem 0 0;font-size:.8rem">
+          Vidéo hébergée par ${echapper(v.hebergeur)} : rien n'est chargé avant que vous
+          lanciez la lecture, qui accepte le dépôt de cookies par ce service.</p>`}
+      </section>
+      ${blocTranscription(video)}`;
+  }
+
   // Fichier local : rien a consentir, donc rien a cliquer avant de voir.
   if (v.local) {
     return `
@@ -258,12 +287,21 @@ function brancherVideo() {
 
   bouton.addEventListener('click', () => {
     const zoneVideo = document.getElementById('lecteur-video');
-    zoneVideo.outerHTML = `
-      <div class="cadre-video">
-        <iframe src="${echapper(zoneVideo.dataset.embed)}"
-                title="Vidéo d'introduction du défi" allow="autoplay; encrypted-media; fullscreen"
-                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe>
-      </div>`;
+    // Fichier du portail sous une affiche : le lecteur du navigateur, lance
+    // d'emblee - le clic vaut consentement a la lecture.
+    zoneVideo.outerHTML = zoneVideo.dataset.source
+      ? `<div class="cadre-video">
+          <video src="${echapper(zoneVideo.dataset.source)}" controls autoplay
+                 style="width:100%;height:100%;background:#000"></video>
+        </div>`
+      : `<div class="cadre-video">
+          <iframe src="${echapper(zoneVideo.dataset.embed)}"
+                  title="Vidéo d'introduction du défi" allow="autoplay; encrypted-media; fullscreen"
+                  referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe>
+        </div>`;
+    // Le bouton a disparu avec l'affiche : sans cela, le focus clavier
+    // retombait en haut de la page.
+    document.querySelector('.bloc-video .cadre-video video, .bloc-video .cadre-video iframe')?.focus();
   });
 }
 
@@ -277,7 +315,7 @@ function afficherQuestion() {
     <div class="barre-progression">
       <div class="etat-progression">
         <span>Question ${index + 1} sur ${total}</span>
-        <span>${q.points} points</span>
+        <span>${libelleNiveau(q.difficulte) ? `${libelleNiveau(q.difficulte)} · ` : ''}${q.points} points</span>
       </div>
       <div class="piste" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pourcent}"
            aria-label="Progression dans le défi"><span style="width:${pourcent}%"></span></div>

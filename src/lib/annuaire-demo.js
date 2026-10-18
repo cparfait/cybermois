@@ -24,12 +24,16 @@ const COMPTES = [
   ['v.chevalier', 'Valerie CHEVALIER', 'Finances'],
   ['d.robin', 'David ROBIN', 'Finances'],
   ['i.masson', 'Ines MASSON', 'Finances'],
-].map(([login, nomComplet, service]) => ({
+  // Deux elus : ils servent a essayer le mail aux elus et les groupes exclus.
+  ['h.lemaire', 'Helene LEMAIRE', 'Elus', ['GG-Elus']],
+  ['r.adjoint', 'Remi ADJOINT', 'Elus', ['GG-Elus']],
+].map(([login, nomComplet, service, groupes = []]) => ({
   login,
   nomComplet,
   service,
   email: `${login}@ville-chatillon.fr`,
   dn: `CN=${nomComplet},OU=${service},OU=Agents,DC=ville,DC=local`,
+  groupes: ['GG-Cybermois-Agents', ...groupes].map((g) => `CN=${g},OU=Groupes,DC=ville,DC=local`),
 }));
 
 // Jamais en production : voir modeDemoActif.
@@ -78,9 +82,12 @@ export async function authentifierDemo(login, motDePasse) {
       email: compte.email,
       service: normaliserService(service),
       serviceBrut: compte.dn,
+      groupes: compte.groupes,
     },
   };
 }
 
-export const comptesDemo = () => COMPTES.map((c) => ({ login: c.login, nom: c.nomComplet, service: c.service }));
+export const comptesDemo = () => COMPTES.map((c) => ({
+  login: c.login, nom: c.nomComplet, service: c.service, groupes: c.groupes,
+}));
 export const motDePasseDemo = () => MOT_DE_PASSE;

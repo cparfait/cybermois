@@ -6,8 +6,9 @@ relèvent les défis au fil de leurs parutions, et font gagner des points à leu
 
 - **Authentification LDAPS** via un compte de service, sans jamais stocker de mot de passe
 - **Rattachement au service déduit de l'annuaire** (OU du DN) : aucune liste à maintenir
-- **Double classement** : par service (défis terminés par agent, puis réussite) et individuel nominatif (défis terminés, puis points)
+- **Double classement** : par service (défis terminés par agent, puis réussite) et individuel nominatif (défis terminés, puis réussite)
 - **Questions à choix multiples** avec validation explicite et notation partielle
+- **Barème unique** : dix questions par défi, cent points, la difficulté fixant les points
 - **Badges, podium, attestation imprimable**
 - **Relances et résultats hebdomadaires** envoyés automatiquement par SMTP
 - **Import de l'effectif** depuis un export d'annuaire, avec prévisualisation
@@ -268,13 +269,40 @@ explicite.
 Deux méthodes, au choix :
 
 - **Par le back-office** — Administration → Défis → Modifier. Édition complète des énoncés,
-  contextes, réponses, bonnes réponses, points et explications. C'est la méthode à privilégier
-  pendant la campagne.
+  contextes, réponses, bonnes réponses, difficulté et explications. C'est la méthode à
+  privilégier pendant la campagne.
 - **Par les fichiers** — `content/modules/<code>.json`, puis Administration → Technique →
   Recharger les contenus. Pratique pour préparer une édition suivante ou versionner les
   contenus dans Git.
 
-Un défi déjà joué n'est jamais écrasé par un rechargement, sauf en forçant explicitement.
+Les deux ne se mélangent pas : **un défi modifié dans le back-office n'est plus jamais
+réécrit depuis son fichier**, ni au redémarrage qui suit chaque mise à jour de
+l'application, ni par « Recharger les contenus », ni en forçant. Retiré du programme, il
+est masqué plutôt que supprimé. La liste des défis le signale par « ✎ modifié ici —
+protégé du rechargement ». Un défi déjà joué n'est écrasé qu'en forçant explicitement.
+
+### Le barème : dix questions, cent points
+
+Chaque défi compte **dix questions pour cent points**, répartis ainsi :
+
+| Difficulté | Points | Par défi |
+|---|---|---|
+| Facile — un réflexe, une définition | 5 | 3 questions |
+| Moyenne — choisir entre des conduites plausibles | 10 | 4 questions |
+| Difficile — cas limite, piège, procédure | 15 | 3 questions |
+
+Les points **ne se saisissent pas** : ils découlent de la difficulté, et l'enregistrement
+d'un défi qui s'écarte de cette répartition est refusé, en disant ce qui manque.
+
+Les deux exigences derrière cette règle sont également fortes. Une question difficile doit
+rapporter davantage qu'une question de réflexe — sans quoi reconnaître une signature de
+domaine vaut autant que reconnaître une pièce jointe suspecte. Et deux défis doivent peser
+le même poids au classement : quand un questionnaire valait 115 points et un autre 70,
+c'était la semaine, et non l'agent, qui décidait du classement — celui qui avait manqué la
+semaine lourde ne rattrapait plus, quoi qu'il fasse ensuite.
+
+Le catalogue est vérifié par `node --test tests/modules.test.mjs`, et l'écran de
+programmation signale tout module qui ne tiendrait pas le barème.
 
 ### Suivre la participation
 
@@ -301,11 +329,11 @@ ferait mécaniquement gagner le service le plus nombreux, ce qui décourage les 
 services dès la première semaine. Le taux de participation est affiché à côté du score :
 c'est en pratique le chiffre qui fait bouger les chefs de service.
 
-**La participation passe avant les points.** Les agents se classent d'abord au nombre de
-défis terminés, puis aux points ; les services, au nombre moyen de défis terminés par agent
-inscrit, puis à la réussite. Classé aux seuls points, un agent qui n'avait fait que les
-deux défis les mieux dotés passait devant un collègue qui les avait tous faits. Le détail
-est dans `docs/parametrage-classement.md`.
+**La participation passe avant la réussite.** Les agents se classent d'abord au nombre de
+défis terminés, puis à la réussite ; les services, au nombre moyen de défis terminés par agent
+inscrit, puis à la réussite. La réussite se lit sur les seuls défis faits : classé à la
+réussite d'abord, un agent qui n'avait fait que deux défis sans faute passait devant un
+collègue qui les avait tous faits à 90 %. Le détail est dans `docs/parametrage-classement.md`.
 
 **Pas de score négatif.** Une mauvaise réponse cochée annule une bonne réponse au sein de
 la même question, mais le score d'une question ne descend jamais sous zéro. L'objectif est

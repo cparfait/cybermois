@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Un mégaphone et une publication sur un réseau social">
+<title>Un mégaphone et une publication sur un réseau social</title>
+<rect width="640" height="360" fill="#e6f1ec"/>
+<circle cx="585" cy="35" r="150" fill="#f4f8dd"/>
+<circle cx="35" cy="345" r="105" fill="#d3e6dc"/>
+<circle cx="520" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/>
+<g transform="rotate(-12 170 190)">
+<path d="M90 170 L210 110 V270 L90 210 Z" fill="#f2b705"/>
+<rect x="62" y="166" width="34" height="48" rx="8" fill="#006e46"/>
+<path d="M110 214 L126 262 H152 L140 222" fill="#006e46"/>
+<rect x="206" y="104" width="18" height="172" rx="9" fill="#006e46"/>
+</g>
+<g fill="none" stroke="#f2b705" stroke-width="6" stroke-linecap="round"><path d="M250 120 Q270 100 262 76"/><path d="M262 200 H292"/><path d="M252 270 Q274 290 268 314"/></g>
+<rect x="320" y="52" width="250" height="256" rx="16" fill="#ffffff" stroke="#b9c7c0" stroke-width="3"/>
+<circle cx="352" cy="86" r="18" fill="#e6f1ec"/>
+<path d="M336.88 101 Q336.88 80 352 80 Q367.12 80 367.12 101 Z" fill="#006e46"/>
+<circle cx="352" cy="70.76" r="8.82" fill="#f1c9a5"/>
+<path d="M343.18 69.92 A8.82 8.82 0 0 1 360.82 69.92 Q352 64.88 343.18 69.92 Z" fill="#14211c"/>
+<rect x="380" y="76" width="120" height="7" rx="3.5" fill="#b9c7c0"/><rect x="380" y="90" width="72" height="7" rx="3.5" fill="#b9c7c0"/>
+<rect x="338" y="118" width="214" height="120" rx="8" fill="#cfe6f0"/>
+<path d="M338 238 L404 170 L446 212 L480 184 L552 238 Z" fill="#8fbfa6"/><circle cx="520" cy="148" r="14" fill="#f2b705"/>
+<path d="M354 277.2 C330 261.2 341.2 243.6 354 256.4 C366.8 243.6 378 261.2 354 277.2 Z" fill="#d64545"/><rect x="374" y="262" width="36" height="8" rx="4" fill="#b9c7c0"/>
+<rect x="430" y="256" width="24" height="18" rx="5" fill="none" stroke="#4a5a53" stroke-width="3"/><rect x="462" y="262" width="36" height="8" rx="4" fill="#b9c7c0"/>
+<path d="M596 124 C566 104 580 82 596 98 C612 82 626 104 596 124 Z" fill="#d64545"/><path d="M606 179.8 C585 165.8 594.8 150.4 606 161.6 C617.2 150.4 627 165.8 606 179.8 Z" fill="#d64545"/><path d="M590 229.7 C573.5 218.7 581.2 206.6 590 215.4 C598.8 206.6 606.5 218.7 590 229.7 Z" fill="#d64545"/>
+</svg>

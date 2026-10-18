@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Un smartphone et une application qui réclame l’accès aux contacts">
+<title>Un smartphone et une application qui réclame l’accès aux contacts</title>
+<rect width="640" height="360" fill="#e6f1ec"/>
+<circle cx="585" cy="35" r="150" fill="#f4f8dd"/>
+<circle cx="35" cy="345" r="105" fill="#d3e6dc"/>
+<circle cx="520" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/>
+<rect x="200" y="26" width="170" height="310" rx="20" fill="#14211c"/>
+<rect x="208" y="50" width="154" height="262" rx="6" fill="#e6f1ec"/>
+<rect x="269" y="36" width="32" height="5" rx="2.5" fill="#4a5a53"/>
+<circle cx="285" cy="324" r="6" fill="#4a5a53"/>
+<rect x="222" y="66" width="34" height="34" rx="9" fill="#006e46"/><rect x="266" y="66" width="34" height="34" rx="9" fill="#aec80c"/><rect x="310" y="66" width="34" height="34" rx="9" fill="#f2b705"/><rect x="222" y="116" width="34" height="34" rx="9" fill="#8fbfa6"/><rect x="266" y="116" width="34" height="34" rx="9" fill="#d64545"/><rect x="310" y="116" width="34" height="34" rx="9" fill="#006e46"/><rect x="222" y="166" width="34" height="34" rx="9" fill="#f2b705"/><rect x="266" y="166" width="34" height="34" rx="9" fill="#005435"/><rect x="310" y="166" width="34" height="34" rx="9" fill="#aec80c"/>
+<rect x="300" y="170" width="260" height="126" rx="16" fill="#ffffff" stroke="#b9c7c0" stroke-width="3"/>
+<circle cx="336" cy="206" r="20" fill="#d64545"/>
+<path d="M323.04 219 Q323.04 201 336 201 Q348.96 201 348.96 219 Z" fill="#ffffff"/>
+<circle cx="336" cy="193.08" r="7.56" fill="#ffffff"/>
+<path d="M328.44 192.36 A7.56 7.56 0 0 1 343.56 192.36 Q336 188.04 328.44 192.36 Z" fill="#ffffff"/>
+<rect x="368" y="196" width="170" height="8" rx="4" fill="#4a5a53"/><rect x="368" y="212" width="102" height="8" rx="4" fill="#4a5a53"/>
+<rect x="320" y="250" width="104" height="30" rx="8" fill="#dfe7e3"/><rect x="436" y="250" width="104" height="30" rx="8" fill="#006e46"/>
+<text x="372" y="271" text-anchor="middle" font-size="14" fill="#4a5a53" font-family="Montserrat, Arial, sans-serif" font-weight="800">Refuser</text>
+<text x="488" y="271" text-anchor="middle" font-size="14" fill="#ffffff" font-family="Montserrat, Arial, sans-serif" font-weight="800">Autoriser</text>
+<path d="M464 110 Q500 81.2 536 110 Q500 138.8 464 110 Z" fill="#ffffff" stroke="#14211c" stroke-width="3.6"/>
+<circle cx="500" cy="110" r="11.700000000000001" fill="#006e46"/><circle cx="500" cy="110" r="5.4" fill="#14211c"/>
+<circle cx="503.6" cy="106.4" r="2.25" fill="#ffffff"/>
+</svg>

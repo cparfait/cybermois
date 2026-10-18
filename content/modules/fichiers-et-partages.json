@@ -20,7 +20,7 @@
     {
       "enonce": "Où un document de travail de la Ville doit-il vivre ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "L'espace partagé du service, ou l'espace collaboratif fourni par la DSI, sont les seuls endroits qui réunissent trois propriétés : ils sont sauvegardés, leurs droits sont gérés, et le document survit au départ de son auteur. Un fichier posé sur le bureau du poste n'a aucune de ces propriétés — le bureau n'est presque jamais sauvegardé, et le jour où la machine tombe en panne, il n'y a rien à restaurer. Un compte cloud personnel ajoute une fuite : le document quitte la collectivité et y reste après votre départ. Quant à la pièce jointe restée dans la messagerie, ce n'est pas un rangement, c'est un oubli en attente. Deux précisions : qu'un poste soit administré par la DSI ne veut pas dire que son disque est sauvegardé, ce sont deux choses différentes ; et un cloud personnel bien protégé reste un cloud personnel, le problème n'est pas la solidité du mot de passe mais le fait que le document a quitté la collectivité. Quant à la messagerie, qu'elle soit sauvegardée n'en fait pas un rangement : personne d'autre n'y a accès, et elle disparaît avec le compte.",
       "reponses": [
         {
@@ -48,7 +48,7 @@
     {
       "enonce": "Vous constatez que vous accédez au dossier des Ressources Humaines alors que ce n'est pas votre service. Que faites-vous ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "difficile",
       "explication": "Une porte ouverte par erreur reste une porte ouverte : la franchir, même par curiosité, est une consultation sans motif légitime, et les accès sont journalisés. Le bon réflexe est de ne pas ouvrir et de signaler à la DSI, qui corrigera les droits — signalement qui rend service à tout le monde, à commencer par les agents des RH. En parler à sa hiérarchie permet que le sujet soit tracé plutôt que réglé de bouche à oreille. Se dire que l'ouverture des droits vaut autorisation est une erreur classique et coûteuse : la légitimité vient de la fonction, jamais de la possibilité technique. Même votre propre dossier ne se consulte pas par cette porte-là : le droit d'accès s'exerce par une demande aux RH, pas en profitant d'une erreur de droits. Et la journalisation ne remplace pas le signalement : personne ne relit les journaux au quotidien, ils servent après coup.",
       "reponses": [
         {
@@ -76,7 +76,7 @@
     {
       "enonce": "Quelles pratiques rendent un partage de service réellement utilisable ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Un partage devient inexploitable moins par excès de fichiers que par absence de règles. Des droits accordés par groupe plutôt que par personne survivent aux mouvements d'agents ; des droits nominatifs empilés depuis dix ans ne survivent à rien. Une revue périodique — même annuelle, même rapide — retire les accès des agents partis. Une arborescence tenue et des noms de fichiers datés évitent la prolifération des « version finale 3 corrigée ». À l'inverse, donner le droit à tout le monde « pour simplifier » est exactement ce qui transforme un incident local en incident général, et conserver toutes les versions de tous les documents finit par noyer la seule qui compte. Ouvrir la lecture à tous n'est pas plus acceptable que l'écriture : ce qui compte, c'est que seuls ceux qui en ont besoin voient les documents.",
       "reponses": [
         {
@@ -104,7 +104,7 @@
     {
       "enonce": "Qu'est-ce qui est réellement sauvegardé, et qu'est-ce qui ne l'est pas ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "C'est la question qui décide de tout le jour d'une panne. Les serveurs de fichiers et les applications métier sont sauvegardés par la DSI : c'est leur raison d'être. Le bureau et le disque local d'un poste ne le sont généralement pas — et quand ils le sont, c'est un service supplémentaire à vérifier, jamais à supposer. Une clé USB n'est pas une sauvegarde : c'est une copie unique sur un support fragile, ce qui est presque le contraire. Un cloud personnel synchronise, ce qui n'est pas non plus sauvegarder : un fichier supprimé ou chiffré par un rançongiciel se propage à toutes les copies en quelques secondes. En cas de doute, la question à la DSI prend une minute. Un disque dur externe ne vaut pas mieux qu'une clé : une copie unique, rarement à jour, qui brûle ou se vole avec le bureau.",
       "reponses": [
         {
@@ -132,7 +132,7 @@
     {
       "enonce": "Un agent quitte le service. Que faut-il faire de ses fichiers ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Un départ mal préparé laisse un service sans ses dossiers et un compte ouvert dans la nature. Les documents de travail doivent être remis sur l'espace du service avant le départ : ce sont ceux de la collectivité, pas ceux de l'agent. La DSI ferme le compte à la date convenue et retire les accès aux boîtes partagées, qui sont l'oubli le plus fréquent. Ce qui n'est pas acceptable, c'est de laisser le compte actif « au cas où » — un compte inutilisé mais valide est une cible de choix, précisément parce que personne ne regarde son activité. Et supprimer les fichiers au départ ferait perdre au service ce qu'il lui faut pour continuer. Les messages qui arrivent encore se traitent par une réponse automatique ou une redirection mise en place par la DSI, pas en gardant le compte vivant. Et une copie emportée par l'agent est une fuite de données : les dossiers de la collectivité restent dans la collectivité, les questions se posent au service.",
       "reponses": [
         {
@@ -160,7 +160,7 @@
     {
       "enonce": "Vous devez partager un tableau avec un partenaire extérieur pendant trois semaines. Comment procédez-vous ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "difficile",
       "explication": "Un partage temporaire doit l'être vraiment : un lien nominatif, avec une date d'expiration, et le droit strictement nécessaire — lecture seule si le partenaire n'a pas à modifier. Le retirer une fois le travail terminé prend cinq secondes et évite qu'il traîne trois ans. À proscrire absolument : le lien « toute personne disposant de l'adresse », qui se transfère et s'indexe, et la création d'un compte partagé dont les identifiants circulent par mail — plus personne ne saurait qui a fait quoi, et le mot de passe finirait par se promener bien au-delà du partenaire. Un mot de passe envoyé dans le même message que le lien ne protège rien : qui reçoit l'un reçoit l'autre.",
       "reponses": [
         {
@@ -188,7 +188,7 @@
     {
       "enonce": "Comment nommer et classer un fichier contenant des données personnelles ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "Le nom d'un fichier circule bien plus que son contenu : il s'affiche dans un partage d'écran, dans une liste de fichiers récents, dans un objet de message. Y écrire un nom, une pathologie ou un motif d'aide sociale expose l'information sans même ouvrir le document. Un nom neutre, avec une date et une référence, dit tout ce qu'il faut. Le classement compte autant : le fichier va dans le dossier dont les droits correspondent à sa sensibilité, et une durée de conservation doit être prévue plutôt que d'être découverte cinq ans plus tard. Enfin, un fichier extrait pour un besoin ponctuel se supprime une fois le besoin passé — c'est ce qui évite les exports oubliés, qui sont la fuite la plus banale qui soit. Les initiales ne suffisent pas non plus : associées à un motif — aide, pathologie, procédure —, elles identifient encore la personne pour qui la connaît.",
       "reponses": [
         {
@@ -210,6 +210,90 @@
         {
           "libelle": "Les initiales de la personne et le motif du dossier dans le titre, plutôt que son nom complet",
           "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Le dossier du service contient « note_v2 », « note_v2_bis », « note_VFINALE » et « note_VFINALE_ok ». Quel est le vrai problème ?",
+      "multiple": true,
+      "difficulte": "facile",
+      "explication": "Ce n'est pas une question d'esthétique. Quand quatre versions cohabitent, personne ne sait laquelle fait foi : on corrige la mauvaise, on envoie la périmée, et un document contenant des données personnelles se retrouve dupliqué en quatre exemplaires qu'il faudra tous penser à supprimer le jour venu. La parade est simple : un seul fichier, modifié au même endroit, dont l'outil garde l'historique, et un nom qui dit ce qu'il contient et à quelle date. Multiplier les copies ne protège de rien : la sauvegarde du partage, elle, existe déjà. Et conserver toutes les versions « pour l'historique » n'a d'intérêt que si quelqu'un est capable de dire à quoi chacune correspond — ce qui n'arrive jamais.",
+      "reponses": [
+        {
+          "libelle": "Plus personne ne sait quelle version fait foi",
+          "correcte": true
+        },
+        {
+          "libelle": "Les données personnelles sont dupliquées en autant d'exemplaires à effacer",
+          "correcte": true
+        },
+        {
+          "libelle": "C'est une bonne pratique : chaque copie est une sauvegarde de plus",
+          "correcte": false
+        },
+        {
+          "libelle": "Un seul fichier, modifié au même endroit, avec l'historique de l'outil, suffit",
+          "correcte": true
+        },
+        {
+          "libelle": "Ce n'est qu'une question de présentation, sans conséquence réelle",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Pour aller plus vite, un collègue propose d'ouvrir le dossier du service « à tout le monde ». Que répondez-vous ?",
+      "multiple": true,
+      "difficulte": "moyen",
+      "explication": "Un droit large est commode le premier jour et ingérable ensuite : plus personne ne sait qui voit quoi, et le jour où un fichier fuite, la liste des personnes ayant pu y accéder couvre toute la collectivité. La bonne réponse n'est pourtant pas de refuser sèchement, car la demande cache un vrai besoin — un dossier partagé mal découpé, ou des droits qui n'ont jamais été revus. On traite donc le besoin : ouvrir précisément ce qui doit l'être, à ceux qui en ont besoin, via la DSI, et prévoir une revue périodique des accès. Ce qui ne doit pas se faire : ouvrir largement en se promettant de restreindre plus tard — ce « plus tard » n'arrive jamais —, ni contourner en déposant une copie dans un espace public de l'intranet, ce qui revient au même en pire.",
+      "reponses": [
+        {
+          "libelle": "Je propose d'ouvrir précisément les dossiers utiles, aux personnes concernées",
+          "correcte": true
+        },
+        {
+          "libelle": "Je passe par la DSI pour ajuster les droits, et je fais revoir les accès régulièrement",
+          "correcte": true
+        },
+        {
+          "libelle": "J'ouvre tout maintenant, on restreindra plus tard",
+          "correcte": false
+        },
+        {
+          "libelle": "Je dépose une copie dans un espace accessible à tous, c'est plus simple",
+          "correcte": false
+        },
+        {
+          "libelle": "Je cherche pourquoi l'accès manque : le besoin est peut-être légitime",
+          "correcte": true
+        }
+      ]
+    },
+    {
+      "enonce": "En rangeant le partage du service, vous trouvez des dossiers d'usagers de 2009 dont plus personne ne se sert. Que faites-vous ?",
+      "multiple": true,
+      "difficulte": "difficile",
+      "explication": "Conserver sans fin n'est pas neutre : le RGPD impose une durée de conservation, et chaque année supplémentaire augmente le volume de données exposées en cas d'intrusion, sans rendre le moindre service. Mais supprimer soi-même n'est pas la solution non plus : une collectivité est soumise au code du patrimoine, et certains documents relèvent de l'archivage, avec des durées d'utilité administrative précises. La marche à suivre consiste donc à ne rien effacer dans son coin, à faire le point avec le service des archives et la DPO, puis à appliquer ce qui est décidé — élimination réglementaire ou versement. Déplacer le tout dans un dossier « vieux » ou sur une clé posée dans un tiroir ne fait que sortir les données de la vue sans les sortir du risque.",
+      "reponses": [
+        {
+          "libelle": "Je n'efface rien de moi-même et je fais le point avec les archives et la DPO",
+          "correcte": true
+        },
+        {
+          "libelle": "J'applique ensuite ce qui est décidé : élimination réglementaire ou versement aux archives",
+          "correcte": true
+        },
+        {
+          "libelle": "Je supprime tout : après quinze ans, plus personne n'en a besoin",
+          "correcte": false
+        },
+        {
+          "libelle": "Je copie l'ensemble sur une clé USB rangée dans un tiroir, pour libérer de la place",
+          "correcte": false
+        },
+        {
+          "libelle": "Je signale que le service n'a pas de règle de conservation écrite pour ces dossiers",
+          "correcte": true
         }
       ]
     }

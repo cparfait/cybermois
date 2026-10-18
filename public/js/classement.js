@@ -34,9 +34,6 @@ function activerOnglet(actif) {
 
 /* ------------------------------------------------------------- Rendu */
 
-/** « 2,6 » et non « 2.6 » : la moyenne de defis par agent s'ecrit a la francaise. */
-const virgule = (n) => String(n).replace('.', ',');
-
 function podium(entrees, rendu) {
   if (entrees.length < 3) return '';
   const ordre = [1, 0, 2]; // 2e, 1er, 3e pour l'effet visuel
@@ -86,6 +83,9 @@ function brancherVoirPlus(idTable, idBouton, total, libelle) {
   };
 }
 
+/** « 2,6 » et non « 2.6 » : la moyenne de defis par agent s'ecrit a la francaise. */
+const virgule = (n) => String(n).replace('.', ',');
+
 function rendreServices(donnees) {
   const services = donnees.services;
 
@@ -117,7 +117,7 @@ function rendreServices(donnees) {
         <td>${echapper(s.service)}${s.service === maDirection ? ' <span class="discret">(ma direction)</span>' : ''}</td>
         <td class="num" style="white-space:nowrap"><strong>${virgule(s.defis_par_agent)}</strong> / ${s.defis_parus}</td>
         <td class="num">${s.pourcentage_moyen} %</td>
-        <td class="num discret" style="white-space:nowrap">${s.score_total} / ${s.points_possibles}</td>
+        <td class="num discret" style="white-space:nowrap">${s.score_max_joue ? `${s.score_total} / ${s.score_max_joue}` : '—'}</td>
         <td class="num">
           <div class="rang" style="justify-content:flex-end;gap:.5rem;flex-wrap:nowrap">
             <span>${s.taux_participation} %</span>
@@ -145,7 +145,7 @@ function rendreAgents(donnees) {
     <div class="sous">${a.pourcentage} % de réussite · ${echapper(a.service)}</div>`);
 
   document.getElementById('table-agents').innerHTML = `
-    <caption class="sr-only">Classement individuel des agents par défis terminés, puis par points</caption>
+    <caption class="sr-only">Classement individuel des agents par défis terminés, puis par réussite</caption>
     <thead><tr>
       <th scope="col">Rang</th><th scope="col">Agent</th><th scope="col">Direction</th>
       <th scope="col" class="num">Défis</th>
@@ -162,7 +162,7 @@ function rendreAgents(donnees) {
         <td>${echapper(a.service)}</td>
         <td class="num" style="white-space:nowrap"><strong>${a.defis_joues}</strong> / ${a.defis_parus}</td>
         <td class="num">${a.pourcentage} %</td>
-        <td class="num discret" style="white-space:nowrap">${a.score_total} / ${a.points_possibles}</td>
+        <td class="num discret" style="white-space:nowrap">${a.score_total} / ${a.score_max_joue}</td>
       </tr>`).join('')}</tbody>`;
 
   if (!agents.length) {

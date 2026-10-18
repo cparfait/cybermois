@@ -103,6 +103,10 @@ export const config = {
   // quatre semaines.
   defisParLigne: num(process.env.DEFIS_PAR_LIGNE, 2),
 
+  // Les defis a venir figurent sur la page des defis, sous forme de carte
+  // fermee. Se regle dans le programme de la campagne.
+  afficherDefisAVenir: bool(process.env.AFFICHER_DEFIS_A_VENIR, true),
+
   // Hebergeurs autorises a fournir une video d'introduction. La liste alimente
   // la politique de securite de contenu : un domaine absent d'ici verra son
   // lecteur bloque par le navigateur. Elle se modifie dans l'administration -
@@ -133,10 +137,30 @@ export const config = {
     groupeDiffusion: process.env.MAIL_GROUPE_DIFFUSION || '',
     copie: process.env.MAIL_COPIE || '',
     actif: bool(process.env.MAIL_ENVOI_ACTIF, false),
+    // Microsoft 365 n'accepte que 30 messages par minute d'un meme compte :
+    // 25 laisse une marge. 0 = sans limite, pour un relais interne.
+    parMinute: num(process.env.SMTP_PAR_MINUTE, 25),
+  },
+
+  // Chaque mail automatique s'active ou se coupe seul, sous l'interrupteur
+  // general smtp.actif. Couper un envoi automatique n'empeche pas de le faire
+  // a la main depuis l'onglet Mails.
+  mails: {
+    ouverture: bool(process.env.MAIL_AUTO_OUVERTURE, true),
+    annonce: bool(process.env.MAIL_AUTO_ANNONCE, true),
+    relance: bool(process.env.MAIL_AUTO_RELANCE, true),
+    resultats: bool(process.env.MAIL_AUTO_RESULTATS, true),
   },
 
   cron: {
     timezone: process.env.TIMEZONE || 'Europe/Paris',
+    // Passages de la tache d'ouverture. Le mail ne part que le jour du premier
+    // defi, et une seule fois : les passages suivants rattrapent un serveur
+    // arrete a 8 h ce jour-la.
+    ouverture: process.env.CRON_OUVERTURE || '0 8-17 * * *',
+    // Annonce des defis de la semaine, les lundis suivants. Meme principe :
+    // plusieurs passages, un seul envoi.
+    annonce: process.env.CRON_ANNONCE || '0 8-17 * * 1',
     relance: process.env.CRON_RELANCE || '0 9 * * 3',
     resultats: process.env.CRON_RESULTATS || '0 16 * * 5',
   },

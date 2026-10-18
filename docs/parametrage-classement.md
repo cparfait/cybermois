@@ -19,34 +19,32 @@ fixé dans le code (`src/lib/scoring.js`) et ne se règle pas ; on le rappelle i
 c'est la première question que posent les directions.
 
 Seuls les **défis déjà parus** comptent : un défi publié dont la date d'ouverture n'est pas
-arrivée n'entre ni dans le nombre de défis, ni dans les points possibles. Un défi non fait
-compte zéro.
+arrivée n'entre ni dans le nombre de défis, ni dans la réussite.
+
+La **réussite** se lit sur les défis **faits** : les points obtenus sur le maximum des défis
+que l'agent a terminés. Elle dit si l'on a bien répondu, pas combien de défis on a faits —
+c'est le rôle du nombre de défis, qui passe donc en premier.
 
 **Classement individuel** — dans cet ordre :
 
 1. le nombre de défis terminés ;
-2. à égalité, les points cumulés ;
+2. à égalité, la réussite ;
 3. à égalité encore, la première participation la plus ancienne.
 
-La participation passe d'abord parce que les barèmes diffèrent d'un défi à l'autre (de 70
-à 115 points). Classé aux seuls points, un agent qui n'avait fait que les deux défis les
-mieux dotés passait devant un collègue qui les avait tous faits :
+Classé à la réussite d'abord, un agent qui n'avait fait que deux défis, sans faute, passait
+devant un collègue qui les avait tous faits presque aussi bien :
 
-| 4 défis parus (370 pts) | Défis | Points | Réussite | Avant | Désormais |
-|---|---|---|---|---|---|
-| A : Hameçonnage et Ingénierie sociale, sans faute | 2 / 4 | 220 | 59 % | 1er | 2e |
-| B : les quatre, à 55 % | 4 / 4 | 203 | 55 % | 2e | 1er |
+| 4 défis parus | Défis | Réussite | Avant | Désormais |
+|---|---|---|---|---|
+| A : deux défis, sans faute | 2 / 4 | 100 % | 1er | 2e |
+| B : les quatre, à 90 % | 4 / 4 | 90 % | 2e | 1er |
 
-La **réussite** affichée rapporte les points de l'agent à ceux qu'il pouvait gagner sur les
-défis parus.
+**Classement par direction** — dans cet ordre :
 
-**Classement par direction** — chaque chiffre est rapporté aux agents **inscrits** de la
-direction, joueurs ou non, pour qu'une direction de 4 agents ne soit pas écrasée par une
-direction de 40 :
-
-1. le nombre moyen de défis terminés par agent inscrit (« 2,6 / 4 ») ;
-2. à égalité, les points moyens par agent inscrit, affichés en réussite (points gagnés sur
-   points possibles de tous les inscrits) ;
+1. le nombre moyen de défis terminés par agent **inscrit**, joueurs ou non (« 2,6 / 4 ») :
+   rapporté aux inscrits, il met sur le même pied une direction de 4 agents et une de 40,
+   et un agent qui ne joue pas fait baisser la moyenne ;
+2. à égalité, la réussite : la moyenne des résultats des agents qui ont joué ;
 3. à égalité encore, le taux de participation (part des inscrits ayant joué au moins une fois).
 
 Seules les directions du référentiel sont classées (voir plus bas).

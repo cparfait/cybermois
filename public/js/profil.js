@@ -7,12 +7,10 @@ const zone = document.getElementById('zone');
 try {
   const p = await api('/api/profil');
   const obtenus = p.badges.filter((b) => b.obtenu).length;
-  // Meme denominateur que le classement : le total atteignable a ce jour, et
-  // non les seuls defis joues. Rapporte aux defis joues, un agent qui n'en
-  // a fait qu'un affichait « 100 % de reussite » a cote d'un classement qui
-  // le disait dernier - deux chiffres justes, et personne ne s'y retrouvait.
-  const reussite = p.pointsPossibles
-    ? Math.round((p.scoreTotal / p.pointsPossibles) * 100) : 0;
+  // Meme denominateur que le classement : les defis faits. Le classement
+  // suit desormais cette reussite, si bien que les deux chiffres concordent.
+  const reussite = p.scoreMaxJoue
+    ? Math.round((p.scoreTotal / p.scoreMaxJoue) * 100) : 0;
 
   zone.innerHTML = `
     <h1 style="margin-bottom:.1em">${echapper(p.agent.nomComplet)}</h1>
@@ -20,8 +18,8 @@ try {
 
     <div class="grille grille-3" style="margin:1.75rem 0">
       <div class="carte centre">
-        <div style="font-family:var(--police-titre);font-weight:900;font-size:2.2rem;color:var(--vert-fonce);line-height:1">${p.scoreTotal}${p.pointsPossibles
-          ? `<span style="font-size:1.1rem;color:var(--encre-douce)">/${p.pointsPossibles}</span>` : ''}</div>
+        <div style="font-family:var(--police-titre);font-weight:900;font-size:2.2rem;color:var(--vert-fonce);line-height:1">${p.scoreTotal}${p.scoreMaxJoue
+          ? `<span style="font-size:1.1rem;color:var(--encre-douce)">/${p.scoreMaxJoue}</span>` : ''}</div>
         <div class="discret ui">points cumulés</div>
       </div>
       <div class="carte centre">

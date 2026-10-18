@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Un hameçon qui remonte un courriel piégé">
+<title>Un hameçon qui remonte un courriel piégé</title>
+<rect width="640" height="360" fill="#e6f1ec"/>
+<circle cx="585" cy="35" r="150" fill="#f4f8dd"/>
+<circle cx="35" cy="345" r="105" fill="#d3e6dc"/>
+<circle cx="520" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/>
+<path d="M0 250 Q80 232 160 250 T320 250 T480 250 T640 250 V360 H0 Z" fill="#cfe6f0"/>
+<path d="M0 278 Q80 262 160 278 T320 278 T480 278 T640 278 V360 H0 Z" fill="#b5d7e6"/>
+<path d="M320 0 V96" stroke="#14211c" stroke-width="3"/>
+<g transform="rotate(-8 300 216)">
+<rect x="214" y="170" width="170" height="108" rx="6" fill="#ffffff" stroke="#006e46" stroke-width="3"/>
+<path d="M219 176 L299 230.48000000000002 L379 176" fill="none" stroke="#006e46" stroke-width="3" stroke-linejoin="round"/>
+<circle cx="354" cy="250" r="17" fill="#d64545"/><text x="354" y="257" text-anchor="middle" font-size="20" fill="#ffffff" font-family="Montserrat, Arial, sans-serif" font-weight="800">@</text></g>
+<path d="M320 96 V168 A24 24 0 0 1 272 168 V156" fill="none" stroke="#4a5a53" stroke-width="7" stroke-linecap="round"/>
+<path d="M272 154 L262 170 M272 154 L282 168" stroke="#4a5a53" stroke-width="6" stroke-linecap="round"/>
+<circle cx="320" cy="96" r="6" fill="#4a5a53"/>
+<circle cx="470" cy="300" r="8" fill="none" stroke="#ffffff" stroke-width="3"/><circle cx="492" cy="272" r="5" fill="none" stroke="#ffffff" stroke-width="3"/><circle cx="150" cy="312" r="7" fill="none" stroke="#ffffff" stroke-width="3"/><circle cx="170" cy="288" r="4" fill="none" stroke="#ffffff" stroke-width="3"/>
+<path d="M470 200 q24 -22 48 0 q-24 22 -48 0 Z M470 200 l-16 -12 v24 Z" fill="#f2b705"/>
+<circle cx="504" cy="197" r="3" fill="#14211c"/>
+</svg>

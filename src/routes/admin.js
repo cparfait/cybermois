@@ -1,4 +1,5 @@
 import { db, journaliser } from '../lib/db.js';
+import { niveauDe, verifierBareme, QUESTIONS_PAR_DEFI, TOTAL_DEFI } from '../lib/bareme.js';
 import { config } from '../lib/config.js';
 import { exigerAdmin } from '../lib/session.js';
 import { testerConnexion } from '../lib/ldap.js';
@@ -9,13 +10,66 @@ import { classementServices, classementAgents, statistiquesGlobales } from '../l
 import {
   testerSmtp, envoyerRelances, envoyerResultats,
   mailLancement, mailRelance, mailResultats,
+  mailBienvenue, mailAnnonce, mailRelanceSemaine, defisAVenir,
+  envoyerOuverture, envoyerAnnonce, envoyerRelancesSemaine, dernierDefiParu,
+  envoyerTest, adresseValide, semainesDeCampagne, mailsDeLaSemaine, exemplesDeCampagne,
+  defisARelancer, mailElus, envoyerElus, dernierEnvoiElus, envoisEnCoursDetail,
+  TYPES_RATTRAPAGE, etatRattrapage, importerRecus, renvoyerA,
 } from '../lib/mail.js';
+import {
+  listerGroupes, lireExclusionsMail, enregistrerExclusionsMail, TYPES_EXCLUSION,
+} from '../lib/groupes.js';
+import { aujourdhui, decalerJours, lundiDe, dateLisible } from '../lib/dates.js';
+import {
+  MODELES, listerModeles, verifierModele, enregistrerModele, reinitialiserModele, avecBrouillon,
+} from '../lib/modeles-mail.js';
+import { illustrationDe } from '../lib/illustrations.js';
+import { lancerTelechargement, lireTache, telechargementDisponible } from '../lib/telechargement-video.js';
+import { estArchiveZip, csvDuClasseur } from '../lib/classeur.js';
 import { creerJetonApercu, revoquerJetonApercu, lienApercu } from '../lib/apercu.js';
 import {
   enregistrerVideo, listerVideos, supprimerVideo, formatsLisibles, TAILLE_MAX,
-  placeOccupee, QUOTA_TOTAL,
+  placeOccupee, QUOTA_TOTAL, estVideoLocale,
 } from '../lib/videos.js';
 import { csv } from '../lib/csv.js';
+
+// Delai de grace d'un fichier que plus aucun defi n'utilise. Un fichier
+// depose ou telecharge n'est rattache au defi qu'a l'enregistrement : entre
+// les deux, il n'est reference nulle part, et le purger aussitot ferait
+// perdre le travail d'un administrateur qui edite un autre defi en parallele.
+const GRACE_VIDEO_ORPHELINE = 24 * 60 * 60 * 1000;
+
+/**
+ * Efface du disque les videos que plus aucun defi n'utilise.
+ *
+ * Remplacer ou retirer la video d'un defi laissait l'ancien fichier sur le
+ * volume : quelques dizaines de Mo a chaque essai, jusqu'au quota, et rien a
+ * l'ecran pour s'en debarrasser. L'ancien fichier du defi part aussitot ; les
+ * autres fichiers orphelins - un telechargement abandonne sans enregistrer -
+ * apres le delai de grace. Un fichier partage par deux defis reste tant que
+ * l'un d'eux s'en sert.
+ */
+function effacerVideosOrphelines(requete, ancienneUrl = null) {
+  const utilisees = new Set(
+    db.prepare('SELECT video_url FROM defis WHERE video_url IS NOT NULL').all().map((d) => d.video_url)
+  );
+  const limite = Date.now() - GRACE_VIDEO_ORPHELINE;
+  const effacees = [];
+  for (const v of listerVideos()) {
+    if (utilisees.has(v.url)) continue;
+    const ancienne = estVideoLocale(ancienneUrl) && v.url === ancienneUrl;
+    if (!ancienne && Date.parse(v.depose_le) > limite) continue;
+    try {
+      if (supprimerVideo(v.nom)) effacees.push(v.nom);
+    } catch (err) {
+      requete.log.warn(err, `video ${v.nom} non effacee`);
+    }
+  }
+  if (effacees.length) {
+    journaliser(requete.agent.login, 'video_supprimee', `${effacees.join(', ')} (plus utilisee)`, requete.ip);
+  }
+  return effacees;
+}
 
 // L'echappement vit dans son propre module : il neutralise desormais les
 // cellules que le tableur lirait comme des formules, ce qui merite d'etre
@@ -67,6 +121,8 @@ export default async function routesAdmin(app) {
         groupeRequis: config.ldap.requiredGroup || '(aucun)',
         envoiMailActif: config.smtp.actif,
         groupeDiffusion: config.smtp.groupeDiffusion || '(non renseigne)',
+        cronOuverture: config.cron.ouverture,
+        cronAnnonce: config.cron.annonce,
         cronRelance: config.cron.relance,
         cronResultats: config.cron.resultats,
         urlPublique: config.publicUrl,
@@ -83,10 +139,16 @@ export default async function routesAdmin(app) {
    * Ecrire vingt questionnaires et n'en jouer que quatre suppose de pouvoir
    * choisir : c'est ce que cet ecran permet.
    */
-  app.get('/api/admin/modules', async () => ({
-    modules: listerModules(),
-    programme: etatProgramme(),
-  }));
+  app.get('/api/admin/modules', async () => {
+    // Le numero d'un module est celui de son defi - celui de l'onglet Defis et
+    // de l'adresse /defi/N. Un module jamais programme n'a pas encore de defi.
+    const defiDe = new Map(db.prepare('SELECT id, module_code FROM defis WHERE module_code IS NOT NULL')
+      .all().map((d) => [d.module_code, d.id]));
+    return {
+      modules: listerModules().map((m) => ({ ...m, defi_id: defiDe.get(m.code) || null })),
+      programme: etatProgramme(),
+    };
+  });
 
   /** Le detail d'un module, reponses comprises, pour le relire avant de le programmer. */
   app.get('/api/admin/modules/:code', async (requete, reponse) => {
@@ -144,7 +206,16 @@ export default async function routesAdmin(app) {
     // de l'editeur ne pouvait pas juger d'une adresse et annoncait « adresse
     // non reconnue » pour une plateforme parfaitement acceptee. L'ecran devait
     // sinon aller les chercher dans un second appel.
-    return { ...defi, videoDomaines: config.videoDomaines || [] };
+    // L'illustration du module s'affiche quand la video est vide : l'editeur
+    // la montre pour qu'on sache ce que l'agent verra a la place.
+    const brut = db.prepare('SELECT module_code FROM defis WHERE id = ?').get(defi.id);
+    return {
+      ...defi,
+      videoDomaines: config.videoDomaines || [],
+      illustration: illustrationDe(brut),
+      // Le bouton « Télécharger sur le serveur » ne s'offre que si yt-dlp est la.
+      telechargementVideo: telechargementDisponible(),
+    };
   });
 
   /** Creation d'un defi. Il arrive masque : on le publie une fois redige. */
@@ -178,7 +249,8 @@ export default async function routesAdmin(app) {
 
       // Une question d'amorce, pour que l'editeur ne s'ouvre pas sur un ecran vide
       const q = db.prepare(
-        'INSERT INTO questions (defi_id, ordre, enonce, contexte, multiple, points, explication) VALUES (?, 1, ?, NULL, 1, 10, ?)'
+        'INSERT INTO questions (defi_id, ordre, enonce, contexte, multiple, difficulte, points, explication) '
+        + "VALUES (?, 1, ?, NULL, 1, 'moyen', 10, ?)"
       ).run(nouveauId, 'Nouvelle question — remplacez cet énoncé', '');
       const r = db.prepare('INSERT INTO reponses (question_id, ordre, libelle, correcte) VALUES (?, ?, ?, ?)');
       r.run(q.lastInsertRowid, 1, 'Première réponse (bonne)', 1);
@@ -253,6 +325,7 @@ export default async function routesAdmin(app) {
     journaliser(requete.agent.login, 'defi_supprime',
       `defi=${id} (${participations} participations)${deprogramme ? `, module ${defi.module_code} deprogramme` : ''}`,
       requete.ip);
+    effacerVideosOrphelines(requete, defi.video_url);
 
     return {
       ok: true,
@@ -292,6 +365,19 @@ export default async function routesAdmin(app) {
       if (!q.reponses.some((r) => r.correcte)) {
         return reponse.code(400).send({ erreur: `Question ${i + 1} : au moins une bonne réponse doit être cochée.` });
       }
+    }
+
+    // Le bareme n'est pas une preference d'affichage : deux defis de poids
+    // differents faussent le classement, et l'ecart ne se rattrape plus une
+    // fois la semaine passee. On refuse donc l'enregistrement, en disant quoi
+    // corriger.
+    const bareme = verifierBareme(questions);
+    if (!bareme.ok) {
+      return reponse.code(400).send({
+        erreur: `Le défi doit compter ${QUESTIONS_PAR_DEFI} questions pour ${TOTAL_DEFI} points `
+          + `(3 faciles, 4 moyennes, 3 difficiles). Actuellement : ${bareme.total} points — `
+          + `${bareme.ecarts.join(', ')}.`,
+      });
     }
 
     /**
@@ -419,12 +505,15 @@ export default async function routesAdmin(app) {
         // sont conserves, donc les reponses archivees des agents restent
         // rattachees a ce qu'elles designent.
         const majQ = db.prepare(`UPDATE questions SET ordre = ?, enonce = ?, contexte = ?,
-                                   multiple = ?, points = ?, explication = ? WHERE id = ?`);
+                                   multiple = ?, difficulte = ?, points = ?, explication = ?
+                                 WHERE id = ?`);
         const majR = db.prepare('UPDATE reponses SET ordre = ?, libelle = ?, correcte = ? WHERE id = ?');
         questions.forEach((q, i) => {
           const qid = existantes[i].id;
+          // Les points ne viennent pas du formulaire : ils decoulent du niveau.
+          const niveau = niveauDe(q);
           majQ.run(i + 1, q.enonce, q.contexte || null, q.multiple ? 1 : 0,
-            Math.max(1, Number(q.points) || 10), q.explication || '', qid);
+            niveau.cle, niveau.points, q.explication || '', qid);
           const rExistantes = db.prepare(
             'SELECT id FROM reponses WHERE question_id = ? ORDER BY ordre, id'
           ).all(qid);
@@ -432,13 +521,14 @@ export default async function routesAdmin(app) {
         });
       } else {
         db.prepare('DELETE FROM questions WHERE defi_id = ?').run(defi.id);
-        const insQ = db.prepare('INSERT INTO questions (defi_id, ordre, enonce, contexte, multiple, points, explication) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        const insQ = db.prepare('INSERT INTO questions (defi_id, ordre, enonce, contexte, multiple, difficulte, points, explication) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
         const insR = db.prepare('INSERT INTO reponses (question_id, ordre, libelle, correcte) VALUES (?, ?, ?, ?)');
         questions.forEach((q, i) => {
-          // Des points negatifs ou nuls etaient acceptes : une question sans
-          // valeur cassait le calcul du pourcentage.
+          // Les points ne se saisissent plus : le niveau les fixe, et le
+          // bareme verifie plus haut garantit qu'ils totalisent cent.
+          const niveau = niveauDe(q);
           const res = insQ.run(defi.id, i + 1, q.enonce, q.contexte || null, q.multiple ? 1 : 0,
-            Math.max(1, Number(q.points) || 10), q.explication || '');
+            niveau.cle, niveau.points, q.explication || '');
           q.reponses.forEach((r, j) => insR.run(res.lastInsertRowid, j + 1, r.libelle, r.correcte ? 1 : 0));
         });
       }
@@ -455,14 +545,19 @@ export default async function routesAdmin(app) {
     journaliser(requete.agent.login, 'defi_modifie',
       `defi=${id} questions=${questions.length}${reelles ? ` (maj en place, ${reelles} participations)` : ''}`,
       requete.ip);
+    const videosEffacees = videoUrl !== defi.video_url ? effacerVideosOrphelines(requete, defi.video_url) : [];
     return {
       ok: true,
-      message: `Défi « ${corps.titre ?? defi.titre} » enregistré (${questions.length} questions). `
+      message: `Défi « ${corps.titre ?? defi.titre} » enregistré (${questions.length} questions, ${bareme.total} points). `
         + 'Vos modifications sont désormais protégées : le rechargement des contenus ne les '
         + 'remplacera plus par le module d’origine.'
         + (reelles
           ? ` Ce défi ayant déjà été joué par ${reelles} agent(s), les textes ont été corrigés `
             + 'sans toucher aux réponses déjà enregistrées.'
+          : '')
+        + (videosEffacees.length
+          ? ` Vidéo${videosEffacees.length > 1 ? 's' : ''} qui ne servai${videosEffacees.length > 1 ? 'en' : ''}t plus `
+            + `effacée${videosEffacees.length > 1 ? 's' : ''} du serveur : ${videosEffacees.join(', ')}.`
           : ''),
     };
   });
@@ -573,6 +668,34 @@ export default async function routesAdmin(app) {
     };
   });
 
+  /**
+   * Telechargement sur le serveur d'une video YouTube ou Dailymotion. La
+   * reponse part aussitot avec l'identifiant de la tache : l'editeur
+   * l'interroge ensuite, une requete qui attendrait la fin serait coupee par
+   * le reverse proxy.
+   */
+  app.post('/api/admin/videos/telechargement', async (requete, reponse) => {
+    const lien = String(requete.body?.url || '').trim();
+    const { login } = requete.agent;
+    const { ip } = requete;
+    try {
+      const tache = lancerTelechargement(lien, {
+        fin: (t) => journaliser(login, t.etat === 'termine' ? 'video_telechargee' : 'video_telechargement_echec',
+          `${t.adresse} -> ${t.resultat?.nom || t.message}`, ip),
+      });
+      return reponse.code(202).send(tache);
+    } catch (err) {
+      const statut = { LIEN_REFUSE: 400, OUTIL_ABSENT: 501, ENVOI_EN_COURS: 409, QUOTA_ATTEINT: 507 }[err.code] || 500;
+      return reponse.code(statut).send({ erreur: err.message, code: err.code });
+    }
+  });
+
+  app.get('/api/admin/videos/telechargement/:id', async (requete, reponse) => {
+    const tache = lireTache(requete.params.id);
+    if (!tache) return reponse.code(404).send({ erreur: 'Téléchargement inconnu ou trop ancien.' });
+    return tache;
+  });
+
   /** Les fichiers deposes, avec le defi qui s'en sert. */
   app.get('/api/admin/videos', async () => {
     const usages = new Map(
@@ -623,7 +746,9 @@ export default async function routesAdmin(app) {
       const touches = db.prepare(`
         SELECT d.titre, COUNT(p.id) AS n
         FROM defis d JOIN participations p ON p.defi_id = d.id AND p.entrainement = 0
-        WHERE d.module_code IS NOT NULL
+        -- Un defi modifie dans le back-office n'est jamais reecrit : le
+        -- compter ici annoncerait une perte qui n'aura pas lieu.
+        WHERE d.module_code IS NOT NULL AND d.contenu_modifie = 0
         GROUP BY d.id HAVING n > 0
       `).all();
       const total = touches.reduce((s, d) => s + d.n, 0);
@@ -648,30 +773,350 @@ export default async function routesAdmin(app) {
   });
 
   /* --------------------------------------------------------------- Mails */
-  app.get('/api/admin/mails/:type/:id', async (requete, reponse) => {
-    const id = Number(requete.params.id);
-    const type = requete.params.type;
-    let m = null;
-    if (type === 'lancement') m = mailLancement(id);
-    else if (type === 'resultats') m = mailResultats(id);
-    else if (type === 'relance') {
-      // Un agent reel, et non le premier venu : « SELECT ... LIMIT 1 » tombait
-      // volontiers sur le compte d'administration locale, dont le nom et la
-      // direction ne ressemblent a rien de ce que les agents recevront.
-      const exemple = db.prepare(
-        "SELECT * FROM agents WHERE exclu = 0 AND origine <> 'local' ORDER BY id LIMIT 1"
-      ).get() || { nom_complet: 'Prénom NOM', service: 'Direction exemple' };
-      m = mailRelance(exemple, id);
-    } else return reponse.code(400).send({ erreur: 'Type inconnu (lancement, relance, resultats).' });
+  /**
+   * Construit un mail tel qu'un agent le recevrait. Partage par l'apercu et
+   * l'envoi de test : ce qu'on valide dans sa boite est exactement ce que
+   * montre l'ecran.
+   *
+   * Les mails de semaine se construisent tels qu'ils partiront la semaine du
+   * defi choisi : l'annonce le jour de sa parution, la relance deux jours
+   * apres. Pour un agent qui n'aurait rien fait : c'est le cas le plus complet.
+   *
+   * @returns le mail, `null` si le defi manque, `undefined` si le type est inconnu
+   */
+  function construireMail(type, id, agent, brouillon = null) {
+    // Un brouillon de l'editeur remplace le texte enregistre, le temps de
+    // construire ce seul message : apercu et test montrent ce qu'on ecrit.
+    return avecBrouillon(type, brouillon, () => construireMailEnregistre(type, id, agent));
+  }
 
+  function construireMailEnregistre(type, id, agent) {
+    const defi = db.prepare('SELECT * FROM defis WHERE id = ?').get(id);
+    switch (type) {
+      case 'lancement': return mailLancement(id);
+      case 'resultats': return mailResultats(id);
+      case 'relance': return mailRelance(agent, id);
+      case 'ouverture': return mailBienvenue(agent);
+      // Les mails de semaine se montrent tels qu'ils partiront la semaine du
+      // defi choisi : l'annonce le lundi, la relance le mercredi. Partir de la
+      // date du defi lui-meme annoncait les sept jours suivants, qui ne sont
+      // pas ceux de l'envoi du lundi.
+      case 'annonce': {
+        if (!defi) return null;
+        const lundi = lundiDe(defi.ouvre_le);
+        const anciens = db.prepare('SELECT * FROM defis WHERE publie = 1 AND ouvre_le < ? ORDER BY ouvre_le, id')
+          .all(lundi);
+        return mailAnnonce(agent, defisAVenir(lundi), anciens, lundi);
+      }
+      case 'relance-semaine':
+        return defi ? mailRelanceSemaine(agent, defisARelancer(decalerJours(lundiDe(defi.ouvre_le), 2))) : null;
+      case 'elus': return mailElus(agent);
+      default: return undefined;
+    }
+  }
+
+  // Un agent reel, et non le premier venu : « SELECT ... LIMIT 1 » tombait
+  // volontiers sur le compte d'administration locale, dont le nom et la
+  // direction ne ressemblent a rien de ce que les agents recevront.
+  const agentExemple = () => db.prepare(
+    "SELECT * FROM agents WHERE exclu = 0 AND origine <> 'local' ORDER BY id LIMIT 1"
+  ).get() || { nom_complet: 'Prénom NOM', service: 'Direction exemple' };
+
+  const TYPE_INCONNU = 'Type inconnu (ouverture, lancement, annonce, relance-semaine, relance, resultats, elus).';
+
+  app.get('/api/admin/mails/:type/:id', async (requete, reponse) => {
+    const m = construireMail(requete.params.type, Number(requete.params.id), agentExemple());
+    if (m === undefined) return reponse.code(400).send({ erreur: TYPE_INCONNU });
     if (!m) return reponse.code(404).send({ erreur: 'Défi introuvable.' });
     return m;
+  });
+
+  /* --------------------------------------- Groupes : ciblage, exclusions */
+
+  app.get('/api/admin/mails/groupes', async () => ({
+    groupes: listerGroupes(),
+    exclusions: lireExclusionsMail(),
+    types: TYPES_EXCLUSION,
+    dernierEnvoiElus: dernierEnvoiElus(),
+  }));
+
+  app.put('/api/admin/mails/exclusions/:type', async (requete, reponse) => {
+    const type = requete.params.type;
+    if (!TYPES_EXCLUSION[type]) return reponse.code(404).send({ erreur: 'Type de mail inconnu.' });
+    const groupes = Array.isArray(requete.body?.groupes) ? requete.body.groupes.map(String) : [];
+    const retenus = enregistrerExclusionsMail(type, groupes, requete.agent.login);
+    return {
+      ok: true,
+      groupes: retenus,
+      message: retenus.length
+        ? `${TYPES_EXCLUSION[type]} : ${retenus.join(', ')} exclu(s).`
+        : `${TYPES_EXCLUSION[type]} : aucun groupe exclu.`,
+    };
+  });
+
+  /** Mail aux elus : aux membres d'un groupe de l'annuaire, a la main. */
+  app.post('/api/admin/mails/elus', async (requete) => {
+    const groupe = String(requete.body?.groupe || '').trim();
+    const simulation = !!requete.body?.simulation;
+    const res = await envoyerElus(groupe, { simulation, attendre: false });
+    if (!simulation) journaliser(requete.agent.login, 'mail_elus_envoye', `${groupe} ${JSON.stringify(res)}`, requete.ip);
+    return res;
+  });
+
+  /* --------------------------------------------------------- Rattrapage */
+
+  /** Qui devait recevoir ce mail et ne l'a pas recu. */
+  app.get('/api/admin/mails/rattrapage/:type', async (requete, reponse) => {
+    const etat = etatRattrapage(requete.params.type);
+    if (!etat) return reponse.code(404).send({ erreur: 'Type de mail inconnu.' });
+    return { ...etat, types: TYPES_RATTRAPAGE };
+  });
+
+  /** Renvoi du vrai mail a quelques agents nommes, recu ou non. */
+  app.post('/api/admin/mails/rattrapage/:type/renvoyer', async (requete, reponse) => {
+    const type = requete.params.type;
+    if (!TYPES_RATTRAPAGE[type]) return reponse.code(404).send({ erreur: 'Type de mail inconnu.' });
+    const r = await renvoyerA(type, requete.body?.adresses);
+    if (!r.ok) return reponse.code(400).send({ erreur: r.message });
+    journaliser(requete.agent.login, 'mail_renvoye',
+      `${type} : ${r.resultats.map((x) => `${x.adresse} ${x.statut}`).join(', ')}`, requete.ip);
+    return r;
+  });
+
+  /** Un export de la messagerie : ses destinataires comptent comme servis. */
+  app.post('/api/admin/mails/rattrapage/:type/recus', { bodyLimit: 10 * 1024 * 1024 }, async (requete, reponse) => {
+    const type = requete.params.type;
+    if (!TYPES_RATTRAPAGE[type]) return reponse.code(404).send({ erreur: 'Type de mail inconnu.' });
+    // Le fichier arrive tel quel, en base64 : CSV, ou classeur Excel (.xlsx),
+    // qui n'est pas du texte. Un CSV enregistre par Excel est souvent en
+    // Windows-1252 : lu en UTF-8, ses accents se brouillent, pas ses adresses.
+    let texte = String(requete.body?.texte || '');
+    if (requete.body?.contenu) {
+      const octets = Buffer.from(String(requete.body.contenu), 'base64');
+      try {
+        texte = estArchiveZip(octets) ? csvDuClasseur(octets) : octets.toString('utf8');
+      } catch (err) {
+        return reponse.code(400).send({ erreur: err.message });
+      }
+    }
+    if (!texte.trim()) return reponse.code(400).send({ erreur: 'Fichier vide.' });
+    // Seules les lignes du jour de l'envoi : l'export contient aussi les tests
+    // et les messages des autres jours.
+    const jour = /^\d{4}-\d{2}-\d{2}$/.test(requete.body?.jour || '') ? requete.body.jour : null;
+    const r = importerRecus(type, texte, { jour });
+    if (!r.adresses) {
+      return reponse.code(400).send({
+        erreur: 'Aucune adresse mail trouvée dans ce fichier. Importez l’export de la messagerie, '
+          + 'en CSV ou en Excel (.xlsx) ; un ancien classeur .xls doit d’abord être enregistré en .xlsx ou en CSV.',
+      });
+    }
+    journaliser(requete.agent.login, 'mail_recus_importes',
+      `${type} : ${r.reconnus} agent(s) sur ${r.adresses} adresse(s)`, requete.ip);
+    return {
+      ok: true,
+      ...r,
+      message: `${r.retenues} envoi(s) retenu(s) sur ${r.lignes} ligne(s)`
+        + `${r.ecartees.date ? `, ${r.ecartees.date} d'un autre jour` : ''}`
+        + `${r.ecartees.objet ? `, ${r.ecartees.objet} test(s), réponse(s) ou transfert(s)` : ''}`
+        + `${r.ecartees.expediteur ? `, ${r.ecartees.expediteur} d'un autre expéditeur` : ''} écarté(s). `
+        + `${r.adresses} adresse(s), dont ${r.reconnus} reconnue(s) : leurs agents sont marqués comme l'ayant reçu.`
+        // Les adresses sans agent se nomment : une poignee se verifie d'un coup d'oeil.
+        + (r.inconnues.length
+          ? ` ${r.inconnues.length} adresse(s) ne correspondent à aucun agent${r.inconnues.length <= 20
+            ? ` : ${r.inconnues.join(', ')}` : ''}.`
+          : ''),
+    };
+  });
+
+  /* --------------------------------------------- Mails d'une semaine */
+
+  app.get('/api/admin/mails/semaines', async () => ({
+    semaines: semainesDeCampagne(),
+    courante: lundiDe(aujourdhui()),
+  }));
+
+  /** Tout ce qui part une semaine donnee, jour par jour, pour relecture. */
+  app.get('/api/admin/mails/semaine/:lundi', async (requete, reponse) => {
+    const lundi = String(requete.params.lundi);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(lundi)) return reponse.code(400).send({ erreur: 'Date attendue : AAAA-MM-JJ.' });
+    return {
+      lundi: lundiDe(lundi),
+      mails: mailsDeLaSemaine(lundiDe(lundi), agentExemple()).map((m) => ({
+        type: m.type,
+        nom: m.nom,
+        jour: m.jour,
+        jourLisible: dateLisible(m.jour),
+        automatique: m.automatique,
+        absent: m.absent,
+        objet: m.mail?.objet || null,
+        html: m.mail?.html || null,
+      })),
+    };
+  });
+
+  /**
+   * Plusieurs tests d'un coup, a une seule adresse : les mails d'une semaine
+   * (`lundi`), ou un exemple de chaque mail de la campagne (sans `lundi`).
+   * Chaque objet porte le jour de l'envoi reel, pour s'y retrouver dans la
+   * boite de reception.
+   */
+  app.post('/api/admin/mails/test-groupe', async (requete, reponse) => {
+    const adresse = String(requete.body?.adresse || '').trim();
+    if (!adresseValide(adresse)) {
+      return reponse.code(400).send({ erreur: 'Adresse de test invalide : une seule adresse attendue.' });
+    }
+    const agent = db.prepare('SELECT * FROM agents WHERE lower(email) = lower(?) LIMIT 1').get(adresse)
+      || agentExemple();
+    const lundi = /^\d{4}-\d{2}-\d{2}$/.test(requete.body?.lundi || '') ? lundiDe(requete.body.lundi) : null;
+    const liste = (lundi ? mailsDeLaSemaine(lundi, agent) : exemplesDeCampagne(agent)).filter((m) => m.mail);
+    if (!liste.length) return reponse.code(404).send({ erreur: 'Aucun mail ne part cette semaine : rien à tester.' });
+
+    const envoyes = [];
+    for (const m of liste) {
+      try {
+        await envoyerTest(adresse, m.mail, m.jour ? dateLisible(m.jour) : m.nom);
+        envoyes.push(m.nom);
+      } catch (err) {
+        return reponse.code(502).send({
+          erreur: `Échec de l'envoi de « ${m.nom} » : ${err.message}`
+            + (envoyes.length ? ` (déjà envoyés : ${envoyes.join(', ')})` : ''),
+        });
+      }
+    }
+    journaliser(requete.agent.login, 'mail_test', `${lundi || 'campagne'} : ${envoyes.join(', ')} -> ${adresse}`, requete.ip);
+    return { ok: true, envoyes, message: `${envoyes.length} mail(s) de test envoyé(s) à ${adresse} : ${envoyes.join(', ')}.` };
+  });
+
+  /* ------------------------------------------------- Textes des mails */
+
+  app.get('/api/admin/modeles-mail', async () => listerModeles());
+
+  /** Apercu d'un texte en cours de modification, sans l'enregistrer. */
+  app.post('/api/admin/mails/apercu', async (requete, reponse) => {
+    const { type, defiId, modele } = requete.body || {};
+    const m = construireMail(String(type || ''), Number(defiId), agentExemple(), modele || null);
+    if (m === undefined) return reponse.code(400).send({ erreur: TYPE_INCONNU });
+    if (!m) return reponse.code(404).send({ erreur: 'Défi introuvable, ou rien à montrer pour cette semaine.' });
+    return m;
+  });
+
+  app.put('/api/admin/modeles-mail/:type', async (requete, reponse) => {
+    const type = requete.params.type;
+    if (!MODELES[type]) return reponse.code(404).send({ erreur: 'Type de mail inconnu.' });
+    const modele = { objet: requete.body?.objet, corps: requete.body?.corps };
+    const erreurs = verifierModele(type, modele);
+    if (erreurs.length) return reponse.code(400).send({ erreur: erreurs.join(' ') });
+    enregistrerModele(type, modele, requete.agent.login);
+    return { ok: true, message: `Texte « ${MODELES[type].nom} » enregistré : les prochains envois l'utiliseront.` };
+  });
+
+  app.delete('/api/admin/modeles-mail/:type', async (requete, reponse) => {
+    const type = requete.params.type;
+    if (!MODELES[type]) return reponse.code(404).send({ erreur: 'Type de mail inconnu.' });
+    reinitialiserModele(type, requete.agent.login);
+    return { ok: true, message: `Texte d'origine rétabli pour « ${MODELES[type].nom} ».` };
+  });
+
+  /**
+   * Envoi de test a une seule adresse, pour valider un message dans une vraie
+   * boite avant de l'envoyer a cinq cents agents.
+   *
+   * Le message est personnalise comme pour l'agent qui porte cette adresse,
+   * s'il existe - sinon comme pour un agent d'exemple. Il n'est pas trace
+   * parmi les envois : un test ne doit pas faire croire que l'ouverture est
+   * deja partie, ce qui bloquerait le vrai envoi.
+   */
+  app.post('/api/admin/mails/test', async (requete, reponse) => {
+    const { type, defiId } = requete.body || {};
+    const adresse = String(requete.body?.adresse || '').trim();
+    if (!adresseValide(adresse)) {
+      return reponse.code(400).send({ erreur: 'Adresse de test invalide : une seule adresse attendue.' });
+    }
+
+    const agent = db.prepare('SELECT * FROM agents WHERE lower(email) = lower(?) LIMIT 1').get(adresse)
+      || agentExemple();
+    // Avec une semaine, le mail de ce type tel qu'il partira cette semaine-la.
+    const lundi = /^\d{4}-\d{2}-\d{2}$/.test(requete.body?.lundi || '') ? lundiDe(requete.body.lundi) : null;
+    const m = lundi
+      ? mailsDeLaSemaine(lundi, agent).find((x) => x.type === type)?.mail || null
+      : construireMail(String(type || ''), Number(defiId), agent, requete.body?.modele || null);
+    if (m === undefined) return reponse.code(400).send({ erreur: TYPE_INCONNU });
+    if (!m) return reponse.code(404).send({ erreur: 'Défi introuvable, ou rien à envoyer pour cette semaine.' });
+
+    try {
+      await envoyerTest(adresse, m);
+    } catch (err) {
+      return reponse.code(502).send({ erreur: `Échec de l'envoi : ${err.message}` });
+    }
+    journaliser(requete.agent.login, 'mail_test', `${type} -> ${adresse}`, requete.ip);
+    return { ok: true, message: `Test envoyé à ${adresse} : « [TEST] ${m.objet} ».` };
+  });
+
+  // Envois automatiques, declenchables a la main : un serveur arrete le jour
+  // prevu, ou un effectif complete apres coup. « forcer » passe outre le
+  // « deja envoye » - la confirmation se fait a l'ecran.
+  const envoisCampagne = {
+    ouverture: (corps) => envoyerOuverture(corps),
+    annonce: (corps) => envoyerAnnonce(corps),
+    'relance-semaine': (corps) => envoyerRelancesSemaine(corps),
+    // Le meme que la tache du vendredi : les resultats du dernier defi paru.
+    resultats: async ({ simulation }) => {
+      const defi = dernierDefiParu();
+      if (!defi) return { ok: false, message: 'Aucun défi paru : pas de résultats à envoyer.' };
+      return { ...(await envoyerResultats(defi.id, { simulation, jour: aujourdhui() })), defis: [defi.titre] };
+    },
+  };
+
+  /**
+   * Tableau de bord des envois : pour chaque mail, s'il part tout seul, quand,
+   * et quand il est parti pour la derniere fois. L'onglet Mails s'en sert pour
+   * les interrupteurs et les boutons « Envoyer maintenant ».
+   */
+  app.get('/api/admin/mails/etat', async (requete) => {
+    const dernier = db.prepare(`
+      SELECT horodatage, destinataires, succes, erreur FROM envois
+      WHERE type = ? ORDER BY id DESC LIMIT 1`);
+    const types = [
+      ['ouverture', 'ouverture', 'ouverture'],
+      ['annonce', 'annonce', 'annonce'],
+      ['relance-semaine', 'relance', 'relance_semaine'],
+      ['resultats', 'resultats', 'resultats'],
+    ];
+    return {
+      automatique: !!config.smtp.actif,
+      smtpConfigure: !!config.smtp.host,
+      groupeDiffusion: config.smtp.groupeDiffusion || null,
+      // Adresse proposee par defaut pour les envois de test : la sienne.
+      monAdresse: requete.agent.email || null,
+      // Les envois en nombre en cours, que l'ecran suit jusqu'a la fin.
+      enCours: envoisEnCoursDetail(),
+      mails: types.map(([type, cle, trace]) => ({
+        type,
+        cle: `mails.${cle}`,
+        actif: !!config.mails?.[cle],
+        planification: config.cron[cle],
+        dernierEnvoi: dernier.get(trace) || null,
+      })),
+    };
+  });
+
+  app.post('/api/admin/mails/campagne/:type', async (requete, reponse) => {
+    const envoi = envoisCampagne[requete.params.type];
+    if (!envoi) return reponse.code(400).send({ erreur: 'Type inconnu (ouverture, annonce, relance-semaine, resultats).' });
+    const simulation = !!requete.body?.simulation;
+    // Un envoi en nombre part en arriere-plan : attendu ici, il depassait le
+    // delai du proxy (504) bien avant la fin de la boucle.
+    const res = await envoi({ simulation, forcer: !!requete.body?.forcer, attendre: false });
+    if (!simulation) {
+      journaliser(requete.agent.login, `mail_${requete.params.type}_envoye`, JSON.stringify(res), requete.ip);
+    }
+    return res;
   });
 
   app.post('/api/admin/mails/relances/:id', async (requete) => {
     const id = Number(requete.params.id);
     const simulation = !!requete.body?.simulation;
-    const res = await envoyerRelances(id, { simulation });
+    const res = await envoyerRelances(id, { simulation, attendre: false });
     if (!simulation) journaliser(requete.agent.login, 'relances_envoyees', `defi=${id} ${JSON.stringify(res)}`, requete.ip);
     return res;
   });
@@ -707,14 +1152,14 @@ export default async function routesAdmin(app) {
     return reponse.type('text/csv; charset=utf-8')
       .header('Content-Disposition', 'attachment; filename="cybermois-services.csv"')
       .send(csv(lignes, ['service', 'inscrits', 'joueurs', 'taux_participation', 'defis_par_agent',
-        'defis_parus', 'pourcentage_moyen', 'score_total', 'points_possibles', 'score_moyen', 'defis_joues']));
+        'defis_parus', 'pourcentage_moyen', 'score_total', 'score_max_joue', 'score_moyen', 'defis_joues']));
   });
 
   app.get('/api/admin/export/agents.csv', async (requete, reponse) => {
     const lignes = classementAgents(100000);
     return reponse.type('text/csv; charset=utf-8')
       .header('Content-Disposition', 'attachment; filename="cybermois-agents.csv"')
-      .send(csv(lignes, ['nom_complet', 'service', 'defis_joues', 'defis_parus', 'score_total', 'bonnes_total']));
+      .send(csv(lignes, ['nom_complet', 'service', 'defis_joues', 'defis_parus', 'pourcentage', 'score_total', 'score_max_joue', 'bonnes_total']));
   });
 
   /** Preuve de participation exploitable en audit SSI */
@@ -800,12 +1245,17 @@ export default async function routesAdmin(app) {
     // sont connectes », et le taux de participation ne repartait jamais de zero.
     // D'un bloc : une remise a zero interrompue au milieu laissait des badges
     // sans participation, ou des tentatives orphelines.
+    // Vider aussi le programme : on replanifie tout. Les questionnaires, eux,
+    // restent en base - masques jusqu'a ce que leur module retrouve une date.
+    const viderProgramme = !!requete.body?.viderProgramme;
     let oublies = 0;
+    let deprogrammes = 0;
     db.exec('BEGIN');
     try {
       db.exec('DELETE FROM reponses_agent; DELETE FROM participations; '
-        + 'DELETE FROM tentatives; DELETE FROM badges_agent; DELETE FROM envois;');
+        + 'DELETE FROM tentatives; DELETE FROM badges_agent; DELETE FROM envois; DELETE FROM envois_agents;');
       oublies = db.prepare('UPDATE agents SET vu_le = NULL').run().changes;
+      if (viderProgramme) deprogrammes = db.prepare('DELETE FROM programme').run().changes;
       db.exec('COMMIT');
     } catch (err) {
       db.exec('ROLLBACK');
@@ -816,16 +1266,25 @@ export default async function routesAdmin(app) {
       });
     }
 
+    // Hors transaction : l'import masque les defis sortis du programme, et
+    // n'a rien a defaire si la remise a zero elle-meme a echoue.
+    if (viderProgramme) importerContenus();
+
     journaliser(requete.agent.login, 'reinitialisation',
-      `participations, tentatives, badges effaces, ${oublies} date(s) de connexion oubliee(s)`,
+      `participations, tentatives, badges effaces, ${oublies} date(s) de connexion oubliee(s)`
+        + (viderProgramme ? `, programme vide (${deprogrammes} parution(s))` : ''),
       requete.ip);
 
     return {
       ok: true,
       message: "Participations, tentatives, badges et historique d'envois effacés. "
         + `${oublies} date(s) de première connexion remises à zéro : le taux de `
-        + 'participation repart de zéro. Les comptes agents, les défis et le '
-        + 'paramétrage sont conservés.',
+        + 'participation repart de zéro. '
+        + (viderProgramme
+          ? `Programme vidé (${deprogrammes} parution(s)) : les défis sont conservés, masqués `
+            + "jusqu'à ce que vous leur redonniez une date dans l'onglet Défis. "
+          : '')
+        + 'Les comptes agents, les questionnaires et le paramétrage sont conservés.',
     };
   });
 }

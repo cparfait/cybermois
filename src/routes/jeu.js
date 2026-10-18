@@ -10,7 +10,8 @@ import {
   progression, repondre, totaux, effacerTentative, detailTentative, effacerTentatives,
 } from '../lib/tentatives.js';
 import { jetonValide } from '../lib/apercu.js';
-import { aujourdhui } from '../lib/dates.js';
+import { aujourdhui, dateLisible } from '../lib/dates.js';
+import { illustrationDe } from '../lib/illustrations.js';
 
 // La date du jour vient d'un module partage : le calcul des scores l'emploie
 // aussi, et les deux divergeaient d'un jour deux heures par nuit.
@@ -36,6 +37,16 @@ function estOuvert(defi) {
 /** Un defi deja joue reste consultable apres la cloture, sans pouvoir etre rejoue. */
 function estParu(defi) {
   return defi.publie === 1 && defi.ouvre_le <= aujourdhui();
+}
+
+/**
+ * Le meme message partout ou un defi a venir est refuse, et le meme que sur
+ * sa carte. Un defi masque n'a pas de date d'ouverture a annoncer.
+ */
+function pasEncoreOuvert(defi) {
+  return defi.publie === 1
+    ? `Ce défi n'est pas encore ouvert. Il ouvrira le ${dateLisible(defi.ouvre_le)}.`
+    : "Ce défi n'est pas encore ouvert.";
 }
 
 /**
@@ -65,6 +76,7 @@ export default async function routesJeu(app) {
   /** Reglages d'affichage de la page des defis, modifiables sans redemarrage. */
   app.get('/api/defis/affichage', async () => ({
     defisParLigne: Math.min(4, Math.max(1, Number(config.defisParLigne) || 2)),
+    afficherDefisAVenir: config.afficherDefisAVenir !== false,
   }));
 
   app.get('/api/defis', async (requete) => {
@@ -133,7 +145,7 @@ export default async function routesJeu(app) {
     // chemin de code - aucune participation n'est ecrite plus bas.
     const apercu = jetonValide(defi, requete.query?.apercu);
     if (!apercu && !estParu(defi)) {
-      return reponse.code(403).send({ erreur: `Ce défi ouvre le ${defi.ouvre_le}.` });
+      return reponse.code(403).send({ erreur: pasEncoreOuvert(defi) });
     }
 
     const dejaFait = db.prepare(
@@ -165,6 +177,9 @@ export default async function routesJeu(app) {
             transcription: defi.video_transcription || null,
           }
         : null,
+      // Illustration du module : seule quand il n'y a pas de video, et sinon
+      // affiche de la video, avec le bouton de lecture par-dessus.
+      illustration: illustrationDe(defi),
       // Hebergeurs autorises : l'ecran ne connait le format d'insertion que de
       // YouTube et Dailymotion. Pour une autre plateforme, il insere l'adresse
       // telle quelle - a condition qu'elle figure ici, sinon le navigateur la
@@ -183,6 +198,9 @@ export default async function routesJeu(app) {
         contexte: q.contexte,
         multiple: !!q.multiple,
         points: q.points,
+        // Le niveau est affiche avec les points : « 15 points » sans raison
+        // ressemble a une faveur, « Difficile · 15 points » s'explique tout seul.
+        difficulte: q.difficulte,
         // Les bonnes reponses ne sont JAMAIS envoyees au navigateur avant validation
         reponses: db.prepare('SELECT id, libelle FROM reponses WHERE question_id = ? ORDER BY ordre').all(q.id),
       })),
@@ -202,7 +220,7 @@ export default async function routesJeu(app) {
     }
     const apercu = jetonValide(defi, requete.query?.apercu);
     if (!apercu && !estOuvert(defi)) {
-      return reponse.code(403).send({ erreur: "Ce défi n'est pas ouvert." });
+      return reponse.code(403).send({ erreur: pasEncoreOuvert(defi) });
     }
 
     const question = db.prepare('SELECT * FROM questions WHERE id = ? AND defi_id = ?')
@@ -276,7 +294,7 @@ export default async function routesJeu(app) {
     // encore scelle - ou jamais publie.
     if (!apercu && !estOuvert(defi)) {
       return reponse.code(403).send({
-        erreur: "Ce défi n'est pas ouvert : aucun résultat ne peut y être enregistré.",
+        erreur: pasEncoreOuvert(defi),
         code: 'DEFI_FERME',
       });
     }
@@ -527,8 +545,9 @@ export default async function routesJeu(app) {
         bonnes: p.bonnes, total: p.total_questions, termineLe: p.termine_le,
       })),
       scoreTotal: participations.reduce((s, p) => s + p.score, 0),
-      // Le total atteignable a ce jour, pour dire « 62 % » plutot que « 430
-      // points » - un nombre de points ne se situe pas tout seul.
+      // Le maximum des defis faits : la reussite se lit sur eux, comme au
+      // classement. Le total atteignable a ce jour reste servi a part.
+      scoreMaxJoue: participations.reduce((s, p) => s + p.score_max, 0),
       pointsPossibles: pointsPossibles(),
       badges: tousLesBadges({ agentId: requete.agent.id }).map((b) => ({
         ...b, obtenu: !!codesObtenus[b.code], obtenuLe: codesObtenus[b.code] || null,

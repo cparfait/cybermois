@@ -17,6 +17,7 @@ import { api, echapper, alerte, animationsReduites } from '/js/commun.js';
  */
 
 let donnees = null;
+let afficherAVenir = true;
 let auTermine = () => {};
 let brouillon = [];
 
@@ -60,7 +61,11 @@ export async function ecranProgramme(cible, onTermine) {
   if (onTermine) auTermine = onTermine;
   cible.innerHTML = '<p class="discret">Chargement du catalogue…</p>';
   try {
-    donnees = await api('/api/admin/modules');
+    const [modules, affichage] = await Promise.all([
+      api('/api/admin/modules'), api('/api/defis/affichage'),
+    ]);
+    donnees = modules;
+    afficherAVenir = affichage.afficherDefisAVenir !== false;
   } catch (e) {
     cible.innerHTML = `<div class="message message-erreur">${echapper(e.message)}</div>`;
     return;
@@ -82,20 +87,21 @@ const parTheme = () => {
 };
 
 /**
- * Numero d'ordre du module dans le catalogue.
+ * Numero du module : celui de son defi, que montrent l'onglet Defis et
+ * l'adresse /defi/N.
  *
- * Vingt titres qui se ressemblent (« Mots de passe », « Mots de passe et
- * comptes ») se confondent d'une liste a l'autre. Un numero stable donne un
- * point de repere commun a la liste deroulante et au catalogue : on se dit
- * « le 14 » plutot que de relire quatre titres.
+ * Il etait le rang du module dans le catalogue, si bien que « Cent messages
+ * par jour » portait 09 ici et un autre numero dans l'onglet Defis. Un
+ * module jamais programme n'a pas encore de defi, donc pas de numero : il en
+ * recoit un au premier enregistrement du programme.
  */
-const numero = (code) => donnees.modules.findIndex((m) => m.code === code) + 1;
+const numero = (code) => donnees.modules.find((m) => m.code === code)?.defi_id || null;
 
-const deuxChiffres = (n) => String(n).padStart(2, '0');
+const etiquette = (code) => (numero(code) ? `N°${numero(code)} · ` : '');
 
 const options = (choisi) => parTheme().map(([theme, liste]) => `
   <optgroup label="${echapper(theme)}">
-    ${liste.map((m) => `<option value="${echapper(m.code)}"${m.code === choisi ? ' selected' : ''}>${deuxChiffres(numero(m.code))} · ${echapper(m.titre)} — ${m.questions} questions</option>`).join('')}
+    ${liste.map((m) => `<option value="${echapper(m.code)}"${m.code === choisi ? ' selected' : ''}>${etiquette(m.code)}${echapper(m.titre)} — ${m.questions} questions${numero(m.code) ? '' : ' (nouveau)'}</option>`).join('')}
   </optgroup>`).join('');
 
 /** Date du jour au format ISO, pour faire paraitre un defi sur-le-champ. */
@@ -129,6 +135,13 @@ function rendre(cible) {
         paraître deux le même jour, ou espacer les thèmes comme vous l'entendez.
         <br>Un défi paraît <strong>tout seul à sa date</strong> : il n'y a rien à publier ensuite.
       </p>
+
+      <label class="ui" style="display:flex;gap:.5rem;align-items:flex-start;margin:.8rem 0 0;font-size:.9rem">
+        <input type="checkbox" id="afficher-a-venir"${afficherAVenir ? ' checked' : ''} style="margin-top:.2rem">
+        <span><strong>Afficher les défis pas encore ouverts</strong>
+          <span class="discret">— les agents voient leur date d'ouverture, sans rien de leur contenu.
+          Décoché, un défi n'apparaît qu'à son ouverture. Enregistré dès le clic.</span></span>
+      </label>
 
       <div class="tableau-defilant" style="margin-top:1rem">
         <table class="admin">
@@ -175,14 +188,15 @@ function rendre(cible) {
             <caption class="sr-only">Modules du thème ${echapper(theme)}</caption>
             <tbody>${liste.map((m) => `
               <tr>
-                <td class="ui discret" style="width:34px;text-align:right;font-variant-numeric:tabular-nums">${deuxChiffres(numero(m.code))}</td>
+                <td class="ui discret" style="width:44px;text-align:right;font-variant-numeric:tabular-nums">${numero(m.code) ? `N°${numero(m.code)}` : ''}</td>
                 <td style="width:34px;font-size:1.3rem" aria-hidden="true">${echapper(m.badge?.emoji || '•')}</td>
                 <td>
                   <strong>${echapper(m.titre)}</strong>
                   ${utilises.has(m.code) ? '<span class="pastille-etat etat-ok" style="margin-left:.5rem">programmé</span>' : ''}
                   <br><span class="discret" style="font-size:.84rem">${echapper(m.accroche)}</span>
                 </td>
-                <td class="num discret" style="white-space:nowrap">${m.questions} q · ${m.points} pts · ${m.duree_minutes} min</td>
+                <td class="num discret" style="white-space:nowrap">${m.questions} q · ${m.points} pts · ${m.duree_minutes} min
+                  ${m.bareme && !m.bareme.ok ? `<br><span style="color:var(--alerte);font-weight:700">⚠️ ${echapper(m.bareme.ecarts.join(', '))}</span>` : ''}</td>
                 <td style="width:90px"><button class="btn btn-secondaire" data-apercu="${echapper(m.code)}"
                         style="padding:.3rem .6rem;font-size:.8rem">Aperçu</button></td>
               </tr>`).join('')}
@@ -198,8 +212,8 @@ function rendre(cible) {
 
 const ligne = (b, i) => {
   const doublon = b.module_code && brouillon.filter((x) => x.module_code === b.module_code).length > 1;
-  const libelle = b.module_code
-    ? `du module ${deuxChiffres(numero(b.module_code))}`
+  const libelle = b.module_code && numero(b.module_code)
+    ? `du défi N°${numero(b.module_code)}`
     : 'du défi';
   return `
   <tr data-index="${i}"${b.verrouille ? ' style="background:var(--vert-fonce-clair)"' : ''}>
@@ -236,6 +250,24 @@ function brancher(cible) {
   }, 0);
   document.getElementById('resume-programme').textContent =
     n ? `${n} défi(s), ${q} questions au total` : 'Aucun module programmé';
+
+  // Reglage d'affichage, independant du programme : il s'enregistre seul,
+  // sans attendre « Enregistrer le programme ».
+  document.getElementById('afficher-a-venir').addEventListener('change', async (e) => {
+    const coche = e.target.checked;
+    try {
+      await api('/api/admin/configuration', {
+        method: 'PUT', body: { valeurs: { afficherDefisAVenir: coche } },
+      });
+      afficherAVenir = coche;
+      alerte('alerte', coche
+        ? 'Les défis pas encore ouverts sont affichés aux agents.'
+        : "Les défis n'apparaissent plus aux agents avant leur ouverture.", 'succes');
+    } catch (erreur) {
+      e.target.checked = !coche;
+      alerte('alerte', erreur.message);
+    }
+  });
 
   cible.querySelectorAll('.module-defi').forEach((sel) => sel.addEventListener('change', () => {
     const i = Number(sel.closest('tr').dataset.index);

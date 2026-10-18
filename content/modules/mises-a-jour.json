@@ -20,7 +20,7 @@
     {
       "enonce": "À quoi sert réellement une mise à jour de sécurité ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "Une mise à jour de sécurité corrige des défauts qui permettent de prendre le contrôle d'un logiciel, de lire ce qu'il manipule ou de contourner une authentification. Le point décisif tient au calendrier : la faille est publiée en même temps que le correctif, et les attaquants s'en emparent aussitôt — parfois en moins d'une semaine. Repousser, c'est donc rester exposé à une faiblesse désormais connue de tous. Une mise à jour apporte souvent aussi des nouveautés fonctionnelles, mais ce n'est pas sa raison d'être ici. Et elle ne remplace ni l'antivirus ni les sauvegardes : ces protections traitent des problèmes différents. Elle ne répare pas non plus ce qu'une attaque a déjà abîmé, et elle ne vise pas à alourdir le poste : ce sont les versions majeures qui changent les exigences matérielles, pas les correctifs de sécurité.",
       "reponses": [
         {
@@ -48,7 +48,7 @@
     {
       "enonce": "Vous repoussez la mise à jour de votre poste depuis six semaines. Que se passe-t-il ?",
       "multiple": false,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "Le report ne suspend pas le risque, il l'accumule : chaque semaine ajoute des failles connues et non corrigées. Six semaines de retard, c'est un poste dont les faiblesses sont documentées publiquement et testées automatiquement par des outils qui balaient les réseaux. Le bon compromis n'est pas de tout accepter en pleine réunion, c'est de programmer l'installation à un moment qui vous arrange — fin de journée, pause déjeuner — et de laisser le redémarrage se faire. Si la mise à jour casse quelque chose dans un logiciel métier, c'est un sujet réel : il se traite avec la DSI, qui sait échelonner, pas en la repoussant indéfiniment tout seul. Le pare-feu ne protège pas d'une pièce jointe ouverte ou d'un site visité : la faille est exploitée de l'intérieur, et le poste bureautique est la cible principale, c'est là qu'on ouvre des mails.",
       "reponses": [
         {
@@ -72,7 +72,7 @@
     {
       "enonce": "Une fenêtre s'ouvre pendant votre navigation : « Votre lecteur vidéo est obsolète, cliquez pour mettre à jour ». Que faites-vous ?",
       "multiple": false,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Les vraies mises à jour ne se proposent jamais depuis une page web : elles viennent du système, du magasin d'applications, ou de la DSI. Une fenêtre de navigateur qui annonce un composant obsolète est un piège classique, et le fichier proposé installe autre chose que ce qu'il annonce. La bonne réaction est de fermer l'onglet — sans cliquer sur la croix du faux bandeau, qui fait parfois partie du piège — et de signaler si le message revient, car cela peut indiquer une publicité malveillante sur un site que vos collègues visitent aussi. Vérifier la réputation du site ne sert à rien : ces bandeaux apparaissent aussi sur des sites tout à fait légitimes, par le biais des régies publicitaires. Le cadenas ne garantit que le chiffrement de la connexion, pas l'honnêteté de ce qui s'affiche ; et faire analyser le fichier ne suffit pas, ces installeurs sont renouvelés plus vite que les signatures antivirus.",
       "reponses": [
         {
@@ -96,7 +96,7 @@
     {
       "enonce": "Quels équipements de la collectivité ont aussi besoin de mises à jour ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "On pense aux ordinateurs, rarement au reste — et c'est précisément le reste qui est oublié pendant des années. Un copieur multifonction est un serveur avec un disque dur qui conserve les documents numérisés. Les caméras de vidéoprotection sont des ordinateurs connectés, régulièrement enrôlés dans des réseaux d'attaque. Les écrans interactifs des salles de réunion et des écoles embarquent un système complet. Les téléphones IP et les bornes Wi-Fi aussi. Ce ne sont pas des objets passifs : chacun est une porte, et la plupart sont livrés avec un mot de passe d'usine que personne n'a changé. Le câblage et les prises murales, eux, ne contiennent aucun logiciel : ils peuvent rester en paix.",
       "reponses": [
         {
@@ -124,7 +124,7 @@
     {
       "enonce": "Un logiciel métier n'est plus maintenu par son éditeur. Quelles conséquences ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "difficile",
       "explication": "Un logiciel en fin de vie ne reçoit plus de correctifs : les failles découvertes après cette date restent ouvertes définitivement. C'est un problème durable, pas une gêne passagère, et il finit par contaminer son environnement — un vieux logiciel impose souvent de garder un vieux système, donc une machine entière non corrigée. C'est aussi un point que les assureurs cyber et les audits regardent de près, et qui peut peser dans la prise en charge d'un sinistre. La bonne conduite est de le signaler à la DSI pour anticiper le remplacement, pas de constater l'obsolescence le jour où plus rien ne fonctionne. Ni l'antivirus ni le pare-feu ne compensent : ils réduisent l'exposition, ils ne corrigent rien.",
       "reponses": [
         {
@@ -152,7 +152,7 @@
     {
       "enonce": "Vous voulez installer un utilitaire qui vous ferait gagner du temps. Comment procéder ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Passer par la DSI n'est pas une lourdeur administrative : c'est ce qui permet de savoir ce qui tourne sur le parc le jour où l'un de ces logiciels se révèle piégé — et les cas de logiciels gratuits populaires détournés sont réguliers. Le téléchargement depuis le site officiel de l'éditeur évite les sites de téléchargement qui reconditionnent les installeurs avec des extras. La licence compte aussi : beaucoup d'outils gratuits pour un usage personnel ne le sont pas pour une collectivité, et l'écart se règle en contentieux. Ce qui est à proscrire : l'installeur reçu d'un collègue, et la version « portable » qui contourne la demande d'installation — elle contourne le contrôle, pas le risque. Qu'un installeur fonctionne chez un collègue ne dit rien de son origine ni de sa version.",
       "reponses": [
         {
@@ -180,7 +180,7 @@
     {
       "enonce": "Pourquoi votre poste doit-il redémarrer régulièrement ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "Beaucoup de correctifs ne prennent effet qu'au redémarrage : un poste laissé en veille pendant des semaines affiche « à jour » tout en fonctionnant encore avec l'ancienne version chargée en mémoire. C'est un cas fréquent et invisible. Le redémarrage permet aussi aux déploiements de la DSI de s'appliquer, et il résout au passage une bonne part des lenteurs qui font râler. Rien de tout cela n'exige de couper le poste chaque soir si la DSI ne le demande pas — c'est la régularité qui compte, pas la ferveur. Et fermer la session ne suffit pas : la session se ferme, le système reste chargé.",
       "reponses": [
         {
@@ -201,6 +201,90 @@
         },
         {
           "libelle": "Un poste qui affiche « à jour » dans les paramètres n'a plus besoin de redémarrer",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "La tablette de service utilisée en réunion ne reçoit plus de mises à jour du système depuis deux ans. Qu'en conclure ?",
+      "multiple": true,
+      "difficulte": "moyen",
+      "explication": "Un appareil qui ne reçoit plus de correctifs ne devient pas dangereux d'un coup : il le devient progressivement, chaque faille publiée après la fin du support restant ouverte pour toujours. La règle n'a rien d'abstrait, parce que l'appareil accède à la messagerie, aux documents et parfois au réseau interne. Il faut donc le signaler à la DSI, qui décidera entre remplacement, cantonnement à des usages sans données, ou retrait. En attendant, on limite ce qu'on lui confie. Deux idées fausses circulent : qu'un antivirus compenserait l'absence de correctifs — il ne corrige rien, il détecte —, et que l'appareil serait sûr parce qu'il fonctionne encore parfaitement. Le bon fonctionnement et la sécurité n'ont jamais eu de rapport.",
+      "reponses": [
+        {
+          "libelle": "Les failles publiées depuis la fin du support restent ouvertes définitivement",
+          "correcte": true
+        },
+        {
+          "libelle": "Je le signale à la DSI pour arbitrage : remplacement, usage restreint ou retrait",
+          "correcte": true
+        },
+        {
+          "libelle": "Un antivirus installé dessus compense l'absence de mises à jour",
+          "correcte": false
+        },
+        {
+          "libelle": "L'appareil fonctionne très bien : il n'y a donc pas de problème",
+          "correcte": false
+        },
+        {
+          "libelle": "En attendant, je limite ce que je fais transiter par cet appareil",
+          "correcte": true
+        }
+      ]
+    },
+    {
+      "enonce": "L'éditeur d'un logiciel métier demande de désactiver l'antivirus et de conserver une ancienne version de son composant pour que son produit fonctionne. Que faites-vous ?",
+      "multiple": true,
+      "difficulte": "difficile",
+      "explication": "La demande est fréquente et elle n'est pas anodine : elle revient à faire porter à la collectivité un risque qui résulte d'un défaut de conception du produit. Elle ne se refuse pas d'un bloc — le service a besoin de son outil —, mais elle ne s'exécute pas non plus sur simple demande téléphonique. C'est la DSI qui arbitre, sur la base d'une demande écrite de l'éditeur précisant ce qui est exigé et pourquoi, et qui cherche les compensations possibles : exclusion limitée à un dossier précis plutôt que désactivation complète, isolement réseau du poste, calendrier de mise en conformité inscrit au marché. Désactiver l'antivirus « le temps de l'installation » finit toujours en état permanent, parce que personne ne pense à le réactiver. Et l'argument selon lequel l'éditeur sait ce qu'il fait ne tient pas : les incidents majeurs en collectivité passent souvent par ces exceptions consenties des années plus tôt.",
+      "reponses": [
+        {
+          "libelle": "Je transmets la demande à la DSI, qui arbitre : je ne désactive rien moi-même",
+          "correcte": true
+        },
+        {
+          "libelle": "Je demande à l'éditeur une demande écrite précisant ce qui est exigé et pourquoi",
+          "correcte": true
+        },
+        {
+          "libelle": "Je cherche avec la DSI une mesure compensatoire plutôt qu'une désactivation complète",
+          "correcte": true
+        },
+        {
+          "libelle": "Je désactive l'antivirus le temps de l'installation, puis j'aviserai",
+          "correcte": false
+        },
+        {
+          "libelle": "J'applique : l'éditeur connaît son produit mieux que nous",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Une faille critique très médiatisée est annoncée, touchant un logiciel utilisé par la Ville. Que se passe-t-il, et que faites-vous ?",
+      "multiple": true,
+      "difficulte": "difficile",
+      "explication": "Entre la publication d'une faille et son exploitation à grande échelle, il s'écoule aujourd'hui quelques heures à quelques jours : les attaquants industrialisent le balayage d'Internet à la recherche des systèmes non corrigés, et les collectivités y figurent au même titre que les entreprises. La DSI applique donc le correctif en priorité, éventuellement en dehors des heures ouvrées, et peut demander un redémarrage rapide ou une interruption de service : accepter ce désagrément fait partie de la réponse. Ce qui est utile côté agent : ne pas relayer les consignes reçues par des canaux non officiels — les attaquants se font passer pour le support au moment précis où tout le monde attend une intervention — et signaler tout comportement anormal du poste. Attendre la mise à jour mensuelle habituelle n'est pas une option pour une faille activement exploitée, et installer soi-même un correctif trouvé sur un forum est une excellente façon d'installer autre chose.",
+      "reponses": [
+        {
+          "libelle": "Le correctif est prioritaire : j'accepte redémarrage ou interruption de service",
+          "correcte": true
+        },
+        {
+          "libelle": "Je me méfie des consignes reçues hors canal officiel pendant cette période",
+          "correcte": true
+        },
+        {
+          "libelle": "Je signale tout comportement anormal de mon poste",
+          "correcte": true
+        },
+        {
+          "libelle": "J'attends la mise à jour mensuelle habituelle",
+          "correcte": false
+        },
+        {
+          "libelle": "Je télécharge moi-même le correctif trouvé sur un forum spécialisé",
           "correcte": false
         }
       ]

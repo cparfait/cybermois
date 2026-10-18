@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Un assistant d’intelligence artificielle qui avale un document confidentiel">
+<title>Un assistant d’intelligence artificielle qui avale un document confidentiel</title>
+<rect width="640" height="360" fill="#e6f1ec"/>
+<circle cx="585" cy="35" r="150" fill="#f4f8dd"/>
+<circle cx="35" cy="345" r="105" fill="#d3e6dc"/>
+<circle cx="520" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="520" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="538" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="556" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="574" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="282" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="300" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="318" r="2.2" fill="#8fbfa6" opacity=".5"/><circle cx="592" cy="336" r="2.2" fill="#8fbfa6" opacity=".5"/>
+<rect x="0" y="300" width="640" height="60" fill="#d3e6dc"/>
+<path d="M306 60 V36" stroke="#005435" stroke-width="6"/><circle cx="306" cy="30" r="10" fill="#aec80c"/>
+<rect x="216" y="60" width="180" height="150" rx="34" fill="#006e46"/>
+<rect x="236" y="84" width="140" height="70" rx="20" fill="#005435"/>
+<circle cx="276" cy="118" r="15" fill="#aec80c"/><circle cx="336" cy="118" r="15" fill="#aec80c"/>
+<rect x="262" y="172" width="88" height="16" rx="8" fill="#14211c"/>
+<rect x="200" y="118" width="16" height="44" rx="8" fill="#005435"/><rect x="396" y="118" width="16" height="44" rx="8" fill="#005435"/>
+<rect x="236" y="210" width="140" height="90" rx="16" fill="#006e46"/>
+<g transform="rotate(-6 306 250)">
+<path d="M262 196 H330 L350 216 V302 H262 Z" fill="#ffffff" stroke="#b9c7c0" stroke-width="2"/>
+<path d="M330 196 V216 H350" fill="#dfe7e3" stroke="#b9c7c0" stroke-width="2"/>
+<rect x="276" y="222" width="48" height="6" rx="3" fill="#b9c7c0"/><rect x="276" y="236" width="48" height="6" rx="3" fill="#b9c7c0"/><rect x="276" y="250" width="28.799999999999997" height="6" rx="3" fill="#b9c7c0"/>
+<g transform="rotate(-14 306 268)"><rect x="268" y="256" width="76" height="24" rx="4" fill="#ffffff" stroke="#d64545" stroke-width="3"/>
+<text x="306" y="273" text-anchor="middle" font-size="13" fill="#d64545" font-family="Montserrat, Arial, sans-serif" font-weight="800">SECRET</text></g>
+</g>
+<rect x="430" y="56" width="170" height="96" rx="16" fill="#ffffff"/>
+<path d="M444 151 L440 170 L466 151 Z" fill="#ffffff"/>
+<rect x="452" y="78" width="126" height="8" rx="4" fill="#8fbfa6"/><rect x="452" y="96" width="126" height="8" rx="4" fill="#8fbfa6"/><rect x="452" y="114" width="75.6" height="8" rx="4" fill="#8fbfa6"/>
+<rect x="52" y="120" width="124" height="64" rx="16" fill="#fde9a8"/>
+<path d="M142 183 L166 202 L164 183 Z" fill="#fde9a8"/>
+<text x="114" y="160" text-anchor="middle" font-size="26" fill="#14211c" font-family="Montserrat, Arial, sans-serif" font-weight="800">…?</text>
+</svg>

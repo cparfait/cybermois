@@ -16,7 +16,10 @@ import { config } from './config.js';
  * redeploiements et part avec la sauvegarde, sans traitement particulier.
  */
 
-const DOSSIER = path.join(path.dirname(config.dbFile), 'videos');
+// Absolu quoi qu'il arrive : un DB_FILE relatif (« data/test/base.db ») donnait
+// un dossier relatif, que le serveur de fichiers refuse - et le portail ne
+// demarrait pas.
+const DOSSIER = path.resolve(path.dirname(config.dbFile), 'videos');
 
 // Formats que tout navigateur recent sait lire sans extension ni greffon.
 const FORMATS = {

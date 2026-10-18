@@ -21,7 +21,7 @@
       "enonce": "Parmi ces mots de passe, lesquels sont réellement solides ?",
       "contexte": "Vous devez choisir un nouveau mot de passe pour votre session.",
       "multiple": true,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "La longueur prime sur la complexité. « Chatillon2026! » et « Ch@t1llon-92! » respectent les règles de complexité classiques mais figurent dans tous les dictionnaires d'attaque : ils tombent en quelques secondes. Une phrase de passe longue, même sans caractère exotique, résiste bien mieux. Retenez : 4 mots aléatoires valent mieux qu'un mot tordu. Remplacer des lettres par des chiffres ou des symboles (« @ » pour « a », « 1 » pour « i ») n'aide pas : les outils d'attaque testent ces variantes d'office, y compris sur le nom de la ville et le département. Un prénom suivi d'une année de naissance est deviné en quelques minutes.",
       "reponses": [
         {
@@ -49,7 +49,7 @@
     {
       "enonce": "Quelles pratiques sont acceptables pour gérer vos mots de passe professionnels ?",
       "multiple": true,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Un gestionnaire de mots de passe est aujourd'hui la recommandation officielle de l'ANSSI : il génère et retient des mots de passe uniques à votre place. Le carnet fermé à clé dans un tiroir est toléré s'il ne quitte pas le bureau. En revanche, le fichier Excel « codes.xlsx », le post-it sous le clavier et le partage entre collègues sont à proscrire : en cas d'incident, plus personne ne peut savoir qui a fait quoi. La protection par mot de passe d'un fichier Excel se contourne en quelques minutes, et le fichier est recopié à chaque sauvegarde. L'enveloppe chez le responsable n'y change rien : les délégations d'accès se règlent avec la DSI, sans transmettre le mot de passe.",
       "reponses": [
         {
@@ -77,7 +77,7 @@
     {
       "enonce": "Vous réutilisez le même mot de passe sur votre compte professionnel et sur un site de e-commerce. Ce site se fait pirater. Que se passe-t-il ?",
       "multiple": false,
-      "points": 10,
+      "difficulte": "facile",
       "explication": "C'est le « credential stuffing » : les attaquants récupèrent les couples identifiant/mot de passe volés sur un site et les rejouent automatiquement sur des centaines d'autres services, dont les webmails et VPN professionnels. C'est aujourd'hui le premier vecteur de compromission des collectivités. D'où la règle absolue : un mot de passe unique par service, surtout pour le travail. Le chiffrement côté site n'est pas garanti, et un mot de passe courant se retrouve à partir de son empreinte en quelques heures. L'attaquant ne se contente pas de rejouer l'adresse personnelle : il trouve votre nom et votre employeur en une recherche et teste le mot de passe sur le webmail de la Ville, qui ne bloque pas une connexion inconnue par défaut — c'est précisément pour cela que la double authentification existe.",
       "reponses": [
         {
@@ -101,7 +101,7 @@
     {
       "enonce": "Qu'est-ce que la double authentification (MFA) apporte concrètement ?",
       "multiple": true,
-      "points": 15,
+      "difficulte": "moyen",
       "explication": "La MFA ajoute une seconde preuve (code, application, clé physique) en plus du mot de passe. Même si votre mot de passe fuite, l'attaquant reste bloqué. Attention toutefois : elle ne vous dispense pas d'un bon mot de passe, et elle ne protège pas si vous validez vous-même une notification que vous n'avez pas déclenchée — c'est le « MFA fatigue ». Une demande de validation que vous n'attendez pas se refuse, et se signale. Elle ne protège pas non plus une session déjà ouverte : un attaquant qui vole le jeton de session du navigateur passe derrière elle, d'où l'importance de verrouiller son poste et de ne pas cliquer n'importe où.",
       "reponses": [
         {
@@ -129,7 +129,7 @@
     {
       "enonce": "Votre navigateur vous propose « Voulez-vous enregistrer ce mot de passe ? » sur un site professionnel. Que faire ?",
       "multiple": false,
-      "points": 10,
+      "difficulte": "moyen",
       "explication": "Sur un poste professionnel géré par la DSI, l'enregistrement dans le navigateur est acceptable si la session Windows est verrouillée dès que vous quittez votre bureau. Le vrai danger, c'est le poste partagé ou personnel : n'importe qui ouvrant le navigateur accède alors à vos comptes. En cas de doute, la règle est simple : demandez à la DSI quelle est la solution retenue chez vous. Le chiffrement du navigateur est lié à la session : sur un poste partagé, quiconque ouvre la session ouvre le coffre. Les voleurs d'identifiants existent, mais sur un poste géré et à jour la DSI a tranché, et refuser par principe pousse à noter ailleurs, souvent moins bien — le double dans un fichier annule tout le bénéfice.",
       "reponses": [
         {
@@ -153,7 +153,7 @@
     {
       "enonce": "Quels signaux doivent vous faire changer un mot de passe immédiatement ?",
       "multiple": true,
-      "points": 15,
+      "difficulte": "difficile",
       "explication": "Toute anomalie inexpliquée sur un compte justifie un changement immédiat et un signalement à la DSI. La règle du changement tous les 3 mois « par principe » a en revanche été abandonnée par l'ANSSI et le NIST : elle poussait les utilisateurs à faire motdepasse1, motdepasse2... Mieux vaut un mot de passe long, unique, et changé uniquement en cas de doute réel. Un compte inactif pendant les congés ne court pas plus de risque qu'un autre : le changer avant de partir n'apporte rien, sinon un mot de passe oublié au retour.",
       "reponses": [
         {
@@ -181,7 +181,7 @@
     {
       "enonce": "Un mot de passe de 8 caractères avec majuscules, minuscules, chiffres et symboles est cassé par une attaque hors ligne moderne en environ :",
       "multiple": false,
-      "points": 10,
+      "difficulte": "difficile",
       "explication": "Avec du matériel grand public, un mot de passe de 8 caractères, même « complexe », tombe en quelques heures. À 12 caractères on passe à plusieurs siècles, à 16 c'est hors de portée. C'est pourquoi on parle désormais de phrase de passe : la longueur est le seul facteur qui compte vraiment. Un million de milliards de combinaisons paraît énorme, mais une seule carte graphique grand public en teste des dizaines de milliards par seconde.",
       "reponses": [
         {
@@ -198,6 +198,90 @@
         },
         {
           "libelle": "Plusieurs siècles, les symboles multipliant les combinaisons",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Un collègue en congés vous appelle : il a besoin d'un document et vous demande son mot de passe de session, qu'il a noté sur un papier dans son bureau. Que faites-vous ?",
+      "multiple": true,
+      "difficulte": "facile",
+      "explication": "Un mot de passe est nominatif : il identifie une personne, et tout ce qui est fait avec engage cette personne. Le partager, même entre collègues de confiance, supprime cette identification — et le jour où une action doit être expliquée, plus personne ne peut dire qui l'a réalisée. Le besoin, lui, est réel et se traite autrement : le document se trouve dans le partage du service, et à défaut la DSI sait ouvrir un accès temporaire à la demande de la hiérarchie. C'est aussi l'occasion de signaler, sans en faire un reproche, que le mot de passe noté sur un papier dans un bureau est à changer. Céder « exceptionnellement, puisqu'il est en congés » est exactement la formulation qu'emploie aussi celui qui se fait passer pour un collègue au téléphone.",
+      "reponses": [
+        {
+          "libelle": "Je refuse : un mot de passe est nominatif et ne se partage pas",
+          "correcte": true
+        },
+        {
+          "libelle": "Je cherche le document dans le partage du service",
+          "correcte": true
+        },
+        {
+          "libelle": "Je passe par la DSI pour un accès temporaire validé par la hiérarchie",
+          "correcte": true
+        },
+        {
+          "libelle": "J'accepte exceptionnellement : il est en congés et c'est urgent",
+          "correcte": false
+        },
+        {
+          "libelle": "J'utilise le papier laissé dans son bureau, puisqu'il me l'indique lui-même",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Votre service utilise un compte partagé pour un logiciel qui n'accepte qu'un seul identifiant. Comment gérer son mot de passe ?",
+      "multiple": true,
+      "difficulte": "moyen",
+      "explication": "Le compte partagé est une exception, pas une commodité : il faut donc commencer par demander à la DSI s'il est vraiment inévitable, car beaucoup de logiciels acceptent des comptes nominatifs qu'on n'a jamais pris le temps de créer. Quand il s'impose, trois règles limitent les dégâts : le mot de passe est conservé dans le coffre-fort prévu par la DSI, et non sur un papier ou dans un fichier « codes.xlsx » ; la liste de ceux qui y ont accès est tenue et connue ; et le mot de passe est changé à chaque départ d'un agent qui le connaissait. Sans ce dernier point, un ancien collègue conserve indéfiniment un accès que personne ne lui a retiré. L'afficher en salle de pause pour éviter les oublis, ou le faire durer depuis 2018 parce que le changer obligerait à prévenir tout le monde, sont les deux dérives habituelles.",
+      "reponses": [
+        {
+          "libelle": "Je vérifie d'abord avec la DSI si des comptes nominatifs sont possibles",
+          "correcte": true
+        },
+        {
+          "libelle": "Le mot de passe est rangé dans le coffre-fort prévu, et la liste des accès est tenue",
+          "correcte": true
+        },
+        {
+          "libelle": "Il est changé dès qu'un agent qui le connaissait quitte le service",
+          "correcte": true
+        },
+        {
+          "libelle": "Il est affiché en salle de pause pour que personne ne l'oublie",
+          "correcte": false
+        },
+        {
+          "libelle": "Il ne change pas depuis 2018 : le modifier obligerait à prévenir tout le monde",
+          "correcte": false
+        }
+      ]
+    },
+    {
+      "enonce": "Votre téléphone affiche une notification de double authentification pour votre compte professionnel, alors que vous n'essayez pas de vous connecter. Que faites-vous ?",
+      "multiple": true,
+      "difficulte": "difficile",
+      "explication": "Cette notification est une information précieuse : quelqu'un possède votre mot de passe et s'en sert en ce moment même. La technique consiste souvent à répéter les demandes jusqu'à ce que la personne, agacée ou distraite, finisse par valider — on parle de lassitude liée à l'authentification, et elle a servi dans plusieurs intrusions retentissantes. La conduite à tenir est donc : refuser, changer immédiatement le mot de passe concerné, et prévenir la DSI, parce que la fuite vient peut-être d'un autre site où le même mot de passe a été réutilisé. Valider « pour que ça s'arrête » ouvre la porte en grand. Ignorer sans rien dire laisse l'attaquant réessayer plus tard, quand vous serez moins attentif. Et penser que la double authentification protège à elle seule revient à oublier qu'elle ne protège que si l'on répond non.",
+      "reponses": [
+        {
+          "libelle": "Je refuse la demande",
+          "correcte": true
+        },
+        {
+          "libelle": "Je change immédiatement le mot de passe du compte concerné",
+          "correcte": true
+        },
+        {
+          "libelle": "Je préviens la DSI : mon mot de passe est connu de quelqu'un d'autre",
+          "correcte": true
+        },
+        {
+          "libelle": "Je valide pour que les notifications cessent",
+          "correcte": false
+        },
+        {
+          "libelle": "J'ignore sans rien signaler : la double authentification a bloqué la tentative",
           "correcte": false
         }
       ]
