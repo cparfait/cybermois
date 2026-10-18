@@ -86,8 +86,9 @@ npm run admin -- lister
 npm run admin -- definir admin "une phrase de passe"
 ```
 
-Le compte est créé au premier démarrage et ses identifiants s'affichent **une seule fois**
-dans les journaux. S'ils ont été perdus, la commande ci-dessus redéfinit le mot de passe.
+Le compte est créé au premier démarrage ; son mot de passe s'écrit dans `data/admin-initial.txt`,
+jamais dans les journaux, et ce fichier s'efface au premier changement. Perdu, la commande
+ci-dessus le redéfinit.
 En conteneur : `docker compose exec cybermois npm run admin -- definir admin "…"`.
 
 ### Diagnostic préalable

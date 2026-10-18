@@ -1,7 +1,8 @@
 import { SERVICE_NON_RATTACHE } from './db.js';
 import fs from 'node:fs';
 import { Client } from 'ldapts';
-import { config } from './config.js';
+import { config, modeDemoActif } from './config.js';
+import { attenteCompte } from './limitation-connexion.js';
 
 // Echappement RFC 4515 : empeche l'injection de filtre LDAP depuis le formulaire
 const CARACTERES_FILTRE = { '\\': '\\5c', '*': '\\2a', '(': '\\28', ')': '\\29', '\0': '\\00' };
@@ -150,12 +151,24 @@ export async function authentifier(login, motDePasse) {
     return { ok: false, motif: 'hors_perimetre' };
   }
 
+  // Le compte tel que l'annuaire le connait : un agent peut saisir son
+  // identifiant, son UPN ou son adresse, et ces trois graphies doivent
+  // partager un meme compteur d'echecs, comme elles partagent un meme
+  // compteur de verrouillage dans l'AD.
+  const compte = String(entree.sAMAccountName || login).toLowerCase();
+
+  // Chaque bind refuse rapproche le compte du verrouillage AD : on s'arrete
+  // avant, pour qu'un tiers ne puisse pas verrouiller la session Windows d'un
+  // agent depuis le portail.
+  const attente = attenteCompte(compte);
+  if (attente) return { ok: false, motif: 'trop_de_tentatives', compte, attente };
+
   // Verification du mot de passe par bind sur le DN trouve
   const clientAgent = nouveauClient();
   try {
     await clientAgent.bind(entree.dn, motDePasse);
   } catch {
-    return { ok: false, motif: 'mot_de_passe_invalide' };
+    return { ok: false, motif: 'mot_de_passe_invalide', compte };
   } finally {
     await clientAgent.unbind().catch(() => {});
   }
@@ -169,7 +182,7 @@ export async function authentifier(login, motDePasse) {
   return {
     ok: true,
     agent: {
-      login: String(entree.sAMAccountName || login).toLowerCase(),
+      login: compte,
       nomComplet: String(entree.displayName || prenomNom || login),
       // Renvoye a part du nom complet : l'accueil s'adresse a l'agent par
       // son prenom, et displayName ne dit pas ou il commence.
@@ -199,7 +212,7 @@ export function annuaireConfigure() {
 }
 
 export function verifierChiffrement() {
-  if (config.ldap.url === 'demo' || config.ldap.url.startsWith('ldaps://')) return null;
+  if (modeDemoActif() || config.ldap.url.startsWith('ldaps://')) return null;
 
   // Une instance qui vient d'etre deployee n'a pas encore d'annuaire : personne
   // ne peut s'authentifier dans cet etat, seul le compte local ouvre la porte.
@@ -228,7 +241,7 @@ export function verifierChiffrement() {
 
 /** Test de connectivite pour le back-office */
 export async function testerConnexion() {
-  if (config.ldap.url === 'demo') {
+  if (modeDemoActif()) {
     return { ok: true, message: 'Mode demonstration : annuaire simule, aucun serveur LDAP interroge.' };
   }
   const client = nouveauClient();
@@ -260,7 +273,7 @@ export async function testerConnexion() {
  * compter indefiniment dans l'effectif de reference.
  */
 export async function listerAgentsAnnuaire({ limite = 20000 } = {}) {
-  if (config.ldap.url === 'demo') {
+  if (modeDemoActif()) {
     const { comptesDemo } = await import('./annuaire-demo.js');
     return {
       ok: true,

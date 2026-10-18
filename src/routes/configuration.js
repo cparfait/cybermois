@@ -106,6 +106,14 @@ const REFUS_SECRET = {
   }],
 };
 
+/** L'annuaire simule n'existe pas en production : un test ne doit pas le dire joignable. */
+const REFUS_DEMO = {
+  libelle: 'Mode démonstration',
+  ok: false,
+  detail: "Le mode démonstration est désactivé en production : ses comptes fictifs, au mot de "
+    + 'passe public, fausseraient le classement. Indiquez le contrôleur de domaine.',
+};
+
 function clientLdap(p) {
   const tlsOptions = p.url.startsWith('ldaps://')
     ? { rejectUnauthorized: !!p.rejectUnauthorized }
@@ -311,6 +319,7 @@ export default async function routesConfiguration(app) {
     const etapes = [];
     const ajouter = (libelle, ok, detail) => etapes.push({ libelle, ok, detail });
 
+    if (p.url === 'demo' && config.env === 'production') return { ok: false, etapes: [REFUS_DEMO] };
     if (p.url === 'demo') {
       return { ok: true, etapes: [{ libelle: 'Mode démonstration', ok: true, detail: 'Annuaire simulé, aucun serveur interrogé.' }] };
     }
@@ -461,6 +470,7 @@ export default async function routesConfiguration(app) {
     const p = fusionner(requete.body?.valeurs);
     const login = String(requete.body?.login || '').trim();
     if (!login) return { ok: false, message: 'Indiquez un identifiant à rechercher.' };
+    if (p.url === 'demo' && config.env === 'production') return { ok: false, message: REFUS_DEMO.detail };
     if (p.url === 'demo') return { ok: false, message: 'Indisponible en mode démonstration.' };
     if (p.secretManquant) {
       journaliser(requete.agent.login, 'test_agent_refuse',

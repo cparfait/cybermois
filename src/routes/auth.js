@@ -6,6 +6,9 @@ import { db, journaliser } from '../lib/db.js';
 import { config } from '../lib/config.js';
 import { creerSession, detruireSession, lireSession, COOKIE, optionsCookie } from '../lib/session.js';
 import { prenomUsuel } from '../lib/prenom.js';
+import {
+  attenteCompte, attenteIp, noterEchecCompte, noterEchecIp, oublierCompte,
+} from '../lib/limitation-connexion.js';
 
 const MESSAGES = {
   identifiants_vides: 'Merci de saisir votre identifiant et votre mot de passe.',
@@ -20,12 +23,28 @@ const MESSAGES = {
     + 'est refusée par sécurité. Prévenez la DSI.',
 };
 
+// Echecs qui disent qu'on cherche un couple identifiant / mot de passe, par
+// opposition a un annuaire injoignable ou a un compte hors campagne.
+const ECHECS_IDENTIFICATION = new Set(['compte_inconnu', 'compte_ambigu', 'mot_de_passe_invalide']);
+
+const minutes = (secondes) => Math.max(1, Math.ceil(secondes / 60));
+
+/** Refus commun : trop d'echecs depuis cette adresse. */
+function refusIp(requete, reponse, attente) {
+  requete.log.warn({ ip: requete.ip }, 'connexion refusee : trop d echecs depuis cette adresse');
+  return reponse.code(429).header('Retry-After', attente).send({
+    erreur: `Trop de tentatives de connexion depuis ce poste. Réessayez dans ${minutes(attente)} minute(s).`,
+    code: 'TROP_DE_TENTATIVES',
+  });
+}
+
 export default async function routesAuth(app) {
-  // Limitation des tentatives, indexee sur le COMPTE et non sur l'adresse IP.
-  // Derriere le reverse proxy, tous les agents peuvent partager une meme IP :
-  // limiter par IP bloquerait des agents legitimes des la 9e connexion du matin.
-  // Indexer par compte protege chaque compte du bourrage d'identifiants sans
-  // penaliser les autres agents.
+  // Deux limitations se superposent. Celle-ci borne le nombre de REQUETES par
+  // compte, succes compris. Celle de limitation-connexion.js compte les ECHECS,
+  // par compte (sous le seuil de verrouillage AD) et par adresse IP (contre
+  // l'essai d'un meme mot de passe sur tous les comptes) : compter les echecs
+  // et non les requetes evite de bloquer un etage entier derriere une meme IP
+  // a l'heure ou tout le monde se connecte.
   app.post('/api/connexion', {
     config: {
       rateLimit: {
@@ -45,6 +64,11 @@ export default async function routesAuth(app) {
     const { login, motDePasse } = requete.body || {};
     const ip = requete.ip;
 
+    // Avant tout controle : une adresse qui essaie un mot de passe sur tous
+    // les comptes ne doit plus rien apprendre, compte local compris.
+    const attenteAdresse = attenteIp(ip);
+    if (attenteAdresse) return refusIp(requete, reponse, attenteAdresse);
+
     // Comptes locaux d'abord : la verification est locale et immediate, et cela
     // evite d'exiger de l'administrateur qu'il pense a basculer le formulaire.
     // Meme principe que dans les autres applications de la collectivite.
@@ -62,11 +86,30 @@ export default async function routesAuth(app) {
         });
     }
 
-    const resultat = estModeDemo()
-      ? await authentifierDemo(login, motDePasse)
-      : await authentifier(login, motDePasse);
+    // Compte deja trop essaye : on n'interroge meme pas l'annuaire, chaque bind
+    // refuse le rapprochant du verrouillage AD. authentifier() refait ce
+    // controle sur l'identifiant canonique, quelle que soit la graphie saisie.
+    const attenteSaisie = attenteCompte(login);
+    const resultat = attenteSaisie
+      ? { ok: false, motif: 'trop_de_tentatives', compte: login, attente: attenteSaisie }
+      : (estModeDemo()
+        ? await authentifierDemo(login, motDePasse)
+        : await authentifier(login, motDePasse));
 
     if (!resultat.ok) {
+      if (resultat.motif === 'trop_de_tentatives') {
+        requete.log.warn({ login, ip }, 'connexion refusee : compte trop essaye');
+        return reponse.code(429).header('Retry-After', resultat.attente).send({
+          erreur: "Trop de mots de passe erronés sur ce compte. Pour éviter le verrouillage de "
+            + `votre session Windows, réessayez dans ${minutes(resultat.attente)} minute(s).`,
+          code: 'TROP_DE_TENTATIVES',
+        });
+      }
+      if (ECHECS_IDENTIFICATION.has(resultat.motif) || local.motif === 'mot_de_passe_invalide') {
+        noterEchecIp(ip);
+      }
+      if (resultat.motif === 'mot_de_passe_invalide') noterEchecCompte(resultat.compte || login);
+
       journaliser(login, 'connexion_echec', resultat.motif + (resultat.erreur ? ` (${resultat.erreur})` : ''), ip);
       requete.log.warn({ login, motif: resultat.motif }, 'echec de connexion');
 
@@ -125,6 +168,9 @@ export default async function routesAuth(app) {
         vu_le       = datetime('now')
     `).run(a.login, a.nomComplet, a.prenom || null, a.email, serviceAffiche, a.service, a.serviceBrut, estAdmin, sourceAdmin);
 
+    oublierCompte(a.login);
+    oublierCompte(login);
+
     const agent = db.prepare('SELECT * FROM agents WHERE login = ?').get(a.login);
     const token = creerSession(agent.id);
     journaliser(a.login, 'connexion_ok', `service=${serviceAffiche} (annuaire: ${a.service})`, ip);
@@ -156,9 +202,13 @@ export default async function routesAuth(app) {
     },
   }, async (requete, reponse) => {
     const { login, motDePasse } = requete.body || {};
+    const attenteAdresse = attenteIp(requete.ip);
+    if (attenteAdresse) return refusIp(requete, reponse, attenteAdresse);
+
     const resultat = verifierAdminLocal(login, motDePasse);
 
     if (!resultat.ok) {
+      if (resultat.motif !== 'identifiants_vides') noterEchecIp(requete.ip);
       journaliser(login, 'connexion_locale_echec', resultat.motif, requete.ip);
       requete.log.warn({ login, motif: resultat.motif }, 'echec de connexion locale');
       return reponse.code(401).send({ erreur: 'Identifiant ou mot de passe incorrect.' });
@@ -180,7 +230,7 @@ export default async function routesAuth(app) {
   /** Indique au formulaire s'il doit proposer la connexion locale. */
   app.get('/api/mode-connexion', async () => ({
     annuaire: config.ldap.url !== 'demo' || true,
-    demonstration: config.ldap.url === 'demo',
+    demonstration: estModeDemo(),
     compteLocal: existeAdminLocal(),
   }));
 

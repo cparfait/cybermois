@@ -18,7 +18,7 @@ import { verifierModeDemo, estModeDemo, motDePasseDemo } from './lib/annuaire-de
 import { verifierChiffrement } from './lib/ldap.js';
 import { appliquerParametres, configurationUtilisable } from './lib/parametres.js';
 import { amorcerAdminLocal } from './lib/admin-local.js';
-import { enregistrerStatiques } from './lib/statiques.js';
+import { enregistrerStatiques, designeUnFichierHtml } from './lib/statiques.js';
 import { dossierVideos, TAILLE_MAX } from './lib/videos.js';
 
 import routesAuth from './routes/auth.js';
@@ -159,8 +159,9 @@ app.addHook('onRequest', async (requete, reponse) => {
  * publiques (/administration, /accueil...) restent servies par
  * enregistrerStatiques, avec leur garde.
  */
+// Le controle porte sur le chemin decode : voir designeUnFichierHtml.
 app.addHook('onRequest', async (requete, reponse) => {
-  if (/\.html?($|\?)/i.test(requete.url)) {
+  if (designeUnFichierHtml(requete.url)) {
     return reponse.code(404).type('text/html; charset=utf-8').send('<p>Page introuvable.</p>');
   }
 });
@@ -393,19 +394,25 @@ try {
   if (nbParametres) app.log.info(`${nbParametres} parametre(s) charge(s) depuis la base.`);
 
   // Sans compte local, personne ne pourrait entrer pour configurer l'annuaire.
+  // Le mot de passe ne figure jamais dans le journal : voir fichierAmorce().
   const amorce = amorcerAdminLocal();
   if (amorce) {
     app.log.warn('================= COMPTE ADMINISTRATEUR LOCAL CREE =================');
     app.log.warn(`  Identifiant  : ${amorce.login}`);
-    app.log.warn(`  Mot de passe : ${amorce.motDePasse}`);
-    app.log.warn(amorce.genere
-      ? '  Mot de passe genere aleatoirement, affiche une seule fois. Notez-le,'
-      : '  Mot de passe repris de ADMIN_LOCAL_MOT_DE_PASSE.');
-    app.log.warn('  puis changez-le dans Administration > Configuration.');
+    if (amorce.genere) {
+      app.log.warn('  Mot de passe genere aleatoirement, enregistre dans :');
+      app.log.warn(`    ${amorce.fichier}`);
+      app.log.warn('  Lisez-le depuis la console du conteneur, connectez-vous, puis');
+      app.log.warn('  changez-le dans Administration > Configuration : le fichier sera efface.');
+    } else {
+      app.log.warn('  Mot de passe repris de ADMIN_LOCAL_MOT_DE_PASSE.');
+      app.log.warn('  Changez-le dans Administration > Configuration.');
+    }
     app.log.warn('===================================================================');
   }
 
-  verifierModeDemo();
+  const demoNeutralise = verifierModeDemo();
+  if (demoNeutralise) app.log.error(demoNeutralise);
   if (estModeDemo()) {
     app.log.warn(`MODE DEMONSTRATION actif : annuaire simule, mot de passe commun "${motDePasseDemo()}". Ne jamais utiliser en production.`);
   }

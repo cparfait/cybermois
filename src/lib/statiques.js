@@ -22,6 +22,24 @@ import { config } from './config.js';
 
 const RACINE = path.resolve(process.cwd(), 'public');
 
+/**
+ * L'URL demande-t-elle un fichier HTML par son nom ? Voir le crochet de server.js.
+ *
+ * Le controle porte sur le chemin DECODE, celui que lit le greffon de fichiers
+ * statiques : sur l'URL brute, /admin%2Ehtml, /admin.htm%6C ou /admin.html/
+ * passaient le filtre et servaient l'ecran d'administration. Une extension
+ * suivie d'autre chose qu'une lettre ou un chiffre est refusee elle aussi : un
+ * point ou une espace finale designent le meme fichier sous Windows.
+ */
+const EXTENSION_HTML = /\.html?(?![a-z0-9_-])/i;
+
+export function designeUnFichierHtml(url) {
+  const brut = String(url || '').split('?')[0];
+  let chemin = brut;
+  try { chemin = decodeURIComponent(brut); } catch { /* mal encodee : Fastify la refusera */ }
+  return EXTENSION_HTML.test(chemin) || EXTENSION_HTML.test(brut);
+}
+
 function calculerEmpreinte() {
   const hachage = crypto.createHash('sha256');
   for (const dossier of ['js', 'css']) {

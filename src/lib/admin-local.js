@@ -1,5 +1,8 @@
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import { db, journaliser } from './db.js';
+import { config } from './config.js';
 
 /**
  * Compte administrateur local, independant de l'Active Directory.
@@ -25,6 +28,26 @@ CREATE TABLE IF NOT EXISTS admins_locaux (
 `);
 
 const PARAMETRES_SCRYPT = { N: 16384, r: 8, p: 1 };
+
+/**
+ * Ou se lit le mot de passe genere au premier demarrage.
+ *
+ * Il s'affichait dans les journaux du conteneur : ceux-ci se lisent dans
+ * Portainer par quiconque a acces a la pile, se recopient dans un ticket, et
+ * partent vers un collecteur s'il y en a un - sans jamais s'effacer. Un
+ * fichier du volume de donnees, lisible du seul utilisateur du conteneur,
+ * reste a cote de la base, et disparait des que le mot de passe est change.
+ */
+export const fichierAmorce = () => path.join(path.dirname(config.dbFile), 'admin-initial.txt');
+
+/** Efface le fichier d'amorcage s'il concerne ce compte : son mot de passe n'a plus cours. */
+function oublierAmorce(identifiant) {
+  const fichier = fichierAmorce();
+  try {
+    const contenu = fs.readFileSync(fichier, 'utf8');
+    if (contenu.match(/^Identifiant\s*:\s*(\S+)/m)?.[1] === identifiant) fs.rmSync(fichier, { force: true });
+  } catch { /* pas de fichier : rien a faire */ }
+}
 
 function calculer(motDePasse, sel) {
   return crypto.scryptSync(motDePasse, sel, 64, PARAMETRES_SCRYPT).toString('hex');
@@ -101,6 +124,8 @@ export function definirAdminLocal(login, motDePasse, { nomComplet, provisoire = 
       provisoire = excluded.provisoire, maj_le = datetime('now')
   `).run(agent.id, calculer(motDePasse, sel), sel, provisoire ? 1 : 0);
 
+  // Tout nouveau mot de passe rend caduc celui du fichier d'amorcage.
+  oublierAmorce(identifiant);
   journaliser(parQui || identifiant, 'admin_local_defini', identifiant, null);
   return agent;
 }
@@ -113,6 +138,7 @@ export function supprimerAdminLocal(login, parQui) {
   }
   db.prepare('DELETE FROM admins_locaux WHERE agent_id = ?').run(agent.id);
   db.prepare('DELETE FROM agents WHERE id = ?').run(agent.id);
+  oublierAmorce(agent.login);
   journaliser(parQui, 'admin_local_supprime', login, null);
 }
 
@@ -138,8 +164,8 @@ export function verifierAdminLocal(login, motDePasse) {
 
 /**
  * Amorcage au demarrage : sans aucun compte local, on en cree un.
- * Le mot de passe vient de l'environnement, sinon il est genere et affiche
- * une fois dans les journaux - lisibles dans Portainer.
+ * Le mot de passe vient de l'environnement, sinon il est genere et ecrit dans
+ * fichierAmorce(). Il n'est jamais renvoye : l'appelant le journaliserait.
  */
 export function amorcerAdminLocal() {
   if (existeAdminLocal()) return null;
@@ -154,5 +180,22 @@ export function amorcerAdminLocal() {
     parQui: 'amorcage',
   });
 
-  return { login, motDePasse, genere: !fourni };
+  if (fourni) return { login, genere: false };
+
+  const fichier = fichierAmorce();
+  fs.mkdirSync(path.dirname(fichier), { recursive: true });
+  // Le mode ne vaut qu'a la creation : on retire d'abord un eventuel reste.
+  fs.rmSync(fichier, { force: true });
+  fs.writeFileSync(fichier, [
+    `Compte administrateur local cree le ${new Date().toISOString()}`,
+    '',
+    `Identifiant  : ${login}`,
+    `Mot de passe : ${motDePasse}`,
+    '',
+    'Changez ce mot de passe a la premiere connexion, dans Administration > Configuration :',
+    'ce fichier sera alors efface.',
+    '',
+  ].join('\n'), { mode: 0o600 });
+
+  return { login, genere: true, fichier };
 }

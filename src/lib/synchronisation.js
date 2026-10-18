@@ -1,5 +1,5 @@
 import { db, journaliser } from './db.js';
-import { config } from './config.js';
+import { config, modeDemoActif } from './config.js';
 import { listerAgentsAnnuaire } from './ldap.js';
 import { resoudreService, normaliser } from './services.js';
 
@@ -189,7 +189,7 @@ export async function analyserSynchronisation() {
 
   return {
     ok: true,
-    source: config.ldap.url === 'demo' ? 'annuaire simulé' : config.ldap.url,
+    source: modeDemoActif() ? 'annuaire simulé' : config.ldap.url,
     origineService: config.service.source === 'attr'
       ? `attribut ${config.service.attribut}`
       : `OU du DN (profondeur ${config.service.ouDepth})`,

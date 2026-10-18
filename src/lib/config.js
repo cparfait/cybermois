@@ -52,6 +52,18 @@ export const config = {
   proxyDeConfiance: (process.env.PROXY_DE_CONFIANCE || '')
     .split(',').map((s) => s.trim()).filter(Boolean),
 
+  /**
+   * Echecs de connexion toleres avant blocage. Voir src/lib/limitation-connexion.js.
+   * Par compte : rester SOUS le seuil de verrouillage de l'Active Directory,
+   * sans quoi un tiers verrouille la session Windows d'un agent depuis le
+   * portail. Par adresse IP : freiner l'essai d'un meme mot de passe sur tous
+   * les comptes.
+   */
+  connexion: {
+    echecsMaxCompte: num(process.env.CONNEXION_ECHECS_MAX_COMPTE, 3),
+    echecsMaxIp: num(process.env.CONNEXION_ECHECS_MAX_IP, 20),
+  },
+
   /** Durees de conservation, en jours. Voir src/lib/retention.js. */
   retention: {
     journalJours: num(process.env.RETENTION_JOURNAL_JOURS, 180),
@@ -136,3 +148,11 @@ export const config = {
 
   dbFile: process.env.DB_FILE || path.resolve(process.cwd(), 'data', 'cybermois.db'),
 };
+
+/**
+ * Annuaire simule actif ? Jamais en production, quelle que soit ldap.url :
+ * l'adresse se regle aussi depuis le back-office, et « demo » y ouvrait quinze
+ * comptes fictifs au mot de passe public, capables de jouer et de fausser le
+ * classement. Source unique : chaque controle du mode demonstration passe ici.
+ */
+export const modeDemoActif = () => config.ldap.url === 'demo' && config.env !== 'production';

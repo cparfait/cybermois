@@ -16,22 +16,21 @@ Il y a un problème d'amorçage évident : la configuration LDAP se saisit dans 
 back-office, mais le back-office exige de s'authentifier… par le LDAP.
 
 D'où le **compte administrateur local**, indépendant de l'annuaire. Au premier démarrage,
-l'application en crée un et affiche ses identifiants **une seule fois** dans les journaux
-du conteneur :
+l'application en crée un. Son mot de passe, tiré au hasard, n'apparaît **pas** dans les
+journaux du conteneur : ceux-ci se lisent par quiconque a accès à la pile et ne s'effacent
+jamais. Il est écrit dans le fichier `admin-initial.txt`, à côté de la base, lisible du
+seul utilisateur du conteneur. Les journaux indiquent seulement où le trouver :
 
 ```
 ================= COMPTE ADMINISTRATEUR LOCAL CREE =================
   Identifiant  : admin
-  Mot de passe : xxxxxxxxxxxxxxxx
-===================================================================
+  Mot de passe genere aleatoirement, enregistre dans :
+    /app/data/admin-initial.txt
 ```
 
-*(le mot de passe réel est une chaîne aléatoire de seize caractères ; il est masqué ici,
-et ne doit figurer ni dans une documentation, ni dans un ticket, ni dans une copie
-d'écran.)*
-
-Dans Portainer : **Containers → cybermois → Logs**. Notez le mot de passe, il ne sera
-plus affiché.
+Dans Portainer : **Containers → cybermois → Console**, puis `cat /app/data/admin-initial.txt`
+(ou, sur l'hôte, le même fichier dans le dossier monté). Dès que le mot de passe est
+changé, le fichier est effacé.
 
 Vous pouvez aussi le fixer d'avance avec `ADMIN_LOCAL_LOGIN` et `ADMIN_LOCAL_MOT_DE_PASSE`
 dans la pile.
@@ -217,7 +216,8 @@ redémarrage :
 | `TIMEZONE` | Fuseau des tâches planifiées |
 | `PROXY_DE_CONFIANCE` | Adresses du reverse proxy dont les en-têtes `X-Forwarded-*` sont acceptés |
 | `RETENTION_JOURNAL_JOURS`, `RETENTION_RESULTATS_JOURS`, `RETENTION_PREUVES_JOURS` | Durées de conservation |
-| `DEMO_MOT_DE_PASSE` | Mot de passe des comptes fictifs, mode démonstration uniquement |
+| `CONNEXION_ECHECS_MAX_COMPTE`, `CONNEXION_ECHECS_MAX_IP` | Échecs de connexion tolérés : par compte sur 30 min (défaut 3, à garder sous le seuil de verrouillage de l'AD), par adresse IP sur 15 min (défaut 20) |
+| `DEMO_MOT_DE_PASSE` | Mot de passe des comptes fictifs, mode démonstration uniquement — jamais actif en production |
 
 `.env.example` documente l'ensemble des variables lues par l'application, y compris celles
 que le back-office sait remplacer.

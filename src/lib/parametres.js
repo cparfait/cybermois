@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { db, journaliser } from './db.js';
-import { config } from './config.js';
+import { config, modeDemoActif } from './config.js';
 import cron from 'node-cron';
 import { normaliserUrlLdap } from './url-ldap.js';
 
@@ -292,6 +292,14 @@ export function validerParametres(valeurs) {
     }
   }
 
+  // L'annuaire simule ouvre quinze comptes fictifs au mot de passe public :
+  // en production, ils joueraient et fausseraient le classement.
+  if (v('ldap.url') !== undefined && config.env === 'production'
+      && normaliserUrlLdap(String(v('ldap.url'))) === 'demo') {
+    erreurs.push("Le mode demonstration (« demo ») est interdit en production : indiquez "
+      + "l'adresse du controleur de domaine.");
+  }
+
   for (const cle of ['campagne.debut', 'campagne.fin']) {
     if (v(cle) !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(String(v(cle)).trim())) {
       erreurs.push(`${PAR_CLE[cle].libelle} : date attendue au format AAAA-MM-JJ.`);
@@ -381,7 +389,7 @@ export function reinitialiserParametre(cle, login) {
 
 /** La configuration permet-elle a un agent de se connecter ? */
 export function configurationUtilisable() {
-  if (config.ldap.url === 'demo') return { ok: true, mode: 'demonstration' };
+  if (modeDemoActif()) return { ok: true, mode: 'demonstration' };
   const manquants = [];
   if (!config.ldap.url || config.ldap.url.startsWith('ldap') === false) manquants.push('serveur LDAP');
   // Une liaison en clair n'est pas une configuration incomplete mais inutilisable :
