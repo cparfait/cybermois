@@ -213,7 +213,8 @@ export function mailResultats(defiId) {
     <tr style="border-bottom:1px solid #d9e4de;">
       <td style="padding:9px 6px;font-family:'Montserrat',Arial,sans-serif;font-weight:700;width:38px;">${medaille[i] || `${i + 1}.`}</td>
       <td style="padding:9px 6px;">${echapper(s.service)}</td>
-      <td style="padding:9px 6px;text-align:right;font-family:'Montserrat',Arial,sans-serif;font-weight:700;color:#006e46;white-space:nowrap;">${s.pourcentage_moyen} %</td>
+      <td style="padding:9px 6px;text-align:right;font-family:'Montserrat',Arial,sans-serif;font-weight:700;color:#006e46;white-space:nowrap;">${String(s.defis_par_agent).replace('.', ',')} / ${s.defis_parus}</td>
+      <td style="padding:9px 6px;text-align:right;font-family:'Montserrat',Arial,sans-serif;font-size:13px;color:#4a5a53;white-space:nowrap;">${s.pourcentage_moyen} %</td>
       <td style="padding:9px 6px;text-align:right;font-family:'Montserrat',Arial,sans-serif;font-size:13px;color:#4a5a53;white-space:nowrap;">${s.taux_participation} %</td>
     </tr>`;
 
@@ -221,7 +222,7 @@ export function mailResultats(defiId) {
     <tr style="border-bottom:1px solid #d9e4de;">
       <td style="padding:9px 6px;font-family:'Montserrat',Arial,sans-serif;font-weight:700;width:38px;">${medaille[i] || `${i + 1}.`}</td>
       <td style="padding:9px 6px;">${echapper(a.nom_complet)}<br><span style="font-size:13px;color:#4a5a53;">${echapper(a.service)}</span></td>
-      <td style="padding:9px 6px;text-align:right;font-family:'Montserrat',Arial,sans-serif;font-weight:700;color:#006e46;white-space:nowrap;">${a.score_total} pts</td>
+      <td style="padding:9px 6px;text-align:right;font-family:'Montserrat',Arial,sans-serif;font-weight:700;color:#006e46;white-space:nowrap;">${a.defis_joues} / ${a.defis_parus} défis<br><span style="font-size:13px;font-weight:400;color:#4a5a53;">${a.score_total} pts</span></td>
     </tr>`;
 
   const corps = `
@@ -235,10 +236,11 @@ export function mailResultats(defiId) {
 </tr></table>
 
 <h2 style="font-family:'Montserrat',Arial,sans-serif;font-size:19px;color:#006e46;margin:26px 0 8px;">🏆 Classement des services</h2>
-<p style="font-size:13px;color:#4a5a53;margin-top:0;">Score moyen par agent du service, et taux de participation.</p>
+<p style="font-size:13px;color:#4a5a53;margin-top:0;">Défis terminés par agent du service, puis réussite et taux de participation.</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px;">${services.slice(0, 10).map(ligneService).join('')}</table>
 
 <h2 style="font-family:'Montserrat',Arial,sans-serif;font-size:19px;color:#006e46;margin:26px 0 8px;">⭐ Classement individuel</h2>
+<p style="font-size:13px;color:#4a5a53;margin-top:0;">Défis terminés d'abord, puis points.</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px;">${agents.map(ligneAgent).join('')}</table>
 
 ${bouton(`${config.publicUrl}/classement`, 'Voir le classement complet')}

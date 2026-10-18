@@ -132,13 +132,15 @@ chargeurs.suivi = async () => {
 
       <h2 style="margin-top:2rem">Classement des directions</h2>
       <div class="tableau-defilant"><table class="admin">
-        <caption class="sr-only">Classement des directions par réussite</caption>
+        <caption class="sr-only">Classement des directions par défis terminés, puis par réussite</caption>
         <thead><tr><th scope="col">Rang</th><th scope="col">Direction</th>
+          <th scope="col" class="num">Défis par agent</th>
           <th scope="col" class="num">Réussite</th><th scope="col" class="num">Points</th>
           <th scope="col" class="num">Participation</th>
           <th scope="col" class="num">Joueurs / inscrits</th></tr></thead>
         <tbody>${d.services.map((x, i) => `
           <tr><td>${i + 1}</td><td>${echapper(x.service)}</td>
+          <td class="num">${String(x.defis_par_agent).replace('.', ',')} / ${x.defis_parus}</td>
           <td class="num">${x.pourcentage_moyen} %</td>
           <td class="num discret">${x.score_total} / ${x.points_possibles}</td>
           <td class="num">${x.taux_participation} %</td>

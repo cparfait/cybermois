@@ -6,7 +6,7 @@ relèvent les défis au fil de leurs parutions, et font gagner des points à leu
 
 - **Authentification LDAPS** via un compte de service, sans jamais stocker de mot de passe
 - **Rattachement au service déduit de l'annuaire** (OU du DN) : aucune liste à maintenir
-- **Double classement** : par service (moyenne par agent + taux de participation) et individuel nominatif
+- **Double classement** : par service (défis terminés par agent, puis réussite) et individuel nominatif (défis terminés, puis points)
 - **Questions à choix multiples** avec validation explicite et notation partielle
 - **Badges, podium, attestation imprimable**
 - **Relances et résultats hebdomadaires** envoyés automatiquement par SMTP
@@ -300,6 +300,12 @@ participation** exploitable en audit SSI, et journal des actions.
 ferait mécaniquement gagner le service le plus nombreux, ce qui décourage les petits
 services dès la première semaine. Le taux de participation est affiché à côté du score :
 c'est en pratique le chiffre qui fait bouger les chefs de service.
+
+**La participation passe avant les points.** Les agents se classent d'abord au nombre de
+défis terminés, puis aux points ; les services, au nombre moyen de défis terminés par agent
+inscrit, puis à la réussite. Classé aux seuls points, un agent qui n'avait fait que les
+deux défis les mieux dotés passait devant un collègue qui les avait tous faits. Le détail
+est dans `docs/parametrage-classement.md`.
 
 **Pas de score négatif.** Une mauvaise réponse cochée annule une bonne réponse au sein de
 la même question, mais le score d'une question ne descend jamais sous zéro. L'objectif est

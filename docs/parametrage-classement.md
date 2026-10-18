@@ -12,6 +12,47 @@ collectivité d'utiliser l'application.
 
 ---
 
+## Comment le classement est calculé
+
+Le paramétrage décide **qui** est classé et dans quelle direction. Le calcul, lui, est
+fixé dans le code (`src/lib/scoring.js`) et ne se règle pas ; on le rappelle ici parce que
+c'est la première question que posent les directions.
+
+Seuls les **défis déjà parus** comptent : un défi publié dont la date d'ouverture n'est pas
+arrivée n'entre ni dans le nombre de défis, ni dans les points possibles. Un défi non fait
+compte zéro.
+
+**Classement individuel** — dans cet ordre :
+
+1. le nombre de défis terminés ;
+2. à égalité, les points cumulés ;
+3. à égalité encore, la première participation la plus ancienne.
+
+La participation passe d'abord parce que les barèmes diffèrent d'un défi à l'autre (de 70
+à 115 points). Classé aux seuls points, un agent qui n'avait fait que les deux défis les
+mieux dotés passait devant un collègue qui les avait tous faits :
+
+| 4 défis parus (370 pts) | Défis | Points | Réussite | Avant | Désormais |
+|---|---|---|---|---|---|
+| A : Hameçonnage et Ingénierie sociale, sans faute | 2 / 4 | 220 | 59 % | 1er | 2e |
+| B : les quatre, à 55 % | 4 / 4 | 203 | 55 % | 2e | 1er |
+
+La **réussite** affichée rapporte les points de l'agent à ceux qu'il pouvait gagner sur les
+défis parus.
+
+**Classement par direction** — chaque chiffre est rapporté aux agents **inscrits** de la
+direction, joueurs ou non, pour qu'une direction de 4 agents ne soit pas écrasée par une
+direction de 40 :
+
+1. le nombre moyen de défis terminés par agent inscrit (« 2,6 / 4 ») ;
+2. à égalité, les points moyens par agent inscrit, affichés en réussite (points gagnés sur
+   points possibles de tous les inscrits) ;
+3. à égalité encore, le taux de participation (part des inscrits ayant joué au moins une fois).
+
+Seules les directions du référentiel sont classées (voir plus bas).
+
+---
+
 ## La procédure de mise en production
 
 L'ordre compte. L'import **ne crée aucun agent** : il applique des décisions à des

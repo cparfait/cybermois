@@ -143,14 +143,14 @@ for (const agent of AGENTS) {
 const cookie = await connecter('c.parfait');
 const c = await (await fetch(`${BASE}/api/classement`, { headers: { cookie } })).json();
 
-console.log('\nClassement par service (moyenne par agent, taux de participation) :');
+console.log('\nClassement par service (defis par agent, puis reussite) :');
 for (const [i, s] of c.services.entries()) {
-  console.log(`  ${String(i + 1).padStart(2)}. ${s.service.padEnd(38)} ${String(s.score_moyen).padStart(6)} pts  ${String(s.taux_participation).padStart(3)}%  (${s.joueurs}/${s.inscrits})`);
+  console.log(`  ${String(i + 1).padStart(2)}. ${s.service.padEnd(38)} ${String(s.defis_par_agent).padStart(4)}/${s.defis_parus} defis  ${String(s.pourcentage_moyen).padStart(3)}%  ${String(s.taux_participation).padStart(3)}% part.  (${s.joueurs}/${s.inscrits})`);
 }
 
 console.log('\nClassement individuel (10 premiers) :');
 for (const [i, a] of c.agents.slice(0, 10).entries()) {
-  console.log(`  ${String(i + 1).padStart(2)}. ${a.nom_complet.padEnd(20)} ${String(a.score_total).padStart(5)} pts  ${a.defis_joues} defis  ${a.service}`);
+  console.log(`  ${String(i + 1).padStart(2)}. ${a.nom_complet.padEnd(20)} ${a.defis_joues}/${a.defis_parus} defis  ${String(a.score_total).padStart(5)} pts  ${a.service}`);
 }
 
 console.log('\nStatistiques :', JSON.stringify({

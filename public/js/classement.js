@@ -34,6 +34,9 @@ function activerOnglet(actif) {
 
 /* ------------------------------------------------------------- Rendu */
 
+/** « 2,6 » et non « 2.6 » : la moyenne de defis par agent s'ecrit a la francaise. */
+const virgule = (n) => String(n).replace('.', ',');
+
 function podium(entrees, rendu) {
   if (entrees.length < 3) return '';
   const ordre = [1, 0, 2]; // 2e, 1er, 3e pour l'effet visuel
@@ -95,13 +98,14 @@ function rendreServices(donnees) {
     <div class="medaille" aria-hidden="true">${medaille(i + 1)}</div>
     <div class="sr-only">${i + 1}<sup>${i === 0 ? 're' : 'e'}</sup> place</div>
     <div class="nom">${echapper(s.service)}</div>
-    <div class="points">${s.pourcentage_moyen} %</div>
-    <div class="sous">${s.score_total} / ${s.points_possibles} pts · ${s.taux_participation} % de participation</div>`);
+    <div class="points">${virgule(s.defis_par_agent)} / ${s.defis_parus} défis</div>
+    <div class="sous">par agent · ${s.pourcentage_moyen} % de réussite · ${s.taux_participation} % de participation</div>`);
 
   document.getElementById('table-services').innerHTML = `
-    <caption class="sr-only">Classement des directions par taux de réussite</caption>
+    <caption class="sr-only">Classement des directions par défis terminés, puis par réussite</caption>
     <thead><tr>
       <th scope="col">Rang</th><th scope="col">Direction</th>
+      <th scope="col" class="num">Défis par agent</th>
       <th scope="col" class="num">Réussite</th>
       <th scope="col" class="num">Points</th>
       <th scope="col" class="num">Participation</th>
@@ -111,7 +115,8 @@ function rendreServices(donnees) {
       <tr class="${s.service === maDirection ? 'moi' : ''}"${i >= PREMIERS ? ' data-au-dela hidden' : ''}>
         <td class="rang-cell">${celluleRang(i + 1)}</td>
         <td>${echapper(s.service)}${s.service === maDirection ? ' <span class="discret">(ma direction)</span>' : ''}</td>
-        <td class="num"><strong>${s.pourcentage_moyen} %</strong></td>
+        <td class="num" style="white-space:nowrap"><strong>${virgule(s.defis_par_agent)}</strong> / ${s.defis_parus}</td>
+        <td class="num">${s.pourcentage_moyen} %</td>
         <td class="num discret" style="white-space:nowrap">${s.score_total} / ${s.points_possibles}</td>
         <td class="num">
           <div class="rang" style="justify-content:flex-end;gap:.5rem;flex-wrap:nowrap">
@@ -136,15 +141,16 @@ function rendreAgents(donnees) {
     <div class="medaille" aria-hidden="true">${medaille(i + 1)}</div>
     <div class="sr-only">${i + 1}<sup>${i === 0 ? 'er' : 'e'}</sup></div>
     <div class="nom">${echapper(a.nom_complet)}</div>
-    <div class="points">${a.pourcentage} %</div>
-    <div class="sous">${a.score_total} / ${a.points_possibles} pts · ${echapper(a.service)}</div>`);
+    <div class="points">${a.defis_joues} / ${a.defis_parus} défis</div>
+    <div class="sous">${a.pourcentage} % de réussite · ${echapper(a.service)}</div>`);
 
   document.getElementById('table-agents').innerHTML = `
-    <caption class="sr-only">Classement individuel des agents</caption>
+    <caption class="sr-only">Classement individuel des agents par défis terminés, puis par points</caption>
     <thead><tr>
       <th scope="col">Rang</th><th scope="col">Agent</th><th scope="col">Direction</th>
+      <th scope="col" class="num">Défis</th>
       <th scope="col" class="num">Réussite</th>
-      <th scope="col" class="num">Points</th><th scope="col" class="num">Défis</th>
+      <th scope="col" class="num">Points</th>
     </tr></thead>
     <!-- « Ma ligne » vient du serveur. Comparer les noms surlignait les
          homonymes, et ne trouvait jamais un agent qui a demande a ne pas
@@ -154,9 +160,9 @@ function rendreAgents(donnees) {
         <td class="rang-cell">${celluleRang(i + 1)}</td>
         <td>${echapper(a.nom_complet)}${a.moi ? ' <span class="discret">(moi)</span>' : ''}</td>
         <td>${echapper(a.service)}</td>
-        <td class="num"><strong>${a.pourcentage} %</strong></td>
+        <td class="num" style="white-space:nowrap"><strong>${a.defis_joues}</strong> / ${a.defis_parus}</td>
+        <td class="num">${a.pourcentage} %</td>
         <td class="num discret" style="white-space:nowrap">${a.score_total} / ${a.points_possibles}</td>
-        <td class="num">${a.defis_joues}</td>
       </tr>`).join('')}</tbody>`;
 
   if (!agents.length) {
@@ -178,6 +184,7 @@ try {
       <strong>${echapper(agent.service)}</strong>
       ${rs.rang
         ? ` — ${rs.rang}<sup>${rs.rang === 1 ? 're' : 'e'}</sup> place sur ${rs.total} directions,
+            ${virgule(rs.detail?.defis_par_agent ?? 0)} défi${(rs.detail?.defis_par_agent ?? 0) >= 2 ? 's' : ''} terminé${(rs.detail?.defis_par_agent ?? 0) >= 2 ? 's' : ''} par agent,
             ${rs.detail?.pourcentage_moyen ?? 0} % de réussite et ${rs.detail?.taux_participation ?? 0} % de participation.`
         : rs.horsReferentiel
           // Dire « pas encore classé » ferait croire a un manque de

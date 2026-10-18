@@ -214,6 +214,14 @@ export function pointsPossibles(jour = aujourdhui()) {
 }
 
 /**
+ * Nombre de defis parus a ce jour, avec la meme regle que pointsPossibles :
+ * c'est l'etalon de la participation (« 3 défis sur 4 »).
+ */
+export function defisParus(jour = aujourdhui()) {
+  return db.prepare('SELECT COUNT(*) AS n FROM defis WHERE publie = 1 AND ouvre_le <= ?').get(jour).n;
+}
+
+/**
  * Classement par direction.
  *
  * Seules les directions du referentiel sont classees. Sans ce filtre, chaque
@@ -228,13 +236,18 @@ export function pointsPossibles(jour = aujourdhui()) {
  * Referentiel vide : il n'y a rien a quoi comparer, on classe tout. Sinon
  * l'ecran serait vide avant meme qu'on ait pu renseigner la liste.
  *
- * Le score retenu est la MOYENNE par agent inscrit de la direction, pas le
- * total : sinon une direction de 40 agents ecraserait mecaniquement une
- * direction de 4. Le taux de participation est affiche a cote, c'est le vrai
- * levier de mobilisation.
+ * Tout se rapporte a l'agent INSCRIT, pas au total : sinon une direction de
+ * 40 agents ecraserait mecaniquement une direction de 4.
+ *
+ * Comme pour les agents, la participation passe d'abord : les directions se
+ * classent au nombre moyen de defis termines par agent inscrit, puis a la
+ * reussite. Classees aux seuls points, deux agents brillants sur deux defis
+ * lourds faisaient passer leur direction devant une autre ou chacun avait
+ * tout fait - l'inverse de ce que la campagne cherche a obtenir.
  */
 export function classementServices() {
   const possible = pointsPossibles();
+  const parus = defisParus();
 
   const lignes = db.prepare(`
     SELECT
@@ -279,8 +292,13 @@ export function classementServices() {
       pourcentage_moyen: possible && c.inscrits
         ? Math.round((c.score_total * 100) / (possible * c.inscrits))
         : 0,
+      defis_par_agent: c.inscrits ? Math.round((c.defis_joues * 10) / c.inscrits) / 10 : 0,
+      defis_parus: parus,
     }))
-    .sort((a, b) => b.score_moyen - a.score_moyen
+    // Les rapports exacts, et non les valeurs arrondies pour l'affichage :
+    // deux directions a « 2,6 » peuvent ne pas etre a egalite.
+    .sort((a, b) => b.defis_joues / (b.inscrits || 1) - a.defis_joues / (a.inscrits || 1)
+      || b.score_total / (b.inscrits || 1) - a.score_total / (a.inscrits || 1)
       || b.taux_participation - a.taux_participation
       || a.service.localeCompare(b.service, 'fr'));
 }
@@ -295,9 +313,18 @@ export function ligneClassement(service, lignes = classementServices()) {
   return lignes.find((s) => cleComparaison(s.service) === cle) || null;
 }
 
-/** Classement individuel nominatif. */
+/**
+ * Classement individuel nominatif.
+ *
+ * La participation passe d'abord : on classe au nombre de defis termines,
+ * puis aux points. Classe aux seuls points, un agent qui n'avait fait que les
+ * deux defis les mieux dotes, sans faute, passait devant un collegue qui les
+ * avait tous faits - les baremes vont de 70 a 115 points selon le defi. Une
+ * campagne de sensibilisation recompense d'abord celui qui va au bout.
+ */
 export function classementAgents(limite = 100) {
   const possible = pointsPossibles();
+  const parus = defisParus();
 
   const lignes = db.prepare(`
     SELECT
@@ -314,7 +341,7 @@ export function classementAgents(limite = 100) {
     JOIN participations p ON p.agent_id = a.id AND p.entrainement = 0
     WHERE a.exclu = 0
     GROUP BY a.id
-    ORDER BY score_total DESC, defis_joues DESC, premiere_participation ASC
+    ORDER BY defis_joues DESC, score_total DESC, premiere_participation ASC
     LIMIT ?
   `).all(limite);
 
@@ -322,6 +349,7 @@ export function classementAgents(limite = 100) {
   // rapportes au total atteignable a ce jour.
   return lignes.map((l) => ({
     ...l,
+    defis_parus: parus,
     points_possibles: possible,
     pourcentage: possible ? Math.round((l.score_total * 100) / possible) : 0,
   }));
