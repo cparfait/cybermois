@@ -2,7 +2,7 @@
 # la meme image. La balise node:24-alpine suit la branche 24 et peut basculer de
 # version mineure sans prevenir, ce qui change le moteur SQLite embarque.
 # Verifiee sur Docker Hub (library/node) au moment de la redaction.
-FROM node:24.21-alpine
+FROM node:24.22-alpine
 
 RUN apk add --no-cache tzdata && \
     ln -snf /usr/share/zoneinfo/Europe/Paris /etc/localtime && \
