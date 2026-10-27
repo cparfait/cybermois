@@ -71,7 +71,10 @@ export async function exigerAuth(requete, reponse) {
   // compte ni dans l'effectif ni au classement - sans etre pour autant ecarte
   // de la campagne. L'exempter est indispensable : c'est lui qui permet de
   // reprendre la main quand l'annuaire est injoignable.
-  if (agent.exclu && agent.origine !== 'local') {
+  //
+  // Un administrateur garde l'acces meme s'il est exclu de la campagne : il
+  // doit pouvoir administrer l'outil sans y etre compte.
+  if (agent.exclu && agent.origine !== 'local' && !agent.est_admin) {
     detruireSession(requete.cookies?.[COOKIE]);
     if (requete.url.startsWith('/api/')) {
       return reponse.code(403).send({

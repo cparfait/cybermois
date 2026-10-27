@@ -127,9 +127,11 @@ export default async function routesAuth(app) {
     const a = resultat.agent;
 
     // Un agent explicitement exclu par l'administration ne doit pas pouvoir
-    // recreer sa fiche en se reconnectant.
+    // recreer sa fiche en se reconnectant. Un administrateur y echappe : il
+    // doit toujours pouvoir entrer, meme ecarte de la campagne.
     const fiche = db.prepare('SELECT exclu FROM agents WHERE login = ?').get(a.login);
-    if (fiche?.exclu) {
+    const adminConnecte = a.adminParGroupe || config.adminLogins.includes(a.login);
+    if (fiche?.exclu && !adminConnecte) {
       journaliser(a.login, 'connexion_refusee', 'agent exclu de la campagne', ip);
       return reponse.code(403).send({ erreur: MESSAGES.exclu });
     }
