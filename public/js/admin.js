@@ -149,6 +149,18 @@ chargeurs.suivi = async () => {
           <td class="num">${x.joueurs} / ${x.inscrits}</td></tr>`).join('')}
         </tbody></table></div>
 
+      <h2 style="margin-top:2rem">Sans-faute (100 %)</h2>
+      <p class="discret">Agents ayant obtenu tous les points à au moins un défi, avec les défis concernés.</p>
+      <div class="tableau-defilant"><table class="admin">
+        <caption class="sr-only">Agents ayant réussi des défis à 100 %</caption>
+        <thead><tr><th scope="col">Agent</th><th scope="col">Direction</th>
+          <th scope="col" class="num">Défis à 100 %</th><th scope="col">Lesquels</th></tr></thead>
+        <tbody>${d.sansFaute.length
+          ? d.sansFaute.map((x) => `<tr><td>${echapper(x.nom_complet)}</td><td>${echapper(x.service)}</td>
+              <td class="num">${x.nombre}</td><td>${x.defis.map(echapper).join(', ')}</td></tr>`).join('')
+          : '<tr><td colspan="4" class="discret">Aucun sans-faute pour le moment.</td></tr>'}
+        </tbody></table></div>
+
       <h2 style="margin-top:2rem">Directions à relancer</h2>
       <p class="discret">Agents connectés n'ayant encore terminé aucun défi.</p>
       <div class="tableau-defilant"><table class="admin">

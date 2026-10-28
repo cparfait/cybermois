@@ -102,3 +102,21 @@ test('un inscrit qui ne joue pas fait baisser la moyenne de sa direction', () =>
   const ordre = classementServices().map((x) => x.service);
   assert.ok(ordre.indexOf('Direction A') < ordre.indexOf('Direction B'));
 });
+
+test('le classement individuel suit les points, pas le nombre de defis', () => {
+  // D : un seul defi mais 100 points ; E : quatre defis a 10 points.
+  agent(20, 'Direction D');
+  jouer(20, 1, 100);
+  agent(21, 'Direction E');
+  for (const d of [1, 2, 3, 4]) jouer(21, d, 10);
+  const ordre = classementAgents().map((a) => a.id);
+  assert.ok(ordre.indexOf(20) < ordre.indexOf(21));
+});
+
+test('les sans-faute listent les agents et les defis a 100 %', async () => {
+  const { agentsSansFaute } = await import('../src/lib/scoring.js');
+  const par = Object.fromEntries(agentsSansFaute().map((a) => [a.id, a]));
+  assert.equal(par[1].nombre, 2); // A : defis 1 et 3 a 100 %
+  assert.deepEqual(par[1].defis, ['Defi 1', 'Defi 3']);
+  assert.equal(par[2], undefined); // B : 90 % partout
+});

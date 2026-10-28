@@ -6,7 +6,7 @@ import { testerConnexion } from '../lib/ldap.js';
 import { importerContenus, exporterDefi } from '../lib/seed.js';
 import { listerModules, lireModule, etatProgramme, enregistrerProgramme } from '../lib/modules.js';
 import { versionApplication } from '../lib/version.js';
-import { classementServices, classementAgents, statistiquesGlobales } from '../lib/scoring.js';
+import { classementServices, classementAgents, statistiquesGlobales, agentsSansFaute } from '../lib/scoring.js';
 import {
   testerSmtp, envoyerRelances, envoyerResultats,
   mailLancement, mailRelance, mailResultats,
@@ -102,6 +102,7 @@ export default async function routesAdmin(app) {
 
     return {
       stats, services, jamaisJoue, derniersEnvois, defis,
+      sansFaute: agentsSansFaute(),
       effectifImporte,
       campagne: config.campagne,
     };

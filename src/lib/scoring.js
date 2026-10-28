@@ -350,15 +350,15 @@ export function classementAgents(limite = 100) {
   // Rapportee a tous les defis parus, elle donnait 45 % a un agent qui avait
   // fait un seul des deux defis, a 90 %.
   //
-  // Classement : le nombre de defis faits d'abord, la reussite ensuite, puis
-  // l'anteriorite. Classe a la reussite d'abord, un agent qui n'avait fait que
-  // deux defis, sans faute, passait devant un collegue qui les avait tous
-  // faits a 90 % : une campagne de sensibilisation recompense d'abord celui
-  // qui va au bout.
+  // Classement : les points d'abord. Le nombre de defis faits et le
+  // pourcentage de reussite s'affichent a cote, sans decider de l'ordre ;
+  // ils departagent seulement deux agents a egalite de points, puis
+  // l'anteriorite.
   const reussite = (l) => (l.score_max_joue ? l.score_total / l.score_max_joue : 0);
   return lignes
-    .sort((a, b) => b.defis_joues - a.defis_joues
+    .sort((a, b) => b.score_total - a.score_total
       || reussite(b) - reussite(a)
+      || b.defis_joues - a.defis_joues
       || String(a.premiere_participation).localeCompare(String(b.premiere_participation)))
     .slice(0, limite)
     .map((l) => ({
@@ -391,6 +391,34 @@ export function rangService(service) {
     detail: tous[i] || null,
     horsReferentiel: i === -1 && tous.length > 0,
   };
+}
+
+/**
+ * Agents ayant fait un sans-faute (100 %) a au moins un defi, avec les defis
+ * concernes. Les participations d'entrainement et les agents exclus ne
+ * comptent pas, comme au classement.
+ */
+export function agentsSansFaute() {
+  const lignes = db.prepare(`
+    SELECT a.id, a.nom_complet, a.service, d.titre, d.ouvre_le
+    FROM participations p
+    JOIN agents a ON a.id = p.agent_id
+    JOIN defis d ON d.id = p.defi_id
+    WHERE p.entrainement = 0 AND a.exclu = 0
+      AND p.score_max > 0 AND p.score >= p.score_max
+    ORDER BY d.ouvre_le, d.id
+  `).all();
+
+  const parAgent = new Map();
+  for (const l of lignes) {
+    const e = parAgent.get(l.id)
+      || { id: l.id, nom_complet: l.nom_complet, service: l.service, defis: [] };
+    e.defis.push(l.titre);
+    parAgent.set(l.id, e);
+  }
+  return [...parAgent.values()]
+    .map((e) => ({ ...e, nombre: e.defis.length }))
+    .sort((a, b) => b.nombre - a.nombre || a.nom_complet.localeCompare(b.nom_complet, 'fr'));
 }
 
 /** Statistiques globales pour le tableau de bord et les mails. */

@@ -141,16 +141,16 @@ function rendreAgents(donnees) {
     <div class="medaille" aria-hidden="true">${medaille(i + 1)}</div>
     <div class="sr-only">${i + 1}<sup>${i === 0 ? 'er' : 'e'}</sup></div>
     <div class="nom">${echapper(a.nom_complet)}</div>
-    <div class="points">${a.defis_joues} / ${a.defis_parus} défis</div>
-    <div class="sous">${a.pourcentage} % de réussite · ${echapper(a.service)}</div>`);
+    <div class="points">${a.score_total} pts</div>
+    <div class="sous">${a.defis_joues} / ${a.defis_parus} défis · ${a.pourcentage} % de réussite · ${echapper(a.service)}</div>`);
 
   document.getElementById('table-agents').innerHTML = `
-    <caption class="sr-only">Classement individuel des agents par défis terminés, puis par réussite</caption>
+    <caption class="sr-only">Classement individuel des agents par points, avec défis terminés et réussite</caption>
     <thead><tr>
       <th scope="col">Rang</th><th scope="col">Agent</th><th scope="col">Direction</th>
+      <th scope="col" class="num">Points</th>
       <th scope="col" class="num">Défis</th>
       <th scope="col" class="num">Réussite</th>
-      <th scope="col" class="num">Points</th>
     </tr></thead>
     <!-- « Ma ligne » vient du serveur. Comparer les noms surlignait les
          homonymes, et ne trouvait jamais un agent qui a demande a ne pas
@@ -160,9 +160,9 @@ function rendreAgents(donnees) {
         <td class="rang-cell">${celluleRang(i + 1)}</td>
         <td>${echapper(a.nom_complet)}${a.moi ? ' <span class="discret">(moi)</span>' : ''}</td>
         <td>${echapper(a.service)}</td>
-        <td class="num" style="white-space:nowrap"><strong>${a.defis_joues}</strong> / ${a.defis_parus}</td>
+        <td class="num" style="white-space:nowrap"><strong>${a.score_total}</strong></td>
+        <td class="num" style="white-space:nowrap">${a.defis_joues} / ${a.defis_parus}</td>
         <td class="num">${a.pourcentage} %</td>
-        <td class="num discret" style="white-space:nowrap">${a.score_total} / ${a.score_max_joue}</td>
       </tr>`).join('')}</tbody>`;
 
   if (!agents.length) {
