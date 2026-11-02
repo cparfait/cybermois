@@ -184,6 +184,7 @@ Reportez-vous à `.env.example`, qui documente chaque variable. Les points d'att
 | `PROXY_DE_CONFIANCE` | IP ou CIDR du reverse proxy. **Vide, les en-têtes `X-Forwarded-*` sont ignorés** et le journal porte l'adresse du proxy pour tous les agents |
 | `ADMIN_LOGINS` | Logins AD autorisés au back-office, séparés par des virgules |
 | `CAMPAGNE_DEBUT` | Date de référence de la campagne ; chaque défi porte sa propre date de parution |
+| `CAMPAGNE_FIN` | Dernier jour de saisie (défaut `2026-10-31`) ; le lendemain les défis ne s'enregistrent plus. Laisser vide : les défis restent ouverts sans limite |
 | `MAIL_ENVOI_ACTIF` | Laisser à `false` tant que la recette n'est pas terminée |
 | `RETENTION_JOURNAL_JOURS`, `RETENTION_RESULTATS_JOURS`, `RETENTION_PREUVES_JOURS` | Durées de conservation appliquées par la purge automatique (180 / 456 / 1095 jours). Elles correspondent aux mentions légales : ne les changer qu'avec la DPO |
 

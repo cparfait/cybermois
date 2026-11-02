@@ -143,6 +143,34 @@ test('un defi ouvert et complet se cloture, lui', async () => {
   assert.equal(participations(agent.id, defi), 1);
 });
 
+test('sans date de fin, les defis restent ouverts apres le mois de campagne', async () => {
+  const { config } = await import('../src/lib/config.js');
+  const { validerParametres } = await import('../src/lib/parametres.js');
+  const fin = config.campagne.fin;
+  try {
+    const agent = agentConnecte('zz-cloture-sans-fin');
+    const defi = creerDefi({ titre: 'Defi apres la campagne', ouvreLe: jour(-30), questions: 2 });
+    repondreATout(agent.id, defi);
+
+    config.campagne.fin = jour(-1);
+    const close = await terminer(agent, defi);
+    assert.equal(close.statusCode, 403, 'une fin de campagne depassee ferme bien le defi');
+    assert.equal(participations(agent.id, defi), 0);
+
+    config.campagne.fin = '';
+    const ouvert = await terminer(agent, defi);
+    assert.equal(ouvert.statusCode, 200, `sans date de fin le defi reste jouable (recu ${ouvert.body})`);
+    assert.equal(participations(agent.id, defi), 1);
+
+    assert.deepEqual(validerParametres({ 'campagne.fin': '' }), [],
+      'le back-office doit accepter une fin vide');
+    assert.equal(validerParametres({ 'campagne.fin': 'bientot' }).length, 1,
+      'une date mal formee reste refusee');
+  } finally {
+    config.campagne.fin = fin;
+  }
+});
+
 test('un defi incomplet ne se cloture pas non plus', async () => {
   const agent = agentConnecte('zz-cloture-incomplete');
   const defi = creerDefi({ titre: 'Defi a moitie', ouvreLe: jour(-1), questions: 3 });

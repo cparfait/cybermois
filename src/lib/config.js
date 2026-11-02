@@ -167,7 +167,9 @@ export const config = {
 
   campagne: {
     debut: process.env.CAMPAGNE_DEBUT || '2026-10-05',
-    fin: process.env.CAMPAGNE_FIN || '2026-10-31',
+    // Vide = pas de date de fin : les defis restent ouverts. `??` et non `||`,
+    // sinon une variable laissee vide retombait sur la date par defaut.
+    fin: process.env.CAMPAGNE_FIN ?? '2026-10-31',
   },
 
   dbFile: process.env.DB_FILE || path.resolve(process.cwd(), 'data', 'cybermois.db'),

@@ -173,7 +173,8 @@ export const DESCRIPTEUR = [
     libelle: 'Fin de campagne',
     aide: "AAAA-MM-JJ. Dernier jour de saisie : le lendemain, plus aucune reponse "
       + "n'est enregistree et le classement devient definitif. Les defis restent "
-      + 'consultables, les corrections relisibles.' },
+      + 'consultables, les corrections relisibles. Laissez vide pour que les defis '
+      + 'restent ouverts sans limite de date.' },
 ];
 
 const PAR_CLE = Object.fromEntries(DESCRIPTEUR.map((d) => [d.cle, d]));
@@ -328,6 +329,8 @@ export function validerParametres(valeurs) {
   }
 
   for (const cle of ['campagne.debut', 'campagne.fin']) {
+    // La fin peut rester vide : la campagne n'est alors jamais close.
+    if (cle === 'campagne.fin' && String(v(cle) ?? '').trim() === '') continue;
     if (v(cle) !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(String(v(cle)).trim())) {
       erreurs.push(`${PAR_CLE[cle].libelle} : date attendue au format AAAA-MM-JJ.`);
     }
