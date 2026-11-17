@@ -10,6 +10,7 @@ import {
   progression, repondre, totaux, effacerTentative, detailTentative, effacerTentatives,
 } from '../lib/tentatives.js';
 import { jetonValide } from '../lib/apercu.js';
+import { classeurClassement, lireNombre, CLASSEMENTS } from '../lib/export-classement.js';
 import { aujourdhui, dateLisible } from '../lib/dates.js';
 import { illustrationDe } from '../lib/illustrations.js';
 
@@ -454,6 +455,26 @@ export default async function routesJeu(app) {
     // des totaux ; le detail par defi reste servi au back-office.
     stats: statistiquesGlobales({ detailParDefi: false }),
   }));
+
+  /**
+   * Le classement en Excel, pour l'imprimer ou le diffuser.
+   * « nombre » limite aux N premiers ; absent ou « tous », tout le classement.
+   * Les donnees sont celles que la page affiche deja a tout agent connecte.
+   */
+  app.get('/api/classement/export.xlsx', async (requete, reponse) => {
+    const { classement, nombre } = requete.query;
+    const n = lireNombre(nombre);
+    if (!CLASSEMENTS[classement] || n === null) {
+      return reponse.code(400).send({ erreur: 'Précisez le classement (services ou agents) et un nombre de lignes positif.' });
+    }
+    const { nomFichier, contenu, lignes } = classeurClassement(classement, n);
+    journaliser(requete.agent.login, 'export_classement', `${classement}, ${lignes} lignes`, requete.ip);
+    return reponse
+      .type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+      .header('Content-Disposition', `attachment; filename="${nomFichier}"`)
+      .header('Cache-Control', 'no-store')
+      .send(contenu);
+  });
 
   /* ------------------------------------------------------------- Profil */
   /**

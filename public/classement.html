@@ -55,6 +55,34 @@
   .stat { background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: 1rem; text-align: center; }
   .stat .v { font-family: var(--police-titre); font-weight: 900; font-size: 1.8rem; color: var(--vert-fonce); line-height: 1; }
   .stat .l { font-family: var(--police-ui); font-size: .78rem; color: var(--encre-douce); margin-top: .3rem; }
+
+  .barre-export {
+    display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem;
+    background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon);
+    padding: .9rem 1rem; margin-top: .6rem; font-family: var(--police-ui);
+  }
+  .barre-export input[type='number'] { width: 6.5rem; }
+  .barre-export #export-aide { display: block; font-size: .78rem; margin-top: .25rem; }
+
+  /* La version imprimee : un titre, la date, le tableau. Rien d'autre. */
+  #impression { display: none; }
+  @media print {
+    @page { size: A4; margin: 14mm 12mm; }
+    body > *:not(#impression) { display: none !important; }
+    body { background: #fff; }
+    #impression { display: block; font-family: var(--police-ui); color: #14211c; }
+    #impression .tete { display: flex; align-items: center; gap: 12px; border-bottom: 3px solid #006e46; padding-bottom: 8px; margin-bottom: 4px; }
+    #impression .tete img { height: 42px; }
+    #impression h1 { font-family: var(--police-titre); font-size: 18pt; margin: 0; color: #006e46; }
+    #impression .portee { font-size: 9.5pt; color: #4a5a53; margin: 6px 0 12px; }
+    #impression table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+    #impression thead { display: table-header-group; }
+    #impression th { text-align: left; font-size: 8pt; text-transform: uppercase; letter-spacing: .05em; background: #dcefe6; border-bottom: 1.5px solid #006e46; padding: 5px 6px; }
+    #impression td { padding: 4px 6px; border-bottom: 1px solid #d5ddd9; }
+    #impression tr { page-break-inside: avoid; }
+    #impression .num { text-align: right; }
+    #impression .note { font-size: 8pt; color: #4a5a53; margin-top: 10px; }
+  }
 </style>
 </head>
 <body>
@@ -78,6 +106,22 @@
         <span class="sous-onglet" id="compte-agents">&nbsp;</span>
       </button>
     </div>
+
+    <!-- Impression et export : portent sur l'onglet affiche. -->
+    <form class="barre-export" id="barre-export" hidden>
+      <div>
+        <label for="export-nombre" id="export-libelle">Directions à inclure</label>
+        <div class="rang" style="gap:.4rem;flex-wrap:nowrap">
+          <input type="number" id="export-nombre" min="1" step="1" inputmode="numeric" value="10" aria-describedby="export-aide">
+          <button type="button" class="btn btn-secondaire" id="export-tous">Tous</button>
+        </div>
+        <span class="discret" id="export-aide"></span>
+      </div>
+      <div class="rang" style="gap:.5rem">
+        <button type="button" class="btn btn-secondaire" id="export-excel"><span aria-hidden="true">📊</span> Excel</button>
+        <button type="button" class="btn btn-principal" id="export-pdf"><span aria-hidden="true">🖨️</span> Imprimer / PDF</button>
+      </div>
+    </form>
 
     <div role="tabpanel" id="panneau-services" aria-labelledby="onglet-services" tabindex="0">
       <p class="discret" style="margin-top:1rem">
@@ -105,6 +149,8 @@
 </main>
 
 <div id="pied"></div>
+<!-- Ce que l'on imprime : construit au clic, invisible a l'ecran. -->
+<section id="impression" aria-hidden="true"></section>
 <script type="module" src="/js/classement.js"></script>
 </body>
 </html>

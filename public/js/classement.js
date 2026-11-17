@@ -25,11 +25,15 @@ onglets.forEach(({ bouton }, index) => {
   });
 });
 
+let ongletActif = 0;
+
 function activerOnglet(actif) {
+  ongletActif = actif;
   onglets.forEach(({ bouton, panneau }, i) => {
     bouton.setAttribute('aria-selected', String(i === actif));
     panneau.hidden = i !== actif;
   });
+  majBarreExport();
 }
 
 /* ------------------------------------------------------------- Rendu */
@@ -172,10 +176,142 @@ function rendreAgents(donnees) {
   brancherVoirPlus('table-agents', 'voir-plus-agents', agents.length, 'agent');
 }
 
+/* --------------------------------------------- Impression et export Excel */
+
+// Renseigne au chargement ; la barre d'export lit les memes donnees que
+// l'ecran, sans nouvel appel pour l'impression.
+let donneesClassement = null;
+
+const EXPORTS = [
+  {
+    cle: 'services', titre: 'Classement par direction', unite: ['direction', 'directions'],
+    libelle: 'Directions à inclure',
+    regle: 'Directions classées au nombre moyen de défis terminés par agent inscrit, puis à la réussite, puis à la participation.',
+    lignes: () => donneesClassement?.services || [],
+  },
+  {
+    cle: 'agents', titre: 'Classement individuel', unite: ['agent', 'agents'],
+    libelle: 'Agents à inclure',
+    regle: 'Agents classés aux points, puis à la réussite, puis au nombre de défis terminés.',
+    lignes: () => donneesClassement?.agents || [],
+  },
+];
+
+const champNombre = document.getElementById('export-nombre');
+
+/** Le nombre de lignes retenu, borne au classement : un champ vide vaut « tous ». */
+function nombreDemande(total) {
+  const n = Number.parseInt(champNombre.value, 10);
+  return Number.isInteger(n) && n >= 1 ? Math.min(n, total) : total;
+}
+
+function majBarreExport() {
+  const barre = document.getElementById('barre-export');
+  if (!donneesClassement) return;
+  const exp = EXPORTS[ongletActif];
+  const total = exp.lignes().length;
+  barre.hidden = false;
+  document.getElementById('export-libelle').textContent = exp.libelle;
+  champNombre.max = String(Math.max(1, total));
+  document.getElementById('export-aide').textContent = total
+    ? `sur ${total} ${exp.unite[total > 1 ? 1 : 0]} classé${total > 1 ? 's' : ''}`
+    : 'aucune ligne à exporter pour le moment';
+  ['export-excel', 'export-pdf', 'export-tous'].forEach((id) => { document.getElementById(id).disabled = !total; });
+  champNombre.disabled = !total;
+}
+
+document.getElementById('export-tous').addEventListener('click', () => {
+  champNombre.value = String(EXPORTS[ongletActif].lignes().length);
+});
+
+// Entree dans le champ ne doit pas soumettre le formulaire, ce qui
+// rechargerait la page.
+document.getElementById('barre-export').addEventListener('submit', (e) => e.preventDefault());
+
+const dateDuJour = () => new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+
+function tableImprimee(exp, lignes) {
+  if (exp.cle === 'services') {
+    return `<table>
+      <thead><tr><th>Rang</th><th>Direction</th><th class="num">Défis par agent</th><th class="num">Réussite</th>
+        <th class="num">Points</th><th class="num">Participation</th><th class="num">Agents</th></tr></thead>
+      <tbody>${lignes.map((s, i) => `<tr>
+        <td>${i + 1}</td><td>${echapper(s.service)}</td>
+        <td class="num">${virgule(s.defis_par_agent)} / ${s.defis_parus}</td>
+        <td class="num">${s.pourcentage_moyen} %</td>
+        <td class="num">${s.score_max_joue ? `${s.score_total} / ${s.score_max_joue}` : '—'}</td>
+        <td class="num">${s.taux_participation} %</td>
+        <td class="num">${s.joueurs} / ${s.inscrits}</td></tr>`).join('')}</tbody></table>`;
+  }
+  return `<table>
+    <thead><tr><th>Rang</th><th>Agent</th><th>Direction</th><th class="num">Points</th>
+      <th class="num">Défis</th><th class="num">Réussite</th></tr></thead>
+    <tbody>${lignes.map((a, i) => `<tr>
+      <td>${i + 1}</td><td>${echapper(a.nom_complet)}</td><td>${echapper(a.service)}</td>
+      <td class="num">${a.score_total}</td><td class="num">${a.defis_joues} / ${a.defis_parus}</td>
+      <td class="num">${a.pourcentage} %</td></tr>`).join('')}</tbody></table>`;
+}
+
+/**
+ * Impression, ou PDF : la boite de dialogue du navigateur propose
+ * « Enregistrer au format PDF » comme imprimante. Un PDF genere a part
+ * demanderait une bibliotheque pour un resultat identique.
+ */
+document.getElementById('export-pdf').addEventListener('click', async () => {
+  const exp = EXPORTS[ongletActif];
+  const toutes = exp.lignes();
+  const n = nombreDemande(toutes.length);
+  champNombre.value = String(n);
+  const portee = n < toutes.length
+    ? `${n} premier${n > 1 ? 's' : ''} sur ${toutes.length} ${exp.unite[1]}`
+    : `${toutes.length} ${exp.unite[toutes.length > 1 ? 1 : 0]}`;
+
+  const zone = document.getElementById('impression');
+  zone.innerHTML = `
+    <div class="tete"><img src="/img/logo.png" alt=""><h1>Cybermois — ${exp.titre}</h1></div>
+    <p class="portee">${portee} · édité le ${dateDuJour()}</p>
+    ${tableImprimee(exp, toutes.slice(0, n))}
+    <p class="note">${exp.regle}</p>`;
+
+  // Le logo doit etre charge avant l'ouverture de la boite d'impression,
+  // sans quoi la premiere impression part sans lui.
+  try { await zone.querySelector('img').decode(); } catch { /* imprime sans logo */ }
+  window.print();
+});
+
+document.getElementById('export-excel').addEventListener('click', async () => {
+  const exp = EXPORTS[ongletActif];
+  const bouton = document.getElementById('export-excel');
+  const n = nombreDemande(exp.lignes().length);
+  champNombre.value = String(n);
+  bouton.disabled = true;
+  try {
+    const reponse = await fetch(`/api/classement/export.xlsx?classement=${exp.cle}&nombre=${n}`, { credentials: 'same-origin' });
+    if (reponse.status === 401) { window.location.href = '/?expire=1'; return; }
+    if (!reponse.ok) {
+      const corps = await reponse.json().catch(() => ({}));
+      throw new Error(corps.erreur || `Erreur ${reponse.status}`);
+    }
+    const nom = /filename="([^"]+)"/.exec(reponse.headers.get('content-disposition') || '')?.[1]
+      || `cybermois-classement-${exp.cle}.xlsx`;
+    const url = URL.createObjectURL(await reponse.blob());
+    const lien = Object.assign(document.createElement('a'), { href: url, download: nom });
+    document.body.append(lien);
+    lien.click();
+    lien.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  } catch (erreur) {
+    alerte('alerte', `Export Excel impossible : ${erreur.message}`);
+  } finally {
+    bouton.disabled = false;
+  }
+});
+
 /* ---------------------------------------------------------- Chargement */
 
 try {
   const donnees = await api('/api/classement');
+  donneesClassement = donnees;
 
   const rs = donnees.monRangService;
   const ra = donnees.monRangAgent;
@@ -214,6 +350,7 @@ try {
 
   rendreServices(donnees);
   rendreAgents(donnees);
+  majBarreExport();
 } catch (erreur) {
   alerte('alerte', erreur.message);
 }
